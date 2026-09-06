@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Image,
   Modal,
+  PanResponder,
   RefreshControl,
   SectionList,
   StyleSheet,
@@ -111,6 +113,29 @@ export default function MenuScreen() {
     return { bienThe: dat, chenhLech: dat.giaBan - pickBienThe.giaBan };
   }, [picking, pickBienThe]);
 
+  // Kéo xuống bằng modalHandle/header để đóng sheet (khớp thao tác vuốt-đóng quen thuộc của
+  // pageSheet iOS) — chỉ gắn panHandlers ở phần header, không phải toàn bộ card, để không nuốt
+  // mất thao tác chạm vào chip/nút/ô nhập bên trong.
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+  const sheetPanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4 && gesture.dy > 0,
+      onPanResponderMove: (_, gesture) => {
+        if (gesture.dy > 0) sheetTranslateY.setValue(gesture.dy);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dy > 100 || gesture.vy > 1) {
+          Animated.timing(sheetTranslateY, { toValue: 700, duration: 180, useNativeDriver: true }).start(() => {
+            setPicking(null);
+            sheetTranslateY.setValue(0);
+          });
+        } else {
+          Animated.spring(sheetTranslateY, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+        }
+      },
+    }),
+  ).current;
+
   const openPicker = (sp: SanPham) => {
     setPicking(sp);
     setPickBienThe(sp.bienThe.find((b) => b.macDinh) ?? sp.bienThe[0] ?? null);
@@ -118,6 +143,7 @@ export default function MenuScreen() {
     setPickSoLuong(1);
     setPickGhiChu('');
     setPickTab('note');
+    sheetTranslateY.setValue(0);
   };
 
   const confirmAdd = () => {
@@ -271,19 +297,21 @@ export default function MenuScreen() {
 
       <Modal visible={!!picking} transparent animationType="slide" onRequestClose={() => setPicking(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeaderRow}>
-              {picking?.hinhAnh ? (
-                <Image source={{ uri: picking.hinhAnh }} style={styles.modalThumb} resizeMode="cover" />
-              ) : (
-                <View style={styles.modalThumbPlaceholder}>
-                  <Text style={styles.thumbPlaceholderText}>{picking?.ten.trim().charAt(0).toUpperCase()}</Text>
-                </View>
-              )}
-              <Text style={styles.modalTitle} numberOfLines={2}>
-                {picking?.ten}
-              </Text>
+          <Animated.View style={[styles.modalCard, { transform: [{ translateY: sheetTranslateY }] }]}>
+            <View {...sheetPanResponder.panHandlers}>
+              <View style={styles.modalHandle} />
+              <View style={styles.modalHeaderRow}>
+                {picking?.hinhAnh ? (
+                  <Image source={{ uri: picking.hinhAnh }} style={styles.modalThumb} resizeMode="cover" />
+                ) : (
+                  <View style={styles.modalThumbPlaceholder}>
+                    <Text style={styles.thumbPlaceholderText}>{picking?.ten.trim().charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
+                <Text style={styles.modalTitle} numberOfLines={2}>
+                  {picking?.ten}
+                </Text>
+              </View>
             </View>
 
             <Text style={styles.modalLabel}>Chọn size</Text>
@@ -328,28 +356,32 @@ export default function MenuScreen() {
             )}
 
             {toppings.length > 0 && pickTab === 'topping' ? (
-              <>
-                <View style={styles.optionRow}>
-                  {toppings.map((t) => (
+              <View style={{ marginTop: 10 }}>
+                {toppings.map((t) => {
+                  const active = pickToppingIds.includes(t.id);
+                  return (
                     <TouchableOpacity
                       key={t.id}
-                      style={[styles.optionChip, pickToppingIds.includes(t.id) && styles.optionChipActive]}
+                      style={styles.toppingRow}
+                      activeOpacity={0.6}
                       onPress={() => toggleTopping(t.id)}
                     >
-                      <Text style={[styles.optionChipText, pickToppingIds.includes(t.id) && styles.optionChipTextActive]}>
-                        {t.ten} (+{t.gia.toLocaleString('vi-VN')}đ)
-                      </Text>
+                      <Text style={styles.toppingName}>{t.ten}</Text>
+                      <Text style={styles.toppingPrice}>+{t.gia.toLocaleString('vi-VN')}đ</Text>
+                      <View style={[styles.toppingCheck, active && styles.toppingCheckActive]}>
+                        {active && <Text style={styles.toppingCheckMark}>✓</Text>}
+                      </View>
                     </TouchableOpacity>
-                  ))}
-                </View>
+                  );
+                })}
                 {pickToppingIds.length === 0 && (
                   <Text style={styles.upsellHint}>
                     💡 Thêm topping chỉ từ +{Math.min(...toppings.map((t) => t.gia)).toLocaleString('vi-VN')}đ
                   </Text>
                 )}
-              </>
+              </View>
             ) : (
-              <>
+              <View style={{ marginTop: 10 }}>
                 <TextInput
                   style={styles.noteInput}
                   placeholder="Ghi chú món..."
@@ -357,20 +389,30 @@ export default function MenuScreen() {
                   value={pickGhiChu}
                   onChangeText={setPickGhiChu}
                 />
-                <View style={styles.optionRow}>
-                  {quickNoteGroups.flatMap((g) => g.notes).map((note) => (
-                    <TouchableOpacity
-                      key={note}
-                      style={[styles.optionChip, activeNotes.has(note) && styles.optionChipActive]}
-                      onPress={() => toggleNote(note)}
-                    >
-                      <Text style={[styles.optionChipText, activeNotes.has(note) && styles.optionChipTextActive]}>
-                        {note}
-                      </Text>
-                    </TouchableOpacity>
+                {/* Đường/Đá/Trà xếp thành cột ngang, mỗi cột xếp dọc các nút — khớp bố cục
+                    quickNoteGroups của ProductPickerPanel (AppQuanLyIOS) thay vì 1 hàng chip phẳng. */}
+                <View style={styles.noteGroupRow}>
+                  {quickNoteGroups.map((group) => (
+                    <View key={group.title} style={styles.noteGroupCol}>
+                      <Text style={styles.noteGroupTitle}>{group.title}</Text>
+                      {group.notes.map((note) => {
+                        const active = activeNotes.has(note);
+                        return (
+                          <TouchableOpacity
+                            key={note}
+                            style={[styles.noteBtn, active && styles.noteBtnActive]}
+                            onPress={() => toggleNote(note)}
+                          >
+                            <Text style={[styles.noteBtnText, active && styles.noteBtnTextActive]} numberOfLines={1}>
+                              {note}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   ))}
                 </View>
-              </>
+              </View>
             )}
 
             <Text style={styles.modalLabel}>Số lượng</Text>
@@ -394,7 +436,7 @@ export default function MenuScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </View>
@@ -550,6 +592,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  toppingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+  },
+  toppingName: { flex: 1, fontSize: 14, color: COLORS.text },
+  toppingPrice: { fontSize: 12, color: COLORS.textMuted, marginRight: 12 },
+  toppingCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toppingCheckActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  toppingCheckMark: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  noteGroupRow: { flexDirection: 'row', gap: 10 },
+  noteGroupCol: { flex: 1, gap: 6 },
+  noteGroupTitle: { fontSize: 11, color: COLORS.textFaint, fontWeight: '600', marginBottom: 2 },
+  noteBtn: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+  },
+  noteBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  noteBtnText: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
+  noteBtnTextActive: { color: '#fff' },
   upsellHint: { fontSize: 12, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
   optionChip: {
     borderWidth: 1,
