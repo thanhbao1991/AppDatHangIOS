@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Đenn Coffee",
+    "slug": "AppDatHangIOS",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uk.denncoffee.appdathangios",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Đenn Coffee cần vị trí của bạn để tính phí ship theo khoảng cách thật và hiển thị bản đồ giao hàng."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF3E0",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-font",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Đenn Coffee cần vị trí của bạn để tính phí ship theo khoảng cách thật và hiển thị bản đồ giao hàng."
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          "iosGoogleMapsApiKey": "GOOGLE_MAPS_IOS_API_KEY_PLACEHOLDER"
+        }
+      ],
+      "expo-secure-store"
+    ]
+  }
+}

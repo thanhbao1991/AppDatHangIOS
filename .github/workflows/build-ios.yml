@@ -1,0 +1,96 @@
+name: Build unsigned iOS IPA
+
+# App Expo managed (không có ios/ commit sẵn) — CI phải chạy `expo prebuild` để tự sinh project
+# native trước khi build. Output là .ipa CHƯA KÝ, ký + cài thật làm ở máy Windows bằng Sideloadly,
+# KHÔNG ký trong CI để khỏi phải nhét Apple ID/2FA vào secrets.
+#
+# Tách ra thành repo riêng (2026-09-06, từ monorepo TraSuaApp/DaenApp) để build CHẠY MIỄN PHÍ trên
+# macOS runner — GitHub Actions chỉ free cho runner GitHub-hosted trên repo PUBLIC, repo private
+# (nơi TraSuaApp.Backend/Desktop vẫn sống) tính phí macOS ~10x so với Ubuntu/Windows.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    # macos-15 chỉ có tối đa Xcode 26.3 (Swift 6.2) — expo-modules-jsi bị lỗi build với Swift 6.2
+    # strict-mode (weak let / Sendable), cần Xcode 26.4+ (Swift 6.3) mới fix. macos-26 có sẵn
+    # Xcode 26.4.1 làm mặc định. Xem: github.com/expo/expo/issues/46242
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      # Xcode mặc định trên macos-15 có Swift tools 6.1, nhưng 1 package SPM nội bộ của Expo
+      # (ExpoModulesJSI) đòi Swift tools 6.2 — chọn bản Xcode mới nhất có sẵn trên runner thay vì
+      # dùng mặc định. Dò động (không hardcode số bản) vì runner image đổi version theo thời gian.
+      - name: Select latest available Xcode
+        run: |
+          LATEST_XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          echo "Selecting: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE"
+          xcodebuild -version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo prebuild (sinh project native iOS)
+        run: npx expo prebuild --platform ios --no-install
+
+      # Đã gỡ @react-native-firebase (chuyển sang OTP tự quản lý gửi qua Zalo ZNS/Bark ở backend)
+      # nên không còn cần patch Podfile cho static framework linkage nữa — pod install thẳng.
+      - name: Install CocoaPods
+        run: cd ios && pod install
+
+      # Tên workspace/scheme do `expo prebuild` tự đặt (dựa theo expo.name trong app.json, có thể
+      # khác chuỗi mong đợi) — dò động thay vì hardcode để tránh build fail vì đoán sai tên.
+      - name: Discover workspace + scheme
+        id: discover
+        run: |
+          set -e
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list | awk '/Schemes:/{flag=1;next} flag && NF{print $1; exit}')
+          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+          echo "Workspace: $WORKSPACE / Scheme: $SCHEME"
+
+      # CFBundleVersion mặc định expo prebuild sinh cố định — stamp gitSha+build time để phân biệt
+      # bản build khi cài.
+      - name: Stamp build version into Info.plist
+        run: |
+          SHORT_SHA=$(git rev-parse --short=8 HEAD)
+          BUILD_TIME=$(date -u +%Y%m%d%H%M%S)
+          PLIST=$(find ios -maxdepth 2 -iname "Info.plist" ! -path "*/Pods/*" | head -1)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_TIME}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SHORT_SHA}" "$PLIST" || true
+
+      - name: Build unsigned .app
+        run: |
+          xcodebuild \
+            -workspace "${{ steps.discover.outputs.workspace }}" \
+            -scheme "${{ steps.discover.outputs.scheme }}" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Package unsigned .ipa
+        run: |
+          set -e
+          APP_PATH=$(find build/Build/Products -maxdepth 2 -iname "*.app" | head -1)
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r AppDatHangIOS-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AppDatHangIOS-unsigned-ipa
+          path: AppDatHangIOS-unsigned.ipa
