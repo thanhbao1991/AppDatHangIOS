@@ -43,6 +43,11 @@ export default function MenuScreen() {
   const [pickBienThe, setPickBienThe] = useState<SanPhamBienThe | null>(null);
   const [pickToppingIds, setPickToppingIds] = useState<string[]>([]);
   const [pickSoLuong, setPickSoLuong] = useState(1);
+  const [pickGhiChu, setPickGhiChu] = useState('');
+  // 'note' | 'topping' — học theo màn "Thêm món" của AppQuanLyIOS (ProductPickerPanel): 2 tab thay
+  // vì xếp chồng, đỡ cuộn dài khi topping nhiều. Tab Ghi chú trước vì món nào cũng có thể cần chỉnh
+  // đường/đá, topping chỉ áp dụng một số món.
+  const [pickTab, setPickTab] = useState<'note' | 'topping'>('note');
 
   const load = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -111,6 +116,8 @@ export default function MenuScreen() {
     setPickBienThe(sp.bienThe.find((b) => b.macDinh) ?? sp.bienThe[0] ?? null);
     setPickToppingIds([]);
     setPickSoLuong(1);
+    setPickGhiChu('');
+    setPickTab('note');
   };
 
   const confirmAdd = () => {
@@ -122,6 +129,7 @@ export default function MenuScreen() {
       tenBienThe: pickBienThe.tenBienThe,
       giaBan: pickBienThe.giaBan,
       soLuong: pickSoLuong,
+      ghiChu: pickGhiChu.trim() || undefined,
       toppings: chosenToppings.map((t) => ({ id: t.id, ten: t.ten, gia: t.gia })),
     });
     setPicking(null);
@@ -129,6 +137,27 @@ export default function MenuScreen() {
 
   const toggleTopping = (id: string) => {
     setPickToppingIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  // Nhóm ghi chú nhanh — khớp quickNoteGroups của ProductPickerPanel (AppQuanLyIOS) để nhân viên
+  // và khách nhìn thấy đúng các lựa chọn quen thuộc.
+  const quickNoteGroups: { title: string; notes: string[] }[] = [
+    { title: 'Đường', notes: ['Không đường', 'Ít ngọt', 'Ngọt', 'Nhiều ngọt', 'Đường riêng'] },
+    { title: 'Đá', notes: ['Không đá', 'Ít đá', 'Vừa đá', 'Nhiều đá', 'Đá riêng'] },
+    { title: 'Trà', notes: ['Không trà', 'Trà nóng', 'Trà đá'] },
+  ];
+
+  const activeNotes = useMemo(
+    () => new Set(pickGhiChu.split(',').map((s) => s.trim()).filter(Boolean)),
+    [pickGhiChu],
+  );
+
+  const toggleNote = (note: string) => {
+    const notes = pickGhiChu.split(',').map((s) => s.trim()).filter(Boolean);
+    const idx = notes.indexOf(note);
+    if (idx >= 0) notes.splice(idx, 1);
+    else notes.push(note);
+    setPickGhiChu(notes.join(', '));
   };
 
   if (loading) {
@@ -280,8 +309,26 @@ export default function MenuScreen() {
             )}
 
             {toppings.length > 0 && (
+              <View style={styles.tabRow}>
+                <TouchableOpacity
+                  style={[styles.tabBtn, pickTab === 'note' && styles.tabBtnActive]}
+                  onPress={() => setPickTab('note')}
+                >
+                  <Text style={[styles.tabBtnText, pickTab === 'note' && styles.tabBtnTextActive]}>Ghi chú</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tabBtn, pickTab === 'topping' && styles.tabBtnActive]}
+                  onPress={() => setPickTab('topping')}
+                >
+                  <Text style={[styles.tabBtnText, pickTab === 'topping' && styles.tabBtnTextActive]}>
+                    Topping{pickToppingIds.length > 0 ? ` (${pickToppingIds.length})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {toppings.length > 0 && pickTab === 'topping' ? (
               <>
-                <Text style={styles.modalLabel}>Topping</Text>
                 <View style={styles.optionRow}>
                   {toppings.map((t) => (
                     <TouchableOpacity
@@ -300,6 +347,29 @@ export default function MenuScreen() {
                     💡 Thêm topping chỉ từ +{Math.min(...toppings.map((t) => t.gia)).toLocaleString('vi-VN')}đ
                   </Text>
                 )}
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.noteInput}
+                  placeholder="Ghi chú món..."
+                  placeholderTextColor={COLORS.textFaint}
+                  value={pickGhiChu}
+                  onChangeText={setPickGhiChu}
+                />
+                <View style={styles.optionRow}>
+                  {quickNoteGroups.flatMap((g) => g.notes).map((note) => (
+                    <TouchableOpacity
+                      key={note}
+                      style={[styles.optionChip, activeNotes.has(note) && styles.optionChipActive]}
+                      onPress={() => toggleNote(note)}
+                    >
+                      <Text style={[styles.optionChipText, activeNotes.has(note) && styles.optionChipTextActive]}>
+                        {note}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </>
             )}
 
@@ -457,6 +527,28 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginLeft: 12, flex: 1 },
   modalLabel: { fontSize: 13, color: COLORS.textMuted, marginTop: 14, marginBottom: 8, fontWeight: '600' },
+  tabRow: {
+    flexDirection: 'row',
+    marginTop: 14,
+    backgroundColor: COLORS.divider,
+    borderRadius: 10,
+    padding: 3,
+  },
+  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
+  tabBtnActive: { backgroundColor: '#fff' },
+  tabBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
+  tabBtnTextActive: { color: COLORS.text },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: COLORS.text,
+    marginTop: 10,
+    marginBottom: 8,
+  },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   upsellHint: { fontSize: 12, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
   optionChip: {
