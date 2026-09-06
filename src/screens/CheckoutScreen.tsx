@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
@@ -121,6 +121,12 @@ export default function CheckoutScreen() {
       if (result.isSuccess && result.data) {
         clientOrderIdRef.current = null;
         clear();
+        // Cảnh báo nghiệp vụ đi kèm đơn THÀNH CÔNG (vd hết nguyên liệu, trừ tồn kho âm) — backend
+        // trả sẵn từ lâu qua Result.WithWarnings nhưng app trước đây bỏ qua hoàn toàn, khách/quán
+        // không biết đơn có vấn đề tồn kho cho tới khi kiểm hàng thủ công.
+        if (result.warnings && result.warnings.length > 0) {
+          Alert.alert('Lưu ý', result.warnings.join('\n'));
+        }
         navigation.navigate('ThanhToan', { hoaDonId: result.data.id });
       } else {
         setError(result.message || 'Đặt hàng thất bại.');

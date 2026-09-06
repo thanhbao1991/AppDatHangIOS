@@ -120,7 +120,10 @@ export async function clearToken() {
   await AsyncStorage.removeItem('tenKhachHang');
 }
 
-type Envelope<T> = { isSuccess: boolean; message: string; data: T | null };
+// warnings: cảnh báo nghiệp vụ đi kèm response THÀNH CÔNG (vd "Đã trừ tồn kho âm: Trân châu đen") —
+// backend đã trả sẵn (Result<T>.WithWarnings) từ lâu nhưng field này CHƯA từng được app đọc, luôn
+// bị bỏ qua âm thầm. Optional vì phần lớn response không có.
+type Envelope<T> = { isSuccess: boolean; message: string; data: T | null; warnings?: string[] | null };
 
 // Gọi từ App.tsx để đưa app quay lại LoginScreen khi refresh token cũng hết hạn — request() không
 // tự render UI được nên chỉ báo qua callback, App.tsx quyết định cách quay lại (reset tenKhachHang).
@@ -191,10 +194,19 @@ async function request<T>(path: string, options: RequestInit = {}, allowRefresh 
 
     if (first.envelope) return first.envelope;
 
-    // Có phản hồi HTTP nhưng không phải JSON envelope. Tách 5xx ra khỏi phần còn lại để khách biết
-    // là lỗi phía quán chứ không phải máy mình — trước đây mọi thứ đều ra "Không đọc được phản hồi".
+    // Có phản hồi HTTP nhưng không phải JSON envelope — 2 nguồn phổ biến nhất đều KHÔNG viết body:
+    // rate limiter (429, xem Program.cs RejectionStatusCode, không có OnRejected) và authorization
+    // middleware mặc định của ASP.NET Core (403, không có IAuthorizationMiddlewareResultHandler
+    // riêng). Trước đây cả 2 lẫn mọi lỗi lạ khác đều ra chung "Không đọc được phản hồi từ server."
+    // — khách tưởng máy/mạng mình hỏng trong khi thực ra bị chặn tốc độ hoặc thiếu quyền.
     if (first.status >= 500) {
       return { isSuccess: false, message: 'Server đang gặp sự cố, vui lòng thử lại sau ít phút.', data: null };
+    }
+    if (first.status === 429) {
+      return { isSuccess: false, message: 'Bạn thao tác hơi nhanh, vui lòng chờ một chút rồi thử lại.', data: null };
+    }
+    if (first.status === 403) {
+      return { isSuccess: false, message: 'Bạn không có quyền thực hiện thao tác này.', data: null };
     }
     return { isSuccess: false, message: 'Không đọc được phản hồi từ server.', data: null };
   } catch (e) {
@@ -567,6 +579,13 @@ export function getVi() {
 }
 
 // ===== Ly Bí Mật (blind box) =====
+
+// Giá thật lấy từ GamificationConfig (staff chỉnh qua AppQuanLyIOS) — dùng để hiện đúng banner
+// TRƯỚC khi khách bấm "Bóc". Trước đây banner hardcode 25.000đ ở client, staff đổi giá bên server
+// là banner sai ngay lập tức mà không ai để ý cho tới khi khách phàn nàn.
+export function getGiaLyBiMat() {
+  return request<number>('/dat-hang/ly-bi-mat/gia');
+}
 
 export type LyBiMatResult = {
   hoaDonId: string;

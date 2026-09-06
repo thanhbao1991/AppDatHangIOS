@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Crypto from 'expo-crypto';
-import { datLyBiMat, DiaChiKhachHang, getDiaChiList, LyBiMatResult } from '../api';
+import { datLyBiMat, DiaChiKhachHang, getDiaChiList, getGiaLyBiMat, LyBiMatResult } from '../api';
 import { COLORS } from '../theme';
 import KeyboardAvoider from '../components/KeyboardAvoider';
 
-const GIA_LY_BI_MAT = 25_000;
+// Fallback CHỈ dùng khi request lấy giá thật lỗi (mất mạng lúc mở màn hình) — 25.000đ là giá mặc
+// định lúc viết tính năng này, có thể lệch nếu staff đã đổi. Ưu tiên tuyệt đối là giaLyBiMat lấy từ
+// server; hằng số này không dùng để tính tiền, DatLyBiMatAsync luôn tự lấy giá server-side khi đặt.
+const GIA_LY_BI_MAT_FALLBACK = 25_000;
 
 export default function LyBiMatScreen() {
   const navigation = useNavigation<any>();
@@ -15,6 +18,7 @@ export default function LyBiMatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<LyBiMatResult | null>(null);
+  const [giaLyBiMat, setGiaLyBiMat] = useState(GIA_LY_BI_MAT_FALLBACK);
   // Mã chống tạo trùng cho đúng lần bấm "Bóc" này — cùng lý do và cùng vòng đời với
   // CheckoutScreen.clientOrderIdRef (xem đó để hiểu đầy đủ).
   const clientOrderIdRef = useRef<string | null>(null);
@@ -27,6 +31,10 @@ export default function LyBiMatScreen() {
         const macDinh = res.data.find((d) => d.isDefault);
         if (macDinh) setDiaChi(macDinh.diaChi);
       }
+    })();
+    (async () => {
+      const res = await getGiaLyBiMat();
+      if (res.isSuccess && typeof res.data === 'number') setGiaLyBiMat(res.data);
     })();
   }, []);
 
@@ -88,7 +96,7 @@ export default function LyBiMatScreen() {
         <Text style={styles.emoji}>🎁</Text>
         <Text style={styles.title}>Ly Bí Mật</Text>
         <Text style={styles.desc}>
-          Chỉ {GIA_LY_BI_MAT.toLocaleString('vi-VN')}đ, quán sẽ chọn NGẪU NHIÊN 1 món cho bạn — có thể là món giá
+          Chỉ {giaLyBiMat.toLocaleString('vi-VN')}đ, quán sẽ chọn NGẪU NHIÊN 1 món cho bạn — có thể là món giá
           cao hơn nhiều! Thử vận may của bạn 🍀
         </Text>
 
