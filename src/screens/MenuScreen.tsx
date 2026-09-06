@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   Image,
   Modal,
-  PanResponder,
   RefreshControl,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -113,29 +112,6 @@ export default function MenuScreen() {
     return { bienThe: dat, chenhLech: dat.giaBan - pickBienThe.giaBan };
   }, [picking, pickBienThe]);
 
-  // Kéo xuống bằng modalHandle/header để đóng sheet (khớp thao tác vuốt-đóng quen thuộc của
-  // pageSheet iOS) — chỉ gắn panHandlers ở phần header, không phải toàn bộ card, để không nuốt
-  // mất thao tác chạm vào chip/nút/ô nhập bên trong.
-  const sheetTranslateY = useRef(new Animated.Value(0)).current;
-  const sheetPanResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4 && gesture.dy > 0,
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dy > 0) sheetTranslateY.setValue(gesture.dy);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > 100 || gesture.vy > 1) {
-          Animated.timing(sheetTranslateY, { toValue: 700, duration: 180, useNativeDriver: true }).start(() => {
-            setPicking(null);
-            sheetTranslateY.setValue(0);
-          });
-        } else {
-          Animated.spring(sheetTranslateY, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
-        }
-      },
-    }),
-  ).current;
-
   const openPicker = (sp: SanPham) => {
     setPicking(sp);
     setPickBienThe(sp.bienThe.find((b) => b.macDinh) ?? sp.bienThe[0] ?? null);
@@ -143,7 +119,6 @@ export default function MenuScreen() {
     setPickSoLuong(1);
     setPickGhiChu('');
     setPickTab('note');
-    sheetTranslateY.setValue(0);
   };
 
   const confirmAdd = () => {
@@ -295,23 +270,29 @@ export default function MenuScreen() {
         </TouchableOpacity>
       )}
 
-      <Modal visible={!!picking} transparent animationType="slide" onRequestClose={() => setPicking(null)}>
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.modalCard, { transform: [{ translateY: sheetTranslateY }] }]}>
-            <View {...sheetPanResponder.panHandlers}>
-              <View style={styles.modalHandle} />
-              <View style={styles.modalHeaderRow}>
-                {picking?.hinhAnh ? (
-                  <Image source={{ uri: picking.hinhAnh }} style={styles.modalThumb} resizeMode="cover" />
-                ) : (
-                  <View style={styles.modalThumbPlaceholder}>
-                    <Text style={styles.thumbPlaceholderText}>{picking?.ten.trim().charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
-                <Text style={styles.modalTitle} numberOfLines={2}>
-                  {picking?.ten}
-                </Text>
-              </View>
+      {/* presentationStyle="pageSheet" dùng thẳng UISheetPresentationController của iOS (native
+          card modal) thay vì tự dựng overlay+PanResponder — có sẵn vuốt-xuống-để-đóng, kéo dở
+          chừng tự bung lại... y hệt .sheet() bên Swift, không cần code tay lại gesture. */}
+      <Modal
+        visible={!!picking}
+        presentationStyle="pageSheet"
+        animationType="slide"
+        onRequestClose={() => setPicking(null)}
+      >
+        <View style={styles.sheetContainer}>
+          <ScrollView contentContainerStyle={styles.sheetScrollContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeaderRow}>
+              {picking?.hinhAnh ? (
+                <Image source={{ uri: picking.hinhAnh }} style={styles.modalThumb} resizeMode="cover" />
+              ) : (
+                <View style={styles.modalThumbPlaceholder}>
+                  <Text style={styles.thumbPlaceholderText}>{picking?.ten.trim().charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {picking?.ten}
+              </Text>
             </View>
 
             <Text style={styles.modalLabel}>Chọn size</Text>
@@ -425,18 +406,18 @@ export default function MenuScreen() {
                 <Text style={styles.qtyBtnText}>+</Text>
               </TouchableOpacity>
             </View>
+          </ScrollView>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setPicking(null)}>
-                <Text style={styles.modalCancelText}>Huỷ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmAdd} disabled={!pickBienThe}>
-                <Text style={styles.modalConfirmText}>
-                  Thêm vào giỏ{pickBienThe ? ` · ${(pickBienThe.giaBan * pickSoLuong).toLocaleString('vi-VN')}đ` : ''}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setPicking(null)}>
+              <Text style={styles.modalCancelText}>Huỷ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmAdd} disabled={!pickBienThe}>
+              <Text style={styles.modalConfirmText}>
+                Thêm vào giỏ{pickBienThe ? ` · ${(pickBienThe.giaBan * pickSoLuong).toLocaleString('vi-VN')}đ` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -554,8 +535,8 @@ const styles = StyleSheet.create({
   cartBarBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   cartBarText: { color: '#fff', fontWeight: '700', fontSize: 15, marginLeft: 10, flex: 1 },
   cartBarPrice: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingTop: 10 },
+  sheetContainer: { flex: 1, backgroundColor: '#fff' },
+  sheetScrollContent: { padding: 20, paddingTop: 10, paddingBottom: 12 },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.divider, alignSelf: 'center', marginBottom: 14 },
   modalHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   modalThumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: COLORS.divider },
@@ -648,7 +629,14 @@ const styles = StyleSheet.create({
   },
   qtyBtnText: { fontSize: 20, fontWeight: '700', color: COLORS.primary },
   qtyValue: { fontSize: 16, fontWeight: '700', minWidth: 24, textAlign: 'center' },
-  modalActions: { flexDirection: 'row', marginTop: 22, gap: 12 },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.divider,
+    backgroundColor: '#fff',
+  },
   modalCancelBtn: { flex: 1, paddingVertical: 13, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border },
   modalCancelText: { color: COLORS.textMuted, fontWeight: '600' },
   modalConfirmBtn: { flex: 2, paddingVertical: 13, alignItems: 'center', borderRadius: 12, backgroundColor: COLORS.primary },
