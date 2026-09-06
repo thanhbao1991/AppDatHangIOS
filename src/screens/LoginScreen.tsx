@@ -223,6 +223,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
                 value={phone}
                 onChangeText={(t) => setPhone(t.replace(/[^0-9]/g, ''))}
                 autoCapitalize="none"
+                textContentType="telephoneNumber"
+                autoComplete="tel"
               />
             </FieldBox>
             <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitPhone} onPress={continuePhone} />
@@ -243,6 +245,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
                 value={password}
                 onChangeText={setPassword}
                 autoFocus
+                textContentType="password"
+                autoComplete="current-password"
               />
               <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
                 <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
@@ -267,6 +271,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
                 value={otpCode}
                 onChangeText={setOtpCode}
                 autoFocus
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
               />
             </FieldBox>
             <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitOtp} onPress={continueOtpCode} />
@@ -296,6 +302,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 autoFocus
+                textContentType="newPassword"
+                autoComplete="new-password"
               />
               <TouchableOpacity onPress={() => setShowNewPassword((v) => !v)} hitSlop={8}>
                 <Ionicons name={showNewPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
@@ -309,6 +317,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
                 secureTextEntry={!showNewPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
+                textContentType="newPassword"
+                autoComplete="new-password"
               />
             </FieldBox>
             <PrimaryButton label="Xác nhận" loading={loading} disabled={loading || !canSubmitOtpPassword} onPress={submitOtpPassword} />

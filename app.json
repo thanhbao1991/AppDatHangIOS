@@ -41,7 +41,8 @@
           "iosGoogleMapsApiKey": "GOOGLE_MAPS_IOS_API_KEY_PLACEHOLDER"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

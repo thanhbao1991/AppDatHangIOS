@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   apDungMaGioiThieu,
@@ -24,7 +25,11 @@ export default function UuDaiScreen() {
 
   const [maNhap, setMaNhap] = useState('');
   const [dangApDung, setDangApDung] = useState(false);
-  const [ngaySinhNhap, setNgaySinhNhap] = useState('');
+  // Native DateTimePicker (bánh xe chọn ngày của hệ điều hành) thay vì bắt gõ tay "dd/mm/yyyy" —
+  // đỡ sai định dạng, không cần regex validate chuỗi nhập.
+  const [dobDate, setDobDate] = useState(new Date(2000, 0, 1));
+  const [dobChosen, setDobChosen] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
   const [dangLuuSinhNhat, setDangLuuSinhNhat] = useState(false);
   const [dangDoiTem, setDangDoiTem] = useState(false);
   const [dangQuay, setDangQuay] = useState(false);
@@ -75,24 +80,30 @@ export default function UuDaiScreen() {
   };
 
   const handleLuuSinhNhat = async () => {
-    const m = ngaySinhNhap.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (!m) {
-      Alert.alert('Sai định dạng', 'Nhập ngày sinh theo dạng dd/mm/yyyy.');
+    if (!dobChosen) {
+      Alert.alert('Chưa chọn ngày', 'Chọn ngày sinh trước khi lưu.');
       return;
     }
-    const [, dd, mm, yyyy] = m;
-    const iso = new Date(Number(yyyy), Number(mm) - 1, Number(dd)).toISOString();
     setDangLuuSinhNhat(true);
     try {
-      const res = await capNhatNgaySinh(iso);
+      const res = await capNhatNgaySinh(dobDate.toISOString());
       if (res.isSuccess) {
-        setNgaySinhNhap('');
+        setDobChosen(false);
         load();
       } else {
         Alert.alert('Lỗi', res.message);
       }
     } finally {
       setDangLuuSinhNhat(false);
+    }
+  };
+
+  const onChangeDob = (event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === 'android') setShowDobPicker(false);
+    if (event.type === 'dismissed') return;
+    if (selected) {
+      setDobDate(selected);
+      setDobChosen(true);
     }
   };
 
@@ -200,18 +211,33 @@ export default function UuDaiScreen() {
             <>
               <Text style={styles.cardDesc}>Nhập ngày sinh để nhận quà mừng sinh nhật mỗi năm.</Text>
               <View style={styles.applyRow}>
-                <TextInput
-                  style={styles.applyInput}
-                  placeholder="dd/mm/yyyy"
-                  placeholderTextColor={COLORS.textFaint}
-                  value={ngaySinhNhap}
-                  onChangeText={setNgaySinhNhap}
-                  keyboardType="numbers-and-punctuation"
-                />
-                <TouchableOpacity style={styles.applyBtn} onPress={handleLuuSinhNhat} disabled={dangLuuSinhNhat}>
+                <TouchableOpacity style={styles.dobBtn} onPress={() => setShowDobPicker(true)}>
+                  <Text style={dobChosen ? styles.dobBtnText : styles.dobBtnPlaceholder}>
+                    {dobChosen ? dobDate.toLocaleDateString('vi-VN') : 'Chọn ngày sinh'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.applyBtn}
+                  onPress={handleLuuSinhNhat}
+                  disabled={dangLuuSinhNhat || !dobChosen}
+                >
                   {dangLuuSinhNhat ? <ActivityIndicator color="#fff" /> : <Text style={styles.applyBtnText}>Lưu</Text>}
                 </TouchableOpacity>
               </View>
+              {showDobPicker && (
+                <DateTimePicker
+                  value={dobDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  maximumDate={new Date()}
+                  onChange={onChangeDob}
+                />
+              )}
+              {Platform.OS === 'ios' && showDobPicker && (
+                <TouchableOpacity style={styles.dobDoneBtn} onPress={() => setShowDobPicker(false)}>
+                  <Text style={styles.dobDoneBtnText}>Xong</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </View>
@@ -265,6 +291,18 @@ const styles = StyleSheet.create({
   },
   applyBtn: { backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 18, justifyContent: 'center' },
   applyBtnText: { color: '#fff', fontWeight: '700' },
+  dobBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+  dobBtnText: { fontSize: 14, color: COLORS.text },
+  dobBtnPlaceholder: { fontSize: 14, color: COLORS.textFaint },
+  dobDoneBtn: { alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 4 },
+  dobDoneBtnText: { color: COLORS.primary, fontWeight: '700' },
   primaryBtn: { backgroundColor: COLORS.primary, borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
   primaryBtnText: { color: '#fff', fontWeight: '700' },
   ketQuaQuay: { fontSize: 16, fontWeight: '700', color: COLORS.primary, textAlign: 'center', marginBottom: 10 },

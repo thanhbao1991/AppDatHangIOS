@@ -108,6 +108,8 @@ export default function LyBiMatScreen() {
           value={diaChi}
           onChangeText={setDiaChi}
           multiline
+          textContentType="fullStreetAddress"
+          autoComplete="street-address"
         />
         {savedDiaChi.length > 0 && (
           <View style={styles.chipRow}>
