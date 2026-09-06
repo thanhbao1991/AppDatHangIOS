@@ -49,7 +49,8 @@ export default function MenuScreen() {
     setError('');
     try {
       const [spRes, nhomRes, topRes] = await Promise.all([getSanPhamList(), getNhomSanPhamList(), getToppingList()]);
-      if (spRes.isSuccess && spRes.data) setSanPhams(spRes.data.filter((s) => !s.ngungBan));
+      if (spRes.isSuccess && spRes.data)
+        setSanPhams(spRes.data.filter((s) => !s.ngungBan && s.storeFoodId != null));
       if (nhomRes.isSuccess && nhomRes.data) setNhoms(nhomRes.data);
       if (topRes.isSuccess && topRes.data) setToppings(topRes.data.filter((t) => !t.ngungBan));
       if (!spRes.isSuccess) setError(spRes.message || 'Không tải được menu.');
@@ -87,6 +88,7 @@ export default function MenuScreen() {
     }
     return nhoms
       .filter((n) => byNhom.has(n.id))
+      .sort((a, b) => a.ten.localeCompare(b.ten, 'vi'))
       .map((n) => ({ title: n.ten, data: byNhom.get(n.id)! }))
       .concat(
         byNhom.has('') ? [{ title: 'Khác', data: byNhom.get('')! }] : [],

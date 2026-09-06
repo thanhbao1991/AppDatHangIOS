@@ -391,6 +391,10 @@ export type SanPham = {
   // tên liền không cách, viết tắt (VietTat/PhatAm), tên đầy đủ không viết tắt (TenKhongVietTat).
   // Dùng để search thay vì so trực tiếp `ten` — mới khớp được các kiểu gõ tắt/không dấu.
   timKiem: string;
+  // Id món trên store shippershipping — null nghĩa là chưa đẩy lên store (món chỉ quản lý nội bộ
+  // hoặc chưa đối soát), app khách chỉ nên hiện món đã có mặt trên store để tránh đặt món quán
+  // chưa thật sự bán qua kênh này.
+  storeFoodId: number | null;
 };
 export type NhomSanPham = { id: string; ten: string };
 export type Topping = { id: string; ten: string; gia: number; ngungBan: boolean };
