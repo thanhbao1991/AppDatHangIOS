@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// Port từ MenuScreen.tsx (bản RN cũ) — SectionList theo nhóm → List với Section, modal chọn
-/// size/topping/ghi chú → .sheet(), tìm không dấu qua timKiem đã chuẩn hoá sẵn từ server.
+/// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
+/// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
+/// hợp hơn Section cuộn dọc hay chip ngang khi có ~17 nhóm. Modal chọn size/topping/ghi chú →
+/// .sheet(), tìm không dấu qua timKiem đã chuẩn hoá sẵn từ server.
 struct MenuView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
@@ -13,6 +15,7 @@ struct MenuView: View {
     @State private var toppings: [Topping] = []
     @State private var query = ""
     @State private var picking: SanPham?
+    @State private var selectedNhomId: String = ""
 
     private func normalizeVN(_ s: String) -> String {
         s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
@@ -21,15 +24,20 @@ struct MenuView: View {
             .trimmingCharacters(in: .whitespaces)
     }
 
-    private var filtered: [SanPham] {
+    /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
+    /// có thể nằm ở nhiều nhóm khác nhau nên bó theo 1 nhóm đang chọn không hợp lý lúc này).
+    private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    private var searchResults: [SanPham] {
         let q = normalizeVN(query)
-        if q.isEmpty { return sanPhams }
         return sanPhams.filter { ($0.timKiem ?? normalizeVN($0.ten)).lowercased().contains(q) }
     }
 
+    /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
+    /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
         var byNhom: [String: [SanPham]] = [:]
-        for sp in filtered { byNhom[sp.nhomSanPhamId ?? "", default: []].append(sp) }
+        for sp in sanPhams { byNhom[sp.nhomSanPhamId ?? "", default: []].append(sp) }
         var result = nhoms
             .filter { byNhom[$0.id] != nil }
             .sorted { $0.ten.localizedStandardCompare($1.ten) == .orderedAscending }
@@ -38,6 +46,10 @@ struct MenuView: View {
             result.append((nhom: NhomSanPham(id: "", ten: "Khác"), items: khac))
         }
         return result
+    }
+
+    private var selectedItems: [SanPham] {
+        sections.first(where: { $0.nhom.id == selectedNhomId })?.items ?? []
     }
 
     var body: some View {
@@ -58,32 +70,21 @@ struct MenuView: View {
                                 .buttonStyle(.borderedProminent).tint(Theme.primary)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if isSearching {
+                        List(searchResults) { sp in productRow(sp) }
+                            .listStyle(.plain)
                     } else {
-                        List {
-                            Button {
-                                path.append(.lyBiMat)
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Text("🎁").font(.system(size: 26))
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Ly Bí Mật — chỉ 25.000đ").font(.system(size: 14, weight: .bold)).foregroundColor(Color(red: 0.54, green: 0.33, blue: 0)).multilineTextAlignment(.leading)
-                                        Text("Bốc ngẫu nhiên 1 món, có thể trúng món giá cao hơn nhiều!").font(.system(size: 11)).foregroundColor(Color(red: 0.64, green: 0.44, blue: 0.18)).multilineTextAlignment(.leading)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right").foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
-                                }
-                            }
-                            .listRowBackground(Color(red: 1, green: 0.953, blue: 0.878))
+                        VStack(spacing: 0) {
+                            lyBiMatBanner
 
-                            ForEach(sections, id: \.nhom.id) { section in
-                                Section(section.nhom.ten) {
-                                    ForEach(section.items) { sp in
-                                        productRow(sp)
-                                    }
-                                }
+                            HStack(spacing: 0) {
+                                nhomSidebar
+                                Divider()
+                                List { ForEach(selectedItems) { sp in productRow(sp) } }
+                                    .listStyle(.plain)
+                                    .id(selectedNhomId)
                             }
                         }
-                        .listStyle(.insetGrouped)
                         .refreshable { await load(silent: true) }
                     }
                 }
@@ -115,6 +116,58 @@ struct MenuView: View {
         .sheet(item: $picking) { sp in
             ProductPickerSheet(sanPham: sp, toppings: toppings, cart: cart) { picking = nil }
         }
+    }
+
+    private var lyBiMatBanner: some View {
+        Button {
+            path.append(.lyBiMat)
+        } label: {
+            HStack(spacing: 10) {
+                Text("🎁").font(.system(size: 26))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Ly Bí Mật — chỉ 25.000đ").font(.system(size: 14, weight: .bold)).foregroundColor(Color(red: 0.54, green: 0.33, blue: 0)).multilineTextAlignment(.leading)
+                    Text("Bốc ngẫu nhiên 1 món, có thể trúng món giá cao hơn nhiều!").font(.system(size: 11)).foregroundColor(Color(red: 0.64, green: 0.44, blue: 0.18)).multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Color(red: 1, green: 0.953, blue: 0.878))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Cột trái: danh sách nhóm cố định, bấm chọn thì cột phải đổi danh sách món — khớp trải
+    /// nghiệm quen thuộc của khách hàng trà sữa/cà phê thay vì cuộn dọc qua từng Section.
+    private var nhomSidebar: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 0) {
+                ForEach(sections, id: \.nhom.id) { section in
+                    let isSelected = section.nhom.id == selectedNhomId
+                    Button {
+                        selectedNhomId = section.nhom.id
+                    } label: {
+                        HStack(spacing: 0) {
+                            Rectangle()
+                                .fill(isSelected ? Theme.primary : Color.clear)
+                                .frame(width: 3)
+                            Text(section.nhom.ten)
+                                .font(.system(size: 12, weight: isSelected ? .bold : .regular))
+                                .foregroundColor(isSelected ? Theme.primary : .primary)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 12)
+                                .padding(.trailing, 6)
+                        }
+                        .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(width: 92)
+        .background(Color(.secondarySystemGroupedBackground))
     }
 
     @ViewBuilder
@@ -155,6 +208,9 @@ struct MenuView: View {
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
+        if !sections.contains(where: { $0.nhom.id == selectedNhomId }) {
+            selectedNhomId = sections.first?.nhom.id ?? ""
+        }
         loading = false
     }
 }
