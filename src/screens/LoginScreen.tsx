@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { kiemTraSdt, dangNhapMatKhau, guiOtp, kiemTraOtp, xacNhanOtp, KhachHangLoginResponse } from '../api';
 import { COLORS } from '../theme';
 import KeyboardAvoider from '../components/KeyboardAvoider';
@@ -198,14 +199,18 @@ export default function LoginScreen({ onLoggedIn }: Props) {
   const canSubmitOtpPassword = newPassword.length > 0 && confirmPassword.length > 0;
 
   return (
-    <KeyboardAvoider style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Đenn Coffee</Text>
-          <Text style={styles.heroSubtitle}>Quán nhỏ cảm ơn to</Text>
-        </View>
+    <LinearGradient
+      colors={[COLORS.primary, 'rgba(30,78,140,0.75)']}
+      style={styles.container}
+    >
+      <KeyboardAvoider>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.hero}>
+            <Text style={styles.heroTitle}>Đenn Coffee</Text>
+            <Text style={styles.heroSubtitle}>Quán nhỏ cảm ơn to</Text>
+          </View>
 
-        <View style={styles.card}>
+          <View style={styles.card}>
           {error ? (
             <View style={styles.errorBanner}>
               <Ionicons name="warning" size={16} color={COLORS.danger} />
@@ -341,7 +346,8 @@ export default function LoginScreen({ onLoggedIn }: Props) {
           )}
         </View>
       </ScrollView>
-    </KeyboardAvoider>
+      </KeyboardAvoider>
+    </LinearGradient>
   );
 }
 
@@ -391,10 +397,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingTop: 68,
     paddingHorizontal: 28,
+    paddingBottom: 28,
   },
   hero: {
     alignItems: 'center',
