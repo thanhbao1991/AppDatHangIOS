@@ -21,16 +21,39 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        List {
-            Section {
-                VStack {
-                    Text(Prefs.tenKhachHang ?? "").font(.system(size: 20, weight: .bold)).foregroundColor(Theme.primaryDark)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+        VStack(spacing: 0) {
+            TitleBar(title: Prefs.tenKhachHang ?? "Cài đặt")
+            settingsList
+        }
+        .navigationDestination(for: SettingsRoute.self) { route in
+            switch route {
+            case .uuDai: UuDaiView()
             }
-            .listRowBackground(Theme.primaryTint)
+        }
+        .task { await load() }
+        .confirmationDialog("Xoá tài khoản?", isPresented: $showXoaTaiKhoanConfirm, titleVisibility: .visible) {
+            Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("Bạn sẽ không thể đăng nhập lại và mất toàn bộ địa chỉ đã lưu. Lịch sử mua hàng vẫn được quán lưu lại. Không thể hoàn tác.")
+        }
+        .alert("Không xoá được", isPresented: Binding(get: { xoaTaiKhoanError != nil }, set: { if !$0 { xoaTaiKhoanError = nil } })) {
+            Button("OK") {}
+        } message: {
+            Text(xoaTaiKhoanError ?? "")
+        }
+        .confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
+            Button("Đăng xuất", role: .destructive) {
+                if let s = revokingSession { Task { await revoke(s) } }
+            }
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("Đăng xuất thiết bị này?")
+        }
+    }
 
+    private var settingsList: some View {
+        List {
             if loading {
                 ProgressView().frame(maxWidth: .infinity)
             } else {
@@ -115,32 +138,6 @@ struct SettingsView: View {
                 Button("Xoá tài khoản") { showXoaTaiKhoanConfirm = true }
                     .foregroundColor(Theme.textFaint).frame(maxWidth: .infinity)
             }
-        }
-        .brandNavBar()
-        .navigationDestination(for: SettingsRoute.self) { route in
-            switch route {
-            case .uuDai: UuDaiView()
-            }
-        }
-        .task { await load() }
-        .confirmationDialog("Xoá tài khoản?", isPresented: $showXoaTaiKhoanConfirm, titleVisibility: .visible) {
-            Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Bạn sẽ không thể đăng nhập lại và mất toàn bộ địa chỉ đã lưu. Lịch sử mua hàng vẫn được quán lưu lại. Không thể hoàn tác.")
-        }
-        .alert("Không xoá được", isPresented: Binding(get: { xoaTaiKhoanError != nil }, set: { if !$0 { xoaTaiKhoanError = nil } })) {
-            Button("OK") {}
-        } message: {
-            Text(xoaTaiKhoanError ?? "")
-        }
-        .confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
-            Button("Đăng xuất", role: .destructive) {
-                if let s = revokingSession { Task { await revoke(s) } }
-            }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Đăng xuất thiết bị này?")
         }
     }
 

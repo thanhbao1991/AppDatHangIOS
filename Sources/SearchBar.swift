@@ -35,6 +35,36 @@ struct SearchBar: View {
     }
 }
 
+/// Không có ô tìm kiếm — dùng cho tab gốc không cần lọc (Đơn của tôi/Cài đặt/Thông báo). Ép cùng
+/// HeaderBarMetrics.rowHeight với SearchBar để 4 tab gốc không nhảy chiều cao khi chuyển qua lại,
+/// khớp cách DayDateBar ép cùng chiều cao DaySearchBar bên AppQuanLyIOS.
+struct TitleBar: View {
+    let title: String
+    var trailing: AnyView?
+    var tinted: Bool = true
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(tinted ? .white : .primary)
+            Spacer()
+            if let trailing { trailing }
+        }
+        .frame(height: HeaderBarMetrics.rowHeight)
+        .padding(.horizontal)
+        .padding(.vertical, HeaderBarMetrics.verticalPadding)
+        .background(
+            Group {
+                if tinted {
+                    LinearGradient(colors: [Theme.primary, Theme.primary.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                        .ignoresSafeArea(edges: .top)
+                }
+            }
+        )
+    }
+}
+
 struct SearchFieldRow: View {
     @Binding var text: String
     var placeholder: String = "Tìm..."

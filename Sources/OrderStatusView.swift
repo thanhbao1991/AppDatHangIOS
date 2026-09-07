@@ -11,23 +11,26 @@ struct OrderStatusView: View {
     @State private var pollTask: Task<Void, Never>?
 
     var body: some View {
-        Group {
-            if loading {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if orders.isEmpty {
-                Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List(orders) { order in
-                    Button { path.append(.detail(order)) } label: {
-                        orderCard(order)
+        VStack(spacing: 0) {
+            TitleBar(title: "Đơn của tôi")
+
+            Group {
+                if loading {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if orders.isEmpty {
+                    Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List(orders) { order in
+                        Button { path.append(.detail(order)) } label: {
+                            orderCard(order)
+                        }
+                        .foregroundColor(.primary)
                     }
-                    .foregroundColor(.primary)
+                    .refreshable { await load(silent: true) }
                 }
-                .refreshable { await load(silent: true) }
             }
         }
-        .brandNavBar()
         .task {
             await load()
             startPolling()
