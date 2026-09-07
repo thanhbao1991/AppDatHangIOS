@@ -18,7 +18,18 @@ enum RuntimeEnv {
 /// plist plaintext. Chỉ token/refreshToken đi qua đây; dữ liệu không nhạy cảm (tên khách, thietBiId)
 /// vẫn dùng UserDefaults như AppQuanLyIOS.
 private enum Keychain {
+    // CI build không code-sign (CODE_SIGNING_ALLOWED=NO) → SecItemAdd thất bại vì thiếu entitlement
+    // Keychain, âm thầm không lưu được gì (SecItemAdd trả lỗi nhưng Keychain.set() không throw ra
+    // ngoài) — PrefsTests round-trip đọc lại ra nil dù vừa "lưu" xong. Dùng in-memory store khi chạy
+    // dưới XCTest để test được đúng LOGIC round-trip, không phải hạ tầng Keychain của hệ điều hành
+    // (Keychain thật chỉ hoạt động đáng tin cậy trên build đã ký, tức app cài thật trên máy).
+    private static var memoryStore: [String: String] = [:]
+
     static func set(_ value: String?, key: String) {
+        if RuntimeEnv.isRunningUnitTests {
+            memoryStore[key] = value
+            return
+        }
         SecItemDelete([kSecClass: kSecClassGenericPassword, kSecAttrAccount: key] as CFDictionary)
         guard let value, let data = value.data(using: .utf8) else { return }
         let query: [CFString: Any] = [
@@ -31,6 +42,7 @@ private enum Keychain {
     }
 
     static func get(_ key: String) -> String? {
+        if RuntimeEnv.isRunningUnitTests { return memoryStore[key] }
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrAccount: key,
