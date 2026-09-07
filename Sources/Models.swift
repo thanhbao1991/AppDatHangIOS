@@ -61,6 +61,7 @@ struct SanPham: Decodable, Identifiable {
     let bienThe: [SanPhamBienThe]
     let timKiem: String?
     let storeFoodId: Int?
+    let khongLenStore: Bool
 }
 
 struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }

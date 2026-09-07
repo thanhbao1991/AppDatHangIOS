@@ -151,7 +151,7 @@ struct MenuView: View {
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
         let (sp, nhom, top) = await (spTask, nhomTask, topTask)
-        sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil }
+        sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
