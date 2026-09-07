@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { danhGiaDon, DonHangKhach, getDonCuaToi, huyDon } from '../api';
 import { useCart } from '../CartContext';
@@ -15,6 +16,12 @@ const TRANG_THAI_LABEL: Record<DonHangKhach['trangThai'], string> = {
 // Thứ tự cố định để vẽ timeline — trạng thái thực tế có thể "nhảy cóc" (vd thanh toán ngay khi giao)
 // nên so sánh theo index thay vì đúng khớp từng bước.
 const STEPS: DonHangKhach['trangThai'][] = ['ChoXacNhan', 'DaXacNhan', 'DangGiao', 'HoanTat'];
+
+// "Mặc định"/"Size Chuẩn"/"Chuẩn" là biến thể mặc định — khớp bienTheSuffix bên AppQuanLyIOS
+// (HoaDonDetailView.swift), không hiển thị vì không mang thêm thông tin.
+function bienTheSuffix(tenBienThe: string): string {
+  return ['', 'Mặc định', 'Size Chuẩn', 'Chuẩn'].includes(tenBienThe) ? '' : ` (${tenBienThe})`;
+}
 
 export default function OrderDetailScreen() {
   const navigation = useNavigation<any>();
@@ -114,7 +121,7 @@ export default function OrderDetailScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: COLORS.bg }} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#fff' }} contentContainerStyle={{ padding: 16 }}>
       <View style={styles.card}>
         <View style={styles.headerRow}>
           <Text style={styles.maHoaDon}>{order.maHoaDon}</Text>
@@ -152,9 +159,17 @@ export default function OrderDetailScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Món đã đặt</Text>
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.cardHeaderLeft}>
+            <Ionicons name="cafe" size={17} color={COLORS.text} />
+            <Text style={styles.cardHeaderTitle}>Món</Text>
+          </View>
+          <View style={styles.qtyBadge}>
+            <Text style={styles.qtyBadgeText}>{order.items.reduce((s, it) => s + it.soLuong, 0)} ly</Text>
+          </View>
+        </View>
         {order.items.map((it, idx) => (
-          <View key={idx} style={styles.itemRow}>
+          <View key={idx} style={[styles.itemRow, idx > 0 && styles.itemRowDivider]}>
             {it.hinhAnh ? (
               <Image source={{ uri: it.hinhAnh }} style={styles.itemThumb} resizeMode="cover" />
             ) : (
@@ -162,9 +177,13 @@ export default function OrderDetailScreen() {
                 <Text style={styles.itemThumbPlaceholderText}>{it.tenSanPham.trim().charAt(0).toUpperCase()}</Text>
               </View>
             )}
+            <View style={styles.itemCountBadge}>
+              <Text style={styles.itemCountBadgeText}>{it.soLuong}</Text>
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.itemName}>
-                {it.soLuong} x {it.tenSanPham} ({it.tenBienThe})
+                {it.tenSanPham}
+                {bienTheSuffix(it.tenBienThe)}
               </Text>
               {it.toppings.length > 0 && (
                 <Text style={styles.itemSub}>+ {it.toppings.map((t) => t.ten).join(', ')}</Text>
@@ -176,6 +195,9 @@ export default function OrderDetailScreen() {
             </Text>
           </View>
         ))}
+      </View>
+
+      <View style={styles.card}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Tổng cộng</Text>
           <Text style={styles.totalValue}>{order.thanhTien.toLocaleString('vi-VN')}đ</Text>
@@ -241,13 +263,16 @@ export default function OrderDetailScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: COLORS.bg,
+    borderRadius: 16,
+    padding: 14,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.divider,
   },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardHeaderTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  qtyBadge: { backgroundColor: COLORS.primaryTint, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  qtyBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   maHoaDon: { fontWeight: '700', fontSize: 16, color: COLORS.text },
   ngay: { fontSize: 12, color: COLORS.textFaint },
@@ -266,10 +291,19 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
+    paddingVertical: 10,
   },
+  itemRowDivider: { borderTopWidth: 1, borderTopColor: COLORS.divider },
+  itemCountBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  itemCountBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
   itemThumb: { width: 44, height: 44, borderRadius: 8, backgroundColor: COLORS.divider, marginRight: 10 },
   itemThumbPlaceholder: {
     width: 44,
@@ -284,7 +318,7 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   itemSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   itemPrice: { fontSize: 14, color: COLORS.text, marginLeft: 8 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between' },
   totalLabel: { fontSize: 15, fontWeight: '700', color: COLORS.text },
   totalValue: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
   thanhToanBtn: {
