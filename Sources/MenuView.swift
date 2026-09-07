@@ -42,43 +42,50 @@ struct MenuView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Group {
-                if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if !error.isEmpty {
-                    VStack(spacing: 12) {
-                        Text(error).foregroundColor(Theme.danger)
-                        Button("Thử lại") { Task { await load() } }
-                            .buttonStyle(.borderedProminent).tint(Theme.primary)
-                    }
-                } else {
-                    List {
-                        Button {
-                            path.append(.lyBiMat)
-                        } label: {
-                            HStack(spacing: 10) {
-                                Text("🎁").font(.system(size: 26))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Ly Bí Mật — chỉ 25.000đ").font(.system(size: 14, weight: .bold)).foregroundColor(Color(red: 0.54, green: 0.33, blue: 0)).multilineTextAlignment(.leading)
-                                    Text("Bốc ngẫu nhiên 1 món, có thể trúng món giá cao hơn nhiều!").font(.system(size: 11)).foregroundColor(Color(red: 0.64, green: 0.44, blue: 0.18)).multilineTextAlignment(.leading)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right").foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
-                            }
-                        }
-                        .listRowBackground(Color(red: 1, green: 0.953, blue: 0.878))
+            VStack(spacing: 0) {
+                // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
+                // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
+                // dưới navigationTitle).
+                SearchBar(text: $query, placeholder: "Tìm món...")
 
-                        ForEach(sections, id: \.nhom.id) { section in
-                            Section(section.nhom.ten) {
-                                ForEach(section.items) { sp in
-                                    productRow(sp)
+                Group {
+                    if loading {
+                        ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if !error.isEmpty {
+                        VStack(spacing: 12) {
+                            Text(error).foregroundColor(Theme.danger)
+                            Button("Thử lại") { Task { await load() } }
+                                .buttonStyle(.borderedProminent).tint(Theme.primary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        List {
+                            Button {
+                                path.append(.lyBiMat)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Text("🎁").font(.system(size: 26))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Ly Bí Mật — chỉ 25.000đ").font(.system(size: 14, weight: .bold)).foregroundColor(Color(red: 0.54, green: 0.33, blue: 0)).multilineTextAlignment(.leading)
+                                        Text("Bốc ngẫu nhiên 1 món, có thể trúng món giá cao hơn nhiều!").font(.system(size: 11)).foregroundColor(Color(red: 0.64, green: 0.44, blue: 0.18)).multilineTextAlignment(.leading)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right").foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
+                                }
+                            }
+                            .listRowBackground(Color(red: 1, green: 0.953, blue: 0.878))
+
+                            ForEach(sections, id: \.nhom.id) { section in
+                                Section(section.nhom.ten) {
+                                    ForEach(section.items) { sp in
+                                        productRow(sp)
+                                    }
                                 }
                             }
                         }
+                        .listStyle(.insetGrouped)
+                        .refreshable { await load(silent: true) }
                     }
-                    .listStyle(.insetGrouped)
-                    .searchable(text: $query, prompt: "Tìm món...")
-                    .refreshable { await load(silent: true) }
                 }
             }
 
@@ -104,7 +111,6 @@ struct MenuView: View {
                 }
             }
         }
-        .brandNavBar()
         .task { if sanPhams.isEmpty { await load() } }
         .sheet(item: $picking) { sp in
             ProductPickerSheet(sanPham: sp, toppings: toppings, cart: cart) { picking = nil }
