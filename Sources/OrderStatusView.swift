@@ -28,6 +28,7 @@ struct OrderStatusView: View {
             }
         }
         .navigationTitle("Đơn của tôi")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await load()
             startPolling()

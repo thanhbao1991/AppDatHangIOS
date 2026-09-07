@@ -36,6 +36,7 @@ struct ThongBaoView: View {
             }
         }
         .navigationTitle("Thông báo")
+        .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }
 

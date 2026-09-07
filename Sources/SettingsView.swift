@@ -117,6 +117,7 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Cài đặt")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: SettingsRoute.self) { route in
             switch route {
             case .uuDai: UuDaiView()
