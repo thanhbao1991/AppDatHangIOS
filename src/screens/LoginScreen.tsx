@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -199,9 +198,11 @@ export default function LoginScreen({ onLoggedIn }: Props) {
 
   return (
     <KeyboardAvoider style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/login-logo.png')} style={styles.logoImage} resizeMode="contain" />
-
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>Đenn Coffee</Text>
+        <Text style={styles.heroSubtitle}>Quán nhỏ cảm ơn to</Text>
+      </View>
+      <ScrollView style={styles.sheet} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {error ? (
           <View style={styles.errorBanner}>
             <Ionicons name="warning" size={16} color={COLORS.danger} />
@@ -364,24 +365,43 @@ function PrimaryButton({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#2F4962',
+  },
+  hero: {
+    height: 260,
+    backgroundColor: '#2F4962',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroTitle: {
+    fontSize: 34,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  heroSubtitle: {
+    marginTop: 8,
+    fontSize: 15,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.85)',
+  },
+  sheet: {
+    flex: 1,
     backgroundColor: '#F2F2F7',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
   },
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 28,
-  },
-  logoImage: {
-    width: 240,
-    height: 56,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    paddingTop: 40,
+    paddingHorizontal: 28,
+    paddingBottom: 28,
   },
   errorBanner: {
     flexDirection: 'row',
