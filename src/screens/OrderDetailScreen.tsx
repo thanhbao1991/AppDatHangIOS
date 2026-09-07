@@ -186,7 +186,7 @@ export default function OrderDetailScreen() {
                 {bienTheSuffix(it.tenBienThe)}
               </Text>
               {it.toppings.length > 0 && (
-                <Text style={styles.itemSub}>+ {it.toppings.map((t) => t.ten).join(', ')}</Text>
+                <Text style={styles.itemToppingText}>+ {it.toppings.map((t) => t.ten).join(', ')}</Text>
               )}
               {it.ghiChu ? <Text style={styles.itemSub}>Ghi chú: {it.ghiChu}</Text> : null}
             </View>
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardHeaderTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  cardHeaderTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
   qtyBadge: { backgroundColor: COLORS.primaryTint, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   qtyBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
@@ -336,12 +336,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   itemThumbPlaceholderText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
-  itemName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  itemName: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  itemToppingText: { fontSize: 12, color: COLORS.primary, marginTop: 2 },
   itemSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-  itemPrice: { fontSize: 14, color: COLORS.text, marginLeft: 8 },
+  itemPrice: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginLeft: 8 },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  infoRowLabel: { fontSize: 14, color: COLORS.textMuted },
-  infoRowValue: { fontSize: 14, color: COLORS.text },
+  infoRowLabel: { fontSize: 15, color: COLORS.textMuted },
+  infoRowValue: { fontSize: 15, color: COLORS.text },
   conLaiDivider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 8 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted, letterSpacing: 0.3 },
