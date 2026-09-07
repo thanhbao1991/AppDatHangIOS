@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { danhGiaDon, DonHangKhach, getDonCuaToi, huyDon } from '../api';
 import { useCart } from '../CartContext';
@@ -155,6 +155,13 @@ export default function OrderDetailScreen() {
         <Text style={styles.sectionTitle}>Món đã đặt</Text>
         {order.items.map((it, idx) => (
           <View key={idx} style={styles.itemRow}>
+            {it.hinhAnh ? (
+              <Image source={{ uri: it.hinhAnh }} style={styles.itemThumb} resizeMode="cover" />
+            ) : (
+              <View style={styles.itemThumbPlaceholder}>
+                <Text style={styles.itemThumbPlaceholderText}>{it.tenSanPham.trim().charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={styles.itemName}>
                 {it.soLuong} x {it.tenSanPham} ({it.tenBienThe})
@@ -258,11 +265,22 @@ const styles = StyleSheet.create({
   infoSub: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
   itemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.divider,
   },
+  itemThumb: { width: 44, height: 44, borderRadius: 8, backgroundColor: COLORS.divider, marginRight: 10 },
+  itemThumbPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  itemThumbPlaceholderText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
   itemName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   itemSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   itemPrice: { fontSize: 14, color: COLORS.text, marginLeft: 8 },

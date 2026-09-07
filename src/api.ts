@@ -495,6 +495,7 @@ export type DonHangKhachItem = {
   donGia: number;
   ghiChu?: string | null;
   toppings: DonHangKhachItemTopping[];
+  hinhAnh?: string | null;
 };
 
 export type DonHangKhach = {
