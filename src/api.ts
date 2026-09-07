@@ -502,7 +502,11 @@ export type DonHangKhach = {
   id: string;
   maHoaDon: string;
   ngayGio: string;
+  tongTien: number;
+  giamGia: number;
   thanhTien: number;
+  daThu: number;
+  conLai: number;
   tenMonSummary: string;
   phanLoai?: string | null;
   tenBan?: string | null;

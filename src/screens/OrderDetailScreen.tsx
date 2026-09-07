@@ -198,9 +198,30 @@ export default function OrderDetailScreen() {
       </View>
 
       <View style={styles.card}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoRowLabel}>Tổng tiền</Text>
+          <Text style={styles.infoRowValue}>{order.tongTien.toLocaleString('vi-VN')}đ</Text>
+        </View>
+        {order.giamGia > 0 && (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoRowLabel}>Giảm giá</Text>
+            <Text style={styles.infoRowValue}>{order.giamGia.toLocaleString('vi-VN')}đ</Text>
+          </View>
+        )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoRowLabel}>Thành tiền</Text>
+          <Text style={styles.infoRowValue}>{order.thanhTien.toLocaleString('vi-VN')}đ</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoRowLabel}>Đã thu</Text>
+          <Text style={styles.infoRowValue}>{order.daThu.toLocaleString('vi-VN')}đ</Text>
+        </View>
+        <View style={styles.conLaiDivider} />
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Tổng cộng</Text>
-          <Text style={styles.totalValue}>{order.thanhTien.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.totalLabel}>CÒN LẠI</Text>
+          <Text style={[styles.totalValue, { color: order.conLai > 0 ? COLORS.danger : COLORS.success }]}>
+            {order.conLai.toLocaleString('vi-VN')}đ
+          </Text>
         </View>
       </View>
 
@@ -318,9 +339,13 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   itemSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   itemPrice: { fontSize: 14, color: COLORS.text, marginLeft: 8 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  totalLabel: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  totalValue: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
+  infoRowLabel: { fontSize: 14, color: COLORS.textMuted },
+  infoRowValue: { fontSize: 14, color: COLORS.text },
+  conLaiDivider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 8 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  totalLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted, letterSpacing: 0.3 },
+  totalValue: { fontSize: 20, fontWeight: '700' },
   thanhToanBtn: {
     backgroundColor: COLORS.primary,
     borderRadius: 10,
