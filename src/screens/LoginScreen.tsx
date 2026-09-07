@@ -200,8 +200,7 @@ export default function LoginScreen({ onLoggedIn }: Props) {
   return (
     <KeyboardAvoider style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="cover" />
-        <Text style={styles.title}>ĐENN</Text>
+        <Image source={require('../../assets/login-logo.png')} style={styles.logoImage} resizeMode="contain" />
 
         {error ? (
           <View style={styles.errorBanner}>
@@ -374,22 +373,15 @@ const styles = StyleSheet.create({
     padding: 28,
   },
   logoImage: {
-    width: 76,
-    height: 76,
-    borderRadius: 18,
-    marginBottom: 12,
+    width: 240,
+    height: 56,
+    borderRadius: 10,
+    marginBottom: 20,
     shadowColor: COLORS.primary,
     shadowOpacity: 0.35,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: '700',
-    letterSpacing: 4,
-    color: COLORS.text,
-    marginBottom: 24,
   },
   errorBanner: {
     flexDirection: 'row',
