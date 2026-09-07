@@ -2,8 +2,8 @@ import XCTest
 @testable import AppDatHangIOS
 
 final class APIClientTests: XCTestCase {
-    func testThanhToanQrUrlUsesApiBase() async {
-        let url = await APIClient.shared.getThanhToanQrUrl(maHoaDon: "HD1234abcd")
+    func testThanhToanQrUrlUsesApiBase() {
+        let url = Prefs.thanhToanQrUrl(hoaDonId: "HD1234abcd")
         XCTAssertEqual(url?.absoluteString, "https://api.denncoffee.uk/api/HoaDon/HD1234abcd/qr")
     }
 

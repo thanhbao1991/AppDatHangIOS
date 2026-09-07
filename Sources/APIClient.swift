@@ -110,10 +110,6 @@ actor APIClient {
 
     // ===== Đăng nhập khách =====
 
-    func getThanhToanQrUrl(maHoaDon: String) -> URL? {
-        URL(string: "\(Prefs.apiBase)/HoaDon/\(maHoaDon)/qr")
-    }
-
     struct SdtBody: Encodable { let soDienThoai: String }
     func kiemTraSdt(_ soDienThoai: String) async -> ApiEnvelope<Bool> {
         await decode("/khachhang-auth/kiem-tra-sdt", method: "POST", body: jsonBody(SdtBody(soDienThoai: soDienThoai)), authorized: false)

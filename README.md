@@ -20,9 +20,12 @@ từ tab Actions, ký/cài bằng Sideloadly.
 ## Tiến độ chuyển native
 
 - [x] Giai đoạn 0 — khung dự án (XcodeGen, APIClient, Prefs/Keychain, CI)
-- [ ] Giai đoạn 1 — đăng nhập
-- [ ] Giai đoạn 2 — menu & giỏ hàng
-- [ ] Giai đoạn 3 — checkout & địa chỉ (MapKit)
-- [ ] Giai đoạn 4 — đơn hàng & thanh toán
-- [ ] Giai đoạn 5 — gamification & cài đặt
+- [x] Giai đoạn 1 — đăng nhập (SĐT + OTP/mật khẩu)
+- [x] Giai đoạn 2 — menu & giỏ hàng
+- [x] Giai đoạn 3 — checkout & địa chỉ (MapKit + CoreLocation)
+- [x] Giai đoạn 4 — đơn hàng & thanh toán (QR vẫn qua WKWebView — endpoint trả HTML, không phải ảnh)
+- [x] Giai đoạn 5 — gamification (thẻ tem/giới thiệu/sinh nhật/vòng quay/Ly Bí Mật) & cài đặt
 - [ ] Giai đoạn 6 — push APNs thật (chờ Apple Developer Program)
+
+Chưa build thử bằng Xcode thật (viết trên Windows) — lần verify build đầu tiên là CI trên macOS
+runner. Nếu CI đỏ, xem log Actions rồi sửa tiếp.

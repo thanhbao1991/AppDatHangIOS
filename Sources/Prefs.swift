@@ -87,4 +87,10 @@ enum Prefs {
         refreshToken = nil
         tenKhachHang = nil
     }
+
+    /// Trang QR chuyển khoản — [AllowAnonymous], HTML tự vẽ (không phải ảnh thuần), dùng lại nguyên
+    /// endpoint đã có sẵn cho SMS soạn sẵn (xem HoaDonController.GetBillQrByHoaDonId).
+    static func thanhToanQrUrl(hoaDonId: String) -> URL? {
+        URL(string: "\(apiBase)/HoaDon/\(hoaDonId)/qr")
+    }
 }

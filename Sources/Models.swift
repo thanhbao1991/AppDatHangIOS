@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Port 1:1 từ src/api.ts (bản RN cũ, xem lịch sử git trước commit chuyển native) — field name phải
 // khớp tuyệt đối JSON backend trả về (không có CodingKeys riêng, tên property Swift = tên field JSON).
@@ -108,9 +109,29 @@ struct DonHangKhachItem: Decodable, Identifiable, Hashable {
     var id: String { sanPhamBienTheId }
 }
 
-enum TrangThaiDon: String, Decodable { case choXacNhan = "ChoXacNhan", daXacNhan = "DaXacNhan", dangGiao = "DangGiao", hoanTat = "HoanTat" }
+enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
+    case choXacNhan = "ChoXacNhan", daXacNhan = "DaXacNhan", dangGiao = "DangGiao", hoanTat = "HoanTat"
 
-struct DonHangKhach: Decodable, Identifiable {
+    var nhan: String {
+        switch self {
+        case .choXacNhan: return "Chờ quán xác nhận"
+        case .daXacNhan: return "Quán đã nhận, đang chuẩn bị"
+        case .dangGiao: return "Đang giao"
+        case .hoanTat: return "Hoàn tất"
+        }
+    }
+
+    var mau: Color {
+        switch self {
+        case .choXacNhan: return Theme.warning
+        case .daXacNhan: return Theme.primary
+        case .dangGiao: return Color(red: 0x19 / 255, green: 0x76 / 255, blue: 0xD2 / 255)
+        case .hoanTat: return Theme.success
+        }
+    }
+}
+
+struct DonHangKhach: Decodable, Identifiable, Hashable {
     let id: String
     let maHoaDon: String
     let ngayGio: String
