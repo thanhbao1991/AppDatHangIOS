@@ -58,6 +58,7 @@ struct CheckoutView: View {
         }
         .navigationTitle("Giỏ hàng")
         .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task { await loadDiaChi() }
     }
 

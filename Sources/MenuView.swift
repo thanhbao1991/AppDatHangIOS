@@ -104,8 +104,7 @@ struct MenuView: View {
                 }
             }
         }
-        .navigationTitle("Thực đơn")
-        .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task { if sanPhams.isEmpty { await load() } }
         .sheet(item: $picking) { sp in
             ProductPickerSheet(sanPham: sp, toppings: toppings, cart: cart) { picking = nil }
@@ -266,6 +265,7 @@ private struct ProductPickerSheet: View {
             }
             .navigationTitle("Thêm món")
             .navigationBarTitleDisplayMode(.inline)
+            .brandNavBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
                 ToolbarItem(placement: .confirmationAction) {

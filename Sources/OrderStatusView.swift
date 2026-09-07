@@ -27,8 +27,7 @@ struct OrderStatusView: View {
                 .refreshable { await load(silent: true) }
             }
         }
-        .navigationTitle("Đơn của tôi")
-        .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task {
             await load()
             startPolling()

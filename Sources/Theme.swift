@@ -14,6 +14,17 @@ enum Theme {
     static let bg = Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
 }
 
+extension View {
+    /// Tô nền navbar brandPrimary + chữ trắng — khớp y hệt style AppQuanLyIOS đang lan ra toàn app
+    /// (xem toolbarBackground(Color.brandPrimary...) lặp lại ở mọi navigationTitle bên đó).
+    func brandNavBar() -> some View {
+        self
+            .toolbarBackground(Theme.primary, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
 func formatTien(_ value: Double) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .decimal

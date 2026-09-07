@@ -66,12 +66,13 @@ struct LoginView: View {
                         }
                     }
                     .padding(24)
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-                    .shadow(color: .black.opacity(0.18), radius: 24, y: 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(Color(.secondarySystemGroupedBackground))
+                            .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 12)
+                    )
                 }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 28)
+                .padding(28)
                 .frame(maxWidth: 400)
                 .frame(maxWidth: .infinity)
             }
@@ -162,15 +163,34 @@ struct LoginView: View {
 
     @ViewBuilder
     private func fieldBox<Content: View>(icon: String, @ViewBuilder content: () -> Content) -> some View {
+        let isFocused = focusedField != nil && fieldBoxFocusIcons.contains(icon)
         HStack(spacing: 10) {
-            Image(systemName: icon).foregroundColor(Theme.textMuted).frame(width: 20)
+            Image(systemName: icon).foregroundColor(isFocused ? Theme.primary : Theme.textMuted).frame(width: 20)
             content()
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
         .frame(height: 50)
-        .background(Color(white: 0.95))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(isFocused ? Theme.primary : Color(.separator).opacity(0.4), lineWidth: isFocused ? 1.5 : 1)
+        )
+        .animation(.easeInOut(duration: 0.15), value: isFocused)
+    }
+
+    /// fieldBox không nhận field id riêng cho border focus (khác fieldContainer AppQuanLyIOS nhận
+    /// isFocused tường minh) — set rỗng vì mỗi icon chỉ dùng ở 1 field tại 1 thời điểm hiển thị nên
+    /// so theo icon vẫn đúng, tránh phải sửa lại chữ ký gọi ở 4 step.
+    private var fieldBoxFocusIcons: Set<String> {
+        guard let focusedField else { return [] }
+        switch focusedField {
+        case "phone": return ["phone"]
+        case "password": return ["lock"]
+        case "otpCode": return ["number"]
+        case "newPassword", "confirmPassword": return ["lock"]
+        default: return []
+        }
     }
 
     @ViewBuilder

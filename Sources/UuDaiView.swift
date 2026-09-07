@@ -37,6 +37,7 @@ struct UuDaiView: View {
         }
         .navigationTitle("Ưu đãi của tôi")
         .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}

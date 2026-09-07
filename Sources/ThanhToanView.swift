@@ -28,5 +28,6 @@ struct ThanhToanView: View {
         }
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
     }
 }

@@ -116,8 +116,7 @@ struct SettingsView: View {
                     .foregroundColor(Theme.textFaint).frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle("Cài đặt")
-        .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .navigationDestination(for: SettingsRoute.self) { route in
             switch route {
             case .uuDai: UuDaiView()

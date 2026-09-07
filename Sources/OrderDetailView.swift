@@ -118,6 +118,7 @@ struct OrderDetailView: View {
         }
         .navigationTitle("Chi tiết đơn hàng")
         .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .onAppear {
             daDanhGia = order.daDanhGia
             soSaoDaDanh = order.soSaoDaDanh ?? 0

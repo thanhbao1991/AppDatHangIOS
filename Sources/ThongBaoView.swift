@@ -35,8 +35,7 @@ struct ThongBaoView: View {
                 .refreshable { await load(silent: true) }
             }
         }
-        .navigationTitle("Thông báo")
-        .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task { await load() }
     }
 
