@@ -43,6 +43,7 @@ export default function LoginScreen({ onLoggedIn }: Props) {
   // mã/ngày/SĐT. Đếm ngược ở đây chỉ để khách thấy phải chờ bao lâu, thay vì bấm liên tục rồi nhận
   // thông báo lỗi — và để không đốt phí quota mã trong ngày vì bấm nhầm.
   const [resendConLai, setResendConLai] = useState(0);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   useEffect(() => {
     if (resendConLai <= 0) return;
@@ -198,143 +199,164 @@ export default function LoginScreen({ onLoggedIn }: Props) {
 
   return (
     <KeyboardAvoider style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Đenn Coffee</Text>
-        <Text style={styles.heroSubtitle}>Quán nhỏ cảm ơn to</Text>
-      </View>
-      <ScrollView style={styles.sheet} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {error ? (
-          <View style={styles.errorBanner}>
-            <Ionicons name="warning" size={16} color={COLORS.danger} />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Đenn Coffee</Text>
+          <Text style={styles.heroSubtitle}>Quán nhỏ cảm ơn to</Text>
+        </View>
 
-        {step === 'phone' && (
-          <>
-            <FieldBox icon="call-outline">
-              <TextInput
-                style={styles.fieldInput}
-                placeholder="Số điện thoại"
-                placeholderTextColor={COLORS.textFaint}
-                keyboardType="number-pad"
-                maxLength={10}
-                value={phone}
-                onChangeText={(t) => setPhone(t.replace(/[^0-9]/g, ''))}
-                autoCapitalize="none"
-                textContentType="telephoneNumber"
-                autoComplete="tel"
-              />
-            </FieldBox>
-            <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitPhone} onPress={continuePhone} />
-          </>
-        )}
+        <View style={styles.card}>
+          {error ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="warning" size={16} color={COLORS.danger} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
-        {step === 'password' && (
-          <>
-            <FieldBox icon="checkmark-circle-outline">
-              <Text style={styles.fieldStaticText}>{phone}</Text>
-            </FieldBox>
-            <FieldBox icon="lock-closed-outline">
-              <TextInput
-                style={styles.fieldInput}
-                placeholder="Mật khẩu"
-                placeholderTextColor={COLORS.textFaint}
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                autoFocus
-                textContentType="password"
-                autoComplete="current-password"
-              />
-              <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
+          {step === 'phone' && (
+            <>
+              <FieldBox icon="call-outline" focused={focusedField === 'phone'}>
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Số điện thoại"
+                  placeholderTextColor={COLORS.textFaint}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={(t) => setPhone(t.replace(/[^0-9]/g, ''))}
+                  onFocus={() => setFocusedField('phone')}
+                  onBlur={() => setFocusedField(null)}
+                  autoCapitalize="none"
+                  textContentType="telephoneNumber"
+                  autoComplete="tel"
+                />
+              </FieldBox>
+              <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitPhone} onPress={continuePhone} />
+            </>
+          )}
+
+          {step === 'password' && (
+            <>
+              <FieldBox icon="checkmark-circle-outline">
+                <Text style={styles.fieldStaticText}>{phone}</Text>
+              </FieldBox>
+              <FieldBox icon="lock-closed-outline" focused={focusedField === 'password'}>
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Mật khẩu"
+                  placeholderTextColor={COLORS.textFaint}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  autoFocus
+                  textContentType="password"
+                  autoComplete="current-password"
+                />
+                <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              </FieldBox>
+              <PrimaryButton label="Đăng nhập" loading={loading} disabled={loading || !canSubmitPassword} onPress={submitPassword} />
+              <TouchableOpacity onPress={backToPhone} style={styles.linkBtn}>
+                <Text style={styles.linkText}>Đổi số khác</Text>
               </TouchableOpacity>
-            </FieldBox>
-            <PrimaryButton label="Đăng nhập" loading={loading} disabled={loading || !canSubmitPassword} onPress={submitPassword} />
-            <TouchableOpacity onPress={backToPhone} style={styles.linkBtn}>
-              <Text style={styles.linkText}>Đổi số khác</Text>
-            </TouchableOpacity>
-          </>
-        )}
+            </>
+          )}
 
-        {step === 'otpCode' && (
-          <>
-            <FieldBox icon="keypad-outline">
-              <TextInput
-                style={styles.fieldInput}
-                placeholder="Mã xác thực (SMS)"
-                placeholderTextColor={COLORS.textFaint}
-                keyboardType="number-pad"
-                maxLength={6}
-                value={otpCode}
-                onChangeText={setOtpCode}
-                autoFocus
-                textContentType="oneTimeCode"
-                autoComplete="sms-otp"
-              />
-            </FieldBox>
-            <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitOtp} onPress={continueOtpCode} />
-            <TouchableOpacity
-              onPress={resendOtp}
-              style={styles.linkBtn}
-              disabled={loading || resendConLai > 0}
-            >
-              <Text style={[styles.linkText, resendConLai > 0 && styles.linkTextDisabled]}>
-                {resendConLai > 0 ? `Gửi lại mã sau ${resendConLai}s` : 'Gửi lại mã'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={backToPhone} style={styles.linkBtn}>
-              <Text style={styles.linkText}>Đổi số khác</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {step === 'otpPassword' && (
-          <>
-            <FieldBox icon="lock-closed-outline">
-              <TextInput
-                style={styles.fieldInput}
-                placeholder="Mật khẩu mới"
-                placeholderTextColor={COLORS.textFaint}
-                secureTextEntry={!showNewPassword}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                autoFocus
-                textContentType="newPassword"
-                autoComplete="new-password"
-              />
-              <TouchableOpacity onPress={() => setShowNewPassword((v) => !v)} hitSlop={8}>
-                <Ionicons name={showNewPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
+          {step === 'otpCode' && (
+            <>
+              <FieldBox icon="keypad-outline" focused={focusedField === 'otpCode'}>
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Mã xác thực (SMS)"
+                  placeholderTextColor={COLORS.textFaint}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={otpCode}
+                  onChangeText={setOtpCode}
+                  onFocus={() => setFocusedField('otpCode')}
+                  onBlur={() => setFocusedField(null)}
+                  autoFocus
+                  textContentType="oneTimeCode"
+                  autoComplete="sms-otp"
+                />
+              </FieldBox>
+              <PrimaryButton label="Tiếp tục" loading={loading} disabled={loading || !canSubmitOtp} onPress={continueOtpCode} />
+              <TouchableOpacity
+                onPress={resendOtp}
+                style={styles.linkBtn}
+                disabled={loading || resendConLai > 0}
+              >
+                <Text style={[styles.linkText, resendConLai > 0 && styles.linkTextDisabled]}>
+                  {resendConLai > 0 ? `Gửi lại mã sau ${resendConLai}s` : 'Gửi lại mã'}
+                </Text>
               </TouchableOpacity>
-            </FieldBox>
-            <FieldBox icon="lock-closed-outline">
-              <TextInput
-                style={styles.fieldInput}
-                placeholder="Nhập lại mật khẩu mới"
-                placeholderTextColor={COLORS.textFaint}
-                secureTextEntry={!showNewPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                textContentType="newPassword"
-                autoComplete="new-password"
-              />
-            </FieldBox>
-            <PrimaryButton label="Xác nhận" loading={loading} disabled={loading || !canSubmitOtpPassword} onPress={submitOtpPassword} />
-            <TouchableOpacity onPress={() => setStep('otpCode')} style={styles.linkBtn}>
-              <Text style={styles.linkText}>Quay lại</Text>
-            </TouchableOpacity>
-          </>
-        )}
+              <TouchableOpacity onPress={backToPhone} style={styles.linkBtn}>
+                <Text style={styles.linkText}>Đổi số khác</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {step === 'otpPassword' && (
+            <>
+              <FieldBox icon="lock-closed-outline" focused={focusedField === 'newPassword'}>
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Mật khẩu mới"
+                  placeholderTextColor={COLORS.textFaint}
+                  secureTextEntry={!showNewPassword}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  onFocus={() => setFocusedField('newPassword')}
+                  onBlur={() => setFocusedField(null)}
+                  autoFocus
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                />
+                <TouchableOpacity onPress={() => setShowNewPassword((v) => !v)} hitSlop={8}>
+                  <Ionicons name={showNewPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              </FieldBox>
+              <FieldBox icon="lock-closed-outline" focused={focusedField === 'confirmPassword'}>
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Nhập lại mật khẩu mới"
+                  placeholderTextColor={COLORS.textFaint}
+                  secureTextEntry={!showNewPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  onFocus={() => setFocusedField('confirmPassword')}
+                  onBlur={() => setFocusedField(null)}
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                />
+              </FieldBox>
+              <PrimaryButton label="Xác nhận" loading={loading} disabled={loading || !canSubmitOtpPassword} onPress={submitOtpPassword} />
+              <TouchableOpacity onPress={() => setStep('otpCode')} style={styles.linkBtn}>
+                <Text style={styles.linkText}>Quay lại</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoider>
   );
 }
 
-function FieldBox({ icon, children }: { icon: keyof typeof Ionicons.glyphMap; children: React.ReactNode }) {
+function FieldBox({
+  icon,
+  focused,
+  children,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  focused?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={styles.fieldBox}>
-      <Ionicons name={icon} size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+    <View style={[styles.fieldBox, focused && styles.fieldBoxFocused]}>
+      <Ionicons name={icon} size={20} color={focused ? COLORS.primary : COLORS.textMuted} style={styles.fieldIcon} />
       {children}
     </View>
   );
@@ -365,13 +387,18 @@ function PrimaryButton({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2F4962',
+    backgroundColor: COLORS.primary,
+  },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 28,
   },
   hero: {
-    height: 260,
-    backgroundColor: '#2F4962',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 32,
   },
   heroTitle: {
     fontSize: 34,
@@ -384,32 +411,23 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255,255,255,0.85)',
   },
-  sheet: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    marginTop: -28,
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
     elevation: 8,
-  },
-  scroll: {
-    flexGrow: 1,
-    alignItems: 'center',
-    paddingTop: 40,
-    paddingHorizontal: 28,
-    paddingBottom: 28,
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     alignSelf: 'stretch',
-    width: '100%',
-    maxWidth: 360,
     backgroundColor: 'rgba(198,40,40,0.1)',
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -426,14 +444,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 360,
     height: 50,
-    backgroundColor: '#fff',
+    backgroundColor: '#F2F2F7',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(60,60,67,0.15)',
     paddingHorizontal: 14,
     marginBottom: 14,
+  },
+  fieldBoxFocused: {
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
   },
   fieldIcon: {
     marginRight: 10,
@@ -456,16 +477,22 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
-    maxWidth: 360,
-    height: 50,
+    height: 52,
     backgroundColor: COLORS.primary,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 4,
   },
   buttonDisabled: {
     backgroundColor: 'rgba(30,78,140,0.35)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonText: {
     color: '#fff',
