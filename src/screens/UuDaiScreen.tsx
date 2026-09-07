@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   apDungMaGioiThieu,
@@ -61,6 +62,26 @@ export default function UuDaiScreen() {
       }
     } finally {
       setDangDoiTem(false);
+    }
+  };
+
+  // "Chia sẻ mã dưới đây" trước chỉ hiện text tĩnh, không thao tác nào thật — dùng thẳng Share/
+  // Clipboard có sẵn trong React Native/Expo (native share sheet + clipboard hệ thống) thay vì bắt
+  // khách tự bôi đen chép tay.
+  const handleCopyMaGioiThieu = async () => {
+    if (!gioiThieu) return;
+    await Clipboard.setStringAsync(gioiThieu.maGioiThieu);
+    Alert.alert('Đã sao chép', `Mã ${gioiThieu.maGioiThieu} đã được chép vào clipboard.`);
+  };
+
+  const handleShareMaGioiThieu = async () => {
+    if (!gioiThieu) return;
+    try {
+      await Share.share({
+        message: `Đặt món qua app Đenn Coffee bằng mã giới thiệu của mình "${gioiThieu.maGioiThieu}" là cả hai đều nhận thưởng nhé!`,
+      });
+    } catch {
+      // Người dùng huỷ share sheet — không cần báo lỗi.
     }
   };
 
@@ -168,6 +189,12 @@ export default function UuDaiScreen() {
           <Text style={styles.cardDesc}>Chia sẻ mã dưới đây — cả bạn và bạn bè đều nhận thưởng khi họ nhập mã.</Text>
           <View style={styles.maBox}>
             <Text style={styles.maText}>{gioiThieu.maGioiThieu}</Text>
+            <TouchableOpacity onPress={handleCopyMaGioiThieu} hitSlop={8} style={styles.maIconBtn}>
+              <Text style={styles.maIconBtnText}>📋</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleShareMaGioiThieu} hitSlop={8} style={styles.maIconBtn}>
+              <Text style={styles.maIconBtnText}>↗️</Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.cardSub}>Đã giới thiệu {gioiThieu.soNguoiDaGioiThieu} người</Text>
 
@@ -272,13 +299,19 @@ const styles = StyleSheet.create({
   stamp: { fontSize: 22 },
   stampProgress: { fontSize: 12, color: COLORS.textMuted, marginBottom: 10 },
   maBox: {
+    flexDirection: 'row',
     backgroundColor: COLORS.primaryTint,
     borderRadius: 8,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     marginBottom: 8,
   },
   maText: { fontSize: 22, fontWeight: '700', color: COLORS.primary, letterSpacing: 4 },
+  maIconBtn: { padding: 4 },
+  maIconBtnText: { fontSize: 18 },
   applyRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
   applyInput: {
     flex: 1,
