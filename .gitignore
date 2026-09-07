@@ -1,14 +1,6 @@
-node_modules/
-.expo/
-*.log
-ios/
-android/
-
-# Biến môi trường build (GOOGLE_MAPS_IOS_API_KEY, TRASUA_API_BASE_URL) — không commit key thật
-.env
-.env.*
-
-# Firebase đã gỡ hẳn (OTP tự quản lý qua Zalo ZNS/Bark ở backend) — nếu ai đó vô tình thêm lại
-# GoogleService-Info.plist thật (có API key) thì KHÔNG được commit, đặc biệt vì repo này Public.
-GoogleService-Info.plist
-google-services.json
+*.xcodeproj/
+build/
+DerivedData/
+Payload/
+*.ipa
+.DS_Store
