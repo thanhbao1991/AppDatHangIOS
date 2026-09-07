@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -199,9 +200,7 @@ export default function LoginScreen({ onLoggedIn }: Props) {
   return (
     <KeyboardAvoider style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.logoCircle}>
-          <Ionicons name="cafe" size={32} color="#fff" />
-        </View>
+        <Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="cover" />
         <Text style={styles.title}>ĐENN</Text>
 
         {error ? (
@@ -374,13 +373,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 28,
   },
-  logoCircle: {
+  logoImage: {
     width: 76,
     height: 76,
-    borderRadius: 38,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 18,
     marginBottom: 12,
     shadowColor: COLORS.primary,
     shadowOpacity: 0.35,
