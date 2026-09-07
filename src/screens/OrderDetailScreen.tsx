@@ -191,7 +191,7 @@ export default function OrderDetailScreen() {
               {it.ghiChu ? <Text style={styles.itemSub}>Ghi chú: {it.ghiChu}</Text> : null}
             </View>
             <Text style={styles.itemPrice}>
-              {(it.soLuong * (it.donGia + it.toppings.reduce((s, t) => s + t.gia, 0))).toLocaleString('vi-VN')}đ
+              {(it.soLuong * (it.donGia + it.toppings.reduce((s, t) => s + t.gia, 0))).toLocaleString('vi-VN')} đ
             </Text>
           </View>
         ))}
@@ -200,27 +200,27 @@ export default function OrderDetailScreen() {
       <View style={styles.card}>
         <View style={styles.infoRow}>
           <Text style={styles.infoRowLabel}>Tổng tiền</Text>
-          <Text style={styles.infoRowValue}>{order.tongTien.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.infoRowValue}>{order.tongTien.toLocaleString('vi-VN')} đ</Text>
         </View>
         {order.giamGia > 0 && (
           <View style={styles.infoRow}>
             <Text style={styles.infoRowLabel}>Giảm giá</Text>
-            <Text style={styles.infoRowValue}>{order.giamGia.toLocaleString('vi-VN')}đ</Text>
+            <Text style={styles.infoRowValue}>{order.giamGia.toLocaleString('vi-VN')} đ</Text>
           </View>
         )}
         <View style={styles.infoRow}>
           <Text style={styles.infoRowLabel}>Thành tiền</Text>
-          <Text style={styles.infoRowValue}>{order.thanhTien.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.infoRowValue}>{order.thanhTien.toLocaleString('vi-VN')} đ</Text>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoRowLabel}>Đã thu</Text>
-          <Text style={styles.infoRowValue}>{order.daThu.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.infoRowValue}>{order.daThu.toLocaleString('vi-VN')} đ</Text>
         </View>
         <View style={styles.conLaiDivider} />
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>CÒN LẠI</Text>
           <Text style={[styles.totalValue, { color: order.conLai > 0 ? COLORS.danger : COLORS.success }]}>
-            {order.conLai.toLocaleString('vi-VN')}đ
+            {order.conLai.toLocaleString('vi-VN')} đ
           </Text>
         </View>
       </View>

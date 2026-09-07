@@ -232,7 +232,7 @@ export default function CheckoutScreen() {
                   </Text>
                   <View style={styles.shipRow}>
                     <Text style={styles.shipText}>Khoảng cách ~{ship.khoangCachKm.toFixed(1)}km</Text>
-                    <Text style={styles.shipFee}>Phí ship: {ship.phiShip.toLocaleString('vi-VN')}đ</Text>
+                    <Text style={styles.shipFee}>Phí ship: {ship.phiShip.toLocaleString('vi-VN')} đ</Text>
                   </View>
                 </>
               )}
@@ -265,7 +265,7 @@ export default function CheckoutScreen() {
               </View>
             </View>
             <Text style={styles.itemPrice}>
-              {(item.soLuong * (item.giaBan + item.toppings.reduce((s, t) => s + t.gia, 0))).toLocaleString('vi-VN')}đ
+              {(item.soLuong * (item.giaBan + item.toppings.reduce((s, t) => s + t.gia, 0))).toLocaleString('vi-VN')} đ
             </Text>
             <TouchableOpacity onPress={() => removeItem(item.key)} style={styles.removeBtn}>
               <Text style={styles.removeText}>✕</Text>
@@ -283,8 +283,8 @@ export default function CheckoutScreen() {
             onChangeText={setGhiChu}
           />
           <Text style={styles.total}>
-            Tạm tính: {(totalPrice + (ship?.phiShip ?? 0)).toLocaleString('vi-VN')}đ
-            {ship ? ` (gồm ${ship.phiShip.toLocaleString('vi-VN')}đ phí ship)` : ''}
+            Tạm tính: {(totalPrice + (ship?.phiShip ?? 0)).toLocaleString('vi-VN')} đ
+            {ship ? ` (gồm ${ship.phiShip.toLocaleString('vi-VN')} đ phí ship)` : ''}
           </Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <TouchableOpacity style={styles.orderBtn} onPress={handleDatHang} disabled={loading}>

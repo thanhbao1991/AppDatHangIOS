@@ -70,10 +70,10 @@ export default function LyBiMatScreen() {
           {result.tenSanPham} ({result.tenBienThe})
         </Text>
         <Text style={styles.revealPrice}>
-          Trả {result.giaTraTien.toLocaleString('vi-VN')}đ — giá thật {result.giaThat.toLocaleString('vi-VN')}đ
+          Trả {result.giaTraTien.toLocaleString('vi-VN')} đ — giá thật {result.giaThat.toLocaleString('vi-VN')} đ
         </Text>
         {result.tietKiem > 0 && (
-          <Text style={styles.revealSaved}>Bạn đã tiết kiệm {result.tietKiem.toLocaleString('vi-VN')}đ! 🎊</Text>
+          <Text style={styles.revealSaved}>Bạn đã tiết kiệm {result.tietKiem.toLocaleString('vi-VN')} đ! 🎊</Text>
         )}
         <Text style={styles.revealMa}>Mã đơn: {result.maHoaDon}</Text>
 
@@ -96,7 +96,7 @@ export default function LyBiMatScreen() {
         <Text style={styles.emoji}>🎁</Text>
         <Text style={styles.title}>Ly Bí Mật</Text>
         <Text style={styles.desc}>
-          Chỉ {giaLyBiMat.toLocaleString('vi-VN')}đ, quán sẽ chọn NGẪU NHIÊN 1 món cho bạn — có thể là món giá
+          Chỉ {giaLyBiMat.toLocaleString('vi-VN')} đ, quán sẽ chọn NGẪU NHIÊN 1 món cho bạn — có thể là món giá
           cao hơn nhiều! Thử vận may của bạn 🍀
         </Text>
 

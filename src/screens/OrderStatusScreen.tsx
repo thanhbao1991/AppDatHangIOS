@@ -81,7 +81,7 @@ export default function OrderStatusScreen() {
           </View>
           <Text style={styles.monSummary}>{item.tenMonSummary}</Text>
           <View style={styles.cardFooter}>
-            <Text style={styles.thanhTien}>{item.thanhTien.toLocaleString('vi-VN')}đ</Text>
+            <Text style={styles.thanhTien}>{item.thanhTien.toLocaleString('vi-VN')} đ</Text>
             <View style={[styles.statusChip, { backgroundColor: TRANG_THAI_COLOR[item.trangThai] }]}>
               <Text style={styles.statusText}>{TRANG_THAI_LABEL[item.trangThai]}</Text>
             </View>

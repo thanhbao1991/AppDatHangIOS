@@ -233,8 +233,8 @@ export default function MenuScreen() {
             minPrice === null
               ? ''
               : prices.length > 1
-              ? `Từ ${minPrice.toLocaleString('vi-VN')}đ`
-              : `${minPrice.toLocaleString('vi-VN')}đ`;
+              ? `Từ ${minPrice.toLocaleString('vi-VN')} đ`
+              : `${minPrice.toLocaleString('vi-VN')} đ`;
           return (
             <TouchableOpacity style={styles.productCard} activeOpacity={0.7} onPress={() => openPicker(item)}>
               {item.hinhAnh ? (
@@ -266,7 +266,7 @@ export default function MenuScreen() {
             <Text style={styles.cartBarBadgeText}>{totalCount}</Text>
           </View>
           <Text style={styles.cartBarText}>Xem giỏ hàng</Text>
-          <Text style={styles.cartBarPrice}>{totalPrice.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.cartBarPrice}>{totalPrice.toLocaleString('vi-VN')} đ</Text>
         </TouchableOpacity>
       )}
 
@@ -304,7 +304,7 @@ export default function MenuScreen() {
                   onPress={() => setPickBienThe(b)}
                 >
                   <Text style={[styles.optionChipText, pickBienThe?.id === b.id && styles.optionChipTextActive]}>
-                    {b.tenBienThe} — {b.giaBan.toLocaleString('vi-VN')}đ
+                    {b.tenBienThe} — {b.giaBan.toLocaleString('vi-VN')} đ
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -312,7 +312,7 @@ export default function MenuScreen() {
             {upsellSize && (
               <TouchableOpacity onPress={() => setPickBienThe(upsellSize.bienThe)}>
                 <Text style={styles.upsellHint}>
-                  💡 Chỉ +{upsellSize.chenhLech.toLocaleString('vi-VN')}đ để lên {upsellSize.bienThe.tenBienThe}
+                  💡 Chỉ +{upsellSize.chenhLech.toLocaleString('vi-VN')} đ để lên {upsellSize.bienThe.tenBienThe}
                 </Text>
               </TouchableOpacity>
             )}
@@ -348,7 +348,7 @@ export default function MenuScreen() {
                       onPress={() => toggleTopping(t.id)}
                     >
                       <Text style={styles.toppingName}>{t.ten}</Text>
-                      <Text style={styles.toppingPrice}>+{t.gia.toLocaleString('vi-VN')}đ</Text>
+                      <Text style={styles.toppingPrice}>+{t.gia.toLocaleString('vi-VN')} đ</Text>
                       <View style={[styles.toppingCheck, active && styles.toppingCheckActive]}>
                         {active && <Text style={styles.toppingCheckMark}>✓</Text>}
                       </View>
@@ -357,7 +357,7 @@ export default function MenuScreen() {
                 })}
                 {pickToppingIds.length === 0 && (
                   <Text style={styles.upsellHint}>
-                    💡 Thêm topping chỉ từ +{Math.min(...toppings.map((t) => t.gia)).toLocaleString('vi-VN')}đ
+                    💡 Thêm topping chỉ từ +{Math.min(...toppings.map((t) => t.gia)).toLocaleString('vi-VN')} đ
                   </Text>
                 )}
               </View>
@@ -414,7 +414,7 @@ export default function MenuScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmAdd} disabled={!pickBienThe}>
               <Text style={styles.modalConfirmText}>
-                Thêm vào giỏ{pickBienThe ? ` · ${(pickBienThe.giaBan * pickSoLuong).toLocaleString('vi-VN')}đ` : ''}
+                Thêm vào giỏ{pickBienThe ? ` · ${(pickBienThe.giaBan * pickSoLuong).toLocaleString('vi-VN')} đ` : ''}
               </Text>
             </TouchableOpacity>
           </View>

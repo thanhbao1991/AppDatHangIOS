@@ -119,7 +119,7 @@ export default function SettingsScreen() {
                 <View style={[styles.hangBadge, { backgroundColor: HANG_COLOR[vi.hang] ?? COLORS.primary }]}>
                   <Text style={styles.hangBadgeText}>👑 Hạng {vi.hang}</Text>
                 </View>
-                <Text style={styles.viSoDu}>{vi.soDu.toLocaleString('vi-VN')}đ</Text>
+                <Text style={styles.viSoDu}>{vi.soDu.toLocaleString('vi-VN')} đ</Text>
               </View>
               <Text style={styles.viLabel}>Số dư ví</Text>
               <View style={styles.viStatsRow}>
@@ -128,12 +128,12 @@ export default function SettingsScreen() {
                   <Text style={styles.viStatLabel}>Điểm tháng này</Text>
                 </View>
                 <View style={styles.viStat}>
-                  <Text style={styles.viStatValue}>{vi.tongChiTieuLifetime.toLocaleString('vi-VN')}đ</Text>
+                  <Text style={styles.viStatValue}>{vi.tongChiTieuLifetime.toLocaleString('vi-VN')} đ</Text>
                   <Text style={styles.viStatLabel}>Tổng chi tiêu</Text>
                 </View>
               </View>
               {vi.tongNo > 0 && (
-                <Text style={styles.viNo}>Công nợ hiện tại: {vi.tongNo.toLocaleString('vi-VN')}đ</Text>
+                <Text style={styles.viNo}>Công nợ hiện tại: {vi.tongNo.toLocaleString('vi-VN')} đ</Text>
               )}
               {vi.monHayMua.length > 0 && (
                 <Text style={styles.viMonHayMua}>
