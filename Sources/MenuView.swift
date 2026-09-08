@@ -287,8 +287,10 @@ private struct ProductPickerSheet: View {
     }
 
     private func formatDateVN(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: iso) ?? DateFormatter.iso8601NoTZ.date(from: iso) else { return iso }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        guard let date = formatter.date(from: String(iso.prefix(10))) else { return iso }
         let out = DateFormatter()
         out.dateFormat = "dd/MM/yyyy"
         out.locale = Locale(identifier: "vi_VN")
