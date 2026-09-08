@@ -17,6 +17,9 @@ struct MenuView: View {
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
 
+    /// Nhớ mục khách chọn lần cuối — mở app lại vào thẳng mục đó thay vì luôn về nhóm đầu tiên.
+    private static let selectedNhomKey = "menu.selectedNhomId"
+
     private func normalizeVN(_ s: String) -> String {
         s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
             .replacingOccurrences(of: "đ", with: "d", options: .caseInsensitive)
@@ -33,17 +36,30 @@ struct MenuView: View {
         return sanPhams.filter { ($0.timKiem ?? normalizeVN($0.ten)).lowercased().contains(q) }
     }
 
+    /// Nhóm lặt vặt/ít món — gom chung 1 mục "#" đặt cuối sidebar thay vì mỗi nhóm 1 dòng riêng
+    /// chiếm chỗ cột trái.
+    private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
+
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
         var byNhom: [String: [SanPham]] = [:]
         for sp in sanPhams { byNhom[sp.nhomSanPhamId ?? "", default: []].append(sp) }
-        var result = nhoms
-            .filter { byNhom[$0.id] != nil }
-            .sorted { $0.ten.localizedStandardCompare($1.ten) == .orderedAscending }
-            .map { (nhom: $0, items: byNhom[$0.id] ?? []) }
-        if let khac = byNhom[""] {
-            result.append((nhom: NhomSanPham(id: "", ten: "Khác"), items: khac))
+
+        var gomChung: [SanPham] = byNhom[""] ?? []
+        var result: [(nhom: NhomSanPham, items: [SanPham])] = []
+        for nhom in nhoms {
+            guard let items = byNhom[nhom.id] else { continue }
+            if Self.nhomGomChung.contains(nhom.ten) {
+                gomChung.append(contentsOf: items)
+            } else {
+                result.append((nhom: nhom, items: items))
+            }
+        }
+        result.sort { $0.nhom.ten.localizedStandardCompare($1.nhom.ten) == .orderedAscending }
+
+        if !gomChung.isEmpty {
+            result.append((nhom: NhomSanPham(id: "#", ten: "#"), items: gomChung))
         }
         return result
     }
@@ -146,6 +162,7 @@ struct MenuView: View {
                     let isSelected = section.nhom.id == selectedNhomId
                     Button {
                         selectedNhomId = section.nhom.id
+                        UserDefaults.standard.set(section.nhom.id, forKey: Self.selectedNhomKey)
                     } label: {
                         HStack(spacing: 0) {
                             Rectangle()
@@ -207,6 +224,9 @@ struct MenuView: View {
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
+        if selectedNhomId.isEmpty, let saved = UserDefaults.standard.string(forKey: Self.selectedNhomKey) {
+            selectedNhomId = saved
+        }
         if !sections.contains(where: { $0.nhom.id == selectedNhomId }) {
             selectedNhomId = sections.first?.nhom.id ?? ""
         }
