@@ -166,7 +166,9 @@ struct MenuView: View {
                                 .padding(.vertical, 12)
                                 .padding(.trailing, 6)
                         }
+                        .frame(minHeight: 44)
                         .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
