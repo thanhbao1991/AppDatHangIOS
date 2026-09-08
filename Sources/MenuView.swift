@@ -194,7 +194,7 @@ struct MenuView: View {
                 }
             }
         }
-        .frame(width: 92)
+        .frame(width: 80)
         .background(Color(.secondarySystemGroupedBackground))
     }
 
@@ -212,7 +212,11 @@ struct MenuView: View {
                         .overlay(Text(item.ten.trimmingCharacters(in: .whitespaces).prefix(1).uppercased()).foregroundColor(Theme.primary).fontWeight(.bold))
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.ten).font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    Text(item.ten)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                     if let minPrice {
                         Text(prices.count > 1 ? "Từ \(formatTien(minPrice))" : formatTien(minPrice))
                             .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
@@ -259,7 +263,37 @@ private struct ProductPickerSheet: View {
     @State private var soLuong = 1
     @State private var ghiChu = ""
     @State private var tab: Int = 0
-    @State private var showAgeConfirm = false
+
+    // ---- Xác minh 18 tuổi (thuốc lá) ----
+    @State private var ngaySinhInfo: SinhNhatInfo?
+    @State private var loadingNgaySinh = false
+    @State private var dobPicked = Calendar.current.date(byAdding: .year, value: -18, to: Date()) ?? Date()
+    @State private var savingDob = false
+    @State private var dobError: String?
+
+    /// Tuổi hiện tại tính từ ngày sinh đã lưu (chuỗi "yyyy-MM-dd..." từ backend) — nil nếu chưa
+    /// có ngày sinh hoặc không parse được.
+    private func tuoi(from iso: String) -> Int? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        guard let date = formatter.date(from: String(iso.prefix(10))) else { return nil }
+        return Calendar.current.dateComponents([.year], from: date, to: Date()).year
+    }
+
+    private var duTuoiMuaThuocLa: Bool {
+        guard let ns = ngaySinhInfo?.ngaySinh, let t = tuoi(from: ns) else { return false }
+        return t >= 18
+    }
+
+    private func formatDateVN(_ iso: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        guard let date = formatter.date(from: iso) ?? DateFormatter.iso8601NoTZ.date(from: iso) else { return iso }
+        let out = DateFormatter()
+        out.dateFormat = "dd/MM/yyyy"
+        out.locale = Locale(identifier: "vi_VN")
+        return out.string(from: date)
+    }
 
     private let quickNoteGroups: [(title: String, notes: [String])] = [
         ("Đường", ["Không đường", "Ít ngọt", "Ngọt", "Nhiều ngọt", "Đường riêng"]),
@@ -282,10 +316,36 @@ private struct ProductPickerSheet: View {
                         }
                         Text(sanPham.ten).font(.system(size: 17, weight: .bold))
                     }
-                    if isThuocLa {
+                }
+
+                if isThuocLa {
+                    Section {
                         Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(Theme.danger)
+
+                        if loadingNgaySinh {
+                            ProgressView()
+                        } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
+                            if duTuoiMuaThuocLa {
+                                Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                    .foregroundColor(Theme.success)
+                            } else {
+                                Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                                    .foregroundColor(Theme.danger)
+                            }
+                        } else {
+                            DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                            if let dobError {
+                                Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
+                            }
+                            Button {
+                                Task { await xacNhanNgaySinh() }
+                            } label: {
+                                if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                            }
+                            .disabled(savingDob)
+                        }
                     }
                 }
 
@@ -369,21 +429,39 @@ private struct ProductPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")") {
-                        if isThuocLa { showAgeConfirm = true } else { confirmAdd() }
-                    }
-                    .disabled(bienThe == nil)
+                    Button("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")") { confirmAdd() }
+                        .disabled(bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa))
                 }
             }
         }
         .onAppear {
             bienThe = sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
         }
-        .alert("Xác nhận độ tuổi", isPresented: $showAgeConfirm) {
-            Button("Tôi từ 18 tuổi trở lên", action: confirmAdd)
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Theo quy định pháp luật, thuốc lá chỉ được bán cho người từ 18 tuổi trở lên. Vui lòng xác nhận trước khi tiếp tục.")
+        .task {
+            guard isThuocLa else { return }
+            loadingNgaySinh = true
+            ngaySinhInfo = await APIClient.shared.getSinhNhat()
+            loadingNgaySinh = false
+        }
+    }
+
+    private func xacNhanNgaySinh() async {
+        dobError = nil
+        let t = Calendar.current.dateComponents([.year], from: dobPicked, to: Date()).year ?? 0
+        guard t >= 18 else {
+            dobError = "Bạn chưa đủ 18 tuổi, không thể mua sản phẩm này."
+            return
+        }
+        savingDob = true
+        defer { savingDob = false }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let iso = formatter.string(from: dobPicked)
+        let result = await APIClient.shared.capNhatNgaySinh(iso)
+        if result.success {
+            ngaySinhInfo = await APIClient.shared.getSinhNhat()
+        } else {
+            dobError = result.message ?? "Lưu ngày sinh thất bại, thử lại."
         }
     }
 
