@@ -76,62 +76,38 @@ struct MenuView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 0) {
-                // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
-                // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
-                // dưới navigationTitle).
-                SearchBar(text: $query, placeholder: "Tìm món...")
+        VStack(spacing: 0) {
+            // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
+            // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
+            // dưới navigationTitle).
+            SearchBar(text: $query, placeholder: "Tìm món...")
 
-                Group {
-                    if loading {
-                        ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if !error.isEmpty {
-                        VStack(spacing: 12) {
-                            Text(error).foregroundColor(Theme.danger)
-                            Button("Thử lại") { Task { await load() } }
-                                .buttonStyle(.borderedProminent).tint(Theme.primary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if isSearching {
-                        List(searchResults) { sp in productRow(sp) }
-                            .listStyle(.plain)
-                    } else {
-                        VStack(spacing: 0) {
-                            lyBiMatBanner
-
-                            HStack(spacing: 0) {
-                                nhomSidebar
-                                Divider()
-                                List { ForEach(selectedItems) { sp in productRow(sp) } }
-                                    .listStyle(.plain)
-                                    .id(selectedNhomId)
-                            }
-                        }
-                        .refreshable { await load(silent: true) }
+            Group {
+                if loading {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !error.isEmpty {
+                    VStack(spacing: 12) {
+                        Text(error).foregroundColor(Theme.danger)
+                        Button("Thử lại") { Task { await load() } }
+                            .buttonStyle(.borderedProminent).tint(Theme.primary)
                     }
-                }
-            }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if isSearching {
+                    List(searchResults) { sp in productRow(sp) }
+                        .listStyle(.plain)
+                } else {
+                    VStack(spacing: 0) {
+                        lyBiMatBanner
 
-            if cart.totalCount > 0 {
-                Button {
-                    selectedTab = .cart
-                } label: {
-                    HStack {
-                        Text("\(cart.totalCount)")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(minWidth: 24, minHeight: 24)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
-                        Text("Xem giỏ hàng").font(.system(size: 15, weight: .bold)).foregroundColor(.white)
-                        Spacer()
-                        Text(formatTien(cart.totalPrice)).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+                        HStack(spacing: 0) {
+                            nhomSidebar
+                            Divider()
+                            List { ForEach(selectedItems) { sp in productRow(sp) } }
+                                .listStyle(.plain)
+                                .id(selectedNhomId)
+                        }
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 14)
-                    .background(Theme.primaryDark)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .padding(.horizontal, 12).padding(.bottom, 8)
+                    .refreshable { await load(silent: true) }
                 }
             }
         }
