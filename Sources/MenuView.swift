@@ -97,7 +97,8 @@ struct MenuView: View {
                         .listStyle(.plain)
                 } else {
                     VStack(spacing: 0) {
-                        lyBiMatBanner
+                        // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ
+                        // hàng thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
 
                         HStack(spacing: 0) {
                             nhomSidebar
