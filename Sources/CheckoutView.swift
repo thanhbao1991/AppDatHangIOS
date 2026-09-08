@@ -19,46 +19,47 @@ struct CheckoutView: View {
     @State private var ship: UocTinhShip?
 
     var body: some View {
-        List {
-            if !cart.items.isEmpty {
-                Section {
-                    addressBox
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+        VStack(spacing: 0) {
+            TitleBar(title: "Giỏ hàng")
 
-                ForEach(cart.items) { item in
-                    itemRow(item)
-                }
-
-                Section {
-                    TextField("Ghi chú cho đơn hàng (không bắt buộc)", text: $ghiChu)
-                    HStack {
-                        Text("Tạm tính")
-                        Spacer()
-                        Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).fontWeight(.bold)
+            List {
+                if !cart.items.isEmpty {
+                    Section {
+                        addressBox
                     }
-                    if !error.isEmpty { Text(error).foregroundColor(Theme.danger) }
-                    Button {
-                        Task { await datHang() }
-                    } label: {
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+
+                    ForEach(cart.items) { item in
+                        itemRow(item)
+                    }
+
+                    Section {
+                        TextField("Ghi chú cho đơn hàng (không bắt buộc)", text: $ghiChu)
                         HStack {
+                            Text("Tạm tính")
                             Spacer()
-                            if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
-                            Spacer()
+                            Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).fontWeight(.bold)
                         }
+                        if !error.isEmpty { Text(error).foregroundColor(Theme.danger) }
+                        Button {
+                            Task { await datHang() }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.primary)
+                        .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.primary)
-                    .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
+                } else {
+                    Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, alignment: .center)
                 }
-            } else {
-                Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, alignment: .center)
             }
         }
-        .navigationTitle("Giỏ hàng")
-        .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task { await loadDiaChi() }
     }
 
