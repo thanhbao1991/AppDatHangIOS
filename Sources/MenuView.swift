@@ -68,6 +68,12 @@ struct MenuView: View {
         sections.first(where: { $0.nhom.id == selectedNhomId })?.items ?? []
     }
 
+    /// Theo quy định pháp luật, thuốc lá chỉ bán cho người từ 18 tuổi trở lên — dùng để bật cảnh
+    /// báo + bắt xác nhận độ tuổi trước khi thêm giỏ ở ProductPickerSheet.
+    private var thuocLaNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Thuốc lá" }.map(\.id))
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
@@ -130,7 +136,12 @@ struct MenuView: View {
         }
         .task { if sanPhams.isEmpty { await load() } }
         .sheet(item: $picking) { sp in
-            ProductPickerSheet(sanPham: sp, toppings: toppings, cart: cart) { picking = nil }
+            ProductPickerSheet(
+                sanPham: sp,
+                toppings: toppings,
+                cart: cart,
+                isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? "")
+            ) { picking = nil }
         }
     }
 
@@ -239,6 +250,8 @@ private struct ProductPickerSheet: View {
     let sanPham: SanPham
     let toppings: [Topping]
     let cart: CartStore
+    /// Theo quy định pháp luật, thuốc lá chỉ bán cho người từ 18 tuổi trở lên.
+    let isThuocLa: Bool
     let onDone: () -> Void
 
     @State private var bienThe: SanPhamBienThe?
@@ -246,6 +259,7 @@ private struct ProductPickerSheet: View {
     @State private var soLuong = 1
     @State private var ghiChu = ""
     @State private var tab: Int = 0
+    @State private var showAgeConfirm = false
 
     private let quickNoteGroups: [(title: String, notes: [String])] = [
         ("Đường", ["Không đường", "Ít ngọt", "Ngọt", "Nhiều ngọt", "Đường riêng"]),
@@ -267,6 +281,11 @@ private struct ProductPickerSheet: View {
                                 .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                         Text(sanPham.ten).font(.system(size: 17, weight: .bold))
+                    }
+                    if isThuocLa {
+                        Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.danger)
                     }
                 }
 
@@ -350,13 +369,21 @@ private struct ProductPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")") { confirmAdd() }
-                        .disabled(bienThe == nil)
+                    Button("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")") {
+                        if isThuocLa { showAgeConfirm = true } else { confirmAdd() }
+                    }
+                    .disabled(bienThe == nil)
                 }
             }
         }
         .onAppear {
             bienThe = sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
+        }
+        .alert("Xác nhận độ tuổi", isPresented: $showAgeConfirm) {
+            Button("Tôi từ 18 tuổi trở lên", action: confirmAdd)
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("Theo quy định pháp luật, thuốc lá chỉ được bán cho người từ 18 tuổi trở lên. Vui lòng xác nhận trước khi tiếp tục.")
         }
     }
 
