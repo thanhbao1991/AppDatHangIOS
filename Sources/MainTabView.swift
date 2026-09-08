@@ -38,7 +38,7 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Thực đơn", systemImage: icon("cup.and.saucer", .home)) }
+            .tabItem { Label("Thực đơn", systemImage: icon("mug", .home)) }
             .tag(AppTab.home)
 
             NavigationStack(path: $cartPath) {
