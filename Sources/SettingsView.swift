@@ -139,6 +139,7 @@ struct SettingsView: View {
                     .foregroundColor(Theme.textFaint).frame(maxWidth: .infinity)
             }
         }
+        .listStyle(.plain)
     }
 
     private func viCard(_ vi: KhachHangVi) -> some View {

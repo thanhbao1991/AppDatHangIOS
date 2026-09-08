@@ -59,6 +59,7 @@ struct CheckoutView: View {
                     Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, alignment: .center)
                 }
             }
+            .listStyle(.plain)
         }
         .task { await loadDiaChi() }
     }
