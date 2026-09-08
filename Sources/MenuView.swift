@@ -42,26 +42,30 @@ struct MenuView: View {
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
     /// SF Symbol cho từng nhóm sidebar, khớp Ten thật trong bảng NhomSanPhams (VPS, 8/9) — nhóm nào
-    /// không có trong map (mở rộng sau này) rơi về defaultNhomIcon.
+    /// không có trong map (mở rộng sau này) rơi về defaultNhomIcon. Cố ý chọn khác nhau cho từng
+    /// nhóm hiện diện riêng ở sidebar (4 nhóm gom chung vào "#Khác" không cần phân biệt nên vẫn để
+    /// trùng thoải mái) — dùng cả biến thể outline (không .fill) để đủ icon phân biệt vì SF Symbols
+    /// không có đủ icon "đúng nghĩa đồ uống" cho từng loại, ưu tiên phân biệt hình dạng hơn khớp
+    /// nghĩa 100%.
     private static let nhomIcons: [String: String] = [
         "Ăn Vặt": "fork.knife",
         "Bạc Xỉu": "cup.and.saucer.fill",
-        "Ca Cao": "cup.and.saucer.fill",
+        "Ca Cao": "mug",
         "Cà Phê": "mug.fill",
         "Đá Xay": "snowflake",
         "Khác": "ellipsis.circle",
-        "Latte": "cup.and.saucer.fill",
-        "Nước Ép": "carrot.fill",
+        "Latte": "cup.and.saucer",
+        "Nước Ép": "drop.fill",
         "Nước Lon": "shippingbox.fill",
-        "Sinh Tố": "leaf.fill",
+        "Sinh Tố": "carrot.fill",
         "Soda": "sparkles",
-        "Sữa Chua": "drop.fill",
-        "Sữa Tươi": "drop.fill",
+        "Sữa Chua": "drop.circle.fill",
+        "Sữa Tươi": "takeoutbag.and.cup.and.straw",
         "Thuốc lá": "exclamationmark.triangle.fill",
         "Trà": "leaf.fill",
-        "Trà Hiện Đại": "leaf.fill",
-        "Trà Sữa": "cup.and.saucer.fill",
-        "Trà Truyền Thống": "leaf.fill",
+        "Trà Hiện Đại": "leaf",
+        "Trà Sữa": "takeoutbag.and.cup.and.straw.fill",
+        "Trà Truyền Thống": "leaf.circle.fill",
         "#Khác": "ellipsis.circle",
     ]
     private static let defaultNhomIcon = "circle.grid.2x2.fill"
