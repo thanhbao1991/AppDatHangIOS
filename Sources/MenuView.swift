@@ -17,6 +17,7 @@ struct MenuView: View {
     @State private var query = ""
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
+    @State private var monHayMua: [FavoriteItem] = []
 
     /// Nhớ mục khách chọn lần cuối — mở app lại vào thẳng mục đó thay vì luôn về nhóm đầu tiên.
     private static let selectedNhomKey = "menu.selectedNhomId"
@@ -66,8 +67,25 @@ struct MenuView: View {
         "Trà Hiện Đại": "leaf",
         "Trà Sữa": "takeoutbag.and.cup.and.straw.fill",
         "Trà Truyền Thống": "leaf.fill",
+        "Yêu thích": "heart.fill",
     ]
     private static let defaultNhomIcon = "circle.grid.2x2.fill"
+    private static let yeuThichNhomId = "yeu-thich"
+
+    /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi — cùng nguồn dữ liệu tab Cài
+    /// đặt đang hiện "Hay gọi") — chỉ khớp theo TÊN sản phẩm vì backend không trả kèm id, khớp cả
+    /// khi không tìm thấy biến thể tương ứng (mở picker vẫn chọn được size khác). Giữ thứ tự theo
+    /// monHayMua, loại trùng nếu 1 sản phẩm xuất hiện ở nhiều biến thể trong danh sách yêu thích.
+    private var favoriteSanPhams: [SanPham] {
+        var seen = Set<String>()
+        var result: [SanPham] = []
+        for fav in monHayMua {
+            guard let sp = sanPhams.first(where: { $0.ten == fav.tenSanPham }), !seen.contains(sp.id) else { continue }
+            seen.insert(sp.id)
+            result.append(sp)
+        }
+        return result
+    }
 
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
@@ -89,6 +107,11 @@ struct MenuView: View {
 
         if !gomChung.isEmpty {
             result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: gomChung))
+        }
+
+        let favs = favoriteSanPhams
+        if !favs.isEmpty {
+            result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favs), at: 0)
         }
         return result
     }
@@ -246,10 +269,12 @@ struct MenuView: View {
         async let spTask = APIClient.shared.getSanPhamList()
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
-        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
+        async let viTask = APIClient.shared.getVi()
+        let (sp, nhom, top, vi) = await (spTask, nhomTask, topTask, viTask)
         sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
+        monHayMua = vi?.monHayMua ?? []
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
         if selectedNhomId.isEmpty, let saved = UserDefaults.standard.string(forKey: Self.selectedNhomKey) {
             selectedNhomId = saved
