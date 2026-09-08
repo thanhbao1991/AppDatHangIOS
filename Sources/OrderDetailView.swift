@@ -6,7 +6,7 @@ struct OrderDetailView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var donHangPath: [DonHangRoute]
     @Binding var selectedTab: AppTab
-    @Binding var homePath: [HomeRoute]
+    @Binding var cartPath: [HomeRoute]
     @Environment(\.dismiss) private var dismiss
 
     @State var order: DonHangKhach
@@ -213,8 +213,8 @@ struct OrderDetailView: View {
         for it in order.items {
             cart.addItem(sanPhamBienTheId: it.sanPhamBienTheId, tenSanPham: it.tenSanPham, tenBienThe: it.tenBienThe, giaBan: it.donGia, soLuong: it.soLuong, ghiChu: it.ghiChu, toppings: it.toppings.map { CartTopping(id: $0.toppingId, ten: $0.ten, gia: $0.gia) })
         }
-        homePath = [.checkout]
-        selectedTab = .home
+        cartPath = []
+        selectedTab = .cart
     }
 
     private func guiDanhGia() async {

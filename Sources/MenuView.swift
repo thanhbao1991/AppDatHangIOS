@@ -7,6 +7,7 @@ import SwiftUI
 struct MenuView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
+    @Binding var selectedTab: AppTab
 
     @State private var loading = true
     @State private var error = ""
@@ -114,7 +115,7 @@ struct MenuView: View {
 
             if cart.totalCount > 0 {
                 Button {
-                    path.append(.checkout)
+                    selectedTab = .cart
                 } label: {
                     HStack {
                         Text("\(cart.totalCount)")

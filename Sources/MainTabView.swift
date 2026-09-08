@@ -10,18 +10,29 @@ struct MainTabView: View {
 
     @State private var selectedTab: AppTab = .home
     @State private var homePath: [HomeRoute] = []
+    @State private var cartPath: [HomeRoute] = []
     @State private var donHangPath: [DonHangRoute] = []
     @State private var settingsPath: [SettingsRoute] = []
     @State private var unreadCount = 0
     @State private var pollTask: Task<Void, Never>?
 
+    /// Badge số tiền giỏ hàng dạng viết tắt trên tab bar (vd "25k", "1.2tr") — nil khi giỏ trống để
+    /// ẩn hẳn badge thay vì hiện "0k".
+    private var cartBadgeText: String? {
+        guard cart.totalCount > 0 else { return nil }
+        let total = cart.totalPrice
+        if total >= 1_000_000 {
+            return String(format: "%.1ftr", total / 1_000_000)
+        }
+        return "\(Int((total / 1000).rounded()))k"
+    }
+
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack(path: $homePath) {
-                MenuView(path: $homePath)
+                MenuView(path: $homePath, selectedTab: $selectedTab)
                     .navigationDestination(for: HomeRoute.self) { route in
                         switch route {
-                        case .checkout: CheckoutView(path: $homePath)
                         case .lyBiMat: LyBiMatView(path: $homePath)
                         case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
                         }
@@ -30,12 +41,25 @@ struct MainTabView: View {
             .tabItem { Label("Thực đơn", systemImage: "fork.knife") }
             .tag(AppTab.home)
 
+            NavigationStack(path: $cartPath) {
+                CheckoutView(path: $cartPath)
+                    .navigationDestination(for: HomeRoute.self) { route in
+                        switch route {
+                        case .lyBiMat: LyBiMatView(path: $cartPath)
+                        case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; cartPath = [] }
+                        }
+                    }
+            }
+            .tabItem { Label("Giỏ hàng", systemImage: "cart") }
+            .badge(cartBadgeText)
+            .tag(AppTab.cart)
+
             NavigationStack(path: $donHangPath) {
                 OrderStatusView(path: $donHangPath)
                     .navigationDestination(for: DonHangRoute.self) { route in
                         switch route {
                         case .detail(let order):
-                            OrderDetailView(donHangPath: $donHangPath, selectedTab: $selectedTab, homePath: $homePath, order: order)
+                            OrderDetailView(donHangPath: $donHangPath, selectedTab: $selectedTab, cartPath: $cartPath, order: order)
                         case .thanhToan(let hoaDonId):
                             ThanhToanView(hoaDonId: hoaDonId) { donHangPath = [] }
                         }
