@@ -78,7 +78,7 @@ struct MainTabView: View {
             NavigationStack(path: $settingsPath) {
                 SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
             }
-            .tabItem { Label("Cài đặt", systemImage: "gearshape") }
+            .tabItem { Label("Cài đặt", systemImage: icon("gearshape", .settings)) }
             .tag(AppTab.settings)
         }
         .tint(Theme.primary)
@@ -98,6 +98,12 @@ struct MainTabView: View {
         guard !items.isEmpty else { return }
         let lastSeen = UserDefaults.standard.string(forKey: "thongBaoLastSeen")
         unreadCount = lastSeen.map { seen in items.filter { $0.ngayTao > seen }.count } ?? items.count
+    }
+
+    /// SF Symbol .fill khi tab đang chọn, outline khi không — khớp cảm giác native TabView
+    /// thay vì hardcode 1 kiểu icon cho mọi trạng thái.
+    private func icon(_ base: String, _ tab: AppTab) -> String {
+        selectedTab == tab ? "\(base).fill" : base
     }
 
     private func startPolling() {
