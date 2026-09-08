@@ -287,134 +287,131 @@ private struct ProductPickerSheet: View {
         Set(ghiChu.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })
     }
 
+    /// Nhãn rút gọn cho chip ghi chú nhanh — khớp shortNoteLabels bên ProductPickerPanel
+    /// (AppQuanLyIOS), chỉ rút "Không" → "Ko" để chip không quá dài, giữ nguyên activeNotes/ghiChu
+    /// đầy đủ phía dưới.
+    private static let shortNoteLabels: [String: String] = [
+        "Không đường": "Ko đường", "Không đá": "Ko đá", "Không trà": "Ko trà",
+    ]
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                            AsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+        VStack(spacing: 0) {
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
+                                AsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                    .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            Text(sanPham.ten).font(.headline)
                         }
-                        Text(sanPham.ten).font(.system(size: 17, weight: .bold))
-                    }
-                }
 
-                if isThuocLa {
-                    Section {
-                        Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Theme.danger)
-
-                        if loadingNgaySinh {
-                            ProgressView()
-                        } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
-                            if duTuoiMuaThuocLa {
-                                Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
-                                    .foregroundColor(Theme.success)
-                            } else {
-                                Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                        if isThuocLa {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(Theme.danger)
-                            }
-                        } else {
-                            DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
-                            if let dobError {
-                                Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
-                            }
-                            Button {
-                                Task { await xacNhanNgaySinh() }
-                            } label: {
-                                if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
-                            }
-                            .disabled(savingDob)
-                        }
-                    }
-                }
 
-                Section("Chọn size") {
-                    ForEach(sanPham.bienThe) { b in
-                        Button {
-                            bienThe = b
-                        } label: {
-                            HStack {
-                                Text("\(b.tenBienThe) — \(formatTien(b.giaBan))")
-                                Spacer()
-                                if bienThe?.id == b.id { Image(systemName: "checkmark").foregroundColor(Theme.primary) }
-                            }
-                        }
-                        .foregroundColor(.primary)
-                    }
-                }
-
-                if !toppings.isEmpty {
-                    Section {
-                        Picker("", selection: $tab) {
-                            Text("Ghi chú").tag(0)
-                            Text("Topping\(toppingIds.isEmpty ? "" : " (\(toppingIds.count))")").tag(1)
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                }
-
-                if !toppings.isEmpty && tab == 1 {
-                    Section("Topping") {
-                        ForEach(toppings) { t in
-                            Button {
-                                if toppingIds.contains(t.id) { toppingIds.remove(t.id) } else { toppingIds.insert(t.id) }
-                            } label: {
-                                HStack {
-                                    Text(t.ten).foregroundColor(.primary)
-                                    Spacer()
-                                    Text("+\(formatTien(t.gia))").foregroundColor(.secondary).font(.system(size: 12))
-                                    Image(systemName: toppingIds.contains(t.id) ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(toppingIds.contains(t.id) ? Theme.primary : Theme.textFaint)
+                                if loadingNgaySinh {
+                                    ProgressView()
+                                } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
+                                    if duTuoiMuaThuocLa {
+                                        Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                            .foregroundColor(Theme.success)
+                                    } else {
+                                        Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                                            .foregroundColor(Theme.danger)
+                                    }
+                                } else {
+                                    DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                    if let dobError {
+                                        Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
+                                    }
+                                    Button {
+                                        Task { await xacNhanNgaySinh() }
+                                    } label: {
+                                        if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .disabled(savingDob)
                                 }
                             }
+                            .padding(12)
+                            .background(Theme.danger.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
-                    }
-                } else {
-                    Section("Ghi chú") {
-                        TextField("Ghi chú món...", text: $ghiChu)
-                        ForEach(quickNoteGroups, id: \.title) { group in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(group.title).font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.textFaint)
-                                HStack {
-                                    ForEach(group.notes, id: \.self) { note in
-                                        let active = activeNotes.contains(note)
-                                        Button(note) { toggleNote(note) }
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .padding(.horizontal, 8).padding(.vertical, 6)
-                                            .background(active ? Theme.primary : Color(white: 0.95))
-                                            .foregroundColor(active ? .white : Theme.textMuted)
-                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                        // Chip size cuộn ngang — khớp configSection bên ProductPickerPanel
+                        // (AppQuanLyIOS) thay vì List hàng riêng từng size.
+                        if sanPham.bienThe.count > 1 {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
+                                        let active = bienThe?.id == b.id
+                                        Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
+                                            .font(.system(size: 12, weight: .bold))
+                                            .padding(.horizontal, 10).padding(.vertical, 6)
+                                            .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                            .foregroundColor(active ? .white : .primary)
+                                            .clipShape(Capsule())
                                     }
                                 }
                             }
                         }
-                    }
-                }
 
-                Section("Số lượng") {
-                    HStack {
-                        Button { soLuong = max(1, soLuong - 1) } label: { Image(systemName: "minus.circle") }
-                        Spacer()
-                        Text("\(soLuong)").font(.system(size: 16, weight: .bold))
-                        Spacer()
-                        Button { soLuong += 1 } label: { Image(systemName: "plus.circle") }
+                        HStack {
+                            Text("Số lượng").font(.subheadline)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Button { soLuong = max(1, soLuong - 1) } label: { Image(systemName: "minus.circle.fill") }
+                                    .disabled(soLuong <= 1)
+                                Text("\(soLuong)").font(.subheadline.bold()).frame(minWidth: 20)
+                                Button { soLuong += 1 } label: { Image(systemName: "plus.circle.fill") }
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundColor(Theme.primary)
+                        }
+
+                        if !toppings.isEmpty {
+                            Picker("", selection: $tab) {
+                                Text("Ghi chú").tag(0)
+                                Text("Topping\(toppingIds.isEmpty ? "" : " (\(toppingIds.count))")").tag(1)
+                            }
+                            .pickerStyle(.segmented)
+                        }
+
+                        if !toppings.isEmpty && tab == 1 {
+                            toppingSection
+                        } else {
+                            noteSection
+                        }
                     }
-                    .tint(Theme.primary)
+                    .padding(16)
+                }
+                .navigationTitle("Thêm món")
+                .navigationBarTitleDisplayMode(.inline)
+                .brandNavBar()
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
                 }
             }
-            .navigationTitle("Thêm món")
-            .navigationBarTitleDisplayMode(.inline)
-            .brandNavBar()
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")") { confirmAdd() }
-                        .disabled(bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa))
-                }
+
+            Button {
+                confirmAdd()
+            } label: {
+                Text("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")")
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.primary)
+            .controlSize(.large)
+            .disabled(bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa))
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 8)
+            .background(.bar)
         }
         .onAppear {
             bienThe = sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
@@ -424,6 +421,62 @@ private struct ProductPickerSheet: View {
             loadingNgaySinh = true
             ngaySinhInfo = await APIClient.shared.getSinhNhat()
             loadingNgaySinh = false
+        }
+    }
+
+    /// Chip toggle thay List hàng+checkmark — khớp phong cách toppingSection bên ProductPickerPanel
+    /// (AppQuanLyIOS). Giữ nguyên chọn 1/0 (không số lượng riêng từng topping) vì CartTopping của
+    /// app khách chưa có field số lượng.
+    private var toppingSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(toppings) { t in
+                let active = toppingIds.contains(t.id)
+                Button {
+                    if active { toppingIds.remove(t.id) } else { toppingIds.insert(t.id) }
+                } label: {
+                    HStack {
+                        Text(t.ten)
+                        Spacer()
+                        Text("+\(formatTien(t.gia))").font(.system(size: 12))
+                        Image(systemName: active ? "checkmark.circle.fill" : "circle")
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 8)
+                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
+                    .foregroundColor(active ? .white : .primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    /// Lưới cột theo số nhóm (Đường/Đá/Trà), mỗi nhóm xếp dọc — khớp bố cục noteSection bên
+    /// ProductPickerPanel (AppQuanLyIOS).
+    private var noteSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TextField("Ghi chú món...", text: $ghiChu)
+                .textFieldStyle(.roundedBorder)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top), count: quickNoteGroups.count), spacing: 10) {
+                ForEach(quickNoteGroups, id: \.title) { group in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(group.title).font(.system(size: 10)).foregroundColor(Theme.textFaint)
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(group.notes, id: \.self) { note in
+                                let active = activeNotes.contains(note)
+                                Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note) }
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .padding(.horizontal, 6)
+                                    .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.75)
+                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
+                                    .foregroundColor(active ? .white : Theme.textMuted)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
