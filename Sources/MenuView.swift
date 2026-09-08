@@ -41,6 +41,31 @@ struct MenuView: View {
     /// chiếm chỗ cột trái.
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
+    /// SF Symbol cho từng nhóm sidebar, khớp Ten thật trong bảng NhomSanPhams (VPS, 8/9) — nhóm nào
+    /// không có trong map (mở rộng sau này) rơi về defaultNhomIcon.
+    private static let nhomIcons: [String: String] = [
+        "Ăn Vặt": "fork.knife",
+        "Bạc Xỉu": "cup.and.saucer.fill",
+        "Ca Cao": "cup.and.saucer.fill",
+        "Cà Phê": "mug.fill",
+        "Đá Xay": "snowflake",
+        "Khác": "ellipsis.circle",
+        "Latte": "cup.and.saucer.fill",
+        "Nước Ép": "carrot.fill",
+        "Nước Lon": "shippingbox.fill",
+        "Sinh Tố": "leaf.fill",
+        "Soda": "sparkles",
+        "Sữa Chua": "drop.fill",
+        "Sữa Tươi": "drop.fill",
+        "Thuốc lá": "exclamationmark.triangle.fill",
+        "Trà": "leaf.fill",
+        "Trà Hiện Đại": "leaf.fill",
+        "Trà Sữa": "cup.and.saucer.fill",
+        "Trà Truyền Thống": "leaf.fill",
+        "#Khác": "ellipsis.circle",
+    ]
+    private static let defaultNhomIcon = "circle.grid.2x2.fill"
+
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
@@ -153,10 +178,14 @@ struct MenuView: View {
                         selectedNhomId = section.nhom.id
                         UserDefaults.standard.set(section.nhom.id, forKey: Self.selectedNhomKey)
                     } label: {
-                        HStack(spacing: 0) {
+                        HStack(spacing: 6) {
                             Rectangle()
                                 .fill(isSelected ? Theme.primary : Color.clear)
                                 .frame(width: 3)
+                            Image(systemName: Self.nhomIcons[section.nhom.ten] ?? Self.defaultNhomIcon)
+                                .font(.system(size: 13, weight: isSelected ? .bold : .regular))
+                                .foregroundColor(isSelected ? Theme.primary : .secondary)
+                                .frame(width: 16)
                             Text(section.nhom.ten)
                                 .font(.system(size: 12, weight: isSelected ? .bold : .regular))
                                 .foregroundColor(isSelected ? Theme.primary : .primary)
@@ -174,7 +203,7 @@ struct MenuView: View {
                 }
             }
         }
-        .frame(width: 80)
+        .frame(width: 92)
         .background(Color(.secondarySystemGroupedBackground))
     }
 
