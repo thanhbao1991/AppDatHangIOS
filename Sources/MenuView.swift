@@ -59,14 +59,13 @@ struct MenuView: View {
         "Nước Lon": "shippingbox.fill",
         "Sinh Tố": "drop.fill",
         "Soda": "wineglass.fill",
-        "Sữa Chua": "checkmark.seal.fill",
+        "Sữa Chua": "shippingbox.fill",
         "Sữa Tươi": "takeoutbag.and.cup.and.straw",
         "Thuốc lá": "exclamationmark.triangle.fill",
         "Trà": "leaf.circle.fill",
         "Trà Hiện Đại": "leaf",
         "Trà Sữa": "takeoutbag.and.cup.and.straw.fill",
         "Trà Truyền Thống": "leaf.fill",
-        "#Khác": "ellipsis.circle",
     ]
     private static let defaultNhomIcon = "circle.grid.2x2.fill"
 
@@ -89,7 +88,7 @@ struct MenuView: View {
         result.sort { $0.nhom.ten.localizedStandardCompare($1.nhom.ten) == .orderedAscending }
 
         if !gomChung.isEmpty {
-            result.append((nhom: NhomSanPham(id: "#", ten: "#Khác"), items: gomChung))
+            result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: gomChung))
         }
         return result
     }
