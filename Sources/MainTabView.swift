@@ -38,7 +38,7 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Thực đơn", systemImage: icon("mug", .home)) }
+            .tabItem { Label("Thực đơn", systemImage: "mug") }
             .tag(AppTab.home)
 
             NavigationStack(path: $cartPath) {
@@ -50,7 +50,7 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Giỏ hàng", systemImage: icon("cart", .cart)) }
+            .tabItem { Label("Giỏ hàng", systemImage: "cart") }
             .badge(cartBadgeText)
             .tag(AppTab.cart)
 
@@ -65,20 +65,20 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Đơn của tôi", systemImage: icon("list.bullet.rectangle", .donHang)) }
+            .tabItem { Label("Đơn của tôi", systemImage: "list.bullet.rectangle") }
             .tag(AppTab.donHang)
 
             NavigationStack {
                 ThongBaoView(selectedTab: $selectedTab)
             }
-            .tabItem { Label("Thông báo", systemImage: icon("bell", .thongBao)) }
+            .tabItem { Label("Thông báo", systemImage: "bell") }
             .badge(unreadCount)
             .tag(AppTab.thongBao)
 
             NavigationStack(path: $settingsPath) {
                 SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
             }
-            .tabItem { Label("Cài đặt", systemImage: icon("gearshape", .settings)) }
+            .tabItem { Label("Cài đặt", systemImage: "gearshape") }
             .tag(AppTab.settings)
         }
         .tint(Theme.primary)
@@ -98,12 +98,6 @@ struct MainTabView: View {
         guard !items.isEmpty else { return }
         let lastSeen = UserDefaults.standard.string(forKey: "thongBaoLastSeen")
         unreadCount = lastSeen.map { seen in items.filter { $0.ngayTao > seen }.count } ?? items.count
-    }
-
-    /// SF Symbol .fill khi tab đang chọn, outline khi không — khớp cảm giác native TabView
-    /// thay vì hardcode 1 kiểu icon cho mọi trạng thái.
-    private func icon(_ base: String, _ tab: AppTab) -> String {
-        selectedTab == tab ? "\(base).fill" : base
     }
 
     private func startPolling() {
