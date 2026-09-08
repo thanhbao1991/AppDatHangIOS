@@ -69,6 +69,12 @@ struct MenuView: View {
     private static let defaultNhomIcon = "circle.grid.2x2.fill"
     private static let yeuThichNhomId = "yeu-thich"
 
+    /// Tên hiển thị rút gọn ở sidebar (2 cột, chữ dễ tràn dòng) — không đụng vào Ten thật, chỉ đổi
+    /// nhãn hiển thị nên không ảnh hưởng nhomIcons/nhomGomChung/thuocLaNhomIds vốn khớp theo Ten gốc.
+    private static let nhomShortLabels: [String: String] = [
+        "Trà Truyền Thống": "Trà Tr.Thống",
+    ]
+
     /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi — cùng nguồn dữ liệu tab Cài
     /// đặt đang hiện "Hay gọi") — chỉ khớp theo TÊN sản phẩm vì backend không trả kèm id, khớp cả
     /// khi không tìm thấy biến thể tương ứng (mở picker vẫn chọn được size khác). Giữ thứ tự theo
@@ -181,10 +187,8 @@ struct MenuView: View {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary)
-            Text("Bạn chưa có món hay mua")
+            Text("Món hay gọi sẽ hiện ở đây!")
                 .font(.system(size: 15, weight: .semibold))
-            Text("Đặt vài đơn và món bạn hay chọn sẽ tự hiện ở đây.")
-                .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -229,7 +233,7 @@ struct MenuView: View {
                                 .font(.system(size: 13, weight: isSelected ? .bold : .regular))
                                 .foregroundColor(isSelected ? Theme.primary : .secondary)
                                 .frame(width: 16)
-                            Text(section.nhom.ten)
+                            Text(Self.nhomShortLabels[section.nhom.ten] ?? section.nhom.ten)
                                 .font(.system(size: 12, weight: isSelected ? .bold : .regular))
                                 .foregroundColor(isSelected ? Theme.primary : .primary)
                                 .multilineTextAlignment(.leading)
