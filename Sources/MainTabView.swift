@@ -38,7 +38,7 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Thực đơn", systemImage: "cup.and.saucer.fill") }
+            .tabItem { Label("Thực đơn", systemImage: icon("cup.and.saucer", .home)) }
             .tag(AppTab.home)
 
             NavigationStack(path: $cartPath) {
@@ -50,7 +50,7 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Giỏ hàng", systemImage: "cart") }
+            .tabItem { Label("Giỏ hàng", systemImage: icon("cart", .cart)) }
             .badge(cartBadgeText)
             .tag(AppTab.cart)
 
@@ -65,13 +65,13 @@ struct MainTabView: View {
                         }
                     }
             }
-            .tabItem { Label("Đơn của tôi", systemImage: "list.bullet.rectangle") }
+            .tabItem { Label("Đơn của tôi", systemImage: icon("list.bullet.rectangle", .donHang)) }
             .tag(AppTab.donHang)
 
             NavigationStack {
                 ThongBaoView(selectedTab: $selectedTab)
             }
-            .tabItem { Label("Thông báo", systemImage: "bell") }
+            .tabItem { Label("Thông báo", systemImage: icon("bell", .thongBao)) }
             .badge(unreadCount)
             .tag(AppTab.thongBao)
 

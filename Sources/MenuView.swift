@@ -19,9 +19,6 @@ struct MenuView: View {
     @State private var selectedNhomId: String = ""
     @State private var monHayMua: [FavoriteItem] = []
 
-    /// Nhớ mục khách chọn lần cuối — mở app lại vào thẳng mục đó thay vì luôn về nhóm đầu tiên.
-    private static let selectedNhomKey = "menu.selectedNhomId"
-
     private func normalizeVN(_ s: String) -> String {
         s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
             .replacingOccurrences(of: "đ", with: "d", options: .caseInsensitive)
@@ -109,10 +106,9 @@ struct MenuView: View {
             result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: gomChung))
         }
 
-        let favs = favoriteSanPhams
-        if !favs.isEmpty {
-            result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favs), at: 0)
-        }
+        // Luôn hiện mục "Yêu thích" đầu sidebar kể cả khi chưa có món nào — rỗng thì cột phải tự
+        // hiện dòng thông báo (xem productList) thay vì ẩn hẳn mục đi.
+        result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favoriteSanPhams), at: 0)
         return result
     }
 
@@ -154,9 +150,13 @@ struct MenuView: View {
                         HStack(spacing: 0) {
                             nhomSidebar
                             Divider()
-                            List { ForEach(selectedItems) { sp in productRow(sp) } }
-                                .listStyle(.plain)
-                                .id(selectedNhomId)
+                            if selectedNhomId == Self.yeuThichNhomId && selectedItems.isEmpty {
+                                yeuThichEmptyState
+                            } else {
+                                List { ForEach(selectedItems) { sp in productRow(sp) } }
+                                    .listStyle(.plain)
+                                    .id(selectedNhomId)
+                            }
                         }
                     }
                     .refreshable { await load(silent: true) }
@@ -172,6 +172,24 @@ struct MenuView: View {
                 isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? "")
             ) { picking = nil }
         }
+    }
+
+    /// Hiện khi khách chưa có món hay mua nào (monHayMua rỗng) — thay vì để trống trơn, giải thích
+    /// vì sao mục "Yêu thích" chưa có gì và món sẽ tự xuất hiện sau khi khách đặt hàng.
+    private var yeuThichEmptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "heart.text.square")
+                .font(.system(size: 32))
+                .foregroundColor(.secondary)
+            Text("Bạn chưa có món hay mua")
+                .font(.system(size: 15, weight: .semibold))
+            Text("Đặt vài đơn và món bạn hay chọn sẽ tự hiện ở đây.")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var lyBiMatBanner: some View {
@@ -202,7 +220,6 @@ struct MenuView: View {
                     let isSelected = section.nhom.id == selectedNhomId
                     Button {
                         selectedNhomId = section.nhom.id
-                        UserDefaults.standard.set(section.nhom.id, forKey: Self.selectedNhomKey)
                     } label: {
                         HStack(spacing: 6) {
                             Rectangle()
@@ -229,7 +246,7 @@ struct MenuView: View {
                 }
             }
         }
-        .frame(width: 92)
+        .frame(width: 96)
         .background(Color(.secondarySystemGroupedBackground))
     }
 
@@ -276,8 +293,10 @@ struct MenuView: View {
         toppings = top.filter { !$0.ngungBan }
         monHayMua = vi?.monHayMua ?? []
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
-        if selectedNhomId.isEmpty, let saved = UserDefaults.standard.string(forKey: Self.selectedNhomKey) {
-            selectedNhomId = saved
+        // Mục đầu tiên khi mở app luôn là "Yêu thích" (id cố định, luôn có mặt trong sections dù
+        // rỗng) — không nhớ nhóm khách chọn lần trước nữa.
+        if selectedNhomId.isEmpty {
+            selectedNhomId = Self.yeuThichNhomId
         }
         if !sections.contains(where: { $0.nhom.id == selectedNhomId }) {
             selectedNhomId = sections.first?.nhom.id ?? ""
