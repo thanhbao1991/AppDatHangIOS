@@ -60,7 +60,7 @@ struct MenuView: View {
         result.sort { $0.nhom.ten.localizedStandardCompare($1.nhom.ten) == .orderedAscending }
 
         if !gomChung.isEmpty {
-            result.append((nhom: NhomSanPham(id: "#", ten: "#"), items: gomChung))
+            result.append((nhom: NhomSanPham(id: "#", ten: "#Khác"), items: gomChung))
         }
         return result
     }
