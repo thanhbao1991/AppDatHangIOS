@@ -1,7 +1,13 @@
 import SwiftUI
+import UIKit
 
-/// Port từ MainTabs.tsx — 4 tab (Thực đơn/Đơn của tôi/Thông báo/Cài đặt), mỗi tab giữ path riêng
-/// (xem Navigation.swift) thay cho react-navigation stack.
+/// Port từ MainTabs.tsx — 4 tab (Thực đơn/Đơn của tôi/Thông báo/Cài đặt) + Giỏ hàng (thêm sau).
+/// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
+/// một "trait" SwiftUI gắn vào lúc dựng UITabBarController, closure của nó KHÔNG track @State như
+/// body thật, nên đổi `selectedTab` chỉ khiến UIKit tự tint màu, không re-render lại icon sang
+/// bản .fill (verify bằng ảnh chụp máy thật, xem commit e4b6068 — bug có thật, không phải hoang
+/// tưởng). Tự vẽ tab bar (giống AppQuanLyIOS/MainTabView.swift) để icon đổi outline/fill theo
+/// đúng tab đang chọn, vì lúc đó Image nằm trong body thật, được SwiftUI diff lại bình thường.
 private let thongBaoPollInterval: TimeInterval = 60
 
 struct MainTabView: View {
@@ -28,58 +34,55 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack(path: $homePath) {
-                MenuView(path: $homePath, selectedTab: $selectedTab)
-                    .navigationDestination(for: HomeRoute.self) { route in
-                        switch route {
-                        case .lyBiMat: LyBiMatView(path: $homePath)
-                        case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
-                        }
+        VStack(spacing: 0) {
+            Group {
+                switch selectedTab {
+                case .home:
+                    NavigationStack(path: $homePath) {
+                        MenuView(path: $homePath, selectedTab: $selectedTab)
+                            .navigationDestination(for: HomeRoute.self) { route in
+                                switch route {
+                                case .lyBiMat: LyBiMatView(path: $homePath)
+                                case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
+                                }
+                            }
                     }
-            }
-            .tabItem { Label("Thực đơn", systemImage: "cup.and.saucer") }
-            .tag(AppTab.home)
-
-            NavigationStack(path: $cartPath) {
-                CheckoutView(path: $cartPath)
-                    .navigationDestination(for: HomeRoute.self) { route in
-                        switch route {
-                        case .lyBiMat: LyBiMatView(path: $cartPath)
-                        case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; cartPath = [] }
-                        }
+                case .cart:
+                    NavigationStack(path: $cartPath) {
+                        CheckoutView(path: $cartPath)
+                            .navigationDestination(for: HomeRoute.self) { route in
+                                switch route {
+                                case .lyBiMat: LyBiMatView(path: $cartPath)
+                                case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; cartPath = [] }
+                                }
+                            }
                     }
-            }
-            .tabItem { Label("Giỏ hàng", systemImage: "cart") }
-            .badge(cartBadgeText)
-            .tag(AppTab.cart)
-
-            NavigationStack(path: $donHangPath) {
-                OrderStatusView(path: $donHangPath)
-                    .navigationDestination(for: DonHangRoute.self) { route in
-                        switch route {
-                        case .detail(let order):
-                            OrderDetailView(donHangPath: $donHangPath, selectedTab: $selectedTab, cartPath: $cartPath, order: order)
-                        case .thanhToan(let hoaDonId):
-                            ThanhToanView(hoaDonId: hoaDonId) { donHangPath = [] }
-                        }
+                case .donHang:
+                    NavigationStack(path: $donHangPath) {
+                        OrderStatusView(path: $donHangPath)
+                            .navigationDestination(for: DonHangRoute.self) { route in
+                                switch route {
+                                case .detail(let order):
+                                    OrderDetailView(donHangPath: $donHangPath, selectedTab: $selectedTab, cartPath: $cartPath, order: order)
+                                case .thanhToan(let hoaDonId):
+                                    ThanhToanView(hoaDonId: hoaDonId) { donHangPath = [] }
+                                }
+                            }
                     }
+                case .thongBao:
+                    NavigationStack {
+                        ThongBaoView(selectedTab: $selectedTab)
+                    }
+                case .settings:
+                    NavigationStack(path: $settingsPath) {
+                        SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
+                    }
+                }
             }
-            .tabItem { Label("Đơn của tôi", systemImage: "list.bullet.rectangle") }
-            .tag(AppTab.donHang)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            NavigationStack {
-                ThongBaoView(selectedTab: $selectedTab)
-            }
-            .tabItem { Label("Thông báo", systemImage: "bell") }
-            .badge(unreadCount)
-            .tag(AppTab.thongBao)
-
-            NavigationStack(path: $settingsPath) {
-                SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
-            }
-            .tabItem { Label("Cài đặt", systemImage: "gearshape") }
-            .tag(AppTab.settings)
+            Divider()
+            tabBar
         }
         .tint(Theme.primary)
         .environmentObject(cart)
@@ -91,6 +94,63 @@ struct MainTabView: View {
             startPolling()
         }
         .onDisappear { pollTask?.cancel() }
+    }
+
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
+            tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
+            tabButton(.donHang, label: "Đơn của tôi", icon: "list.bullet.rectangle")
+            tabButton(.thongBao, label: "Thông báo", icon: "bell", badgeCount: unreadCount)
+            tabButton(.settings, label: "Cài đặt", icon: "gearshape")
+        }
+        .padding(.top, 6)
+        // Tab bar tự vẽ không còn nằm trong UITabBarController nên không tự có safe area đáy
+        // như TabView gốc — cộng tay để không bị thanh vuốt home indicator đè lên, khớp cách
+        // AppQuanLyIOS đang làm.
+        .padding(.bottom, max(4, Self.bottomSafeAreaInset))
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private func tabButton(_ tab: AppTab, label: String, icon: String, badgeText: String? = nil, badgeCount: Int = 0) -> some View {
+        let isSelected = selectedTab == tab
+        Button {
+            selectedTab = tab
+        } label: {
+            VStack(spacing: 3) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: isSelected ? "\(icon).fill" : icon)
+                        .font(.system(size: 20))
+                    if let badgeText {
+                        tabBadge(badgeText)
+                    } else if badgeCount > 0 {
+                        tabBadge("\(badgeCount)")
+                    }
+                }
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundColor(isSelected ? Theme.primary : Theme.textMuted)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func tabBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(Color.red))
+            .offset(x: 14, y: -8)
+    }
+
+    private static var bottomSafeAreaInset: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.windows.first { $0.isKeyWindow } }
+            .first?.safeAreaInsets.bottom ?? 0
     }
 
     private func checkUnread() async {
