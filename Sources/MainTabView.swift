@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// Port từ MainTabs.tsx — 4 tab (Thực đơn/Đơn của tôi/Thông báo/Cài đặt) + Giỏ hàng (thêm sau).
 /// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
@@ -105,10 +104,7 @@ struct MainTabView: View {
             tabButton(.settings, label: "Cài đặt", icon: "gearshape")
         }
         .padding(.top, 6)
-        // Tab bar tự vẽ không còn nằm trong UITabBarController nên không tự có safe area đáy
-        // như TabView gốc — cộng tay để không bị thanh vuốt home indicator đè lên, khớp cách
-        // AppQuanLyIOS đang làm.
-        .padding(.bottom, max(4, Self.bottomSafeAreaInset))
+        .padding(.bottom, 6)
         .background(.bar)
     }
 
@@ -145,12 +141,6 @@ struct MainTabView: View {
             .padding(.vertical, 2)
             .background(Capsule().fill(Color.red))
             .offset(x: 14, y: -8)
-    }
-
-    private static var bottomSafeAreaInset: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.windows.first { $0.isKeyWindow } }
-            .first?.safeAreaInsets.bottom ?? 0
     }
 
     private func checkUnread() async {
