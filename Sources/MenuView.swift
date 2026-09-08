@@ -191,7 +191,6 @@ struct MenuView: View {
                     }
                 }
                 Spacer()
-                Image(systemName: "plus.circle.fill").foregroundColor(Theme.primary).font(.system(size: 22))
             }
         }
         .foregroundColor(.primary)
