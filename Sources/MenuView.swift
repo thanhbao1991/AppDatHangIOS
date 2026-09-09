@@ -159,9 +159,12 @@ struct MenuView: View {
                             if selectedNhomId == Self.yeuThichNhomId && selectedItems.isEmpty {
                                 yeuThichEmptyState
                             } else {
-                                List { ForEach(selectedItems) { sp in productRow(sp) } }
-                                    .listStyle(.plain)
-                                    .id(selectedNhomId)
+                                List {
+                                    if !selectedItems.isEmpty { randomPickRow }
+                                    ForEach(selectedItems) { sp in productRow(sp) }
+                                }
+                                .listStyle(.plain)
+                                .id(selectedNhomId)
                             }
                         }
                     }
@@ -252,6 +255,29 @@ struct MenuView: View {
         }
         .frame(width: 96)
         .background(Color(.secondarySystemGroupedBackground))
+    }
+
+    /// Hàng đặc biệt đầu danh sách mỗi nhóm — bấm thì bốc random 1 món TRONG NHÓM ĐANG XEM
+    /// (selectedItems) rồi mở ProductPickerSheet y hệt bấm chọn tay, khách vẫn tự chọn size/topping.
+    private var randomPickRow: some View {
+        Button {
+            picking = selectedItems.randomElement()
+        } label: {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
+                    .overlay(Image(systemName: "dice.fill").font(.system(size: 22)).foregroundColor(Theme.primary))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Chọn Ngẫu Nhiên")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Text("Để quán bốc giúp 1 món trong nhóm này")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+        }
+        .foregroundColor(.primary)
     }
 
     @ViewBuilder
