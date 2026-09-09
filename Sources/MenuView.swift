@@ -270,10 +270,10 @@ struct MenuView: View {
                     .frame(width: 56, height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Chọn Ngẫu Nhiên")
+                    Text("Hôm Nay Uống Gì?")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
-                    Text("Để quán bốc giúp 1 món trong nhóm này")
+                    Text("Chọn ngẫu nhiên 1 món")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
