@@ -321,10 +321,17 @@ struct MenuView: View {
         return "\(first.uppercased()).\(parts[1])"
     }
 
+    /// Cụm từ hay gặp trong tên món khi quá dài — viết tắt CỐ ĐỊNH (không suy ra tự động), áp dụng
+    /// theo thứ tự khai báo. Thêm cụm mới vào đây khi gặp tên dài phát sinh thêm.
+    private static let cumTuVietTat: [(full: String, abbr: String)] = [
+        ("Trân Châu Trắng", "TCT"),
+        ("Trứng Nướng", "T.Nướng"),
+    ]
+
     /// Tên món hiển thị ở danh sách — quá dài (> tenMonThreshold) thì viết tắt dần: (1) tiền tố
-    /// trùng tên nhóm (vd "Sữa Chua Chanh Dây..." → "S.Chua Chanh Dây..."), (2) nếu vẫn dài thì
-    /// viết tắt tiếp 2 từ cuối cùng (vd "...Trân Châu" → "...T.Châu"). lineLimit(1) vẫn là lưới an
-    /// toàn cuối nếu 2 bước trên chưa đủ ngắn.
+    /// trùng tên nhóm (vd "Sữa Chua Chanh Dây..." → "S.Chua Chanh Dây..."), (2) nếu vẫn dài thì áp
+    /// cumTuVietTat cho tới khi vừa hoặc hết danh sách. lineLimit(1) vẫn là lưới an toàn cuối nếu
+    /// các bước trên chưa đủ ngắn.
     private func displayName(for item: SanPham) -> String {
         var name = item.ten
         guard name.count > Self.tenMonThreshold else { return name }
@@ -334,11 +341,9 @@ struct MenuView: View {
         }
         guard name.count > Self.tenMonThreshold else { return name }
 
-        let words = name.split(separator: " ")
-        if words.count >= 2 {
-            let dauWords = words.dropLast(2).joined(separator: " ")
-            let cuoiAbbr = abbreviateTwoWords(words.suffix(2).joined(separator: " "))
-            name = dauWords.isEmpty ? cuoiAbbr : "\(dauWords) \(cuoiAbbr)"
+        for (full, abbr) in Self.cumTuVietTat {
+            guard name.count > Self.tenMonThreshold, name.contains(full) else { continue }
+            name = name.replacingOccurrences(of: full, with: abbr)
         }
         return name
     }
