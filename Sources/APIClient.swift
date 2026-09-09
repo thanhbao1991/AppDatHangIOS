@@ -202,6 +202,13 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// SanPhamId theo tổng số lượng bán ra giảm dần (30 ngày gần nhất) — dùng để xếp "bán chạy"
+    /// lên trước trong từng nhóm ở màn Thực đơn.
+    func getBanChayIds() async -> [String] {
+        let env: ApiEnvelope<[String]> = await cachedDecode("/dat-hang/menu/ban-chay")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     // ===== Đặt món =====
 
     func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?) async -> ApiEnvelope<DatMonResponse> {

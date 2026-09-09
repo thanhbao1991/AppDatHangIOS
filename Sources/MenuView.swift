@@ -18,6 +18,8 @@ struct MenuView: View {
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
     @State private var monHayMua: [FavoriteItem] = []
+    /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
+    @State private var banChayIds: [String] = []
 
     private func normalizeVN(_ s: String) -> String {
         s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
@@ -90,6 +92,24 @@ struct MenuView: View {
         return result
     }
 
+    /// SanPhamId → hạng bán chạy (0 = bán chạy nhất) — món không có trong banChayIds rơi về cuối.
+    private var banChayRank: [String: Int] {
+        var m: [String: Int] = [:]
+        for (i, id) in banChayIds.enumerated() { m[id] = i }
+        return m
+    }
+
+    /// Sắp món trong 1 nhóm theo bán chạy giảm dần, giữ nguyên thứ tự gốc giữa các món cùng hạng
+    /// (chưa có lượt bán/chưa nằm trong top 30 ngày).
+    private func sortedByBanChay(_ items: [SanPham]) -> [SanPham] {
+        let rank = banChayRank
+        return items.enumerated().sorted { a, b in
+            let ra = rank[a.element.id] ?? Int.max
+            let rb = rank[b.element.id] ?? Int.max
+            return ra != rb ? ra < rb : a.offset < b.offset
+        }.map(\.element)
+    }
+
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
@@ -103,13 +123,13 @@ struct MenuView: View {
             if Self.nhomGomChung.contains(nhom.ten) {
                 gomChung.append(contentsOf: items)
             } else {
-                result.append((nhom: nhom, items: items))
+                result.append((nhom: nhom, items: sortedByBanChay(items)))
             }
         }
         result.sort { $0.nhom.ten.localizedStandardCompare($1.nhom.ten) == .orderedAscending }
 
         if !gomChung.isEmpty {
-            result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: gomChung))
+            result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: sortedByBanChay(gomChung)))
         }
 
         // Luôn hiện mục "Yêu thích" đầu sidebar kể cả khi chưa có món nào — rỗng thì cột phải tự
@@ -320,11 +340,13 @@ struct MenuView: View {
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
         async let viTask = APIClient.shared.getVi()
-        let (sp, nhom, top, vi) = await (spTask, nhomTask, topTask, viTask)
+        async let banChayTask = APIClient.shared.getBanChayIds()
+        let (sp, nhom, top, vi, banChay) = await (spTask, nhomTask, topTask, viTask, banChayTask)
         sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         monHayMua = vi?.monHayMua ?? []
+        banChayIds = banChay
         if sanPhams.isEmpty && sp.isEmpty { error = "" }
         // Mục đầu tiên khi mở app luôn là "Yêu thích" (id cố định, luôn có mặt trong sections dù
         // rỗng) — không nhớ nhóm khách chọn lần trước nữa.
