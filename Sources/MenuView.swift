@@ -566,15 +566,16 @@ private struct ProductPickerSheet: View {
         }
     }
 
-    /// Stepper số lượng từng topping — khớp toppingSection bên ProductPickerPanel (AppQuanLyIOS),
-    /// cho chọn nhiều lần cùng 1 topping (vd 2 trân châu) thay vì chỉ bật/tắt 0-1 như trước.
+    /// Stepper số lượng từng topping — khớp toppingSection bên ProductPickerPanel (AppQuanLyIOS):
+    /// hàng phẳng không nền/bo góc, cho chọn nhiều lần cùng 1 topping (vd 2 trân châu) thay vì chỉ
+    /// bật/tắt 0-1 như trước.
     private var toppingSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             ForEach(toppings) { t in
                 HStack {
                     Text(t.ten)
                     Spacer()
-                    Text("+\(formatTien(t.gia))").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    Text(formatTien(t.gia)).font(.caption).foregroundColor(Theme.textMuted)
                     Stepper("\(toppingQty[t.id] ?? 0)", value: Binding(
                         get: { toppingQty[t.id] ?? 0 },
                         set: { newValue in
@@ -583,9 +584,6 @@ private struct ProductPickerSheet: View {
                     ), in: 0...20)
                     .fixedSize()
                 }
-                .padding(.horizontal, 10).padding(.vertical, 8)
-                .background(Theme.textMuted.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
         }
     }
