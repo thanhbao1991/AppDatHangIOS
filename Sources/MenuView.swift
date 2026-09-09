@@ -264,8 +264,11 @@ struct MenuView: View {
             picking = selectedItems.randomElement()
         } label: {
             HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
-                    .overlay(Image(systemName: "dice.fill").font(.system(size: 22)).foregroundColor(Theme.primary))
+                Image("RandomPickIcon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Chọn Ngẫu Nhiên")
                         .font(.system(size: 15, weight: .semibold))
