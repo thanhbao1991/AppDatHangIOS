@@ -119,7 +119,7 @@ struct MainTabView: View {
                     Image(systemName: isSelected ? "\(icon).fill" : icon)
                         .font(.system(size: 20))
                     if let badgeText {
-                        tabBadge(badgeText)
+                        tabBadge(badgeText, pulse: tab == .cart)
                     } else if badgeCount > 0 {
                         tabBadge("\(badgeCount)")
                     }
@@ -133,14 +133,20 @@ struct MainTabView: View {
         .buttonStyle(.plain)
     }
 
-    private func tabBadge(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(Color.red))
-            .offset(x: 14, y: -8)
+    private func tabBadge(_ text: String, pulse: Bool = false) -> some View {
+        Group {
+            if pulse {
+                PulsingCartBadge(text: text)
+            } else {
+                Text(text)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.red))
+            }
+        }
+        .offset(x: 14, y: -8)
     }
 
     private func checkUnread() async {
@@ -159,5 +165,27 @@ struct MainTabView: View {
                 await checkUnread()
             }
         }
+    }
+}
+
+/// Badge giỏ hàng nhấp nháy (phóng to/thu nhỏ lặp lại) để gây chú ý khi có món trong giỏ — cần
+/// @State riêng để driver animation lặp vô hạn nên tách thành view con thay vì để trong tabBadge.
+private struct PulsingCartBadge: View {
+    let text: String
+    @State private var animate = false
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(Color.red))
+            .scaleEffect(animate ? 1.22 : 1.0)
+            .onAppear {
+                withAnimation(Animation.easeInOut(duration: 0.55).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
+            }
     }
 }
