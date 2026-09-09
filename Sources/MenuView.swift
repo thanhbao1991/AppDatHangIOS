@@ -303,6 +303,46 @@ struct MenuView: View {
         .foregroundColor(.primary)
     }
 
+    /// SanPhamId → tên nhóm thật (khác section.nhom.ten của mục "Khác" gộp chung) — dùng để nhận
+    /// diện tiền tố cần viết tắt trong displayName(for:).
+    private var nhomTenById: [String: String] {
+        Dictionary(uniqueKeysWithValues: nhoms.map { ($0.id, $0.ten) })
+    }
+
+    /// Ngưỡng ký tự ước lượng để tên món vừa 1 dòng ở font 15 semibold trong cột tên (sau ảnh
+    /// 56pt+khoảng cách) — vượt ngưỡng mới viết tắt, tránh viết tắt cả tên ngắn không cần thiết.
+    private static let tenMonThreshold = 20
+
+    /// "Sữa Chua" → "S.Chua", "Trứng Nướng" → "T.Nướng" — chỉ viết tắt CHỮ ĐẦU của cụm 2+ từ,
+    /// giữ nguyên phần còn lại.
+    private func abbreviateTwoWords(_ s: String) -> String {
+        let parts = s.split(separator: " ", maxSplits: 1)
+        guard parts.count == 2, let first = parts[0].first else { return s }
+        return "\(first.uppercased()).\(parts[1])"
+    }
+
+    /// Tên món hiển thị ở danh sách — quá dài (> tenMonThreshold) thì viết tắt dần: (1) tiền tố
+    /// trùng tên nhóm (vd "Sữa Chua Chanh Dây..." → "S.Chua Chanh Dây..."), (2) nếu vẫn dài thì
+    /// viết tắt tiếp 2 từ cuối cùng (vd "...Trân Châu" → "...T.Châu"). lineLimit(1) vẫn là lưới an
+    /// toàn cuối nếu 2 bước trên chưa đủ ngắn.
+    private func displayName(for item: SanPham) -> String {
+        var name = item.ten
+        guard name.count > Self.tenMonThreshold else { return name }
+
+        if let nhomTen = nhomTenById[item.nhomSanPhamId ?? ""], name.hasPrefix(nhomTen) {
+            name = abbreviateTwoWords(nhomTen) + name.dropFirst(nhomTen.count)
+        }
+        guard name.count > Self.tenMonThreshold else { return name }
+
+        let words = name.split(separator: " ")
+        if words.count >= 2 {
+            let dauWords = words.dropLast(2).joined(separator: " ")
+            let cuoiAbbr = abbreviateTwoWords(words.suffix(2).joined(separator: " "))
+            name = dauWords.isEmpty ? cuoiAbbr : "\(dauWords) \(cuoiAbbr)"
+        }
+        return name
+    }
+
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
         let prices = item.bienThe.map(\.giaBan)
@@ -317,11 +357,10 @@ struct MenuView: View {
                         .overlay(Text(item.ten.trimmingCharacters(in: .whitespaces).prefix(1).uppercased()).foregroundColor(Theme.primary).fontWeight(.bold))
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.ten)
+                    Text(displayName(for: item))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
                     if let minPrice {
                         Text(prices.count > 1 ? "Từ \(formatTien(minPrice))" : formatTien(minPrice))
                             .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
