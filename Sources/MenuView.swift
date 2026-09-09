@@ -319,7 +319,7 @@ private struct ProductPickerSheet: View {
     let onDone: () -> Void
 
     @State private var bienThe: SanPhamBienThe?
-    @State private var toppingIds: Set<String> = []
+    @State private var toppingQty: [String: Int] = [:]
     @State private var soLuong = 1
     @State private var ghiChu = ""
     @State private var tab: Int = 0
@@ -365,6 +365,18 @@ private struct ProductPickerSheet: View {
 
     private var activeNotes: Set<String> {
         Set(ghiChu.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })
+    }
+
+    private var toppingCount: Int { toppingQty.values.reduce(0, +) }
+
+    /// Thành tiền tạm tính gồm cả topping — khớp thanhTienDraft bên ProductPickerPanel (AppQuanLyIOS).
+    private var thanhTienDraft: Double {
+        guard let bienThe else { return 0 }
+        let toppingTien = toppingQty.reduce(0.0) { sum, kv in
+            guard let top = toppings.first(where: { $0.id == kv.key }) else { return sum }
+            return sum + top.gia * Double(kv.value)
+        }
+        return bienThe.giaBan * Double(soLuong) + toppingTien
     }
 
     /// Nhãn rút gọn cho chip ghi chú nhanh — khớp shortNoteLabels bên ProductPickerPanel
@@ -456,7 +468,7 @@ private struct ProductPickerSheet: View {
                         if !toppings.isEmpty {
                             Picker("", selection: $tab) {
                                 Text("Ghi chú").tag(0)
-                                Text("Topping\(toppingIds.isEmpty ? "" : " (\(toppingIds.count))")").tag(1)
+                                Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
                             }
                             .pickerStyle(.segmented)
                         }
@@ -480,7 +492,7 @@ private struct ProductPickerSheet: View {
             Button {
                 confirmAdd()
             } label: {
-                Text("Thêm giỏ · \(bienThe != nil ? formatTien(bienThe!.giaBan * Double(soLuong)) : "")")
+                Text("Thêm giỏ · \(bienThe != nil ? formatTien(thanhTienDraft) : "")")
                     .fontWeight(.bold)
                     .frame(maxWidth: .infinity)
             }
@@ -504,28 +516,26 @@ private struct ProductPickerSheet: View {
         }
     }
 
-    /// Chip toggle thay List hàng+checkmark — khớp phong cách toppingSection bên ProductPickerPanel
-    /// (AppQuanLyIOS). Giữ nguyên chọn 1/0 (không số lượng riêng từng topping) vì CartTopping của
-    /// app khách chưa có field số lượng.
+    /// Stepper số lượng từng topping — khớp toppingSection bên ProductPickerPanel (AppQuanLyIOS),
+    /// cho chọn nhiều lần cùng 1 topping (vd 2 trân châu) thay vì chỉ bật/tắt 0-1 như trước.
     private var toppingSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(toppings) { t in
-                let active = toppingIds.contains(t.id)
-                Button {
-                    if active { toppingIds.remove(t.id) } else { toppingIds.insert(t.id) }
-                } label: {
-                    HStack {
-                        Text(t.ten)
-                        Spacer()
-                        Text("+\(formatTien(t.gia))").font(.system(size: 12))
-                        Image(systemName: active ? "checkmark.circle.fill" : "circle")
-                    }
-                    .padding(.horizontal, 10).padding(.vertical, 8)
-                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
-                    .foregroundColor(active ? .white : .primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                HStack {
+                    Text(t.ten)
+                    Spacer()
+                    Text("+\(formatTien(t.gia))").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    Stepper("\(toppingQty[t.id] ?? 0)", value: Binding(
+                        get: { toppingQty[t.id] ?? 0 },
+                        set: { newValue in
+                            if newValue <= 0 { toppingQty.removeValue(forKey: t.id) } else { toppingQty[t.id] = newValue }
+                        }
+                    ), in: 0...20)
+                    .fixedSize()
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .background(Theme.textMuted.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
         }
     }
@@ -588,7 +598,10 @@ private struct ProductPickerSheet: View {
 
     private func confirmAdd() {
         guard let bienThe else { return }
-        let chosen = toppings.filter { toppingIds.contains($0.id) }.map { CartTopping(id: $0.id, ten: $0.ten, gia: $0.gia) }
+        let chosen = toppings.compactMap { t -> CartTopping? in
+            guard let qty = toppingQty[t.id], qty > 0 else { return nil }
+            return CartTopping(id: t.id, ten: t.ten, gia: t.gia, soLuong: qty)
+        }
         cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sanPham.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, toppings: chosen)
         onDone()
     }

@@ -137,7 +137,7 @@ struct CheckoutView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold))
                 if !item.toppings.isEmpty {
-                    Text("+ " + item.toppings.map(\.ten).joined(separator: ", ")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    Text("+ " + item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 }
                 HStack(spacing: 10) {
                     Button { cart.setQuantity(item.id, soLuong: item.soLuong - 1) } label: { Image(systemName: "minus.circle") }
@@ -192,7 +192,7 @@ struct CheckoutView: View {
         loading = true; error = ""
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
-        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppingIds: $0.toppings.map(\.id)) }
+        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
         let result = await APIClient.shared.datMon(
             items: items, diaChiText: diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChu.isEmpty ? nil : ghiChu,
             soDienThoaiText: nil, deliveryLat: coord?.latitude, deliveryLong: coord?.longitude, clientOrderId: clientOrderId

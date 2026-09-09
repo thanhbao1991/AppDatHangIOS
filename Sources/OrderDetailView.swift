@@ -68,14 +68,14 @@ struct OrderDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))").font(.system(size: 15, weight: .bold))
                                 if !it.toppings.isEmpty {
-                                    Text("+ " + it.toppings.map(\.ten).joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
+                                    Text("+ " + it.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
                                 }
                                 if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
                                     Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
                                 }
                             }
                             Spacer()
-                            Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia }))).font(.system(size: 15, weight: .bold))
+                            Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
                         }
                         .padding(.vertical, 6)
                     }
@@ -211,7 +211,7 @@ struct OrderDetailView: View {
     private func datLai() {
         cart.clear()
         for it in order.items {
-            cart.addItem(sanPhamBienTheId: it.sanPhamBienTheId, tenSanPham: it.tenSanPham, tenBienThe: it.tenBienThe, giaBan: it.donGia, soLuong: it.soLuong, ghiChu: it.ghiChu, toppings: it.toppings.map { CartTopping(id: $0.toppingId, ten: $0.ten, gia: $0.gia) })
+            cart.addItem(sanPhamBienTheId: it.sanPhamBienTheId, tenSanPham: it.tenSanPham, tenBienThe: it.tenBienThe, giaBan: it.donGia, soLuong: it.soLuong, ghiChu: it.ghiChu, toppings: it.toppings.map { CartTopping(id: $0.toppingId, ten: $0.ten, gia: $0.gia, soLuong: $0.soLuong) })
         }
         cartPath = []
         selectedTab = .cart

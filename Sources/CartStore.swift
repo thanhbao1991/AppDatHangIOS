@@ -1,7 +1,7 @@
 import Foundation
 
 /// Port từ CartContext.tsx (bản RN cũ).
-struct CartTopping: Identifiable, Hashable { let id: String; let ten: String; let gia: Double }
+struct CartTopping: Identifiable, Hashable { let id: String; let ten: String; let gia: Double; let soLuong: Int }
 
 struct CartItem: Identifiable, Hashable {
     let id: UUID
@@ -13,7 +13,7 @@ struct CartItem: Identifiable, Hashable {
     var ghiChu: String?
     let toppings: [CartTopping]
 
-    var donGia: Double { giaBan + toppings.reduce(0) { $0 + $1.gia } }
+    var donGia: Double { giaBan + toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) } }
     var thanhTien: Double { donGia * Double(soLuong) }
 }
 

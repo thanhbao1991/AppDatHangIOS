@@ -69,7 +69,8 @@ struct Topping: Decodable, Identifiable { let id: String; let ten: String; let g
 
 // ---- Đặt món ----
 
-struct DatMonItem: Encodable { let sanPhamBienTheId: String; let soLuong: Int; let ghiChu: String?; let toppingIds: [String] }
+struct DatMonToppingItem: Encodable { let toppingId: String; let soLuong: Int }
+struct DatMonItem: Encodable { let sanPhamBienTheId: String; let soLuong: Int; let ghiChu: String?; let toppings: [DatMonToppingItem] }
 struct DatMonRequest: Encodable {
     let items: [DatMonItem]
     let ghiChu: String?
@@ -95,6 +96,7 @@ struct DonHangKhachItemTopping: Decodable, Identifiable, Hashable {
     let toppingId: String
     let ten: String
     let gia: Double
+    let soLuong: Int
     var id: String { toppingId }
 }
 
