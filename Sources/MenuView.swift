@@ -202,11 +202,6 @@ struct MenuView: View {
                                                 .listRowInsets(EdgeInsets())
                                                 .listRowBackground(sectionBackground(index))
                                         } else {
-                                            if !section.items.isEmpty {
-                                                randomPickRow(section.items, nhomTen: section.nhom.ten)
-                                                    .listRowInsets(EdgeInsets())
-                                                    .listRowBackground(sectionBackground(index))
-                                            }
                                             ForEach(section.items) { sp in
                                                 productRow(sp)
                                                     .listRowInsets(EdgeInsets())
@@ -214,12 +209,23 @@ struct MenuView: View {
                                             }
                                         }
                                     } header: {
-                                        sectionHeader(section.nhom)
-                                            .id(section.nhom.id)
-                                            .onAppear {
-                                                guard !isJumpingToSection else { return }
-                                                selectedNhomId = section.nhom.id
+                                        // "Chọn ngẫu nhiên" gộp chung header để ghim (pinned) luôn
+                                        // theo tên nhóm khi cuộn — trước đây là row đầu của Section
+                                        // nên cuộn mất, giờ khách luôn thấy nút bốc random dù đã
+                                        // cuộn xuống xem hết cả nhóm.
+                                        VStack(spacing: 0) {
+                                            sectionHeader(section.nhom)
+                                                .id(section.nhom.id)
+                                                .onAppear {
+                                                    guard !isJumpingToSection else { return }
+                                                    selectedNhomId = section.nhom.id
+                                                }
+                                            if !section.items.isEmpty {
+                                                Divider()
+                                                randomPickRow(section.items, nhomTen: section.nhom.ten)
+                                                    .background(sectionBackground(index))
                                             }
+                                        }
                                     }
                                     .listRowInsets(EdgeInsets())
                                 }
