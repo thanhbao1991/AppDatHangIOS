@@ -48,7 +48,7 @@ struct UuDaiView: View {
 
     @ViewBuilder
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8, content: content)
+        VStack(alignment: .leading, spacing: 10, content: content)
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.white)
@@ -56,14 +56,33 @@ struct UuDaiView: View {
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
     }
 
+    /// Header thống nhất cho mọi card — icon trong khung tròn màu nhấn + tiêu đề, thay vì emoji nằm
+    /// trơn cạnh chữ (trước đây 3 card trông đều na ná nhau, khó phân biệt loại ưu đãi khi lướt nhanh).
+    private func cardHeader(_ icon: String, _ title: String) -> some View {
+        HStack(spacing: 10) {
+            Text(icon).font(.system(size: 20))
+                .frame(width: 36, height: 36)
+                .background(Theme.primaryTint)
+                .clipShape(Circle())
+            Text(title).font(.system(size: 16, weight: .bold))
+            Spacer()
+        }
+    }
+
     private func theTemCard(_ t: TheTem) -> some View {
         card {
-            Text("🧋 Thẻ sưu tập ly").font(.system(size: 16, weight: .bold))
+            cardHeader("🧋", "Thẻ sưu tập ly")
             Text("Mua đủ \(t.mocThuong) đơn được đổi 1 phần thưởng — báo nhân viên khi đủ điều kiện.")
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
             Text(String(repeating: "🧋", count: t.temHienTai) + String(repeating: "⚪", count: max(0, t.mocThuong - t.temHienTai)))
                 .font(.system(size: 22))
-            Text("\(t.temHienTai)/\(t.mocThuong) — đã đổi \(t.soLanDaDoiThuong) lần").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+            ProgressView(value: Double(t.temHienTai), total: Double(max(t.mocThuong, 1)))
+                .tint(Theme.primary)
+            HStack {
+                Text("\(t.temHienTai)/\(t.mocThuong) tem").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                Spacer()
+                Text("Đã đổi \(t.soLanDaDoiThuong) lần").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+            }
             if t.duDieuKienDoiThuong {
                 Button {
                     Task { await doiTem() }
@@ -77,7 +96,7 @@ struct UuDaiView: View {
 
     private func gioiThieuCard(_ g: GioiThieuInfo) -> some View {
         card {
-            Text("👥 Giới thiệu bạn bè").font(.system(size: 16, weight: .bold))
+            cardHeader("👥", "Giới thiệu bạn bè")
             Text("Chia sẻ mã dưới đây — cả bạn và bạn bè đều nhận thưởng khi họ nhập mã.").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             HStack {
                 Spacer()
@@ -115,10 +134,14 @@ struct UuDaiView: View {
 
     private var vongQuayCard: some View {
         card {
-            Text("🎡 Vòng quay may mắn").font(.system(size: 16, weight: .bold))
+            cardHeader("🎡", "Vòng quay may mắn")
             Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng Xu!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             if let ketQuaQuay {
-                Text(ketQuaQuay).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity, alignment: .center)
+                Text("🎉 " + ketQuaQuay)
+                    .font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 10)
+                    .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
             }
             Button {
                 Task { await quay() }

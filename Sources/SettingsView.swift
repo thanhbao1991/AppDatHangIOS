@@ -100,6 +100,7 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
             .padding(.horizontal)
+            .padding(.vertical, 6)
     }
 
     /// Card Xu — CHỈ số dư Xu (điểm thưởng quy đổi đơn hàng), tách hẳn khỏi Điểm/Hạng thành viên vì
