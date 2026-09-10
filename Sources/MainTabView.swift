@@ -124,7 +124,12 @@ struct MainTabView: View {
                     .foregroundColor(.white)
                     .frame(width: 30, height: 30)
                 if unreadCount > 0 {
-                    PulsingBadge(text: "\(unreadCount)")
+                    Text("\(unreadCount)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.red))
                         .offset(x: 6, y: -4)
                 }
             }
