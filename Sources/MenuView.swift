@@ -722,7 +722,7 @@ private struct ProductPickerSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(group.notes, id: \.self) { note in
                                 let active = activeNotes.contains(note)
-                                let disabled = khongChoKhongDa && note == "Không đá"
+                                let disabled = khongChoKhongDa && (note == "Không đá" || note == "Đá riêng")
                                 Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note) }
                                     .font(.system(size: 11, weight: .semibold))
                                     .padding(.horizontal, 6)
