@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// Vị trí Y (trong coordinate space "menuScroll") của header từng nhóm — gộp nhiều publisher bằng
-/// cách ghi đè giá trị mới nhất (mỗi nhóm chỉ có 1 header nên không có xung đột thật sự).
-private struct SectionOffsetKey: PreferenceKey {
-    static var defaultValue: [String: CGFloat] = [:]
-    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
-        value.merge(nextValue()) { _, new in new }
-    }
-}
-
 /// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
 /// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
 /// hợp hơn Section cuộn dọc hay chip ngang khi có ~17 nhóm. Modal chọn size/topping/ghi chú →
@@ -27,8 +18,8 @@ struct MenuView: View {
     @State private var query = ""
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
-    /// true trong lúc đang scrollTo do BẤM sidebar (không phải khách tự cuộn tay) — chặn
-    /// updateSelectedFromScroll ghi đè lại lựa chọn giữa chừng animation, gây nhấp nháy highlight.
+    /// true trong lúc đang scrollTo do BẤM sidebar (không phải khách tự cuộn tay) — chặn header
+    /// .onAppear (do chính animation cuộn gây ra) ghi đè lại lựa chọn giữa chừng, gây nhấp nháy.
     @State private var isJumpingToSection = false
     @State private var monHayMua: [FavoriteItem] = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
@@ -181,43 +172,45 @@ struct MenuView: View {
                     // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ hàng
                     // thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
                     //
-                    // Dùng List (UITableView) thay vì ScrollView+LazyVStack cho cột phải: LazyVStack
-                    // chỉ dựng view trong/gần khung nhìn nên scrollTo tới section ở XA thường cuộn
-                    // hụt (đã thử gọi lại nhiều lần vẫn không chắc ăn) — List tính sẵn kích thước
-                    // toàn bộ nội dung nên scrollTo bất kỳ section nào cũng chính xác ngay lần đầu.
+                    // List (UITableView) PHẲNG — không dùng Section(header:) nữa: kết hợp
+                    // Section + GeometryReader/preference để dò vị trí cuộn từng gây nhảy sai/trễ
+                    // (UITableView tái sử dụng cell, geometry của header báo cáo không ổn định).
+                    // Header giờ chỉ là 1 row bình thường, dùng .onAppear để biết đang cuộn tới
+                    // nhóm nào — đơn giản nhưng bám sát UITableView thật, đáng tin cậy hơn hẳn.
                     ScrollViewReader { proxy in
                         HStack(spacing: 0) {
                             nhomSidebar(proxy: proxy)
                             Divider()
                             List {
                                 ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
-                                    Section {
-                                        if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
-                                            yeuThichEmptyState
-                                        } else {
-                                            if !section.items.isEmpty { randomPickRow(section.items, nhomTen: section.nhom.ten) }
-                                            ForEach(section.items) { sp in productRow(sp) }
+                                    sectionHeader(section.nhom)
+                                        .id(section.nhom.id)
+                                        .listRowInsets(EdgeInsets())
+                                        .listRowBackground(sectionBackground(index))
+                                        .onAppear {
+                                            guard !isJumpingToSection else { return }
+                                            selectedNhomId = section.nhom.id
                                         }
-                                    } header: {
-                                        sectionHeader(section.nhom)
-                                            // Đo vị trí Y của header so với đỉnh vùng cuộn — dùng để
-                                            // suy ra nhóm "đang xem" khi cuộn tự do (không bấm
-                                            // sidebar), xem updateSelectedFromScroll bên dưới.
-                                            .background(GeometryReader { geo in
-                                                Color.clear.preference(
-                                                    key: SectionOffsetKey.self,
-                                                    value: [section.nhom.id: geo.frame(in: .named("menuScroll")).minY]
-                                                )
-                                            })
-                                            .id(section.nhom.id)
+
+                                    if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
+                                        yeuThichEmptyState
+                                            .listRowInsets(EdgeInsets())
+                                            .listRowBackground(sectionBackground(index))
+                                    } else {
+                                        if !section.items.isEmpty {
+                                            randomPickRow(section.items, nhomTen: section.nhom.ten)
+                                                .listRowInsets(EdgeInsets())
+                                                .listRowBackground(sectionBackground(index))
+                                        }
+                                        ForEach(section.items) { sp in
+                                            productRow(sp)
+                                                .listRowInsets(EdgeInsets())
+                                                .listRowBackground(sectionBackground(index))
+                                        }
                                     }
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(sectionBackground(index))
                                 }
                             }
                             .listStyle(.plain)
-                            .coordinateSpace(name: "menuScroll")
-                            .onPreferenceChange(SectionOffsetKey.self) { updateSelectedFromScroll($0) }
                         }
                     }
                     .refreshable { await load(silent: true) }
@@ -270,25 +263,15 @@ struct MenuView: View {
         .buttonStyle(.plain)
     }
 
-    /// Nhóm "đang xem" khi khách tự cuộn tay (không bấm sidebar) — nhóm cuối cùng có header đã
-    /// cuộn qua khỏi đỉnh vùng cuộn (offset <= threshold, tính luôn phần header pinned nằm sát 0).
-    private func updateSelectedFromScroll(_ offsets: [String: CGFloat]) {
-        guard !isJumpingToSection else { return }
-        let threshold: CGFloat = 50
-        guard let top = offsets.filter({ $0.value <= threshold }).max(by: { $0.value < $1.value }) else { return }
-        if selectedNhomId != top.key {
-            selectedNhomId = top.key
-        }
-    }
-
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
     /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh.
     private func sectionBackground(_ index: Int) -> Color {
         index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
     }
 
-    /// Header ghim (pinned) đầu mỗi nhóm khi cuộn — nền đồng bộ sectionBackground(index) để không
-    /// tạo viền lệch màu với nội dung ngay bên dưới nó.
+    /// Header đầu mỗi nhóm — 1 row bình thường trong List (không ghim/pinned, đổi từ Section(header:)
+    /// vì kết hợp với cách dò vị trí cuộn kiểu cũ không ổn định trên UITableView tái sử dụng cell).
+    /// Nền đồng bộ sectionBackground(index) để không tạo viền lệch màu với nội dung bên dưới nó.
     private func sectionHeader(_ nhom: NhomSanPham) -> some View {
         HStack(spacing: 6) {
             Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
@@ -347,8 +330,8 @@ struct MenuView: View {
             }
             .frame(width: 96)
             .background(Color(.secondarySystemGroupedBackground))
-            // Khách tự cuộn tay bên phải → selectedNhomId đổi theo (updateSelectedFromScroll) → tự
-            // cuộn sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
+            // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
+            // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
             .onChange(of: selectedNhomId) { id in
                 withAnimation { sidebarProxy.scrollTo(id, anchor: .center) }
             }
