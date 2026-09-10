@@ -80,6 +80,8 @@ struct SettingsView: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Theme.bg)
     }
 
     /// Section wrapper dùng chung cho mọi card ở tab Tài khoản — giữ đồng nhất khoảng cách/insets
