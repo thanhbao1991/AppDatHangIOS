@@ -415,7 +415,7 @@ struct MenuView: View {
         Button { picking = item } label: {
             HStack(spacing: 12) {
                 if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-                    AsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                         .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                 } else {
                     RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
@@ -549,7 +549,7 @@ private struct ProductPickerSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                                AsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                                     .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                             }
                             Text(sanPham.ten).font(.headline)
