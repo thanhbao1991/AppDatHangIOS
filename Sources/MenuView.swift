@@ -165,6 +165,12 @@ struct MenuView: View {
         Set(nhoms.filter { $0.ten == "Thuốc lá" }.map(\.id))
     }
 
+    /// Món Sinh Tố/Đá Xay luôn phải xay cùng đá nên chip ghi chú nhanh "Không đá" vô nghĩa với
+    /// nhóm này — disable để tránh khách chọn nhầm rồi báo pha sai.
+    private var khongChoKhongDaNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
@@ -275,7 +281,8 @@ struct MenuView: View {
                 sanPham: sp,
                 toppings: toppings,
                 cart: cart,
-                isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? "")
+                isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? "")
             ) { picking = nil }
         }
     }
@@ -477,6 +484,8 @@ private struct ProductPickerSheet: View {
     let cart: CartStore
     /// Theo quy định pháp luật, thuốc lá chỉ bán cho người từ 18 tuổi trở lên.
     let isThuocLa: Bool
+    /// Sinh Tố/Đá Xay luôn xay cùng đá — disable chip "Không đá".
+    let khongChoKhongDa: Bool
     let onDone: () -> Void
 
     @State private var bienThe: SanPhamBienThe?
@@ -713,6 +722,7 @@ private struct ProductPickerSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(group.notes, id: \.self) { note in
                                 let active = activeNotes.contains(note)
+                                let disabled = khongChoKhongDa && note == "Không đá"
                                 Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note) }
                                     .font(.system(size: 11, weight: .semibold))
                                     .padding(.horizontal, 6)
@@ -722,6 +732,8 @@ private struct ProductPickerSheet: View {
                                     .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
                                     .foregroundColor(active ? .white : Theme.textMuted)
                                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                    .disabled(disabled)
+                                    .opacity(disabled ? 0.4 : 1)
                             }
                         }
                     }
