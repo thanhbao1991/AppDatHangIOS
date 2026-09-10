@@ -619,8 +619,10 @@ private struct ProductPickerSheet: View {
                                 Spacer()
                                 // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
                                 // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping.
-                                Stepper("\(soLuong)", value: $soLuong, in: 1...20)
-                                    .fixedSize()
+                                Stepper(value: $soLuong, in: 1...20) {
+                                    Text("\(soLuong)").fontWeight(.bold)
+                                }
+                                .fixedSize()
                             }
     
                             if !toppings.isEmpty {
@@ -685,12 +687,14 @@ private struct ProductPickerSheet: View {
                     Text(t.ten)
                     Spacer()
                     Text(formatTien(t.gia)).font(.caption).foregroundColor(Theme.textMuted)
-                    Stepper("\(toppingQty[t.id] ?? 0)", value: Binding(
+                    Stepper(value: Binding(
                         get: { toppingQty[t.id] ?? 0 },
                         set: { newValue in
                             if newValue <= 0 { toppingQty.removeValue(forKey: t.id) } else { toppingQty[t.id] = newValue }
                         }
-                    ), in: 0...20)
+                    ), in: 0...20) {
+                        Text("\(toppingQty[t.id] ?? 0)").fontWeight(.bold)
+                    }
                     .fixedSize()
                 }
             }
