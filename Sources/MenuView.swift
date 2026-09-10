@@ -21,6 +21,11 @@ struct MenuView: View {
     /// true trong lúc đang scrollTo do BẤM sidebar (không phải khách tự cuộn tay) — chặn header
     /// .onAppear (do chính animation cuộn gây ra) ghi đè lại lựa chọn giữa chừng, gây nhấp nháy.
     @State private var isJumpingToSection = false
+    /// Yêu cầu scrollTo tới 1 nhóm — kèm `tick` tăng dần để .onChange bên List LUÔN bắt được kể cả
+    /// bấm lại đúng nhóm cũ (vd khách cuộn tay đi chỗ khác rồi bấm lại đúng nhóm đang chọn, muốn
+    /// cuộn về) — String đơn thuần sẽ không đổi giá trị nên .onChange không fire lại được.
+    private struct ScrollRequest: Equatable { let id: String; let tick: Int }
+    @State private var scrollRequest: ScrollRequest?
     @State private var monHayMua: [FavoriteItem] = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
@@ -177,10 +182,19 @@ struct MenuView: View {
                     // (UITableView tái sử dụng cell, geometry của header báo cáo không ổn định).
                     // Header giờ chỉ là 1 row bình thường, dùng .onAppear để biết đang cuộn tới
                     // nhóm nào — đơn giản nhưng bám sát UITableView thật, đáng tin cậy hơn hẳn.
-                    ScrollViewReader { proxy in
-                        HStack(spacing: 0) {
-                            nhomSidebar(proxy: proxy)
-                            Divider()
+                    //
+                    // QUAN TRỌNG: ScrollViewReader chỉ bọc riêng List — KHÔNG bọc chung với sidebar
+                    // (sidebar có ScrollView riêng của nó). Từng thử bọc chung 1 ScrollViewReader
+                    // quanh cả HStack (2 vùng cuộn cùng lúc trong 1 reader) và bấm sidebar không
+                    // cuộn được List — tách hẳn ra để proxy.scrollTo không còn mơ hồ vùng cuộn nào.
+                    HStack(spacing: 0) {
+                        nhomSidebar(onTap: { id in
+                            isJumpingToSection = true
+                            selectedNhomId = id
+                            scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
+                        })
+                        Divider()
+                        ScrollViewReader { proxy in
                             List {
                                 ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
                                     sectionHeader(section.nhom)
@@ -211,6 +225,11 @@ struct MenuView: View {
                                 }
                             }
                             .listStyle(.plain)
+                            .onChange(of: scrollRequest) { req in
+                                guard let req else { return }
+                                withAnimation { proxy.scrollTo(req.id, anchor: .top) }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
+                            }
                         }
                     }
                     .refreshable { await load(silent: true) }
@@ -283,24 +302,16 @@ struct MenuView: View {
         .background(.bar)
     }
 
-    /// Cột trái: danh sách nhóm cố định — bấm thì cuộn cột phải nhảy tới đúng section (không lọc ẩn
-    /// nhóm khác) để khách vẫn cuộn xem liền mạch toàn bộ menu mà vẫn "nhảy" nhanh tới nhóm cần.
-    private func nhomSidebar(proxy: ScrollViewProxy) -> some View {
+    /// Cột trái: danh sách nhóm cố định — bấm thì báo `onTap` để cột phải tự cuộn tới đúng section
+    /// (không lọc ẩn nhóm khác) qua ScrollViewReader riêng của chính nó, xem body.
+    private func nhomSidebar(onTap: @escaping (String) -> Void) -> some View {
         ScrollViewReader { sidebarProxy in
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 0) {
                     ForEach(sections, id: \.nhom.id) { section in
                         let isSelected = section.nhom.id == selectedNhomId
                         Button {
-                            isJumpingToSection = true
-                            selectedNhomId = section.nhom.id
-                            // scrollTo gọi CÙNG transaction với selectedNhomId (đổi opacity/màu 17
-                            // dòng sidebar cùng lúc) khiến SwiftUI không thực thi animation cuộn
-                            // của List — đẩy sang runloop kế tiếp để tách hẳn khỏi update đang chạy.
-                            DispatchQueue.main.async {
-                                withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
+                            onTap(section.nhom.id)
                         } label: {
                             HStack(spacing: 6) {
                                 Rectangle()
