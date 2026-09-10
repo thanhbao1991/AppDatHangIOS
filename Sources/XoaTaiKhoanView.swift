@@ -20,7 +20,7 @@ struct XoaTaiKhoanView: View {
     var body: some View {
         Form {
             Section {
-                Text("Xoá tài khoản sẽ vô hiệu hoá đăng nhập và xoá địa chỉ/ngày sinh đã lưu. Lịch sử mua hàng vẫn được quán giữ lại. Không thể hoàn tác.")
+                Text("Xoá tài khoản sẽ chấm dứt quyền đăng nhập vĩnh viễn và xoá ngày sinh đã khai. Bạn sẽ không còn thấy lại đơn hàng, thẻ tích điểm hay địa chỉ đã lưu trong app. Số điện thoại, tên và lịch sử mua hàng vẫn được quán lưu giữ (kế toán, chăm sóc khách hàng ngoài app) — xem Chính sách bảo mật. Không thể hoàn tác.")
                     .font(.system(size: 13)).foregroundColor(Theme.textMuted)
             }
 

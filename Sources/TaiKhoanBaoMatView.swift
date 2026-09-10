@@ -35,6 +35,12 @@ struct TaiKhoanBaoMatView: View {
                         Text("Xoá tài khoản").foregroundColor(Theme.textFaint)
                     }
                 }
+
+                Section {
+                    Link(destination: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) {
+                        Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
+                    }
+                }
             }
             .listStyle(.insetGrouped)
         }
