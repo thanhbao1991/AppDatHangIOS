@@ -20,24 +20,25 @@ struct UuDaiView: View {
     @State private var copiedToast = false
 
     var body: some View {
-        Group {
-            if loading {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        if let theTem { theTemCard(theTem) }
-                        if let gioiThieu { gioiThieuCard(gioiThieu) }
-                        if let sinhNhat { sinhNhatCard(sinhNhat) }
-                        vongQuayCard
+        VStack(spacing: 0) {
+            TitleBar(title: "Săn thưởng")
+
+            Group {
+                if loading {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            if let theTem { theTemCard(theTem) }
+                            if let gioiThieu { gioiThieuCard(gioiThieu) }
+                            if let sinhNhat { sinhNhatCard(sinhNhat) }
+                            vongQuayCard
+                        }
+                        .padding()
                     }
-                    .padding()
                 }
             }
         }
-        .navigationTitle("Ưu đãi của tôi")
-        .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}

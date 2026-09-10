@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Port từ MainTabs.tsx — 4 tab (Thực đơn/Đơn của tôi/Thông báo/Cài đặt) + Giỏ hàng (thêm sau).
+/// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Thông báo/Săn thưởng/Tài khoản.
 /// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
 /// một "trait" SwiftUI gắn vào lúc dựng UITabBarController, closure của nó KHÔNG track @State như
 /// body thật, nên đổi `selectedTab` chỉ khiến UIKit tự tint màu, không re-render lại icon sang
@@ -72,6 +72,10 @@ struct MainTabView: View {
                     NavigationStack {
                         ThongBaoView(selectedTab: $selectedTab)
                     }
+                case .sanThuong:
+                    NavigationStack {
+                        UuDaiView()
+                    }
                 case .settings:
                     NavigationStack(path: $settingsPath) {
                         SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
@@ -99,9 +103,10 @@ struct MainTabView: View {
         HStack(spacing: 0) {
             tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
-            tabButton(.donHang, label: "Đơn của tôi", icon: "list.bullet.rectangle")
+            tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
             tabButton(.thongBao, label: "Thông báo", icon: "bell", badgeCount: unreadCount)
-            tabButton(.settings, label: "Cài đặt", icon: "gearshape")
+            tabButton(.sanThuong, label: "Săn thưởng", icon: "gift")
+            tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
         .padding(.top, 6)
         .padding(.bottom, 6)

@@ -22,13 +22,11 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: Prefs.tenKhachHang ?? "Cài đặt")
+            TitleBar(title: Prefs.tenKhachHang ?? "Tài khoản")
             settingsList
         }
         .navigationDestination(for: SettingsRoute.self) { route in
-            switch route {
-            case .uuDai: UuDaiView()
-            }
+            switch route {}
         }
         .task { await load() }
         .confirmationDialog("Xoá tài khoản?", isPresented: $showXoaTaiKhoanConfirm, titleVisibility: .visible) {
@@ -63,17 +61,6 @@ struct SettingsView: View {
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
-                }
-
-                Section {
-                    Button { path.append(.uuDai) } label: {
-                        HStack {
-                            Text("🎁 Ưu đãi của tôi")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(Theme.textFaint)
-                        }
-                    }
-                    .foregroundColor(.primary)
                 }
 
                 Section("Địa chỉ đã lưu") {

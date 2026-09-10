@@ -12,10 +12,8 @@ enum DonHangRoute: Hashable {
     case thanhToan(hoaDonId: String)
 }
 
-enum SettingsRoute: Hashable {
-    case uuDai
-}
+enum SettingsRoute: Hashable {}
 
 enum AppTab: Hashable {
-    case home, cart, donHang, thongBao, settings
+    case home, cart, donHang, thongBao, sanThuong, settings
 }

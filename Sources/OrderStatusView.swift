@@ -12,7 +12,7 @@ struct OrderStatusView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Đơn của tôi")
+            TitleBar(title: "Đơn hàng")
 
             Group {
                 if loading {
