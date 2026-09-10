@@ -28,12 +28,12 @@ struct UuDaiView: View {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: 0) {
                             if let theTem { theTemCard(theTem) }
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
                             vongQuayCard
                         }
-                        .padding()
+                        .padding(.top, 6)
                     }
                 }
             }
@@ -46,16 +46,6 @@ struct UuDaiView: View {
         } message: {
             Text(alertMessage?.message ?? "")
         }
-    }
-
-    @ViewBuilder
-    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10, content: content)
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
     }
 
     /// Header thống nhất cho mọi card — icon trong khung tròn màu nhấn + tiêu đề, thay vì emoji nằm
@@ -72,7 +62,7 @@ struct UuDaiView: View {
     }
 
     private func theTemCard(_ t: TheTem) -> some View {
-        card {
+        cardBox {
             cardHeader("🧋", "Thẻ sưu tập ly")
             Text("Mua đủ \(t.mocThuong) đơn được đổi 1 phần thưởng — báo nhân viên khi đủ điều kiện.")
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
@@ -97,7 +87,7 @@ struct UuDaiView: View {
     }
 
     private func gioiThieuCard(_ g: GioiThieuInfo) -> some View {
-        card {
+        cardBox {
             cardHeader("👥", "Giới thiệu bạn bè")
             Text("Chia sẻ mã dưới đây — cả bạn và bạn bè đều nhận thưởng khi họ nhập mã.").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             HStack {
@@ -135,7 +125,7 @@ struct UuDaiView: View {
     }
 
     private var vongQuayCard: some View {
-        card {
+        cardBox {
             cardHeader("🎡", "Vòng quay may mắn")
             Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng Xu!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             if let ketQuaQuay {

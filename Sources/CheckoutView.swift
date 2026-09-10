@@ -25,11 +25,7 @@ struct CheckoutView: View {
 
             List {
                 if !cart.items.isEmpty {
-                    Section {
-                        addressBox
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+                    cardRow(topExtra: 6) { addressBox }
 
                     ForEach(cart.items) { item in
                         itemRow(item)
@@ -126,11 +122,7 @@ struct CheckoutView: View {
                 }
             }
         }
-        .padding(12)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.divider))
-        .padding(.horizontal)
+        .cardBoxStyle()
     }
 
     private func itemRow(_ item: CartItem) -> some View {

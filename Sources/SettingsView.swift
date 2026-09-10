@@ -51,48 +51,24 @@ struct SettingsView: View {
             if loading {
                 ProgressView().frame(maxWidth: .infinity)
             } else {
-                cardSection { avatarCard }
+                cardRow(topExtra: 6) { avatarCard }
 
                 if let vi {
-                    cardSection { xuCard(vi) }
-                    cardSection { diemHangCard(vi) }
+                    cardRow { xuCard(vi) }
+                    cardRow { diemHangCard(vi) }
                     if vi.tongNo > 0 {
-                        cardSection { congNoCard(vi) }
+                        cardRow { congNoCard(vi) }
                     }
                 }
 
-                cardSection { thongTinCaNhanCard }
+                cardRow { thongTinCaNhanCard }
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Theme.bg)
-    }
-
-    /// Section wrapper dùng chung cho mọi card ở tab Tài khoản — giữ đồng nhất khoảng cách/insets
-    /// giữa các card (Xu, Điểm & Hạng, Công nợ) mà không lặp lại 2 modifier mỗi nơi.
-    @ViewBuilder
-    private func cardSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        Section { content() }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-    }
-
-    @ViewBuilder
-    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10, content: content)
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
-            .padding(.horizontal)
-            .padding(.vertical, 6)
+        .cardListBackground()
     }
 
     private var avatarCard: some View {
-        card {
+        cardBox {
             HStack(spacing: 14) {
                 AvatarPickerView(avatarUrl: avatarUrl, uploading: dangUploadAvatar) { data in
                     Task { await uploadAvatar(data) }
@@ -108,7 +84,7 @@ struct SettingsView: View {
     /// Card Xu — CHỈ số dư Xu (điểm thưởng quy đổi đơn hàng), tách hẳn khỏi Điểm/Hạng thành viên vì
     /// hai khái niệm khác nhau: Xu tiêu được như tiền, Điểm chỉ dùng xét hạng thành viên.
     private func xuCard(_ vi: KhachHangVi) -> some View {
-        card {
+        cardBox {
             HStack {
                 Text("🪙 Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
                 Spacer()
@@ -127,7 +103,7 @@ struct SettingsView: View {
     /// Card Điểm & Hạng thành viên đi CHUNG một card vì Hạng được xét trực tiếp từ điểm tích luỹ —
     /// không liên quan Xu.
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
-        card {
+        cardBox {
             HStack {
                 Text("👑 Hạng \(vi.hang)")
                     .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
@@ -145,7 +121,7 @@ struct SettingsView: View {
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
     /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
     private var thongTinCaNhanCard: some View {
-        card {
+        cardBox {
             Text("Thông tin cá nhân").font(.system(size: 16, weight: .bold))
             Divider()
             tenHienThiRow
@@ -235,7 +211,7 @@ struct SettingsView: View {
     }
 
     private func congNoCard(_ vi: KhachHangVi) -> some View {
-        card {
+        cardBox {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
         }
@@ -274,8 +250,12 @@ struct SettingsView: View {
         defer { dangUploadAvatar = false }
         let (url, message) = await APIClient.shared.uploadAvatar(imageData: data)
         if let url {
-            avatarUrl = url
-            Prefs.avatarUrl = url
+            // Backend giữ nguyên tên file (id.ext) mỗi lần đổi avatar nên URL không đổi — gắn query
+            // cache-bust để AsyncImage tải lại ngay, không phải thoát app mở lại mới thấy ảnh mới
+            // (cùng bug đã gặp ở màn Ảnh menu bên AppQuanLyIOS).
+            let bustedUrl = url + "?v=\(Int(Date().timeIntervalSince1970))"
+            avatarUrl = bustedUrl
+            Prefs.avatarUrl = bustedUrl
         } else {
             alertMessage = ("Lỗi", message ?? "")
         }

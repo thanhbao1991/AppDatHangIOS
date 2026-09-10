@@ -23,6 +23,47 @@ extension View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
     }
+
+    /// Style card trắng bo góc dùng chung cho MỌI tab (Giỏ hàng/Đơn hàng/Ưu đãi/Tài khoản) — trước
+    /// đây mỗi màn tự định nghĩa card() riêng (padding/corner/border na ná nhau nhưng không giống
+    /// hệt), giờ gom 1 chỗ để khoảng cách card-với-top và card-với-card đồng bộ thật sự trên cả 4 tab
+    /// thay vì "trông giống giống" do trùng hợp copy-paste.
+    func cardBoxStyle() -> some View {
+        self
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+    }
+
+    /// Nền xám Theme.bg thống nhất cho List(.plain) ở mọi tab card-based — .plain tự thân nền trắng,
+    /// cần lật nền hệ thống mới lộ ra Theme.bg phía dưới để card trắng nổi lên.
+    func cardListBackground() -> some View {
+        self
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Theme.bg)
+    }
+}
+
+@ViewBuilder
+func cardBox<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    VStack(alignment: .leading, spacing: 10, content: content)
+        .cardBoxStyle()
+}
+
+/// Bọc 1 card thành Section của List — topExtra CHỈ dùng cho card ĐẦU TIÊN của mỗi tab (thêm 6pt để
+/// khoảng cách với TitleBar bằng đúng khoảng cách giữa 2 card liền nhau: 6pt padding riêng của mỗi
+/// card cộng lại thành 12, còn card đầu chỉ có 6 từ chính nó nên thiếu 6pt so với các card sau).
+@ViewBuilder
+func cardRow<Content: View>(topExtra: CGFloat = 0, @ViewBuilder content: () -> Content) -> some View {
+    Section { content() }
+        .listRowInsets(EdgeInsets(top: topExtra, leading: 0, bottom: 0, trailing: 0))
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
 }
 
 func formatTien(_ value: Double) -> String {
