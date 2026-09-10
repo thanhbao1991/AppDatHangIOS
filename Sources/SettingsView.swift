@@ -3,7 +3,6 @@ import SwiftUI
 /// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu, thiết bị đăng nhập, đăng xuất/
 /// xoá tài khoản.
 struct SettingsView: View {
-    @Binding var path: [SettingsRoute]
     @Binding var isLoggedIn: Bool
 
     @State private var sessions: [PhienDangNhapKhachHang] = []
@@ -24,9 +23,6 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             TitleBar(title: Prefs.tenKhachHang ?? "Tài khoản")
             settingsList
-        }
-        .navigationDestination(for: SettingsRoute.self) { route in
-            switch route {}
         }
         .task { await load() }
         .confirmationDialog("Xoá tài khoản?", isPresented: $showXoaTaiKhoanConfirm, titleVisibility: .visible) {

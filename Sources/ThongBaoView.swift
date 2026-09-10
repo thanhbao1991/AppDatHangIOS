@@ -3,13 +3,18 @@ import SwiftUI
 /// Port từ ThongBaoScreen.tsx — poll khi mở tab, đánh dấu mốc đã xem để MainTabView tính badge.
 struct ThongBaoView: View {
     @Binding var selectedTab: AppTab
+    @Environment(\.dismiss) private var dismiss
 
     @State private var items: [ThongBao] = []
     @State private var loading = true
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Thông báo")
+            TitleBar(title: "Thông báo", trailing: AnyView(
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark").foregroundColor(.white)
+                }
+            ))
 
             Group {
                 if loading {
@@ -19,7 +24,10 @@ struct ThongBaoView: View {
                 } else {
                     List(items) { item in
                         Button {
-                            if item.hoaDonId != nil { selectedTab = .donHang }
+                            if item.hoaDonId != nil {
+                                selectedTab = .donHang
+                                dismiss()
+                            }
                         } label: {
                             HStack(spacing: 12) {
                                 Text(item.loai == .khuyenMai ? "🎁" : "📦")

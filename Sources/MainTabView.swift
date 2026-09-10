@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Thông báo/Săn thưởng/Tài khoản.
+/// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Săn thưởng/Tài khoản + icon chuông Thông báo
+/// cố định góc trên-phải (nổi trên mọi tab, không còn là tab riêng).
 /// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
 /// một "trait" SwiftUI gắn vào lúc dựng UITabBarController, closure của nó KHÔNG track @State như
 /// body thật, nên đổi `selectedTab` chỉ khiến UIKit tự tint màu, không re-render lại icon sang
@@ -17,9 +18,9 @@ struct MainTabView: View {
     @State private var homePath: [HomeRoute] = []
     @State private var cartPath: [HomeRoute] = []
     @State private var donHangPath: [DonHangRoute] = []
-    @State private var settingsPath: [SettingsRoute] = []
     @State private var unreadCount = 0
     @State private var pollTask: Task<Void, Never>?
+    @State private var showThongBao = false
 
     /// Badge số tiền giỏ hàng dạng viết tắt trên tab bar (vd "25k", "1.2tr") — nil khi giỏ trống để
     /// ẩn hẳn badge thay vì hiện "0k".
@@ -68,29 +69,29 @@ struct MainTabView: View {
                                 }
                             }
                     }
-                case .thongBao:
-                    NavigationStack {
-                        ThongBaoView(selectedTab: $selectedTab)
-                    }
                 case .sanThuong:
                     NavigationStack {
                         UuDaiView()
                     }
                 case .settings:
-                    NavigationStack(path: $settingsPath) {
-                        SettingsView(path: $settingsPath, isLoggedIn: $isLoggedIn)
+                    NavigationStack {
+                        SettingsView(isLoggedIn: $isLoggedIn)
                     }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .topTrailing) { notificationBell }
 
             Divider()
             tabBar
         }
         .tint(Theme.primary)
         .environmentObject(cart)
-        .onChange(of: selectedTab) { tab in
-            if tab == .thongBao { unreadCount = 0 }
+        .onChange(of: selectedTab) { _ in showThongBao = false }
+        .sheet(isPresented: $showThongBao) {
+            NavigationStack {
+                ThongBaoView(selectedTab: $selectedTab)
+            }
         }
         .task {
             await checkUnread()
@@ -99,12 +100,38 @@ struct MainTabView: View {
         .onDisappear { pollTask?.cancel() }
     }
 
+    /// Icon chuông cố định góc trên-phải, nổi trên header của MỌI tab (thay cho tab "Thông báo" cũ)
+    /// — mở ThongBaoView qua sheet khi bấm, thay vì chuyển tab.
+    private var notificationBell: some View {
+        Button {
+            showThongBao = true
+            unreadCount = 0
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: "bell.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.white)
+                    .frame(width: 36, height: 36)
+                if unreadCount > 0 {
+                    Text("\(unreadCount)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.red))
+                        .offset(x: 6, y: -2)
+                }
+            }
+        }
+        .padding(.trailing, 8)
+        .padding(.top, 8)
+    }
+
     private var tabBar: some View {
         HStack(spacing: 0) {
             tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
-            tabButton(.thongBao, label: "Thông báo", icon: "bell", badgeCount: unreadCount)
             tabButton(.sanThuong, label: "Săn thưởng", icon: "gift")
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
