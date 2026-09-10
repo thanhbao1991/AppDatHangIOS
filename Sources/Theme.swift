@@ -33,3 +33,17 @@ func formatTien(_ value: Double) -> String {
     let number = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
     return "\(number) đ"
 }
+
+/// Số dư ví/giao dịch ví hiển thị dưới nhãn "Xu" thay vì "đ" — quy đổi 1 Xu = 1đ y hệt bên dưới
+/// (dùng thẳng để trừ trực tiếp vào hoá đơn), CHỈ đổi tên hiển thị. Lý do: gắn số tiền thật (15.000đ)
+/// kích hoạt "nỗi đau chi tiêu" khiến khách ngại tiêu/nạp hơn hẳn so với 1 đơn vị game-hoá (15.000
+/// Xu) — quy ước phổ biến ở app thương mại/loyalty (Shopee, ShopeeFood, Baemin...). Đừng dùng cho
+/// giá món/công nợ/hoá đơn — những cái đó vẫn phải hiện đúng "đ" là tiền thật.
+func formatXu(_ value: Double) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.groupingSeparator = "."
+    formatter.maximumFractionDigits = 0
+    let number = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    return "\(number) Xu"
+}

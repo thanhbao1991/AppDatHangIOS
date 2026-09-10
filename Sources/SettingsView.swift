@@ -77,8 +77,8 @@ struct SettingsView: View {
                     .background(hangColor[vi.hang] ?? Theme.primary).clipShape(Capsule())
                 Spacer()
                 VStack(alignment: .trailing) {
-                    Text(formatTien(vi.soDu)).font(.system(size: 20, weight: .bold))
-                    Text("Số dư ví").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Text(formatXu(vi.soDu)).font(.system(size: 20, weight: .bold))
+                    Text("Số dư Xu").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             }
             HStack(spacing: 12) {
@@ -87,6 +87,13 @@ struct SettingsView: View {
             }
             if vi.tongNo > 0 {
                 Text("Công nợ hiện tại: \(formatTien(vi.tongNo))").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
+            }
+            NavigationLink { LichSuViView() } label: {
+                HStack {
+                    Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                }
             }
         }
         .padding(16)

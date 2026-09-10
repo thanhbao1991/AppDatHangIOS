@@ -148,7 +148,7 @@ struct UuDaiView: View {
     private var vongQuayCard: some View {
         card {
             Text("🎡 Vòng quay may mắn").font(.system(size: 16, weight: .bold))
-            Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng vào ví!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+            Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng Xu!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             if let ketQuaQuay {
                 Text(ketQuaQuay).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity, alignment: .center)
             }

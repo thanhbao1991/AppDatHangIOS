@@ -192,6 +192,17 @@ struct KhachHangVi: Decodable {
     let monHayMua: [FavoriteItem]
 }
 
+struct ViGiaoDich: Decodable, Identifiable {
+    let id: String
+    let soTienThayDoi: Double
+    let soDuTruoc: Double
+    let soDuSau: Double
+    let tenLoai: String
+    let hoaDonId: String?
+    let thoiGian: String
+    let ghiChu: String?
+}
+
 struct LyBiMatResult: Decodable {
     let hoaDonId: String
     let maHoaDon: String
