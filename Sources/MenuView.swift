@@ -335,6 +335,8 @@ struct MenuView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        // Mục chưa chọn mờ hẳn đi (như disabled) để mục đang chọn nổi bật rõ ràng.
+                        .opacity(isSelected ? 1 : 0.4)
                     }
                 }
             }
