@@ -310,15 +310,17 @@ struct MenuView: View {
                         Button {
                             isJumpingToSection = true
                             selectedNhomId = section.nhom.id
-                            // LazyVStack chỉ dựng các Section đang/gần trong khung nhìn — scrollTo
-                            // gọi 1 lần duy nhất lúc section đích còn ở xa (chưa được dựng) có thể
-                            // không tìm thấy id, cuộn hụt. Gọi 2 lần cách nhau 1 nhịp: lần đầu buộc
-                            // LazyVStack dựng dần tới gần đích, lần 2 mới chốt đúng vị trí.
-                            withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                            // LazyVStack chỉ dựng các Section đang/gần trong khung nhìn — 1 lần
+                            // scrollTo duy nhất lúc section đích còn ở xa (chưa được dựng) thường
+                            // cuộn hụt. Gọi lại nhiều lần trong ~0.6s: mỗi lần buộc LazyVStack dựng
+                            // thêm tới gần đích hơn, lần cuối mới chốt đúng vị trí — khắc phục dứt
+                            // điểm thay vì chỉ 1-2 lần (từng vẫn hụt với menu nhiều nhóm/món).
+                            for delay in [0.0, 0.1, 0.2, 0.35, 0.55] {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                                    withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                                }
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { isJumpingToSection = false }
                         } label: {
                             HStack(spacing: 6) {
                                 Rectangle()
