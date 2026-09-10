@@ -350,7 +350,7 @@ struct MenuView: View {
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
-                        Image(systemName: "shuffle").font(.system(size: 14)).foregroundColor(Theme.primary)
+                        Text("🤔").font(.system(size: 18))
                     }
                     .padding(.horizontal, 16).padding(.vertical, 8)
                     .background(.bar)
