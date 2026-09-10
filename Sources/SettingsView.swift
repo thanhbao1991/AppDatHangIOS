@@ -140,7 +140,7 @@ struct SettingsView: View {
             }
             HStack(spacing: 12) {
                 statBox(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
-                statBox(formatTien(vi.tongChiTieuLifetime), "Tổng chi tiêu")
+                statBox(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
             }
             if vi.tongNo > 0 {
                 Text("Công nợ hiện tại: \(formatTien(vi.tongNo))").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
