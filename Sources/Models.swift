@@ -26,6 +26,7 @@ struct KhachHangLoginResponse: Decodable {
     let refreshToken: String?
     let khachHangId: String?
     let tenKhachHang: String?
+    let avatarUrl: String?
 }
 
 enum LoginResult {

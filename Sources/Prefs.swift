@@ -63,6 +63,7 @@ enum Prefs {
     private static let keyToken = "token"
     private static let keyRefreshToken = "refresh_token"
     private static let keyTenKhachHang = "ten_khach_hang"
+    private static let keyAvatarUrl = "avatar_url"
     private static let keyThietBiId = "thiet_bi_id"
 
     static var token: String? {
@@ -77,6 +78,10 @@ enum Prefs {
         get { defaults.string(forKey: keyTenKhachHang) }
         set { defaults.set(newValue, forKey: keyTenKhachHang) }
     }
+    static var avatarUrl: String? {
+        get { defaults.string(forKey: keyAvatarUrl) }
+        set { defaults.set(newValue, forKey: keyAvatarUrl) }
+    }
     static var isLoggedIn: Bool { !(token?.isEmpty ?? true) }
 
     /// Sinh 1 lần, ổn định suốt vòng đời cài đặt app — backend dedupe phiên đăng nhập theo thiết bị
@@ -88,16 +93,18 @@ enum Prefs {
         return id
     }
 
-    static func saveSession(token: String, refreshToken: String, tenKhachHang: String) {
+    static func saveSession(token: String, refreshToken: String, tenKhachHang: String, avatarUrl: String? = nil) {
         Prefs.token = token
         Prefs.refreshToken = refreshToken
         Prefs.tenKhachHang = tenKhachHang
+        Prefs.avatarUrl = avatarUrl
     }
 
     static func clear() {
         token = nil
         refreshToken = nil
         tenKhachHang = nil
+        avatarUrl = nil
     }
 
     /// Trang QR chuyển khoản — [AllowAnonymous], HTML tự vẽ (không phải ảnh thuần), dùng lại nguyên

@@ -22,6 +22,9 @@ struct SettingsView: View {
     @State private var tenHienThi: String = Prefs.tenKhachHang ?? ""
     @State private var dangLuuTen = false
 
+    @State private var avatarUrl: String? = Prefs.avatarUrl
+    @State private var dangUploadAvatar = false
+
     private let hangColor: [String: Color] = [
         "Kim Cương": Color(red: 0, green: 0.51, blue: 0.56),
         "Vàng": Color(red: 0.72, green: 0.53, blue: 0.04),
@@ -48,6 +51,8 @@ struct SettingsView: View {
             if loading {
                 ProgressView().frame(maxWidth: .infinity)
             } else {
+                cardSection { avatarCard }
+
                 if let vi {
                     cardSection { xuCard(vi) }
                     cardSection { diemHangCard(vi) }
@@ -84,6 +89,20 @@ struct SettingsView: View {
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
             .padding(.horizontal)
             .padding(.vertical, 6)
+    }
+
+    private var avatarCard: some View {
+        card {
+            HStack(spacing: 14) {
+                AvatarPickerView(avatarUrl: avatarUrl, uploading: dangUploadAvatar) { data in
+                    Task { await uploadAvatar(data) }
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold))
+                    Text("Bấm vào ảnh để đổi avatar").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                }
+            }
+        }
     }
 
     /// Card Xu — CHỈ số dư Xu (điểm thưởng quy đổi đơn hàng), tách hẳn khỏi Điểm/Hạng thành viên vì
@@ -247,6 +266,18 @@ struct SettingsView: View {
         out.dateFormat = "dd/MM/yyyy"
         out.locale = Locale(identifier: "vi_VN")
         return out.string(from: date)
+    }
+
+    private func uploadAvatar(_ data: Data) async {
+        dangUploadAvatar = true
+        defer { dangUploadAvatar = false }
+        let (url, message) = await APIClient.shared.uploadAvatar(imageData: data)
+        if let url {
+            avatarUrl = url
+            Prefs.avatarUrl = url
+        } else {
+            alertMessage = ("Lỗi", message ?? "")
+        }
     }
 
     private func luuTenHienThi() async {

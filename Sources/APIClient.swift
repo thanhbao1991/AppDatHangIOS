@@ -75,7 +75,7 @@ actor APIClient {
               let env = try? JSONDecoder().decode(ApiEnvelope<KhachHangLoginResponse>.self, from: data),
               env.isSuccess, let resp = env.data,
               let token = resp.token, let rt = resp.refreshToken, let ten = resp.tenKhachHang else { return nil }
-        Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten)
+        Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: resp.avatarUrl)
         return token
     }
 
@@ -119,7 +119,7 @@ actor APIClient {
         let body = LoginRequest(soDienThoai: soDienThoai, matKhau: matKhau, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
-            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten)
+            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: d.avatarUrl)
         }
         return result
     }
@@ -138,7 +138,7 @@ actor APIClient {
         let body = OtpConfirmRequest(soDienThoai: soDienThoai, otp: otp, matKhau: matKhau, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/xac-nhan-otp", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
-            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten)
+            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: d.avatarUrl)
         }
         return result
     }
@@ -188,6 +188,29 @@ actor APIClient {
     func capNhatTenHienThi(_ tenHienThi: String?) async -> ActionResult {
         let env: ApiEnvelope<Bool> = await decode("/khachhang-auth/ten-hien-thi", method: "PUT", body: jsonBody(CapNhatTenHienThiRequest(tenHienThi: tenHienThi)))
         return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
+    /// imageData đã được crop/resize nhẹ ở client (xem UIImage.resizedForMenuUpload) — server chỉ
+    /// giới hạn 2MB để chặn client không tuân thủ, không tự resize lại.
+    func uploadAvatar(imageData: Data, mimeType: String = "image/jpeg") async -> (url: String?, message: String?) {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"avatar.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        var req = makeRequest("/khachhang-auth/avatar", method: "POST")
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.httpBody = body
+
+        let (data, _) = await send(req)
+        guard let data else { return (nil, "Không có phản hồi từ server.") }
+        guard let env = try? JSONDecoder().decode(ApiEnvelope<String>.self, from: data) else {
+            return (nil, "Không đọc được phản hồi từ server.")
+        }
+        return (env.data, env.isSuccess ? nil : (env.message ?? "Cập nhật ảnh thất bại."))
     }
 
     // ===== Catalog (cache 5 phút) =====
