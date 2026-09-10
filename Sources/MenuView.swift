@@ -209,23 +209,12 @@ struct MenuView: View {
                                             }
                                         }
                                     } header: {
-                                        // "Chọn ngẫu nhiên" gộp chung header để ghim (pinned) luôn
-                                        // theo tên nhóm khi cuộn — trước đây là row đầu của Section
-                                        // nên cuộn mất, giờ khách luôn thấy nút bốc random dù đã
-                                        // cuộn xuống xem hết cả nhóm.
-                                        VStack(spacing: 0) {
-                                            sectionHeader(section.nhom)
-                                                .id(section.nhom.id)
-                                                .onAppear {
-                                                    guard !isJumpingToSection else { return }
-                                                    selectedNhomId = section.nhom.id
-                                                }
-                                            if !section.items.isEmpty {
-                                                Divider()
-                                                randomPickRow(section.items, nhomTen: section.nhom.ten)
-                                                    .background(sectionBackground(index))
+                                        sectionHeader(section.nhom, items: section.items)
+                                            .id(section.nhom.id)
+                                            .onAppear {
+                                                guard !isJumpingToSection else { return }
+                                                selectedNhomId = section.nhom.id
                                             }
-                                        }
                                     }
                                     .listRowInsets(EdgeInsets())
                                 }
@@ -295,17 +284,47 @@ struct MenuView: View {
     }
 
     /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
-    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Nền đồng bộ
-    /// sectionBackground(index) để không tạo viền lệch màu với nội dung bên dưới nó.
-    private func sectionHeader(_ nhom: NhomSanPham) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
-            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
-            Spacer()
+    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Gộp luôn "bốc ngẫu
+    /// nhiên" vào chung header (thay vì 1 row riêng bên dưới như trước) — cùng icon nhóm, bấm
+    /// thẳng vào cả header là bốc random 1 món trong nhóm. Rỗng (mục Yêu thích lúc chưa có món
+    /// hay mua) thì hiện tên nhóm trơn, không bấm được.
+    private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
+        Group {
+            if items.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                        .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+                    Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+                    Spacer()
+                }
+                .padding(.horizontal, 16).padding(.vertical, 8)
+                .background(.bar)
+            } else {
+                Button {
+                    picking = items.randomElement()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Theme.primary)
+                            .frame(width: 22)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Uống gì giờ ta?")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text("Chọn ngẫu nhiên một ly \(nhom.ten.uppercased())")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "shuffle").font(.system(size: 14)).foregroundColor(Theme.primary)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(.bar)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.horizontal, 16).padding(.vertical, 8)
-        .background(.bar)
     }
 
     /// Cột trái: danh sách nhóm cố định — bấm thì báo `onTap` để cột phải tự cuộn tới đúng section
@@ -354,33 +373,6 @@ struct MenuView: View {
                 withAnimation { sidebarProxy.scrollTo(id, anchor: .center) }
             }
         }
-    }
-
-    /// Hàng đặc biệt đầu danh sách mỗi nhóm — bấm thì bốc random 1 món TRONG NHÓM ĐÓ (section.items)
-    /// rồi mở ProductPickerSheet y hệt bấm chọn tay, khách vẫn tự chọn size/topping.
-    private func randomPickRow(_ items: [SanPham], nhomTen: String) -> some View {
-        Button {
-            picking = items.randomElement()
-        } label: {
-            HStack(spacing: 12) {
-                Image("RandomPickIcon")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 56, height: 56)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Hôm Nay Uống Gì?")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                    Text("Chọn ngẫu nhiên \(nhomTen)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 16).padding(.vertical, 8)
-        }
-        .foregroundColor(.primary)
     }
 
     @ViewBuilder
