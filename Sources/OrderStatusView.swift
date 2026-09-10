@@ -22,12 +22,17 @@ struct OrderStatusView: View {
                     Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List(orders) { order in
-                        Button { path.append(.detail(order)) } label: {
-                            orderCard(order)
+                    List {
+                        ForEach(Array(orders.enumerated()), id: \.element.id) { index, order in
+                            cardRow(topExtra: index == 0 ? 6 : 0) {
+                                Button { path.append(.detail(order)) } label: {
+                                    orderCard(order)
+                                }
+                                .foregroundColor(.primary)
+                            }
                         }
-                        .foregroundColor(.primary)
                     }
+                    .cardListBackground()
                     .refreshable { await load(silent: true) }
                 }
             }
@@ -58,7 +63,7 @@ struct OrderStatusView: View {
                     .clipShape(Capsule())
             }
         }
-        .padding(.vertical, 4)
+        .cardBoxStyle()
     }
 
     private func load(silent: Bool = false) async {
