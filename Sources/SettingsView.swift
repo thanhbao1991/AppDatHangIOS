@@ -145,10 +145,6 @@ struct SettingsView: View {
             if vi.tongNo > 0 {
                 Text("Công nợ hiện tại: \(formatTien(vi.tongNo))").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
             }
-            if !vi.monHayMua.isEmpty {
-                Text("Hay gọi: " + vi.monHayMua.map { "\($0.tenSanPham)\($0.tenBienThe.isEmpty ? "" : " (\($0.tenBienThe))")" }.joined(separator: ", "))
-                    .font(.system(size: 12)).foregroundColor(Theme.textMuted)
-            }
         }
         .padding(16)
         .background(Color.white)

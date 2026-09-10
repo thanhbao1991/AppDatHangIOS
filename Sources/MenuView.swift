@@ -77,8 +77,8 @@ struct MenuView: View {
         "Trà Truyền Thống": "Trà Tr.Thống",
     ]
 
-    /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi — cùng nguồn dữ liệu tab Cài
-    /// đặt đang hiện "Hay gọi") — chỉ khớp theo TÊN sản phẩm vì backend không trả kèm id, khớp cả
+    /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi) — chỉ khớp theo TÊN sản
+    /// phẩm vì backend không trả kèm id, khớp cả
     /// khi không tìm thấy biến thể tương ứng (mở picker vẫn chọn được size khác). Giữ thứ tự theo
     /// monHayMua, loại trùng nếu 1 sản phẩm xuất hiện ở nhiều biến thể trong danh sách yêu thích.
     private var favoriteSanPhams: [SanPham] {
