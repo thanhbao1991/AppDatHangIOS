@@ -180,41 +180,42 @@ struct MenuView: View {
                 } else {
                     // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ hàng
                     // thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
+                    //
+                    // Dùng List (UITableView) thay vì ScrollView+LazyVStack cho cột phải: LazyVStack
+                    // chỉ dựng view trong/gần khung nhìn nên scrollTo tới section ở XA thường cuộn
+                    // hụt (đã thử gọi lại nhiều lần vẫn không chắc ăn) — List tính sẵn kích thước
+                    // toàn bộ nội dung nên scrollTo bất kỳ section nào cũng chính xác ngay lần đầu.
                     ScrollViewReader { proxy in
                         HStack(spacing: 0) {
                             nhomSidebar(proxy: proxy)
                             Divider()
-                            // Toàn bộ menu cuộn liền 1 mạch (không đổi list khi bấm nhóm bên trái) —
-                            // bấm sidebar chỉ scrollTo tới đúng section, không lọc ẩn nhóm khác. Mỗi
-                            // section 1 màu nền xen kẽ (background(for:)) để mắt phân biệt ranh giới
-                            // 2 nhóm liền kề khi cuộn nhanh qua.
-                            ScrollView(showsIndicators: false) {
-                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                                    ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
-                                        Section {
-                                            if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
-                                                yeuThichEmptyState
-                                            } else {
-                                                if !section.items.isEmpty { randomPickRow(section.items, nhomTen: section.nhom.ten) }
-                                                ForEach(section.items) { sp in productRow(sp) }
-                                            }
-                                        } header: {
-                                            sectionHeader(section.nhom)
-                                                // Đo vị trí Y của header so với đỉnh vùng cuộn — dùng
-                                                // để suy ra nhóm "đang xem" khi cuộn tự do (không bấm
-                                                // sidebar), xem updateSelectedFromScroll bên dưới.
-                                                .background(GeometryReader { geo in
-                                                    Color.clear.preference(
-                                                        key: SectionOffsetKey.self,
-                                                        value: [section.nhom.id: geo.frame(in: .named("menuScroll")).minY]
-                                                    )
-                                                })
+                            List {
+                                ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
+                                    Section {
+                                        if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
+                                            yeuThichEmptyState
+                                        } else {
+                                            if !section.items.isEmpty { randomPickRow(section.items, nhomTen: section.nhom.ten) }
+                                            ForEach(section.items) { sp in productRow(sp) }
                                         }
-                                        .background(sectionBackground(index))
-                                        .id(section.nhom.id)
+                                    } header: {
+                                        sectionHeader(section.nhom)
+                                            // Đo vị trí Y của header so với đỉnh vùng cuộn — dùng để
+                                            // suy ra nhóm "đang xem" khi cuộn tự do (không bấm
+                                            // sidebar), xem updateSelectedFromScroll bên dưới.
+                                            .background(GeometryReader { geo in
+                                                Color.clear.preference(
+                                                    key: SectionOffsetKey.self,
+                                                    value: [section.nhom.id: geo.frame(in: .named("menuScroll")).minY]
+                                                )
+                                            })
+                                            .id(section.nhom.id)
                                     }
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(sectionBackground(index))
                                 }
                             }
+                            .listStyle(.plain)
                             .coordinateSpace(name: "menuScroll")
                             .onPreferenceChange(SectionOffsetKey.self) { updateSelectedFromScroll($0) }
                         }
@@ -310,17 +311,12 @@ struct MenuView: View {
                         Button {
                             isJumpingToSection = true
                             selectedNhomId = section.nhom.id
-                            // LazyVStack chỉ dựng các Section đang/gần trong khung nhìn — 1 lần
-                            // scrollTo duy nhất lúc section đích còn ở xa (chưa được dựng) thường
-                            // cuộn hụt. Gọi lại nhiều lần trong ~0.6s: mỗi lần buộc LazyVStack dựng
-                            // thêm tới gần đích hơn, lần cuối mới chốt đúng vị trí — khắc phục dứt
-                            // điểm thay vì chỉ 1-2 lần (từng vẫn hụt với menu nhiều nhóm/món).
-                            for delay in [0.0, 0.1, 0.2, 0.35, 0.55] {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                                    withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                                }
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { isJumpingToSection = false }
+                            // Cột phải giờ là List (UITableView) nên scrollTo 1 lần là đủ chính
+                            // xác kể cả section ở xa — không còn cần hack gọi lại nhiều lần như hồi
+                            // còn dùng ScrollView+LazyVStack (LazyVStack không tính trước kích
+                            // thước nội dung chưa dựng nên hay cuộn hụt).
+                            withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { isJumpingToSection = false }
                         } label: {
                             HStack(spacing: 6) {
                                 Rectangle()
