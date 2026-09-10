@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Săn thưởng/Tài khoản + icon chuông Thông báo
+/// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Ưu đãi/Tài khoản + icon chuông Thông báo
 /// nhúng làm trailing trong header (SearchBar/TitleBar) của MỌI tab, không còn là tab riêng.
 /// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
 /// một "trait" SwiftUI gắn vào lúc dựng UITabBarController, closure của nó KHÔNG track @State như
@@ -154,7 +154,7 @@ struct MainTabView: View {
             tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
-            tabButton(.sanThuong, label: "Săn thưởng", icon: "gift")
+            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
         .padding(.top, 6)

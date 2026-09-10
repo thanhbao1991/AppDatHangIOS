@@ -1,20 +1,18 @@
 import SwiftUI
 import UIKit
 
-/// Port từ UuDaiScreen.tsx — thẻ tem, giới thiệu bạn bè, sinh nhật, vòng quay may mắn.
+/// Port từ UuDaiScreen.tsx — thẻ tem, giới thiệu bạn bè, vòng quay may mắn. Ngày sinh (khai báo +
+/// nhận quà sinh nhật) đã chuyển sang SettingsView (mục "Thông tin cá nhân", tab Tài khoản) — đây là
+/// thông tin cá nhân, không phải phần thưởng, nên không thuộc tab Ưu đãi.
 struct UuDaiView: View {
     var notificationBell: AnyView
 
     @State private var theTem: TheTem?
     @State private var gioiThieu: GioiThieuInfo?
-    @State private var sinhNhat: SinhNhatInfo?
     @State private var loading = true
 
     @State private var maNhap = ""
     @State private var dangApDung = false
-    @State private var dobDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
-    @State private var dobChosen = false
-    @State private var dangLuuSinhNhat = false
     @State private var dangDoiTem = false
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
@@ -23,7 +21,7 @@ struct UuDaiView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Săn thưởng", trailing: notificationBell)
+            TitleBar(title: "Ưu đãi", trailing: notificationBell)
 
             Group {
                 if loading {
@@ -33,7 +31,6 @@ struct UuDaiView: View {
                         VStack(spacing: 12) {
                             if let theTem { theTemCard(theTem) }
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
-                            if let sinhNhat { sinhNhatCard(sinhNhat) }
                             vongQuayCard
                         }
                         .padding()
@@ -116,35 +113,6 @@ struct UuDaiView: View {
         }
     }
 
-    private func sinhNhatCard(_ s: SinhNhatInfo) -> some View {
-        card {
-            Text("🎂 Sinh nhật").font(.system(size: 16, weight: .bold))
-            if let ngaySinh = s.ngaySinh {
-                Text("Ngày sinh: \(formatDateVN(ngaySinh))").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                if s.dangTrongThangSinhNhat && !s.daNhanQuaNamNay {
-                    Button("🎁 Nhận quà sinh nhật") { Task { await nhanQua() } }
-                        .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
-                }
-                if s.daNhanQuaNamNay {
-                    Text("Đã nhận quà năm nay rồi, hẹn năm sau nhé!").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
-            } else {
-                Text("Nhập ngày sinh để nhận quà mừng sinh nhật mỗi năm.").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                HStack {
-                    DatePicker("", selection: $dobDate, in: ...Date(), displayedComponents: .date)
-                        .labelsHidden()
-                        .onChange(of: dobDate) { _ in dobChosen = true }
-                    Button {
-                        Task { await luuSinhNhat() }
-                    } label: {
-                        if dangLuuSinhNhat { ProgressView().tint(.white) } else { Text("Lưu") }
-                    }
-                    .buttonStyle(.borderedProminent).tint(Theme.primary).disabled(dangLuuSinhNhat || !dobChosen)
-                }
-            }
-        }
-    }
-
     private var vongQuayCard: some View {
         card {
             Text("🎡 Vòng quay may mắn").font(.system(size: 16, weight: .bold))
@@ -161,20 +129,10 @@ struct UuDaiView: View {
         }
     }
 
-    private func formatDateVN(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: iso) ?? DateFormatter.iso8601NoTZ.date(from: iso) else { return iso }
-        let out = DateFormatter()
-        out.dateFormat = "dd/MM/yyyy"
-        out.locale = Locale(identifier: "vi_VN")
-        return out.string(from: date)
-    }
-
     private func load() async {
         async let temTask = APIClient.shared.getTheTem()
         async let gtTask = APIClient.shared.getGioiThieu()
-        async let snTask = APIClient.shared.getSinhNhat()
-        (theTem, gioiThieu, sinhNhat) = await (temTask, gtTask, snTask)
+        (theTem, gioiThieu) = await (temTask, gtTask)
         loading = false
     }
 
@@ -202,29 +160,6 @@ struct UuDaiView: View {
         }
     }
 
-    private func luuSinhNhat() async {
-        guard dobChosen else {
-            alertMessage = ("Chưa chọn ngày", "Chọn ngày sinh trước khi lưu.")
-            return
-        }
-        dangLuuSinhNhat = true
-        defer { dangLuuSinhNhat = false }
-        let iso = ISO8601DateFormatter().string(from: dobDate)
-        let res = await APIClient.shared.capNhatNgaySinh(iso)
-        if res.success {
-            dobChosen = false
-            await load()
-        } else {
-            alertMessage = ("Lỗi", res.message ?? "")
-        }
-    }
-
-    private func nhanQua() async {
-        let res = await APIClient.shared.nhanQuaSinhNhat()
-        alertMessage = (res.isSuccess ? "🎂 Chúc mừng!" : "Chưa nhận được", res.message ?? "")
-        if res.isSuccess { await load() }
-    }
-
     private func quay() async {
         dangQuay = true
         ketQuaQuay = nil
@@ -236,13 +171,4 @@ struct UuDaiView: View {
             alertMessage = ("Chưa quay được", res.message ?? "")
         }
     }
-}
-
-private extension DateFormatter {
-    static let iso8601NoTZ: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }

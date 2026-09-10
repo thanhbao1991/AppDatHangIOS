@@ -23,7 +23,7 @@ struct XoaTaiKhoanView: View {
     var body: some View {
         Form {
             Section {
-                Text("Xoá tài khoản sẽ xoá mật khẩu hiện tại và ngày sinh đã khai, thu hồi mọi phiên đăng nhập. Bạn sẽ không còn thấy lại đơn hàng, thẻ tích điểm hay địa chỉ đã lưu trong app, kể cả nếu đăng ký lại sau này. Số điện thoại, tên và lịch sử mua hàng vẫn được quán lưu giữ (kế toán, chăm sóc khách hàng ngoài app) — xem Chính sách bảo mật. Không thể hoàn tác.")
+                Text("Nếu tài khoản còn số dư Xu hoặc công nợ, bạn cần liên hệ quán xử lý trước — hệ thống sẽ từ chối xoá cho đến khi số dư về 0.\n\nXoá tài khoản sẽ xoá mật khẩu hiện tại và ngày sinh đã khai, thu hồi mọi phiên đăng nhập. Bạn sẽ không còn thấy lại đơn hàng, thẻ tích điểm, lịch sử Xu hay địa chỉ đã lưu trong app, kể cả nếu đăng ký lại sau này. Số điện thoại, tên và lịch sử mua hàng vẫn được quán lưu giữ (kế toán, chăm sóc khách hàng ngoài app) — xem Chính sách bảo mật. Không thể hoàn tác.")
                     .font(.system(size: 13)).foregroundColor(Theme.textMuted)
             }
 

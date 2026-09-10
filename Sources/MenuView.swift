@@ -139,10 +139,6 @@ struct MenuView: View {
         return result
     }
 
-    private var selectedItems: [SanPham] {
-        sections.first(where: { $0.nhom.id == selectedNhomId })?.items ?? []
-    }
-
     /// Theo quy định pháp luật, thuốc lá chỉ bán cho người từ 18 tuổi trở lên — dùng để bật cảnh
     /// báo + bắt xác nhận độ tuổi trước khi thêm giỏ ở ProductPickerSheet.
     private var thuocLaNhomIds: Set<String> {
@@ -170,22 +166,33 @@ struct MenuView: View {
                     List(searchResults) { sp in productRow(sp) }
                         .listStyle(.plain)
                 } else {
-                    VStack(spacing: 0) {
-                        // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ
-                        // hàng thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
-
+                    // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ hàng
+                    // thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
+                    ScrollViewReader { proxy in
                         HStack(spacing: 0) {
-                            nhomSidebar
+                            nhomSidebar(proxy: proxy)
                             Divider()
-                            if selectedNhomId == Self.yeuThichNhomId && selectedItems.isEmpty {
-                                yeuThichEmptyState
-                            } else {
-                                List {
-                                    if !selectedItems.isEmpty { randomPickRow }
-                                    ForEach(selectedItems) { sp in productRow(sp) }
+                            // Toàn bộ menu cuộn liền 1 mạch (không đổi list khi bấm nhóm bên trái) —
+                            // bấm sidebar chỉ scrollTo tới đúng section, không lọc ẩn nhóm khác. Mỗi
+                            // section 1 màu nền xen kẽ (background(for:)) để mắt phân biệt ranh giới
+                            // 2 nhóm liền kề khi cuộn nhanh qua.
+                            ScrollView(showsIndicators: false) {
+                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                    ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
+                                        Section {
+                                            if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
+                                                yeuThichEmptyState
+                                            } else {
+                                                if !section.items.isEmpty { randomPickRow(section.items) }
+                                                ForEach(section.items) { sp in productRow(sp) }
+                                            }
+                                        } header: {
+                                            sectionHeader(section.nhom)
+                                        }
+                                        .background(sectionBackground(index))
+                                        .id(section.nhom.id)
+                                    }
                                 }
-                                .listStyle(.plain)
-                                .id(selectedNhomId)
                             }
                         }
                     }
@@ -217,7 +224,7 @@ struct MenuView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     private var lyBiMatBanner: some View {
@@ -239,15 +246,35 @@ struct MenuView: View {
         .buttonStyle(.plain)
     }
 
-    /// Cột trái: danh sách nhóm cố định, bấm chọn thì cột phải đổi danh sách món — khớp trải
-    /// nghiệm quen thuộc của khách hàng trà sữa/cà phê thay vì cuộn dọc qua từng Section.
-    private var nhomSidebar: some View {
+    /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
+    /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh.
+    private func sectionBackground(_ index: Int) -> Color {
+        index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
+    }
+
+    /// Header ghim (pinned) đầu mỗi nhóm khi cuộn — nền đồng bộ sectionBackground(index) để không
+    /// tạo viền lệch màu với nội dung ngay bên dưới nó.
+    private func sectionHeader(_ nhom: NhomSanPham) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+            Spacer()
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8)
+        .background(.bar)
+    }
+
+    /// Cột trái: danh sách nhóm cố định — bấm thì cuộn cột phải nhảy tới đúng section (không lọc ẩn
+    /// nhóm khác) để khách vẫn cuộn xem liền mạch toàn bộ menu mà vẫn "nhảy" nhanh tới nhóm cần.
+    private func nhomSidebar(proxy: ScrollViewProxy) -> some View {
         ScrollView(showsIndicators: false) {
             LazyVStack(spacing: 0) {
                 ForEach(sections, id: \.nhom.id) { section in
                     let isSelected = section.nhom.id == selectedNhomId
                     Button {
                         selectedNhomId = section.nhom.id
+                        withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
                     } label: {
                         HStack(spacing: 6) {
                             Rectangle()
@@ -278,11 +305,11 @@ struct MenuView: View {
         .background(Color(.secondarySystemGroupedBackground))
     }
 
-    /// Hàng đặc biệt đầu danh sách mỗi nhóm — bấm thì bốc random 1 món TRONG NHÓM ĐANG XEM
-    /// (selectedItems) rồi mở ProductPickerSheet y hệt bấm chọn tay, khách vẫn tự chọn size/topping.
-    private var randomPickRow: some View {
+    /// Hàng đặc biệt đầu danh sách mỗi nhóm — bấm thì bốc random 1 món TRONG NHÓM ĐÓ (section.items)
+    /// rồi mở ProductPickerSheet y hệt bấm chọn tay, khách vẫn tự chọn size/topping.
+    private func randomPickRow(_ items: [SanPham]) -> some View {
         Button {
-            picking = selectedItems.randomElement()
+            picking = items.randomElement()
         } label: {
             HStack(spacing: 12) {
                 Image("RandomPickIcon")
@@ -300,6 +327,7 @@ struct MenuView: View {
                 }
                 Spacer()
             }
+            .padding(.horizontal, 16).padding(.vertical, 8)
         }
         .foregroundColor(.primary)
     }
@@ -329,6 +357,7 @@ struct MenuView: View {
                 }
                 Spacer()
             }
+            .padding(.horizontal, 16).padding(.vertical, 8)
         }
         .foregroundColor(.primary)
     }

@@ -35,7 +35,7 @@ struct SearchBar: View {
     }
 }
 
-/// Không có ô tìm kiếm — dùng cho tab gốc không cần lọc (Đơn hàng/Săn thưởng/Tài khoản). Ép cùng
+/// Không có ô tìm kiếm — dùng cho tab gốc không cần lọc (Đơn hàng/Ưu đãi/Tài khoản). Ép cùng
 /// HeaderBarMetrics.rowHeight với SearchBar để 4 tab gốc không nhảy chiều cao khi chuyển qua lại,
 /// khớp cách DayDateBar ép cùng chiều cao DaySearchBar bên AppQuanLyIOS.
 struct TitleBar: View {
