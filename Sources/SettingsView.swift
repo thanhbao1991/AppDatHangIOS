@@ -89,6 +89,7 @@ struct SettingsView: View {
         Section { content() }
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
     }
 
     @ViewBuilder
