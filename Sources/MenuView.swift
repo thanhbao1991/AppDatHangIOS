@@ -310,8 +310,15 @@ struct MenuView: View {
                         Button {
                             isJumpingToSection = true
                             selectedNhomId = section.nhom.id
+                            // LazyVStack chỉ dựng các Section đang/gần trong khung nhìn — scrollTo
+                            // gọi 1 lần duy nhất lúc section đích còn ở xa (chưa được dựng) có thể
+                            // không tìm thấy id, cuộn hụt. Gọi 2 lần cách nhau 1 nhịp: lần đầu buộc
+                            // LazyVStack dựng dần tới gần đích, lần 2 mới chốt đúng vị trí.
                             withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { isJumpingToSection = false }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
                         } label: {
                             HStack(spacing: 6) {
                                 Rectangle()
@@ -366,7 +373,7 @@ struct MenuView: View {
                     Text("Hôm Nay Uống Gì?")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
-                    Text("Chọn ngẫu nhiên 1 món \(nhomTen)")
+                    Text("Chọn ngẫu nhiên \(nhomTen)")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
