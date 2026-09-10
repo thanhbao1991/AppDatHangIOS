@@ -251,9 +251,16 @@ struct MenuView: View {
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
                             }
+                            // Kéo-thả refresh cũng làm List layout lại từ đầu → khoảng trống cũ tái
+                            // xuất hiện y hệt lúc mới mở tab — nhử lại đúng cách như .onAppear ở trên.
+                            .refreshable {
+                                await load(silent: true)
+                                if let firstId = sections.first?.nhom.id {
+                                    DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
+                                }
+                            }
                         }
                     }
-                    .refreshable { await load(silent: true) }
                 }
             }
         }
