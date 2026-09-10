@@ -185,6 +185,11 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    func capNhatTenHienThi(_ tenHienThi: String?) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/khachhang-auth/ten-hien-thi", method: "PUT", body: jsonBody(CapNhatTenHienThiRequest(tenHienThi: tenHienThi)))
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     // ===== Catalog (cache 5 phút) =====
 
     private func cachedDecode<T: Decodable>(_ path: String) async -> ApiEnvelope<T> {

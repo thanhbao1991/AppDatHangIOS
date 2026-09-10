@@ -19,6 +19,9 @@ struct SettingsView: View {
     @State private var dangNhanQua = false
     @State private var alertMessage: (title: String, message: String)?
 
+    @State private var tenHienThi: String = Prefs.tenKhachHang ?? ""
+    @State private var dangLuuTen = false
+
     private let hangColor: [String: Color] = [
         "Kim Cương": Color(red: 0, green: 0.51, blue: 0.56),
         "Vàng": Color(red: 0.72, green: 0.53, blue: 0.04),
@@ -54,6 +57,7 @@ struct SettingsView: View {
                 }
 
                 Section("Thông tin cá nhân") {
+                    tenHienThiRow
                     sinhNhatRow
 
                     if diaChiList.isEmpty {
@@ -143,6 +147,26 @@ struct SettingsView: View {
         }
     }
 
+    /// Tên hiển thị (biệt danh) trong app — chỉ đổi cách app hiện tên, không đụng tên thật khách lưu
+    /// ở quán (chỉ nhân viên sửa được qua Desktop). Để trống + Lưu = xoá biệt danh, quay lại tên thật.
+    private var tenHienThiRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Tên hiển thị").font(.system(size: 14))
+            HStack {
+                TextField("Tên hiển thị trong app", text: $tenHienThi)
+                    .textFieldStyle(.roundedBorder)
+                Button {
+                    Task { await luuTenHienThi() }
+                } label: {
+                    if dangLuuTen { ProgressView() } else { Text("Lưu") }
+                }
+                .buttonStyle(.bordered).tint(Theme.primary)
+                .disabled(dangLuuTen || tenHienThi.trimmingCharacters(in: .whitespaces) == (Prefs.tenKhachHang ?? ""))
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
     @ViewBuilder
     private var sinhNhatRow: some View {
         if let sinhNhat {
@@ -213,6 +237,19 @@ struct SettingsView: View {
         out.dateFormat = "dd/MM/yyyy"
         out.locale = Locale(identifier: "vi_VN")
         return out.string(from: date)
+    }
+
+    private func luuTenHienThi() async {
+        let ten = tenHienThi.trimmingCharacters(in: .whitespaces)
+        dangLuuTen = true
+        defer { dangLuuTen = false }
+        let res = await APIClient.shared.capNhatTenHienThi(ten.isEmpty ? nil : ten)
+        if res.success {
+            Prefs.tenKhachHang = ten.isEmpty ? nil : ten
+            tenHienThi = ten
+        } else {
+            alertMessage = ("Lỗi", res.message ?? "")
+        }
     }
 
     private func luuSinhNhat() async {
