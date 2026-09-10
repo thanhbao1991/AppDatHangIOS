@@ -358,7 +358,7 @@ struct MenuView: View {
                             Text("Uống gì bây giờ ...")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.primary)
-                            Text("Chọn ngẫu nhiên một ly \(nhom.ten.uppercased())")
+                            Text("Bấm chọn ngẫu nhiên 1 ly \(nhom.ten.uppercased())")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                         }
