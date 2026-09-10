@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// Vị trí Y (trong coordinate space "menuScroll") của header từng nhóm — gộp nhiều publisher bằng
+/// cách ghi đè giá trị mới nhất (mỗi nhóm chỉ có 1 header nên không có xung đột thật sự).
+private struct SectionOffsetKey: PreferenceKey {
+    static var defaultValue: [String: CGFloat] = [:]
+    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
 /// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
 /// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
 /// hợp hơn Section cuộn dọc hay chip ngang khi có ~17 nhóm. Modal chọn size/topping/ghi chú →
@@ -18,6 +27,9 @@ struct MenuView: View {
     @State private var query = ""
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
+    /// true trong lúc đang scrollTo do BẤM sidebar (không phải khách tự cuộn tay) — chặn
+    /// updateSelectedFromScroll ghi đè lại lựa chọn giữa chừng animation, gây nhấp nháy highlight.
+    @State private var isJumpingToSection = false
     @State private var monHayMua: [FavoriteItem] = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
@@ -183,17 +195,28 @@ struct MenuView: View {
                                             if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
                                                 yeuThichEmptyState
                                             } else {
-                                                if !section.items.isEmpty { randomPickRow(section.items) }
+                                                if !section.items.isEmpty { randomPickRow(section.items, nhomTen: section.nhom.ten) }
                                                 ForEach(section.items) { sp in productRow(sp) }
                                             }
                                         } header: {
                                             sectionHeader(section.nhom)
+                                                // Đo vị trí Y của header so với đỉnh vùng cuộn — dùng
+                                                // để suy ra nhóm "đang xem" khi cuộn tự do (không bấm
+                                                // sidebar), xem updateSelectedFromScroll bên dưới.
+                                                .background(GeometryReader { geo in
+                                                    Color.clear.preference(
+                                                        key: SectionOffsetKey.self,
+                                                        value: [section.nhom.id: geo.frame(in: .named("menuScroll")).minY]
+                                                    )
+                                                })
                                         }
                                         .background(sectionBackground(index))
                                         .id(section.nhom.id)
                                     }
                                 }
                             }
+                            .coordinateSpace(name: "menuScroll")
+                            .onPreferenceChange(SectionOffsetKey.self) { updateSelectedFromScroll($0) }
                         }
                     }
                     .refreshable { await load(silent: true) }
@@ -246,6 +269,17 @@ struct MenuView: View {
         .buttonStyle(.plain)
     }
 
+    /// Nhóm "đang xem" khi khách tự cuộn tay (không bấm sidebar) — nhóm cuối cùng có header đã
+    /// cuộn qua khỏi đỉnh vùng cuộn (offset <= threshold, tính luôn phần header pinned nằm sát 0).
+    private func updateSelectedFromScroll(_ offsets: [String: CGFloat]) {
+        guard !isJumpingToSection else { return }
+        let threshold: CGFloat = 50
+        guard let top = offsets.filter({ $0.value <= threshold }).max(by: { $0.value < $1.value }) else { return }
+        if selectedNhomId != top.key {
+            selectedNhomId = top.key
+        }
+    }
+
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
     /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh.
     private func sectionBackground(_ index: Int) -> Color {
@@ -268,46 +302,55 @@ struct MenuView: View {
     /// Cột trái: danh sách nhóm cố định — bấm thì cuộn cột phải nhảy tới đúng section (không lọc ẩn
     /// nhóm khác) để khách vẫn cuộn xem liền mạch toàn bộ menu mà vẫn "nhảy" nhanh tới nhóm cần.
     private func nhomSidebar(proxy: ScrollViewProxy) -> some View {
-        ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 0) {
-                ForEach(sections, id: \.nhom.id) { section in
-                    let isSelected = section.nhom.id == selectedNhomId
-                    Button {
-                        selectedNhomId = section.nhom.id
-                        withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Rectangle()
-                                .fill(isSelected ? Theme.primary : Color.clear)
-                                .frame(width: 3)
-                            Image(systemName: Self.nhomIcons[section.nhom.ten] ?? Self.defaultNhomIcon)
-                                .font(.system(size: 13, weight: isSelected ? .bold : .regular))
-                                .foregroundColor(isSelected ? Theme.primary : .secondary)
-                                .frame(width: 16)
-                            Text(Self.nhomShortLabels[section.nhom.ten] ?? section.nhom.ten)
-                                .font(.system(size: 12, weight: isSelected ? .bold : .regular))
-                                .foregroundColor(isSelected ? Theme.primary : .primary)
-                                .multilineTextAlignment(.leading)
-                                .lineLimit(2)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 12)
-                                .padding(.trailing, 6)
+        ScrollViewReader { sidebarProxy in
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 0) {
+                    ForEach(sections, id: \.nhom.id) { section in
+                        let isSelected = section.nhom.id == selectedNhomId
+                        Button {
+                            isJumpingToSection = true
+                            selectedNhomId = section.nhom.id
+                            withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { isJumpingToSection = false }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Rectangle()
+                                    .fill(isSelected ? Theme.primary : Color.clear)
+                                    .frame(width: 3)
+                                Image(systemName: Self.nhomIcons[section.nhom.ten] ?? Self.defaultNhomIcon)
+                                    .font(.system(size: 13, weight: isSelected ? .bold : .regular))
+                                    .foregroundColor(isSelected ? Theme.primary : .secondary)
+                                    .frame(width: 16)
+                                Text(Self.nhomShortLabels[section.nhom.ten] ?? section.nhom.ten)
+                                    .font(.system(size: 12, weight: isSelected ? .bold : .regular))
+                                    .foregroundColor(isSelected ? Theme.primary : .primary)
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 12)
+                                    .padding(.trailing, 6)
+                            }
+                            .frame(minHeight: 44)
+                            .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
+                            .contentShape(Rectangle())
                         }
-                        .frame(minHeight: 44)
-                        .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .frame(width: 96)
+            .background(Color(.secondarySystemGroupedBackground))
+            // Khách tự cuộn tay bên phải → selectedNhomId đổi theo (updateSelectedFromScroll) → tự
+            // cuộn sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
+            .onChange(of: selectedNhomId) { id in
+                withAnimation { sidebarProxy.scrollTo(id, anchor: .center) }
+            }
         }
-        .frame(width: 96)
-        .background(Color(.secondarySystemGroupedBackground))
     }
 
     /// Hàng đặc biệt đầu danh sách mỗi nhóm — bấm thì bốc random 1 món TRONG NHÓM ĐÓ (section.items)
     /// rồi mở ProductPickerSheet y hệt bấm chọn tay, khách vẫn tự chọn size/topping.
-    private func randomPickRow(_ items: [SanPham]) -> some View {
+    private func randomPickRow(_ items: [SanPham], nhomTen: String) -> some View {
         Button {
             picking = items.randomElement()
         } label: {
@@ -321,7 +364,7 @@ struct MenuView: View {
                     Text("Hôm Nay Uống Gì?")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
-                    Text("Chọn ngẫu nhiên 1 món")
+                    Text("Chọn ngẫu nhiên 1 món \(nhomTen)")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
