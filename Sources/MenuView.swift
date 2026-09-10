@@ -322,7 +322,7 @@ struct MenuView: View {
                                 Rectangle()
                                     .fill(isSelected ? Theme.primary : Color.clear)
                                     .frame(width: 3)
-                                Image(systemName: Self.nhomIcons[section.nhom.ten] ?? Self.defaultNhomIcon)
+                                Text("#")
                                     .font(.system(size: 13, weight: isSelected ? .bold : .regular))
                                     .foregroundColor(isSelected ? Theme.primary : .secondary)
                                     .frame(width: 16)
