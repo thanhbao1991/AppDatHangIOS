@@ -5,6 +5,7 @@ private let pollInterval: TimeInterval = 10
 
 struct OrderStatusView: View {
     @Binding var path: [DonHangRoute]
+    var notificationBell: AnyView
 
     @State private var orders: [DonHangKhach] = []
     @State private var loading = true
@@ -12,7 +13,7 @@ struct OrderStatusView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Đơn hàng")
+            TitleBar(title: "Đơn hàng", trailing: notificationBell)
 
             Group {
                 if loading {

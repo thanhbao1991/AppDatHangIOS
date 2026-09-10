@@ -3,6 +3,8 @@ import UIKit
 
 /// Port từ UuDaiScreen.tsx — thẻ tem, giới thiệu bạn bè, sinh nhật, vòng quay may mắn.
 struct UuDaiView: View {
+    var notificationBell: AnyView
+
     @State private var theTem: TheTem?
     @State private var gioiThieu: GioiThieuInfo?
     @State private var sinhNhat: SinhNhatInfo?
@@ -21,7 +23,7 @@ struct UuDaiView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Săn thưởng")
+            TitleBar(title: "Săn thưởng", trailing: notificationBell)
 
             Group {
                 if loading {

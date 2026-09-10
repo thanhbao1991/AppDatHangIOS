@@ -5,6 +5,7 @@ import CoreLocation
 struct CheckoutView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
+    var notificationBell: AnyView
 
     @State private var ghiChu = ""
     @State private var diaChi = ""
@@ -20,7 +21,7 @@ struct CheckoutView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Giỏ hàng")
+            TitleBar(title: "Giỏ hàng", trailing: notificationBell)
 
             List {
                 if !cart.items.isEmpty {

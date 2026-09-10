@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Port từ MainTabs.tsx — Thực đơn/Giỏ hàng/Đơn hàng/Săn thưởng/Tài khoản + icon chuông Thông báo
-/// cố định góc trên-phải (nổi trên mọi tab, không còn là tab riêng).
+/// nhúng làm trailing trong header (SearchBar/TitleBar) của MỌI tab, không còn là tab riêng.
 /// Dùng thanh tab TỰ VẼ (không phải `TabView`/`.tabItem` gốc của SwiftUI) — lý do: `.tabItem` là
 /// một "trait" SwiftUI gắn vào lúc dựng UITabBarController, closure của nó KHÔNG track @State như
 /// body thật, nên đổi `selectedTab` chỉ khiến UIKit tự tint màu, không re-render lại icon sang
@@ -40,7 +40,7 @@ struct MainTabView: View {
                 switch selectedTab {
                 case .home:
                     NavigationStack(path: $homePath) {
-                        MenuView(path: $homePath, selectedTab: $selectedTab)
+                        MenuView(path: $homePath, selectedTab: $selectedTab, notificationBell: AnyView(notificationBell))
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .lyBiMat: LyBiMatView(path: $homePath)
@@ -50,7 +50,7 @@ struct MainTabView: View {
                     }
                 case .cart:
                     NavigationStack(path: $cartPath) {
-                        CheckoutView(path: $cartPath)
+                        CheckoutView(path: $cartPath, notificationBell: AnyView(notificationBell))
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .lyBiMat: LyBiMatView(path: $cartPath)
@@ -60,7 +60,7 @@ struct MainTabView: View {
                     }
                 case .donHang:
                     NavigationStack(path: $donHangPath) {
-                        OrderStatusView(path: $donHangPath)
+                        OrderStatusView(path: $donHangPath, notificationBell: AnyView(notificationBell))
                             .navigationDestination(for: DonHangRoute.self) { route in
                                 switch route {
                                 case .detail(let order):
@@ -72,23 +72,15 @@ struct MainTabView: View {
                     }
                 case .sanThuong:
                     NavigationStack {
-                        UuDaiView()
+                        UuDaiView(notificationBell: AnyView(notificationBell))
                     }
                 case .settings:
                     NavigationStack {
-                        SettingsView(isLoggedIn: $isLoggedIn)
+                        SettingsView(isLoggedIn: $isLoggedIn, notificationBell: AnyView(notificationBell), accountSettingsGear: AnyView(accountSettingsGear))
                     }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .overlay(alignment: .topTrailing) {
-                HStack(spacing: 4) {
-                    notificationBell
-                    if selectedTab == .settings { accountSettingsGear }
-                }
-                .padding(.trailing, 8)
-                .padding(.top, 8)
-            }
 
             Divider()
             tabBar
@@ -116,8 +108,11 @@ struct MainTabView: View {
         .onDisappear { pollTask?.cancel() }
     }
 
-    /// Icon chuông cố định góc trên-phải, nổi trên header của MỌI tab (thay cho tab "Thông báo" cũ)
-    /// — mở ThongBaoView qua sheet khi bấm, thay vì chuyển tab.
+    /// Icon chuông đặt làm `trailing` trong header (SearchBar/TitleBar) của TỪNG tab (thay cho tab
+    /// "Thông báo" cũ) — mở ThongBaoView qua sheet khi bấm, thay vì chuyển tab. Trước đây thử nổi
+    /// bằng `.overlay(alignment: .topTrailing)` trên toàn màn hình nhưng bị đè lên thanh tìm kiếm
+    /// (pill trắng) của tab Thực đơn do overlay không cộng dồn layout — đổi hẳn sang truyền xuống
+    /// làm trailing thật trong HStack của từng header để không chồng lấn.
     private var notificationBell: some View {
         Button {
             showThongBao = true
@@ -127,23 +122,17 @@ struct MainTabView: View {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 18))
                     .foregroundColor(.white)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 30, height: 30)
                 if unreadCount > 0 {
-                    Text("\(unreadCount)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.red))
-                        .offset(x: 6, y: -2)
+                    PulsingBadge(text: "\(unreadCount)")
+                        .offset(x: 6, y: -4)
                 }
             }
         }
     }
 
     /// Icon bánh răng mở TaiKhoanBaoMatView (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài
-    /// khoản) — chỉ hiện khi đang ở tab Tài khoản, đặt bên phải icon chuông (icon chuông luôn hiện
-    /// trước, vì nó có mặt trên MỌI tab còn bánh răng chỉ thêm vào khi ở tab Tài khoản).
+    /// khoản) — chỉ truyền vào header của tab Tài khoản (xem SettingsView), đặt bên phải icon chuông.
     private var accountSettingsGear: some View {
         Button {
             showTaiKhoanBaoMat = true
@@ -151,7 +140,7 @@ struct MainTabView: View {
             Image(systemName: "gearshape.fill")
                 .font(.system(size: 18))
                 .foregroundColor(.white)
-                .frame(width: 36, height: 36)
+                .frame(width: 30, height: 30)
         }
     }
 
@@ -196,7 +185,7 @@ struct MainTabView: View {
     private func tabBadge(_ text: String, pulse: Bool = false) -> some View {
         Group {
             if pulse {
-                PulsingCartBadge(text: text)
+                PulsingBadge(text: text)
             } else {
                 Text(text)
                     .font(.system(size: 10, weight: .bold))
@@ -228,9 +217,10 @@ struct MainTabView: View {
     }
 }
 
-/// Badge giỏ hàng nhấp nháy (phóng to/thu nhỏ lặp lại) để gây chú ý khi có món trong giỏ — cần
-/// @State riêng để driver animation lặp vô hạn nên tách thành view con thay vì để trong tabBadge.
-private struct PulsingCartBadge: View {
+/// Badge nhấp nháy (phóng to/thu nhỏ lặp lại) để gây chú ý — dùng cho cả badge giỏ hàng và badge
+/// chuông thông báo khi có tin chưa đọc. Cần @State riêng để driver animation lặp vô hạn nên tách
+/// thành view con thay vì để trong tabBadge/notificationBell.
+private struct PulsingBadge: View {
     let text: String
     @State private var animate = false
 

@@ -8,6 +8,7 @@ struct MenuView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
     @Binding var selectedTab: AppTab
+    var notificationBell: AnyView
 
     @State private var loading = true
     @State private var error = ""
@@ -153,7 +154,7 @@ struct MenuView: View {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
             // dưới navigationTitle).
-            SearchBar(text: $query, placeholder: "Tìm món...")
+            SearchBar(text: $query, placeholder: "Tìm món...", trailing: notificationBell)
 
             Group {
                 if loading {

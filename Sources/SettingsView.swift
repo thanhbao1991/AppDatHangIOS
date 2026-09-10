@@ -5,6 +5,8 @@ import SwiftUI
 /// mở qua icon bánh răng ở MainTabView (chỉ hiện khi đang ở tab này) — tránh trộn với ví/địa chỉ.
 struct SettingsView: View {
     @Binding var isLoggedIn: Bool
+    var notificationBell: AnyView
+    var accountSettingsGear: AnyView
 
     @State private var diaChiList: [DiaChiKhachHang] = []
     @State private var vi: KhachHangVi?
@@ -18,7 +20,9 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: Prefs.tenKhachHang ?? "Tài khoản")
+            TitleBar(title: Prefs.tenKhachHang ?? "Tài khoản", trailing: AnyView(
+                HStack(spacing: 4) { notificationBell; accountSettingsGear }
+            ))
             settingsList
         }
         .task { await load() }
