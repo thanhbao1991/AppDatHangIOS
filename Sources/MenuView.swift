@@ -294,12 +294,13 @@ struct MenuView: View {
                         Button {
                             isJumpingToSection = true
                             selectedNhomId = section.nhom.id
-                            // Cột phải giờ là List (UITableView) nên scrollTo 1 lần là đủ chính
-                            // xác kể cả section ở xa — không còn cần hack gọi lại nhiều lần như hồi
-                            // còn dùng ScrollView+LazyVStack (LazyVStack không tính trước kích
-                            // thước nội dung chưa dựng nên hay cuộn hụt).
-                            withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { isJumpingToSection = false }
+                            // scrollTo gọi CÙNG transaction với selectedNhomId (đổi opacity/màu 17
+                            // dòng sidebar cùng lúc) khiến SwiftUI không thực thi animation cuộn
+                            // của List — đẩy sang runloop kế tiếp để tách hẳn khỏi update đang chạy.
+                            DispatchQueue.main.async {
+                                withAnimation { proxy.scrollTo(section.nhom.id, anchor: .top) }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
                         } label: {
                             HStack(spacing: 6) {
                                 Rectangle()
