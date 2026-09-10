@@ -219,6 +219,8 @@ struct ApDungMaGioiThieuRequest: Encodable { let maGioiThieu: String }
 struct SinhNhatInfo: Decodable { let ngaySinh: String?; let dangTrongThangSinhNhat: Bool; let daNhanQuaNamNay: Bool }
 struct CapNhatNgaySinhRequest: Encodable { let ngaySinh: String }
 
+struct DoiMatKhauRequest: Encodable { let matKhauCu: String; let matKhauMoi: String }
+
 struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; let trung: Bool }
 
 struct PushTokenRequest: Encodable { let expoPushToken: String? }

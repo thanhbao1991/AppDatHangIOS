@@ -1,17 +1,14 @@
 import SwiftUI
 
-/// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu, thiết bị đăng nhập, đăng xuất/
-/// xoá tài khoản.
+/// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu. Các thao tác bảo mật/tài khoản
+/// (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài khoản) đã tách sang TaiKhoanBaoMatView,
+/// mở qua icon bánh răng ở MainTabView (chỉ hiện khi đang ở tab này) — tránh trộn với ví/địa chỉ.
 struct SettingsView: View {
     @Binding var isLoggedIn: Bool
 
-    @State private var sessions: [PhienDangNhapKhachHang] = []
     @State private var diaChiList: [DiaChiKhachHang] = []
     @State private var vi: KhachHangVi?
     @State private var loading = true
-    @State private var showXoaTaiKhoanConfirm = false
-    @State private var xoaTaiKhoanError: String?
-    @State private var revokingSession: PhienDangNhapKhachHang?
 
     private let hangColor: [String: Color] = [
         "Kim Cương": Color(red: 0, green: 0.51, blue: 0.56),
@@ -25,25 +22,6 @@ struct SettingsView: View {
             settingsList
         }
         .task { await load() }
-        .confirmationDialog("Xoá tài khoản?", isPresented: $showXoaTaiKhoanConfirm, titleVisibility: .visible) {
-            Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Bạn sẽ không thể đăng nhập lại và mất toàn bộ địa chỉ đã lưu. Lịch sử mua hàng vẫn được quán lưu lại. Không thể hoàn tác.")
-        }
-        .alert("Không xoá được", isPresented: Binding(get: { xoaTaiKhoanError != nil }, set: { if !$0 { xoaTaiKhoanError = nil } })) {
-            Button("OK") {}
-        } message: {
-            Text(xoaTaiKhoanError ?? "")
-        }
-        .confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
-            Button("Đăng xuất", role: .destructive) {
-                if let s = revokingSession { Task { await revoke(s) } }
-            }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Đăng xuất thiết bị này?")
-        }
     }
 
     private var settingsList: some View {
@@ -81,45 +59,6 @@ struct SettingsView: View {
                         }
                     }
                 }
-
-                Section("Thiết bị đã đăng nhập") {
-                    ForEach(sessions, id: \.id) { item in
-                        HStack(spacing: 12) {
-                            Image(systemName: item.nenTang == "Desktop" ? "desktopcomputer" : "iphone")
-                                .foregroundColor(item.laThietBiHienTai ? Theme.success : Theme.primary)
-                                .frame(width: 32)
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack {
-                                    Text(item.thietBi ?? "Thiết bị không rõ").font(.system(size: 15, weight: .bold))
-                                    if item.laThietBiHienTai {
-                                        Text("Thiết bị này").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
-                                            .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.success).clipShape(Capsule())
-                                    }
-                                }
-                                Text(item.nenTang ?? "?").font(.system(size: 12, weight: .bold)).foregroundColor(item.laThietBiHienTai ? Theme.success : Theme.primary)
-                                Text("Đăng nhập \(formatUtcShort(item.ngayTao)) · Hết hạn \(formatUtcShort(item.hetHan))")
-                                    .font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                            }
-                            Spacer()
-                            if !item.laThietBiHienTai {
-                                Button { revokingSession = item } label: {
-                                    Image(systemName: "xmark").foregroundColor(Theme.danger)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Section {
-                Button("Đăng xuất") { Task { await logout() } }
-                    .foregroundColor(.white).frame(maxWidth: .infinity)
-                    .listRowBackground(Theme.danger)
-            }
-
-            Section {
-                Button("Xoá tài khoản") { showXoaTaiKhoanConfirm = true }
-                    .foregroundColor(Theme.textFaint).frame(maxWidth: .infinity)
             }
         }
         .listStyle(.plain)
@@ -164,23 +103,10 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
-    /// Backend trả DateTime "yyyy-MM-ddTHH:mm:ss.fffffff" (Kind=Unspecified nhưng thực chất UTC) —
-    /// ép hậu tố "Z" trước khi parse để không bị hiểu nhầm thành giờ máy.
-    private func formatUtcShort(_ iso: String) -> String {
-        let trimmed = String(iso.prefix(19)) + "Z"
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: trimmed) else { return iso }
-        let out = DateFormatter()
-        out.dateFormat = "HH:mm dd/MM"
-        out.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
-        return out.string(from: date)
-    }
-
     private func load() async {
-        async let sessionsTask = APIClient.shared.getSessions()
         async let diaChiTask = APIClient.shared.getDiaChiList()
         async let viTask = APIClient.shared.getVi()
-        (sessions, diaChiList, vi) = await (sessionsTask, diaChiTask, viTask)
+        (diaChiList, vi) = await (diaChiTask, viTask)
         loading = false
     }
 
@@ -193,26 +119,6 @@ struct SettingsView: View {
         let result = await APIClient.shared.datDiaChiMacDinh(id)
         if result.success {
             diaChiList = diaChiList.map { DiaChiKhachHang(id: $0.id, diaChi: $0.diaChi, isDefault: $0.id == id, lat: $0.lat, long: $0.long) }
-        }
-    }
-
-    private func revoke(_ item: PhienDangNhapKhachHang) async {
-        let result = await APIClient.shared.revokeSession(item.id)
-        if result.success { sessions.removeAll { $0.id == item.id } }
-    }
-
-    private func logout() async {
-        await APIClient.shared.logout()
-        isLoggedIn = false
-    }
-
-    private func xoaTaiKhoan() async {
-        let result = await APIClient.shared.xoaTaiKhoan()
-        if result.success {
-            await APIClient.shared.logout()
-            isLoggedIn = false
-        } else {
-            xoaTaiKhoanError = result.message
         }
     }
 }

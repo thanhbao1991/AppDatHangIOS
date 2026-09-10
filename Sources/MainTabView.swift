@@ -21,6 +21,7 @@ struct MainTabView: View {
     @State private var unreadCount = 0
     @State private var pollTask: Task<Void, Never>?
     @State private var showThongBao = false
+    @State private var showTaiKhoanBaoMat = false
 
     /// Badge số tiền giỏ hàng dạng viết tắt trên tab bar (vd "25k", "1.2tr") — nil khi giỏ trống để
     /// ẩn hẳn badge thay vì hiện "0k".
@@ -80,17 +81,32 @@ struct MainTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .overlay(alignment: .topTrailing) { notificationBell }
+            .overlay(alignment: .topTrailing) {
+                HStack(spacing: 4) {
+                    notificationBell
+                    if selectedTab == .settings { accountSettingsGear }
+                }
+                .padding(.trailing, 8)
+                .padding(.top, 8)
+            }
 
             Divider()
             tabBar
         }
         .tint(Theme.primary)
         .environmentObject(cart)
-        .onChange(of: selectedTab) { _ in showThongBao = false }
+        .onChange(of: selectedTab) { _ in
+            showThongBao = false
+            showTaiKhoanBaoMat = false
+        }
         .sheet(isPresented: $showThongBao) {
             NavigationStack {
                 ThongBaoView(selectedTab: $selectedTab)
+            }
+        }
+        .sheet(isPresented: $showTaiKhoanBaoMat) {
+            NavigationStack {
+                TaiKhoanBaoMatView(isLoggedIn: $isLoggedIn)
             }
         }
         .task {
@@ -123,8 +139,20 @@ struct MainTabView: View {
                 }
             }
         }
-        .padding(.trailing, 8)
-        .padding(.top, 8)
+    }
+
+    /// Icon bánh răng mở TaiKhoanBaoMatView (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài
+    /// khoản) — chỉ hiện khi đang ở tab Tài khoản, đặt bên phải icon chuông (icon chuông luôn hiện
+    /// trước, vì nó có mặt trên MỌI tab còn bánh răng chỉ thêm vào khi ở tab Tài khoản).
+    private var accountSettingsGear: some View {
+        Button {
+            showTaiKhoanBaoMat = true
+        } label: {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.white)
+                .frame(width: 36, height: 36)
+        }
     }
 
     private var tabBar: some View {

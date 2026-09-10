@@ -171,6 +171,11 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    func doiMatKhau(matKhauCu: String, matKhauMoi: String) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/khachhang-auth/doi-mat-khau", method: "PUT", body: jsonBody(DoiMatKhauRequest(matKhauCu: matKhauCu, matKhauMoi: matKhauMoi)))
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     // ===== Catalog (cache 5 phút) =====
 
     private func cachedDecode<T: Decodable>(_ path: String) async -> ApiEnvelope<T> {
