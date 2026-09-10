@@ -630,24 +630,15 @@ private struct ProductPickerSheet: View {
                                 }
                                 .pickerStyle(.segmented)
                             }
+
+                            if !toppings.isEmpty && tab == 1 {
+                                toppingSection
+                            } else {
+                                noteSection
+                            }
                         }
                         .padding(16)
                     }
-    
-                    Divider()
-    
-                    // Tách khỏi ScrollView phía trên — ô ghi chú tự do cần cao hết phần còn lại của màn
-                    // hình (dưới các chip ghi chú nhanh) thay vì co lại theo nội dung như 1 dòng TextField
-                    // cũ, nên phần dưới này PHẢI nằm ngoài ScrollView (frame(maxHeight: .infinity) bên
-                    // trong 1 ScrollView vô nghĩa vì ScrollView luôn co theo content).
-                    Group {
-                        if !toppings.isEmpty && tab == 1 {
-                            ScrollView { toppingSection.padding(16) }
-                        } else {
-                            noteSection.padding(16)
-                        }
-                    }
-                    .frame(maxHeight: .infinity)
                     }
                 .navigationTitle("Thêm món")
                 .navigationBarTitleDisplayMode(.inline)
@@ -708,8 +699,7 @@ private struct ProductPickerSheet: View {
 
     /// Lưới cột theo số nhóm (Đường/Đá/Trà), mỗi nhóm xếp dọc — khớp bố cục noteSection bên
     /// ProductPickerPanel (AppQuanLyIOS). Ô ghi chú tự do đặt DƯỚI lưới chip (trước đây nằm trên,
-    /// dễ bị hiểu nhầm là ô bắt buộc chính) và chiếm hết chiều cao còn lại (xem body: phần chứa
-    /// noteSection đã tách khỏi ScrollView, có frame(maxHeight: .infinity) sẵn).
+    /// dễ bị hiểu nhầm là ô bắt buộc chính), nhiều dòng thay vì TextField 1 dòng cũ.
     private var noteSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top), count: quickNoteGroups.count), spacing: 10) {
@@ -746,10 +736,10 @@ private struct ProductPickerSheet: View {
                 TextEditor(text: $ghiChu)
                     .font(.system(size: 15))
                     .scrollContentBackground(.hidden)
+                    .frame(height: 100)
             }
             .padding(4)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.divider))
-            .frame(maxHeight: .infinity)
         }
     }
 
