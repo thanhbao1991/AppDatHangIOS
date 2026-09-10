@@ -237,6 +237,15 @@ struct MenuView: View {
                             // sang UICollectionView khiến property đó vô tác dụng, khoảng trống vẫn
                             // còn. Thêm contentMargins(top: 0) cho iOS 17+ để phủ luôn trường hợp đó.
                             .modifier(ZeroTopContentMargin())
+                            // contentMargins(top: 0) chỉ có hiệu lực thật sự sau khi List đã chạy
+                            // qua 1 lần layout/cuộn — lúc mới mở tab (chưa cuộn tay lần nào) khoảng
+                            // trống cũ vẫn còn thấy thoáng qua. "Nhử" 1 lần scrollTo về đúng section
+                            // đầu ngay khi có dữ liệu — không animate, khách không thấy gì nhảy —
+                            // để ép layout tính lại đúng từ đầu.
+                            .onAppear {
+                                guard let firstId = sections.first?.nhom.id else { return }
+                                DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
+                            }
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
