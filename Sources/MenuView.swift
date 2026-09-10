@@ -723,7 +723,7 @@ private struct ProductPickerSheet: View {
                             ForEach(group.notes, id: \.self) { note in
                                 let active = activeNotes.contains(note)
                                 let disabled = khongChoKhongDa && (note == "Không đá" || note == "Đá riêng")
-                                Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note) }
+                                Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note, in: group.notes) }
                                     .font(.system(size: 11, weight: .semibold))
                                     .padding(.horizontal, 6)
                                     .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
@@ -779,9 +779,13 @@ private struct ProductPickerSheet: View {
         }
     }
 
-    private func toggleNote(_ note: String) {
+    /// Mỗi nhóm (Đường/Đá/Trà) chỉ chọn được 1 chip — chọn chip mới trong nhóm sẽ bỏ chip cũ
+    /// cùng nhóm (kiểu radio), bấm lại chip đang chọn để bỏ chọn hẳn.
+    private func toggleNote(_ note: String, in groupNotes: [String]) {
         var notes = ghiChu.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        if let idx = notes.firstIndex(of: note) { notes.remove(at: idx) } else { notes.append(note) }
+        let wasActive = notes.contains(note)
+        notes.removeAll { groupNotes.contains($0) }
+        if !wasActive { notes.append(note) }
         ghiChu = notes.joined(separator: ", ")
     }
 
