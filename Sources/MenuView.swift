@@ -1,5 +1,17 @@
 import SwiftUI
 
+/// contentMargins(.top, 0, for: .scrollContent) chỉ có từ iOS 17 — bọc qua modifier riêng để gọi
+/// có điều kiện (#available) mà không phải rải if/else khắp nơi gọi nó.
+private struct ZeroTopContentMargin: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17.0, *) {
+            content.contentMargins(.top, 0, for: .scrollContent)
+        } else {
+            content
+        }
+    }
+}
+
 /// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
 /// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
 /// hợp hơn Section cuộn dọc hay chip ngang khi có ~17 nhóm. Modal chọn size/topping/ghi chú →
@@ -220,6 +232,11 @@ struct MenuView: View {
                                 }
                             }
                             .listStyle(.plain)
+                            // sectionHeaderTopPadding (AppDatHangIOSApp.init) chỉ chắc ăn khi List
+                            // còn backing bằng UITableView (iOS 16) — từ iOS 17 SwiftUI có thể đổi
+                            // sang UICollectionView khiến property đó vô tác dụng, khoảng trống vẫn
+                            // còn. Thêm contentMargins(top: 0) cho iOS 17+ để phủ luôn trường hợp đó.
+                            .modifier(ZeroTopContentMargin())
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
