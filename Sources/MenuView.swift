@@ -342,7 +342,7 @@ struct MenuView: View {
                             .foregroundColor(Theme.primary)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Uống gì giờ ta?")
+                            Text("Uống gì giờ ta 🤔?")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.primary)
                             Text("Chọn ngẫu nhiên một ly \(nhom.ten.uppercased())")
