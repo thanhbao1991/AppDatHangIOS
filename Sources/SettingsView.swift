@@ -56,31 +56,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Thông tin cá nhân") {
-                    tenHienThiRow
-                    sinhNhatRow
-
-                    if diaChiList.isEmpty {
-                        Text("Chưa có địa chỉ nào — nhập ở bước đặt hàng sẽ tự lưu lại.")
-                            .font(.system(size: 13)).foregroundColor(Theme.textFaint)
-                    } else {
-                        ForEach(diaChiList) { item in
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text((item.isDefault ? "★ " : "") + item.diaChi)
-                                    if !item.isDefault {
-                                        Button("Đặt làm mặc định") { Task { await datMacDinh(item.id) } }
-                                            .font(.system(size: 12)).foregroundColor(Theme.primary)
-                                    }
-                                }
-                                Spacer()
-                                Button { Task { await xoaDiaChi(item.id) } } label: {
-                                    Image(systemName: "xmark").foregroundColor(Theme.danger)
-                                }
-                            }
-                        }
-                    }
-                }
+                cardSection { thongTinCaNhanCard }
             }
         }
         .listStyle(.plain)
@@ -143,6 +119,40 @@ struct SettingsView: View {
             HStack(spacing: 12) {
                 statBox(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
                 statBox(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
+            }
+        }
+    }
+
+    /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
+    /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
+    private var thongTinCaNhanCard: some View {
+        card {
+            Text("Thông tin cá nhân").font(.system(size: 16, weight: .bold))
+            Divider()
+            tenHienThiRow
+            Divider()
+            sinhNhatRow
+            Divider()
+
+            if diaChiList.isEmpty {
+                Text("Chưa có địa chỉ nào — nhập ở bước đặt hàng sẽ tự lưu lại.")
+                    .font(.system(size: 13)).foregroundColor(Theme.textFaint)
+            } else {
+                ForEach(diaChiList) { item in
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text((item.isDefault ? "★ " : "") + item.diaChi)
+                            if !item.isDefault {
+                                Button("Đặt làm mặc định") { Task { await datMacDinh(item.id) } }
+                                    .font(.system(size: 12)).foregroundColor(Theme.primary)
+                            }
+                        }
+                        Spacer()
+                        Button { Task { await xoaDiaChi(item.id) } } label: {
+                            Image(systemName: "xmark").foregroundColor(Theme.danger)
+                        }
+                    }
+                }
             }
         }
     }
