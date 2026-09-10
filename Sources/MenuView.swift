@@ -259,19 +259,11 @@ struct MenuView: View {
                                     DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
                                 }
                             }
-                            // Kéo nhẹ rồi buông (CHƯA đủ xa để kích hoạt refresh) vẫn làm khoảng
-                            // trống tái xuất hiện — .refreshable không bắt được trường hợp này vì
-                            // action của nó chỉ chạy khi thật sự trigger. Bắt mọi lần buông tay,
-                            // chỉ nhử lại khi đang ở nhóm ĐẦU (nơi bug này xảy ra) để không phá vị
-                            // trí cuộn thật khi khách đang xem nhóm khác.
-                            .simultaneousGesture(
-                                DragGesture(minimumDistance: 0).onEnded { _ in
-                                    guard let firstId = sections.first?.nhom.id, selectedNhomId == firstId else { return }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                        proxy.scrollTo(firstId, anchor: .top)
-                                    }
-                                }
-                            )
+                            // (Đã thử bắt thêm DragGesture(minimumDistance: 0) để vá nốt trường hợp
+                            // kéo nhẹ chưa đủ trigger refresh — nhưng dù dùng simultaneousGesture,
+                            // nó vẫn đè mất tap vào Button từng hàng món trong List. Bỏ hẳn: ưu
+                            // tiên chức năng thêm món hoạt động đúng hơn khoảng trắng cosmetic hiếm
+                            // gặp lúc kéo dở dang.)
                         }
                     }
                 }
