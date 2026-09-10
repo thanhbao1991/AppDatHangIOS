@@ -166,8 +166,17 @@ actor APIClient {
         _ = await decode("/khachhang-auth/push-token", method: "PUT", body: jsonBody(PushTokenRequest(expoPushToken: token))) as ApiEnvelope<Bool>
     }
 
-    func xoaTaiKhoan() async -> ActionResult {
-        let env: ApiEnvelope<Bool> = await decode("/khachhang-auth/tai-khoan", method: "DELETE")
+    /// Xoá tài khoản giờ đòi 2 bước: guiOtpXoaTaiKhoan (xác minh mật khẩu, gửi OTP về SĐT) rồi mới
+    /// gọi xoaTaiKhoan(matKhau:otp:) — tránh khách bị người khác cầm máy đã đăng nhập sẵn xoá hộ.
+    struct MatKhauBody: Encodable { let matKhau: String }
+    func guiOtpXoaTaiKhoan(matKhau: String) async -> ActionResult {
+        let env: ApiEnvelope<OtpResponse> = await decode("/khachhang-auth/tai-khoan/gui-otp-xoa", method: "POST", body: jsonBody(MatKhauBody(matKhau: matKhau)))
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
+    struct XoaTaiKhoanBody: Encodable { let matKhau: String; let otp: String }
+    func xoaTaiKhoan(matKhau: String, otp: String) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/khachhang-auth/tai-khoan", method: "DELETE", body: jsonBody(XoaTaiKhoanBody(matKhau: matKhau, otp: otp)))
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
