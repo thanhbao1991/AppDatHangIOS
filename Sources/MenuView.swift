@@ -558,98 +558,105 @@ private struct ProductPickerSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                                CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                    .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                    VStack(spacing: 0) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
+                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                Text(sanPham.ten).font(.headline)
                             }
-                            Text(sanPham.ten).font(.headline)
-                        }
-
-                        if isThuocLa {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(Theme.danger)
-
-                                if loadingNgaySinh {
-                                    ProgressView()
-                                } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
-                                    if duTuoiMuaThuocLa {
-                                        Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
-                                            .foregroundColor(Theme.success)
+    
+                            if isThuocLa {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(Theme.danger)
+    
+                                    if loadingNgaySinh {
+                                        ProgressView()
+                                    } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
+                                        if duTuoiMuaThuocLa {
+                                            Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                                .foregroundColor(Theme.success)
+                                        } else {
+                                            Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                                                .foregroundColor(Theme.danger)
+                                        }
                                     } else {
-                                        Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
-                                            .foregroundColor(Theme.danger)
+                                        DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                        if let dobError {
+                                            Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
+                                        }
+                                        Button {
+                                            Task { await xacNhanNgaySinh() }
+                                        } label: {
+                                            if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .disabled(savingDob)
                                     }
-                                } else {
-                                    DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
-                                    if let dobError {
-                                        Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
-                                    }
-                                    Button {
-                                        Task { await xacNhanNgaySinh() }
-                                    } label: {
-                                        if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .disabled(savingDob)
                                 }
+                                .padding(12)
+                                .background(Theme.danger.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             }
-                            .padding(12)
-                            .background(Theme.danger.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
-
-                        // Chip size cuộn ngang — khớp configSection bên ProductPickerPanel
-                        // (AppQuanLyIOS) thay vì List hàng riêng từng size.
-                        if sanPham.bienThe.count > 1 {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
-                                        let active = bienThe?.id == b.id
-                                        Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
-                                            .font(.system(size: 12, weight: .bold))
-                                            .padding(.horizontal, 10).padding(.vertical, 6)
-                                            .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                            .foregroundColor(active ? .white : .primary)
-                                            .clipShape(Capsule())
+    
+                            // Chip size cuộn ngang — khớp configSection bên ProductPickerPanel
+                            // (AppQuanLyIOS) thay vì List hàng riêng từng size.
+                            if sanPham.bienThe.count > 1 {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
+                                            let active = bienThe?.id == b.id
+                                            Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
+                                                .font(.system(size: 12, weight: .bold))
+                                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                                .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                                .foregroundColor(active ? .white : .primary)
+                                                .clipShape(Capsule())
+                                        }
                                     }
                                 }
                             }
-                        }
-
-                        HStack {
-                            Text("Số lượng").font(.subheadline)
-                            Spacer()
-                            HStack(spacing: 4) {
-                                Button { soLuong = max(1, soLuong - 1) } label: { Image(systemName: "minus.circle.fill") }
-                                    .disabled(soLuong <= 1)
-                                Text("\(soLuong)").font(.subheadline.bold()).frame(minWidth: 20)
-                                Button { soLuong += 1 } label: { Image(systemName: "plus.circle.fill") }
+    
+                            HStack {
+                                Text("Số lượng").font(.subheadline)
+                                Spacer()
+                                // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
+                                // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping.
+                                Stepper("\(soLuong)", value: $soLuong, in: 1...20)
+                                    .fixedSize()
                             }
-                            .buttonStyle(.plain)
-                            .foregroundColor(Theme.primary)
-                        }
-
-                        if !toppings.isEmpty {
-                            Picker("", selection: $tab) {
-                                Text("Ghi chú").tag(0)
-                                Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
+    
+                            if !toppings.isEmpty {
+                                Picker("", selection: $tab) {
+                                    Text("Ghi chú").tag(0)
+                                    Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
+                                }
+                                .pickerStyle(.segmented)
                             }
-                            .pickerStyle(.segmented)
                         }
-
+                        .padding(16)
+                    }
+    
+                    Divider()
+    
+                    // Tách khỏi ScrollView phía trên — ô ghi chú tự do cần cao hết phần còn lại của màn
+                    // hình (dưới các chip ghi chú nhanh) thay vì co lại theo nội dung như 1 dòng TextField
+                    // cũ, nên phần dưới này PHẢI nằm ngoài ScrollView (frame(maxHeight: .infinity) bên
+                    // trong 1 ScrollView vô nghĩa vì ScrollView luôn co theo content).
+                    Group {
                         if !toppings.isEmpty && tab == 1 {
-                            toppingSection
+                            ScrollView { toppingSection.padding(16) }
                         } else {
-                            noteSection
+                            noteSection.padding(16)
                         }
                     }
-                    .padding(16)
-                }
+                    .frame(maxHeight: .infinity)
+                    }
                 .navigationTitle("Thêm món")
                 .navigationBarTitleDisplayMode(.inline)
                 .brandNavBar()
@@ -708,11 +715,11 @@ private struct ProductPickerSheet: View {
     }
 
     /// Lưới cột theo số nhóm (Đường/Đá/Trà), mỗi nhóm xếp dọc — khớp bố cục noteSection bên
-    /// ProductPickerPanel (AppQuanLyIOS).
+    /// ProductPickerPanel (AppQuanLyIOS). Ô ghi chú tự do đặt DƯỚI lưới chip (trước đây nằm trên,
+    /// dễ bị hiểu nhầm là ô bắt buộc chính) và chiếm hết chiều cao còn lại (xem body: phần chứa
+    /// noteSection đã tách khỏi ScrollView, có frame(maxHeight: .infinity) sẵn).
     private var noteSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("Ghi chú món...", text: $ghiChu)
-                .textFieldStyle(.roundedBorder)
+        VStack(alignment: .leading, spacing: 10) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top), count: quickNoteGroups.count), spacing: 10) {
                 ForEach(quickNoteGroups, id: \.title) { group in
                     VStack(alignment: .leading, spacing: 4) {
@@ -734,6 +741,23 @@ private struct ProductPickerSheet: View {
                     }
                 }
             }
+
+            ZStack(alignment: .topLeading) {
+                if ghiChu.isEmpty {
+                    Text("Ghi chú món...")
+                        .font(.system(size: 15))
+                        .foregroundColor(Theme.textFaint)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 8)
+                        .allowsHitTesting(false)
+                }
+                TextEditor(text: $ghiChu)
+                    .font(.system(size: 15))
+                    .scrollContentBackground(.hidden)
+            }
+            .padding(4)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.divider))
+            .frame(maxHeight: .infinity)
         }
     }
 
