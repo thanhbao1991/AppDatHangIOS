@@ -218,6 +218,7 @@ struct SettingsView: View {
                     HStack {
                         DatePicker("", selection: $dobDate, in: ...Date(), displayedComponents: .date)
                             .labelsHidden()
+                            .environment(\.locale, Locale(identifier: "vi_VN"))
                             .onChange(of: dobDate) { _ in dobChosen = true }
                         Button {
                             Task { await luuSinhNhat() }
