@@ -355,7 +355,9 @@ struct MenuView: View {
                             .frame(width: 30, height: 30)
                             .background(Theme.primary)
                             .clipShape(Circle())
-                        Text("Chọn ngẫu nhiên \(nhom.ten.uppercased())")
+                        // Không .uppercased() nữa — chữ hoa toàn bộ đọc như tên danh mục hơn là
+                        // lời mời bấm, giữ nguyên cách viết hoa chữ đầu gốc (vd "Đá Xay").
+                        Text("Chọn ngẫu nhiên món \(nhom.ten)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Theme.primary)
                         Spacer()
