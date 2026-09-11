@@ -38,5 +38,12 @@ final class CartStore: ObservableObject {
         if let idx = items.firstIndex(where: { $0.id == id }) { items[idx].soLuong = soLuong }
     }
 
+    /// Sửa lại 1 dòng đã có trong giỏ (đổi size/topping/ghi chú/số lượng) — dùng khi khách bấm vào
+    /// món ở CheckoutView để mở lại ProductPickerSheet ở chế độ sửa, thay vì thêm dòng mới.
+    func updateItem(_ id: UUID, sanPhamBienTheId: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
+        guard let idx = items.firstIndex(where: { $0.id == id }) else { return }
+        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+    }
+
     func clear() { items.removeAll() }
 }

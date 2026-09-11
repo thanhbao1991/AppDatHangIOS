@@ -276,9 +276,11 @@ struct MenuView: View {
             ProductPickerSheet(
                 sanPham: sp,
                 toppings: toppings,
-                cart: cart,
                 isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? "")
+                khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                onConfirm: { bienThe, soLuong, ghiChu, toppings in
+                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                }
             ) { picking = nil }
         }
     }
@@ -490,14 +492,19 @@ struct MenuView: View {
 }
 
 /// Modal chọn size/topping/ghi chú — port từ Modal presentationStyle="pageSheet" trong MenuScreen.tsx.
-private struct ProductPickerSheet: View {
+/// Dùng chung cho 2 luồng: THÊM món mới (MenuView, `existing` = nil) và SỬA món đã có trong giỏ
+/// (CheckoutView, `existing` = dòng đang sửa) — không tự đụng CartStore, chỉ trả kết quả chọn qua
+/// `onConfirm` để nơi gọi tự quyết định addItem hay updateItem.
+struct ProductPickerSheet: View {
     let sanPham: SanPham
     let toppings: [Topping]
-    let cart: CartStore
     /// Theo quy định pháp luật, thuốc lá chỉ bán cho người từ 18 tuổi trở lên.
     let isThuocLa: Bool
     /// Sinh Tố/Đá Xay luôn xay cùng đá — disable chip "Không đá".
     let khongChoKhongDa: Bool
+    /// Dòng đang sửa (size/topping/số lượng/ghi chú cũ) — nil nghĩa là đang thêm món mới.
+    var existing: CartItem? = nil
+    let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping]) -> Void
     let onDone: () -> Void
 
     @State private var bienThe: SanPhamBienThe?
@@ -661,7 +668,7 @@ private struct ProductPickerSheet: View {
                     }
                 }
                 .padding(16)
-                .navigationTitle("Thêm món")
+                .navigationTitle(existing == nil ? "Thêm món" : "Sửa món")
                 .navigationBarTitleDisplayMode(.inline)
                 .brandNavBar()
                 .toolbar {
@@ -672,7 +679,7 @@ private struct ProductPickerSheet: View {
             Button {
                 confirmAdd()
             } label: {
-                Text("Thêm giỏ · \(bienThe != nil ? formatTien(thanhTienDraft) : "")")
+                Text("\(existing == nil ? "Thêm giỏ" : "Cập nhật") · \(bienThe != nil ? formatTien(thanhTienDraft) : "")")
                     .fontWeight(.bold)
                     .frame(maxWidth: .infinity)
             }
@@ -686,7 +693,14 @@ private struct ProductPickerSheet: View {
             .background(.bar)
         }
         .onAppear {
-            bienThe = sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
+            if let existing {
+                bienThe = sanPham.bienThe.first(where: { $0.id == existing.sanPhamBienTheId }) ?? sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
+                soLuong = existing.soLuong
+                ghiChu = existing.ghiChu ?? ""
+                toppingQty = Dictionary(uniqueKeysWithValues: existing.toppings.map { ($0.id, $0.soLuong) })
+            } else {
+                bienThe = sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
+            }
         }
         .task {
             guard isThuocLa else { return }
@@ -822,7 +836,7 @@ private struct ProductPickerSheet: View {
             guard let qty = toppingQty[t.id], qty > 0 else { return nil }
             return CartTopping(id: t.id, ten: t.ten, gia: t.gia, soLuong: qty)
         }
-        cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sanPham.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, toppings: chosen)
+        onConfirm(bienThe, soLuong, ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, chosen)
         onDone()
     }
 }

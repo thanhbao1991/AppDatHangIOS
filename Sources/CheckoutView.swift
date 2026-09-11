@@ -19,46 +19,71 @@ struct CheckoutView: View {
     @State private var locError = ""
     @State private var ship: UocTinhShip?
 
+    /// Catalog nạp riêng cho CheckoutView (không dùng chung state với MenuView) — chỉ để dựng lại
+    /// SanPham gốc khi khách bấm sửa 1 dòng trong giỏ (ProductPickerSheet cần đủ danh sách bienThe/
+    /// topping để hiện lại UI chọn, giống lúc thêm mới ở MenuView).
+    @State private var sanPhams: [SanPham] = []
+    @State private var nhoms: [NhomSanPham] = []
+    @State private var toppings: [Topping] = []
+    @State private var editingItem: CartItem?
+
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Giỏ hàng", trailing: notificationBell)
+            TitleBar(title: "Giỏ hàng", center: cart.items.isEmpty ? nil : AnyView(qtyBadge), trailing: notificationBell)
 
             List {
                 if !cart.items.isEmpty {
-                    cardRow(topExtra: 6) { addressBox }
-
-                    ForEach(cart.items) { item in
-                        itemRow(item)
-                    }
-
-                    Section {
-                        TextField("Ghi chú cho đơn hàng (không bắt buộc)", text: $ghiChu)
-                        HStack {
-                            Text("Tạm tính")
-                            Spacer()
-                            Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).fontWeight(.bold)
-                        }
-                        if !error.isEmpty { Text(error).foregroundColor(Theme.danger) }
-                        Button {
-                            Task { await datHang() }
-                        } label: {
-                            HStack {
-                                Spacer()
-                                if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
-                                Spacer()
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.primary)
-                        .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
+                    cardRow(topExtra: 6) { cartItemsCard }
+                    cardRow { addressBox }
+                    cardRow { footerCard }
                 } else {
                     Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, alignment: .center)
                 }
             }
-            .listStyle(.plain)
+            .cardListBackground()
         }
-        .task { await loadDiaChi() }
+        .task {
+            await loadDiaChi()
+            await loadCatalog()
+        }
+        .sheet(item: $editingItem) { item in
+            if let sp = sanPham(for: item) {
+                ProductPickerSheet(
+                    sanPham: sp,
+                    toppings: toppings,
+                    isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                    khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                    existing: item,
+                    onConfirm: { bienThe, soLuong, ghiChu, toppings in
+                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                    }
+                ) { editingItem = nil }
+            }
+        }
+    }
+
+    /// Badge "X Ly" giữa thanh tiêu đề — nền trắng nổi trên gradient navy của TitleBar, gọn hơn số
+    /// đặt cạnh icon giỏ vì tab Giỏ hàng đã tự là màn hình giỏ, không cần icon nhắc lại.
+    private var qtyBadge: some View {
+        Text("\(cart.totalCount) Ly")
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(Theme.primary)
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background(Color.white)
+            .clipShape(Capsule())
+    }
+
+    /// Card 1: chi tiết hoá đơn — mỗi dòng bấm vào (trừ vùng số lượng/xoá) mở lại ProductPickerSheet
+    /// ở chế độ sửa.
+    private var cartItemsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Chi tiết hoá đơn").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+            ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
+                itemRow(item)
+                if index < cart.items.count - 1 { Divider() }
+            }
+        }
+        .cardBoxStyle()
     }
 
     private var addressBox: some View {
@@ -125,23 +150,76 @@ struct CheckoutView: View {
         .cardBoxStyle()
     }
 
-    private func itemRow(_ item: CartItem) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold))
-                if !item.toppings.isEmpty {
-                    Text("+ " + item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+    /// Card cuối: ghi chú + tạm tính + nút đặt hàng.
+    private var footerCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField("Ghi chú cho đơn hàng (không bắt buộc)", text: $ghiChu)
+                .textFieldStyle(.roundedBorder)
+            HStack {
+                Text("Tạm tính")
+                Spacer()
+                Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).fontWeight(.bold)
+            }
+            if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
+            Button {
+                Task { await datHang() }
+            } label: {
+                HStack {
+                    Spacer()
+                    if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
+                    Spacer()
                 }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.primary)
+            .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
+        .cardBoxStyle()
+    }
+
+    /// Nhóm chứa thuốc lá/sinh tố/đá xay — cần cho ProductPickerSheet lúc sửa (cảnh báo 18 tuổi,
+    /// disable "Không đá"), khớp y hệt logic bên MenuView.
+    private var thuocLaNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Thuốc lá" }.map(\.id))
+    }
+
+    private var khongChoKhongDaNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
+    }
+
+    /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu
+    /// (khi đó dòng vẫn hiện bình thường trong giỏ nhưng không bấm sửa được, chỉ xoá được).
+    private func sanPham(for item: CartItem) -> SanPham? {
+        sanPhams.first { $0.bienThe.contains { $0.id == item.sanPhamBienTheId } }
+    }
+
+    private func itemRow(_ item: CartItem) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Button {
+                if sanPham(for: item) != nil { editingItem = item }
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    if !item.toppings.isEmpty {
+                        Text("+ " + item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    }
+                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Text(itemGhiChu).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            VStack(alignment: .trailing, spacing: 8) {
+                Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                 HStack(spacing: 10) {
                     Button { cart.setQuantity(item.id, soLuong: item.soLuong - 1) } label: { Image(systemName: "minus.circle") }
                     Text("\(item.soLuong)").fontWeight(.bold)
                     Button { cart.setQuantity(item.id, soLuong: item.soLuong + 1) } label: { Image(systemName: "plus.circle") }
+                    Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
                 }
                 .tint(Theme.primary)
             }
-            Spacer()
-            Text(formatTien(item.thanhTien)).font(.system(size: 14))
-            Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
         }
     }
 
@@ -154,6 +232,16 @@ struct CheckoutView: View {
                 await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
             }
         }
+    }
+
+    private func loadCatalog() async {
+        async let spTask = APIClient.shared.getSanPhamList()
+        async let nhomTask = APIClient.shared.getNhomSanPhamList()
+        async let topTask = APIClient.shared.getToppingList()
+        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
+        sanPhams = sp
+        nhoms = nhom
+        toppings = top
     }
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
