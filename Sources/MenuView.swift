@@ -129,6 +129,21 @@ struct MenuView: View {
         }.map(\.element)
     }
 
+    /// Vị trí của nhóm đang xem trong `sections` — dùng ước lượng "đã cuộn bao nhiêu %" thay vì đo
+    /// pixel offset thật (từng thử qua GeometryReader và bị nhấp nháy, xem comment ở HStack trong
+    /// body). Không chính xác bằng % pixel nhưng ổn định vì dùng lại chính cơ chế .onAppear theo
+    /// Section header đã có sẵn.
+    private var selectedSectionIndex: Int {
+        sections.firstIndex(where: { $0.nhom.id == selectedNhomId }) ?? 0
+    }
+
+    /// Chỉ hiện sidebar cột trái sau khi khách đã cuộn qua >40% số nhóm — gần đầu danh sách (mục
+    /// Yêu thích/nhóm đầu) sidebar chưa cần thiết, đỡ chiếm chỗ màn hình hẹp.
+    private var showSidebar: Bool {
+        guard sections.count > 1 else { return true }
+        return Double(selectedSectionIndex) / Double(sections.count - 1) > 0.4
+    }
+
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
@@ -203,12 +218,14 @@ struct MenuView: View {
                     // quanh cả HStack (2 vùng cuộn cùng lúc trong 1 reader) và bấm sidebar không
                     // cuộn được List — tách hẳn ra để proxy.scrollTo không còn mơ hồ vùng cuộn nào.
                     HStack(spacing: 0) {
-                        nhomSidebar(onTap: { id in
-                            isJumpingToSection = true
-                            selectedNhomId = id
-                            scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
-                        })
-                        Divider()
+                        if showSidebar {
+                            nhomSidebar(onTap: { id in
+                                isJumpingToSection = true
+                                selectedNhomId = id
+                                scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
+                            })
+                            Divider()
+                        }
                         ScrollViewReader { proxy in
                             List {
                                 ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
@@ -270,6 +287,7 @@ struct MenuView: View {
                             // gặp lúc kéo dở dang.)
                         }
                     }
+                    .animation(.easeInOut(duration: 0.2), value: showSidebar)
                 }
             }
         }
