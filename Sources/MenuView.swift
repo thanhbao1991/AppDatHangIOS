@@ -90,11 +90,9 @@ struct MenuView: View {
     private static let defaultNhomIcon = "🥤"
     private static let yeuThichNhomId = "yeu-thich"
 
-    /// Tên hiển thị rút gọn ở sidebar (2 cột, chữ dễ tràn dòng) — không đụng vào Ten thật, chỉ đổi
-    /// nhãn hiển thị nên không ảnh hưởng nhomIcons/nhomGomChung/thuocLaNhomIds vốn khớp theo Ten gốc.
-    private static let nhomShortLabels: [String: String] = [
-        "Trà Truyền Thống": "Trà Tr.Thống",
-    ]
+    /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
+    /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
+    private static let nhomShortLabels: [String: String] = [:]
 
     /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi) — chỉ khớp theo TÊN sản
     /// phẩm vì backend không trả kèm id, khớp cả
@@ -127,21 +125,6 @@ struct MenuView: View {
             let rb = rank[b.element.id] ?? Int.max
             return ra != rb ? ra < rb : a.offset < b.offset
         }.map(\.element)
-    }
-
-    /// Vị trí của nhóm đang xem trong `sections` — dùng ước lượng "đã cuộn bao nhiêu %" thay vì đo
-    /// pixel offset thật (từng thử qua GeometryReader và bị nhấp nháy, xem comment ở HStack trong
-    /// body). Không chính xác bằng % pixel nhưng ổn định vì dùng lại chính cơ chế .onAppear theo
-    /// Section header đã có sẵn.
-    private var selectedSectionIndex: Int {
-        sections.firstIndex(where: { $0.nhom.id == selectedNhomId }) ?? 0
-    }
-
-    /// Chỉ hiện sidebar cột trái sau khi khách đã cuộn qua >40% số nhóm — gần đầu danh sách (mục
-    /// Yêu thích/nhóm đầu) sidebar chưa cần thiết, đỡ chiếm chỗ màn hình hẹp.
-    private var showSidebar: Bool {
-        guard sections.count > 1 else { return true }
-        return Double(selectedSectionIndex) / Double(sections.count - 1) > 0.4
     }
 
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
@@ -218,14 +201,12 @@ struct MenuView: View {
                     // quanh cả HStack (2 vùng cuộn cùng lúc trong 1 reader) và bấm sidebar không
                     // cuộn được List — tách hẳn ra để proxy.scrollTo không còn mơ hồ vùng cuộn nào.
                     HStack(spacing: 0) {
-                        if showSidebar {
-                            nhomSidebar(onTap: { id in
-                                isJumpingToSection = true
-                                selectedNhomId = id
-                                scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
-                            })
-                            Divider()
-                        }
+                        nhomSidebar(onTap: { id in
+                            isJumpingToSection = true
+                            selectedNhomId = id
+                            scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
+                        })
+                        Divider()
                         ScrollViewReader { proxy in
                             List {
                                 ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
@@ -287,7 +268,6 @@ struct MenuView: View {
                             // gặp lúc kéo dở dang.)
                         }
                     }
-                    .animation(.easeInOut(duration: 0.2), value: showSidebar)
                 }
             }
         }
@@ -429,9 +409,10 @@ struct MenuView: View {
                                     .foregroundColor(isSelected ? Theme.primary : .primary))
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
+                                    .minimumScaleFactor(0.8)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 12)
-                                    .padding(.trailing, 6)
+                                    .padding(.trailing, 4)
                             }
                             .frame(minHeight: 44)
                             .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
@@ -441,7 +422,7 @@ struct MenuView: View {
                     }
                 }
             }
-            .frame(width: 96)
+            .frame(width: 84)
             .background(Color(.secondarySystemGroupedBackground))
             // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
             // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
