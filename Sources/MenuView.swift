@@ -346,41 +346,44 @@ struct MenuView: View {
                 Button {
                     picking = items.randomElement()
                 } label: {
-                    HStack(spacing: 10) {
-                        Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                            .font(.system(size: 16))
-                            .frame(width: 30, height: 30)
-                            .background(Theme.primaryTint)
-                            .clipShape(Circle())
-                        // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như tên
-                        // danh mục hơn là lời mời bấm. Hành động thật ("bấm để làm gì") dồn hết vào
-                        // pill bên phải cho rõ ràng, tách bạch nhãn/hành động.
-                        Text(nhom.ten)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Theme.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Spacer(minLength: 8)
-                        // Pill có nền đặc + chữ nêu đúng hành động — thay icon shuffle đơn thuần
-                        // trước đây, để nhìn là ra ngay 1 nút bấm thật. fixedSize để tên nhóm co lại
-                        // nhường chỗ khi thiếu, thay vì để chữ trong pill tự xuống dòng.
-                        Text("Chọn ngẫu nhiên")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Theme.primary)
-                            .clipShape(Capsule())
+                    HStack(spacing: 0) {
+                        // Card ôm sát nội dung (icon+tên+pill liền nhau, không Spacer chen giữa) —
+                        // trước đây Spacer đẩy pill sát mép phải card, để lại khoảng trống lớn giữa
+                        // tên nhóm ngắn và pill. Khoảng dư đẩy ra NGOÀI card bằng Spacer ở dưới.
+                        HStack(spacing: 10) {
+                            Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                                .font(.system(size: 16))
+                                .frame(width: 30, height: 30)
+                                .background(Theme.primaryTint)
+                                .clipShape(Circle())
+                            // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như
+                            // tên danh mục hơn là lời mời bấm. Hành động thật dồn vào pill bên phải.
+                            Text(nhom.ten)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(Theme.primary)
+                                .lineLimit(1)
+                            // Pill nêu đúng hành động — thay icon shuffle đơn thuần trước đây, để
+                            // nhìn là ra ngay 1 nút bấm thật.
+                            Text("Chọn ngẫu nhiên")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .fixedSize()
+                                .padding(.horizontal, 12).padding(.vertical, 7)
+                                .background(Theme.primary)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 10)
+                        .background(Theme.primaryTint)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 12).padding(.vertical, 10)
-                    .background(Theme.primaryTint)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
                     // Thụt lề + bo góc để khối này nổi thành 1 card riêng thay vì thanh kẻ sát mép
                     // dễ bị đọc nhầm thành header thường (xem nhánh items.isEmpty phía trên).
                     .padding(.horizontal, 12).padding(.vertical, 6)
                     .background(.bar)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
