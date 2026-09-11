@@ -350,22 +350,28 @@ struct MenuView: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Theme.primary)
-                            .frame(width: 22)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Theme.primary)
+                            .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Uống gì bây giờ ...")
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(Theme.primary)
                             Text("Bấm chọn ngẫu nhiên 1 ly \(nhom.ten.uppercased())")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
-                        Text("🤔").font(.system(size: 18))
+                        Image(systemName: "shuffle.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(Theme.primary)
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 8)
-                    .background(.bar)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    // Nền tint (khác hẳn nền trắng của list món phía dưới) để khối này đọc là
+                    // banner/nút bấm, không lẫn với header nhóm thường (xem nhánh items.isEmpty).
+                    .background(Theme.primaryTint.opacity(0.5))
                 }
                 .buttonStyle(.plain)
             }
@@ -405,8 +411,6 @@ struct MenuView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        // Mục chưa chọn mờ hẳn đi (như disabled) để mục đang chọn nổi bật rõ ràng.
-                        .opacity(isSelected ? 1 : 0.4)
                     }
                 }
             }
