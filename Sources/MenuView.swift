@@ -573,28 +573,28 @@ private struct ProductPickerSheet: View {
         VStack(spacing: 0) {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 16) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-                                    }
-                                    Text(sanPham.ten).font(.headline)
+                            HStack(alignment: .top) {
+                                if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
+                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(sanPham.ten).font(.headline)
 
-                                // Chip size cuộn ngang, gắn ngay dưới tên món thay vì tách hàng
-                                // riêng — khớp configSection bên ProductPickerPanel (AppQuanLyIOS).
-                                if sanPham.bienThe.count > 1 {
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack(spacing: 8) {
-                                            ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
-                                                let active = bienThe?.id == b.id
-                                                Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
-                                                    .font(.system(size: 12, weight: .bold))
-                                                    .padding(.horizontal, 10).padding(.vertical, 6)
-                                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                                    .foregroundColor(active ? .white : .primary)
-                                                    .clipShape(Capsule())
+                                    // Chip size cuộn ngang, gắn ngay dưới tên món thay vì tách hàng
+                                    // riêng — khớp configSection bên ProductPickerPanel (AppQuanLyIOS).
+                                    if sanPham.bienThe.count > 1 {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 8) {
+                                                ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
+                                                    let active = bienThe?.id == b.id
+                                                    Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
+                                                        .font(.system(size: 12, weight: .bold))
+                                                        .padding(.horizontal, 10).padding(.vertical, 6)
+                                                        .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                                        .foregroundColor(active ? .white : .primary)
+                                                        .clipShape(Capsule())
+                                                }
                                             }
                                         }
                                     }
