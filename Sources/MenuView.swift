@@ -355,15 +355,16 @@ struct MenuView: View {
                             .frame(width: 30, height: 30)
                             .background(Theme.primary)
                             .clipShape(Circle())
-                        // Không .uppercased() nữa — chữ hoa toàn bộ đọc như tên danh mục hơn là
-                        // lời mời bấm, giữ nguyên cách viết hoa chữ đầu gốc (vd "Đá Xay").
-                        Text("Chọn ngẫu nhiên món \(nhom.ten)")
+                        // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như tên
+                        // danh mục hơn là lời mời bấm. Hành động thật ("bấm để làm gì") dồn hết vào
+                        // pill bên phải cho rõ ràng, tách bạch nhãn/hành động.
+                        Text(nhom.ten)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Theme.primary)
                         Spacer()
-                        // Pill có nền đặc + chữ — thay icon shuffle đơn thuần trước đây, để nhìn là
-                        // ra ngay 1 nút bấm thật (icon một mình dễ bị đọc nhầm thành trang trí).
-                        Text("Chọn ngay")
+                        // Pill có nền đặc + chữ nêu đúng hành động — thay icon shuffle đơn thuần
+                        // trước đây, để nhìn là ra ngay 1 nút bấm thật.
+                        Text("Chọn ngẫu nhiên")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 12).padding(.vertical, 7)
