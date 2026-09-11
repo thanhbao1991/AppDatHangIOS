@@ -86,5 +86,5 @@ func formatXu(_ value: Double) -> String {
     formatter.groupingSeparator = "."
     formatter.maximumFractionDigits = 0
     let number = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    return "\(number) Xu"
+    return "\(number)Xu"
 }
