@@ -358,12 +358,17 @@ struct MenuView: View {
                         Text(nhom.ten)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Theme.primary)
-                        Spacer()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        Spacer(minLength: 8)
                         // Pill có nền đặc + chữ nêu đúng hành động — thay icon shuffle đơn thuần
-                        // trước đây, để nhìn là ra ngay 1 nút bấm thật.
+                        // trước đây, để nhìn là ra ngay 1 nút bấm thật. fixedSize để tên nhóm co lại
+                        // nhường chỗ khi thiếu, thay vì để chữ trong pill tự xuống dòng.
                         Text("Chọn ngẫu nhiên")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                             .padding(.horizontal, 12).padding(.vertical, 7)
                             .background(Theme.primary)
                             .clipShape(Capsule())
