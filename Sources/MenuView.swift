@@ -62,34 +62,32 @@ struct MenuView: View {
     /// chiếm chỗ cột trái.
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
-    /// SF Symbol cho từng nhóm sidebar, khớp Ten thật trong bảng NhomSanPhams (VPS, 8/9) — nhóm nào
-    /// không có trong map (mở rộng sau này) rơi về defaultNhomIcon. Cố ý chọn khác nhau cho từng
-    /// nhóm hiện diện riêng ở sidebar (4 nhóm gom chung vào "#Khác" không cần phân biệt nên vẫn để
-    /// trùng thoải mái) — dùng cả biến thể outline (không .fill) để đủ icon phân biệt vì SF Symbols
-    /// không có đủ icon "đúng nghĩa đồ uống" cho từng loại, ưu tiên phân biệt hình dạng hơn khớp
-    /// nghĩa 100%.
+    /// Emoji dự phòng cho từng nhóm — dùng khi nhóm không có món nào có ảnh thật (xem
+    /// nhomImageUrl/pickNhomImages bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Chọn theo đúng
+    /// nghĩa đồ uống của từng nhóm, tránh trùng giữa các nhóm hiện diện riêng ở sidebar (4 nhóm gom
+    /// chung vào "#Khác" không cần phân biệt nên vẫn để trùng thoải mái).
     private static let nhomIcons: [String: String] = [
-        "Ăn Vặt": "fork.knife",
-        "Bạc Xỉu": "mug.fill",
-        "Ca Cao": "mug",
-        "Cà Phê": "cup.and.saucer.fill",
-        "Đá Xay": "snowflake",
-        "Khác": "ellipsis.circle",
-        "Latte": "cup.and.saucer",
-        "Nước Ép": "carrot.fill",
-        "Nước Lon": "shippingbox.fill",
-        "Sinh Tố": "drop.fill",
-        "Soda": "wineglass.fill",
-        "Sữa Chua": "shippingbox.fill",
-        "Sữa Tươi": "takeoutbag.and.cup.and.straw",
-        "Thuốc lá": "exclamationmark.triangle.fill",
-        "Trà": "leaf.circle.fill",
-        "Trà Hiện Đại": "leaf",
-        "Trà Sữa": "takeoutbag.and.cup.and.straw.fill",
-        "Trà Truyền Thống": "leaf.fill",
-        "Yêu thích": "heart.fill",
+        "Ăn Vặt": "🥫",
+        "Bạc Xỉu": "🥃",
+        "Ca Cao": "🧉",
+        "Cà Phê": "☕",
+        "Đá Xay": "🍧",
+        "Khác": "🥫",
+        "Latte": "🍶",
+        "Nước Ép": "🍊",
+        "Nước Lon": "🥫",
+        "Sinh Tố": "🍓",
+        "Soda": "🥤",
+        "Sữa Chua": "🥣",
+        "Sữa Tươi": "🥛",
+        "Thuốc lá": "🥫",
+        "Trà": "🍃",
+        "Trà Hiện Đại": "🍹",
+        "Trà Sữa": "🧋",
+        "Trà Truyền Thống": "🍵",
+        "Yêu thích": "❤️",
     ]
-    private static let defaultNhomIcon = "circle.grid.2x2.fill"
+    private static let defaultNhomIcon = "🥤"
     private static let yeuThichNhomId = "yeu-thich"
 
     /// Tên hiển thị rút gọn ở sidebar (2 cột, chữ dễ tràn dòng) — không đụng vào Ten thật, chỉ đổi
@@ -337,8 +335,8 @@ struct MenuView: View {
         Group {
             if items.isEmpty {
                 HStack(spacing: 6) {
-                    Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                        .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+                    Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                        .font(.system(size: 14))
                     Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
                     Spacer()
                 }
@@ -349,11 +347,10 @@ struct MenuView: View {
                     picking = items.randomElement()
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
+                        Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                            .font(.system(size: 16))
                             .frame(width: 30, height: 30)
-                            .background(Theme.primary)
+                            .background(Theme.primaryTint)
                             .clipShape(Circle())
                         // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như tên
                         // danh mục hơn là lời mời bấm. Hành động thật ("bấm để làm gì") dồn hết vào
