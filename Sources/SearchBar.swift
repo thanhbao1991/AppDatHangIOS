@@ -40,8 +40,9 @@ struct SearchBar: View {
 /// khớp cách DayDateBar ép cùng chiều cao DaySearchBar bên AppQuanLyIOS.
 struct TitleBar: View {
     let title: String
-    /// Đặt giữa title và trailing (vd badge số lượng Ly ở tab Giỏ hàng) — khác `trailing` vì luôn
-    /// căn giữa thanh bất kể title/trailing dài ngắn ra sao, không đẩy lệch theo nội dung 2 bên.
+    /// Đặt đúng GIỮA MÀN HÌNH (vd badge số lượng Ly ở tab Giỏ hàng) qua .overlay ở dưới — không
+    /// dùng 2 Spacer 2 bên vì cách đó chỉ căn giữa KHOẢNG TRỐNG giữa title/trailing, bị lệch khi 2
+    /// bên rộng hẹp khác nhau, không phải giữa màn hình thật.
     var center: AnyView?
     var trailing: AnyView?
     var tinted: Bool = true
@@ -52,10 +53,9 @@ struct TitleBar: View {
                 .font(.headline)
                 .foregroundColor(tinted ? .white : .primary)
             Spacer()
-            if let center { center }
-            Spacer()
             if let trailing { trailing }
         }
+        .overlay { if let center { center } }
         .frame(height: HeaderBarMetrics.rowHeight)
         .padding(.horizontal)
         .padding(.vertical, HeaderBarMetrics.verticalPadding)

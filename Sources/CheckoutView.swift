@@ -31,16 +31,30 @@ struct CheckoutView: View {
         VStack(spacing: 0) {
             TitleBar(title: "Giỏ hàng", center: cart.items.isEmpty ? nil : AnyView(qtyBadge), trailing: notificationBell)
 
-            List {
+            ScrollView {
                 if !cart.items.isEmpty {
-                    cardRow(topExtra: 6) { cartItemsCard }
-                    cardRow { addressBox }
-                    cardRow { footerCard }
+                    // ScrollView + VStack thay vì List — từng thử dồn nhiều dòng món (ForEach động,
+                    // mỗi dòng vài Button riêng: sửa/+/-/xoá) vào chung 1 "card" bên trong MỘT List
+                    // row/Section duy nhất, gặp lỗi UITableView tái sử dụng cell sai (bấm sửa ra màn
+                    // hình trắng, bấm số lượng xoá sạch giỏ hàng) — List không được thiết kế cho 1
+                    // row chứa nhiều nhóm nút tương tác thay đổi số lượng động như vậy. Màn này
+                    // không cần pull-to-refresh/swipe-action nên bỏ hẳn List, dùng ScrollView an toàn.
+                    // spacing: 0 vì mỗi card đã tự có padding.vertical 6 riêng (cardBoxStyle) — 2 card
+                    // liền nhau cộng lại vừa đúng 12pt, thêm spacing ở đây sẽ bị gấp đôi khoảng cách.
+                    VStack(spacing: 0) {
+                        cartItemsCard
+                        addressBox
+                        footerCard
+                    }
+                    // +6pt để khớp đúng khoảng cách 12pt giống giữa 2 card (card đầu chỉ có 6pt từ
+                    // chính nó, xem comment cardRow trong Theme.swift).
+                    .padding(.top, 6)
                 } else {
-                    Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, alignment: .center)
+                    Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
+                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
                 }
             }
-            .cardListBackground()
+            .background(Theme.bg)
         }
         .task {
             await loadDiaChi()
@@ -153,7 +167,7 @@ struct CheckoutView: View {
     /// Card cuối: ghi chú + tạm tính + nút đặt hàng.
     private var footerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("Ghi chú cho đơn hàng (không bắt buộc)", text: $ghiChu)
+            TextField("Ghi chú", text: $ghiChu)
                 .textFieldStyle(.roundedBorder)
             HStack {
                 Text("Tạm tính")

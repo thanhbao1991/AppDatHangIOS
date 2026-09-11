@@ -49,9 +49,15 @@ final class LocationHelper: NSObject, CLLocationManagerDelegate {
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
+            // CLLocationManager có thể gọi callback này SỚM, ngay lúc vừa requestWhenInUseAuthorization()
+            // (trước khi khách kịp bấm Cho phép/Từ chối), với status vẫn còn .notDetermined — nếu resume
+            // continuation ngay lúc đó thì coi như "từ chối" oan, khách phải bấm nút thêm 1 lần nữa mới
+            // thấy đúng kết quả (vì lúc đó status đã thật sự authorized, rơi vào nhánh trả về true ngay ở
+            // requestAuthorization()). Bỏ qua callback này, chỉ resume khi khách đã thật sự trả lời.
+            let status = manager.authorizationStatus
+            guard status != .notDetermined else { return }
             guard let cont = authContinuation else { return }
             authContinuation = nil
-            let status = manager.authorizationStatus
             cont.resume(returning: status == .authorizedWhenInUse || status == .authorizedAlways)
         }
     }
