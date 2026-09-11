@@ -572,9 +572,7 @@ private struct ProductPickerSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             NavigationStack {
-                    VStack(spacing: 0) {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
                                     CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
@@ -655,15 +653,13 @@ private struct ProductPickerSheet: View {
                                 .pickerStyle(.segmented)
                             }
 
-                            if !toppings.isEmpty && tab == 1 {
-                                toppingSection
-                            } else {
-                                noteSection
-                            }
-                        }
-                        .padding(16)
+                    if !toppings.isEmpty && tab == 1 {
+                        toppingSection
+                    } else {
+                        noteSection
                     }
-                    }
+                }
+                .padding(16)
                 .navigationTitle("Thêm món")
                 .navigationBarTitleDisplayMode(.inline)
                 .brandNavBar()
@@ -703,30 +699,45 @@ private struct ProductPickerSheet: View {
     /// hàng phẳng không nền/bo góc, cho chọn nhiều lần cùng 1 topping (vd 2 trân châu) thay vì chỉ
     /// bật/tắt 0-1 như trước.
     private var toppingSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(toppings.sorted(by: { $0.gia > $1.gia })) { t in
-                HStack {
-                    Text(t.ten)
-                    Spacer()
-                    Text(formatTien(t.gia)).font(.caption).foregroundColor(Theme.textMuted)
-                    Stepper(value: Binding(
-                        get: { toppingQty[t.id] ?? 0 },
-                        set: { newValue in
-                            if newValue <= 0 { toppingQty.removeValue(forKey: t.id) } else { toppingQty[t.id] = newValue }
+        // ScrollView riêng, cao lấp đầy phần còn lại tới nút "Thêm giỏ" — topping nhiều thì cuộn
+        // ngay trong vùng này, không kéo cả màn hình thêm món (header/size/số lượng phía trên nay
+        // không còn nằm trong ScrollView, cố định).
+        ScrollView {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(toppings.sorted(by: { $0.gia > $1.gia })) { t in
+                    HStack {
+                        Text(t.ten)
+                        Spacer()
+                        Text(formatTien(t.gia)).font(.caption).foregroundColor(Theme.textMuted)
+                        Stepper(value: Binding(
+                            get: { toppingQty[t.id] ?? 0 },
+                            set: { newValue in
+                                if newValue <= 0 { toppingQty.removeValue(forKey: t.id) } else { toppingQty[t.id] = newValue }
+                            }
+                        ), in: 0...20) {
+                            Text("\(toppingQty[t.id] ?? 0)").fontWeight(.bold)
                         }
-                    ), in: 0...20) {
-                        Text("\(toppingQty[t.id] ?? 0)").fontWeight(.bold)
+                        .fixedSize()
                     }
-                    .fixedSize()
                 }
             }
         }
+        .frame(maxHeight: .infinity)
     }
 
     /// Lưới cột theo số nhóm (Đường/Đá/Trà), mỗi nhóm xếp dọc — khớp bố cục noteSection bên
     /// ProductPickerPanel (AppQuanLyIOS). Ô ghi chú tự do đặt DƯỚI lưới chip (trước đây nằm trên,
     /// dễ bị hiểu nhầm là ô bắt buộc chính), nhiều dòng thay vì TextField 1 dòng cũ.
     private var noteSection: some View {
+        // Bọc ScrollView để khớp hành vi với toppingSection (cùng chỗ đứng, đổi qua lại bằng tab)
+        // — nội dung thường vừa màn hình nhưng phòng khi bàn phím che TextEditor trên máy nhỏ.
+        ScrollView {
+            noteSectionContent
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var noteSectionContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top), count: quickNoteGroups.count), spacing: 10) {
                 ForEach(quickNoteGroups, id: \.title) { group in
