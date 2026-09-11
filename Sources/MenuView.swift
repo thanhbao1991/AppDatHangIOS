@@ -355,14 +355,9 @@ struct MenuView: View {
                             .frame(width: 30, height: 30)
                             .background(Theme.primary)
                             .clipShape(Circle())
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Uống gì bây giờ ...")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Theme.primary)
-                            Text("Bấm chọn ngẫu nhiên 1 ly \(nhom.ten.uppercased())")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                        }
+                        Text("Chọn ngẫu nhiên \(nhom.ten.uppercased())")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Theme.primary)
                         Spacer()
                         Image(systemName: "shuffle.circle.fill")
                             .font(.system(size: 22))
