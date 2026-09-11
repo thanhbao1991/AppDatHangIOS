@@ -704,7 +704,7 @@ private struct ProductPickerSheet: View {
     /// bật/tắt 0-1 như trước.
     private var toppingSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(toppings) { t in
+            ForEach(toppings.sorted(by: { $0.gia > $1.gia })) { t in
                 HStack {
                     Text(t.ten)
                     Spacer()
@@ -742,6 +742,7 @@ private struct ProductPickerSheet: View {
                                     .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.75)
+                                    .contentShape(Rectangle())
                                     .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
                                     .foregroundColor(active ? .white : Theme.textMuted)
                                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
