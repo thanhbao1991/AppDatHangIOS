@@ -400,13 +400,15 @@ struct MenuView: View {
                                 Rectangle()
                                     .fill(isSelected ? Theme.primary : Color.clear)
                                     .frame(width: 3)
-                                Text("#")
+                                // "#" ghép liền chữ đầu bằng Text concatenation (+) thay vì Text
+                                // riêng có .frame(width:) — frame cố định tạo khoảng trắng 2 bên "#"
+                                // làm mất cảm giác hashtag dính liền kiểu "#BạcXỉu".
+                                (Text("#")
                                     .font(.system(size: 13, weight: isSelected ? .bold : .regular))
                                     .foregroundColor(isSelected ? Theme.primary : .secondary)
-                                    .frame(width: 16)
-                                Text(Self.nhomShortLabels[section.nhom.ten] ?? section.nhom.ten)
+                                    + Text(Self.nhomShortLabels[section.nhom.ten] ?? section.nhom.ten)
                                     .font(.system(size: 12, weight: isSelected ? .bold : .regular))
-                                    .foregroundColor(isSelected ? Theme.primary : .primary)
+                                    .foregroundColor(isSelected ? Theme.primary : .primary))
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
