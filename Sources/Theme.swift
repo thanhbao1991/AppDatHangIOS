@@ -72,7 +72,7 @@ func formatTien(_ value: Double) -> String {
     formatter.groupingSeparator = "."
     formatter.maximumFractionDigits = 0
     let number = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    return "\(number) đ"
+    return "\(number)đ"
 }
 
 /// Số dư ví/giao dịch ví hiển thị dưới nhãn "Xu" thay vì "đ" — quy đổi 1 Xu = 1đ y hệt bên dưới
