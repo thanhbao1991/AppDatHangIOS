@@ -573,14 +573,34 @@ private struct ProductPickerSheet: View {
         VStack(spacing: 0) {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
+                                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }
+                                    Text(sanPham.ten).font(.headline)
                                 }
-                                Text(sanPham.ten).font(.headline)
+
+                                // Chip size cuộn ngang, gắn ngay dưới tên món thay vì tách hàng
+                                // riêng — khớp configSection bên ProductPickerPanel (AppQuanLyIOS).
+                                if sanPham.bienThe.count > 1 {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 8) {
+                                            ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
+                                                let active = bienThe?.id == b.id
+                                                Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
+                                                    .font(.system(size: 12, weight: .bold))
+                                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                                    .foregroundColor(active ? .white : .primary)
+                                                    .clipShape(Capsule())
+                                            }
+                                        }
+                                    }
+                                }
                             }
-    
+
                             if isThuocLa {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
@@ -615,25 +635,7 @@ private struct ProductPickerSheet: View {
                                 .background(Theme.danger.opacity(0.08))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             }
-    
-                            // Chip size cuộn ngang — khớp configSection bên ProductPickerPanel
-                            // (AppQuanLyIOS) thay vì List hàng riêng từng size.
-                            if sanPham.bienThe.count > 1 {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 8) {
-                                        ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
-                                            let active = bienThe?.id == b.id
-                                            Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
-                                                .font(.system(size: 12, weight: .bold))
-                                                .padding(.horizontal, 10).padding(.vertical, 6)
-                                                .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                                .foregroundColor(active ? .white : .primary)
-                                                .clipShape(Capsule())
-                                        }
-                                    }
-                                }
-                            }
-    
+
                             HStack {
                                 Text("Số lượng").font(.subheadline)
                                 Spacer()
@@ -721,6 +723,7 @@ private struct ProductPickerSheet: View {
                     }
                 }
             }
+            .padding(.trailing, 10)
         }
         .frame(maxHeight: .infinity)
     }
