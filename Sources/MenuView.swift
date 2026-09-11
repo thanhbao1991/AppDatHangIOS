@@ -346,43 +346,38 @@ struct MenuView: View {
                 Button {
                     picking = items.randomElement()
                 } label: {
-                    HStack(spacing: 0) {
-                        // Card ôm sát nội dung (icon+tên+pill liền nhau, không Spacer chen giữa) —
-                        // trước đây Spacer đẩy pill sát mép phải card, để lại khoảng trống lớn giữa
-                        // tên nhóm ngắn và pill. Khoảng dư đẩy ra NGOÀI card bằng Spacer ở dưới.
-                        HStack(spacing: 10) {
-                            Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
-                                .font(.system(size: 16))
-                                .frame(width: 30, height: 30)
-                                .background(Theme.primaryTint)
-                                .clipShape(Circle())
-                            // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như
-                            // tên danh mục hơn là lời mời bấm. Hành động thật dồn vào pill bên phải.
-                            Text(nhom.ten)
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Theme.primary)
-                                .lineLimit(1)
-                            // Pill nêu đúng hành động — thay icon shuffle đơn thuần trước đây, để
-                            // nhìn là ra ngay 1 nút bấm thật.
-                            Text("Chọn ngẫu nhiên")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .fixedSize()
-                                .padding(.horizontal, 12).padding(.vertical, 7)
-                                .background(Theme.primary)
-                                .clipShape(Capsule())
-                        }
-                        .padding(.horizontal, 12).padding(.vertical, 10)
-                        .background(Theme.primaryTint)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
-                        Spacer(minLength: 0)
+                    // Card full-width, KHÔNG ôm sát nội dung nữa — pill phải nằm cố định 1 vị trí
+                    // (mép phải) xuyên suốt mọi nhóm khi cuộn, quan trọng hơn việc tránh khoảng
+                    // trống co giãn giữa tên nhóm ngắn/dài và pill (chấp nhận đánh đổi).
+                    HStack(spacing: 10) {
+                        Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                            .font(.system(size: 16))
+                            .frame(width: 30, height: 30)
+                            .background(Theme.primaryTint)
+                            .clipShape(Circle())
+                        // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như
+                        // tên danh mục hơn là lời mời bấm. Hành động thật dồn vào pill bên phải.
+                        Text(nhom.ten)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Theme.primary)
+                            .lineLimit(1)
+                        Spacer(minLength: 8)
+                        // Pill nêu đúng hành động — thay icon shuffle đơn thuần trước đây, để
+                        // nhìn là ra ngay 1 nút bấm thật.
+                        Text("Chọn ngẫu nhiên")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .fixedSize()
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Theme.primary)
+                            .clipShape(Capsule())
                     }
-                    // Thụt lề + bo góc để khối này nổi thành 1 card riêng thay vì thanh kẻ sát mép
-                    // dễ bị đọc nhầm thành header thường (xem nhánh items.isEmpty phía trên).
-                    .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(.bar)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    // Nền tint fill sát mép luôn (không còn card nổi thụt lề/bo góc/shadow như
+                    // trước) — tint khác hẳn nền trắng của list món phía dưới là đủ để phân biệt,
+                    // không cần thêm lớp viền.
+                    .background(Theme.primaryTint)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
