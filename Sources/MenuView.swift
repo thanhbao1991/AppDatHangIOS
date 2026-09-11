@@ -359,14 +359,23 @@ struct MenuView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Theme.primary)
                         Spacer()
-                        Image(systemName: "shuffle.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(Theme.primary)
+                        // Pill có nền đặc + chữ — thay icon shuffle đơn thuần trước đây, để nhìn là
+                        // ra ngay 1 nút bấm thật (icon một mình dễ bị đọc nhầm thành trang trí).
+                        Text("Chọn ngay")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Theme.primary)
+                            .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    // Nền tint (khác hẳn nền trắng của list món phía dưới) để khối này đọc là
-                    // banner/nút bấm, không lẫn với header nhóm thường (xem nhánh items.isEmpty).
-                    .background(Theme.primaryTint.opacity(0.5))
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(Theme.primaryTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                    // Thụt lề + bo góc để khối này nổi thành 1 card riêng thay vì thanh kẻ sát mép
+                    // dễ bị đọc nhầm thành header thường (xem nhánh items.isEmpty phía trên).
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(.bar)
                 }
                 .buttonStyle(.plain)
             }
