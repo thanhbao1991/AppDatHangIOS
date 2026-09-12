@@ -63,13 +63,21 @@ struct CheckoutView: View {
                     // hết dòng tiêu đề (không xuyên hết danh sách món như 2 bước còn lại), đã xác
                     // nhận đánh đổi với khách trước khi làm.
                     cardRow(topExtra: 6) { stepHeaderRow(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) }
+                    cardRow {
+                        // Hướng dẫn thao tác xoá món — khớp UX Shopee (swipe-to-delete) đã áp dụng
+                        // ở đây nhưng không có gợi ý trực quan nào, khách dễ không biết phải vuốt.
+                        Text("Vuốt trái để xoá món")
+                            .font(.system(size: 11))
+                            .foregroundColor(Theme.textFaint)
+                            .padding(.leading, 54)
+                    }
                     ForEach(cart.items) { item in
                         let isFirst = item.id == cart.items.first?.id
                         let isLast = item.id == cart.items.last?.id
                         itemRow(item)
-                            .padding(.horizontal, 12)
-                            .padding(.top, isFirst ? 12 : 6)
-                            .padding(.bottom, isLast ? 12 : 6)
+                            .padding(.horizontal, 16)
+                            .padding(.top, isFirst ? 16 : 8)
+                            .padding(.bottom, isLast ? 16 : 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(cardEdgeBackground(isFirst: isFirst, isLast: isLast))
                             // Lề ngoài áp bằng .padding SAU frame+background (KHÔNG dùng
