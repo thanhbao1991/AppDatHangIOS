@@ -50,10 +50,14 @@ struct CheckoutView: View {
                     // nhận đánh đổi với khách trước khi làm.
                     cardRow(topExtra: 6) { stepHeaderRow(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) }
                     ForEach(cart.items) { item in
+                        let isFirst = item.id == cart.items.first?.id
+                        let isLast = item.id == cart.items.last?.id
                         itemRow(item)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 12)
+                            .padding(.top, isFirst ? 12 : 6)
+                            .padding(.bottom, isLast ? 12 : 6)
                             .listRowInsets(EdgeInsets(top: 0, leading: 54, bottom: 0, trailing: 16))
-                            .listRowBackground(Color.white)
+                            .listRowBackground(cardEdgeBackground(isFirst: isFirst, isLast: isLast))
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) { cart.removeItem(item.id) } label: {
                                     Label("Xoá", systemImage: "trash")
@@ -160,6 +164,34 @@ struct CheckoutView: View {
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+    }
+
+    /// Nền + viền cho từng dòng món trong "Chi tiết hoá đơn" — ghép nhiều row List thật lại thành 1
+    /// card trắng bo góc liền mạch (bo góc trên ở dòng đầu, bo góc dưới ở dòng cuối, viền trái/phải
+    /// xuyên suốt, viền trên/dưới chỉ ở 2 đầu) để đồng bộ hình khối với box bước 2/3 (xem
+    /// stepBoxStyle), dù buộc phải tách row thật để .swipeActions hoạt động trên từng món (xem
+    /// comment ở body).
+    private func cardEdgeBackground(isFirst: Bool, isLast: Bool) -> some View {
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: isFirst ? 12 : 0,
+            bottomLeadingRadius: isLast ? 12 : 0,
+            bottomTrailingRadius: isLast ? 12 : 0,
+            topTrailingRadius: isFirst ? 12 : 0
+        )
+        return ZStack {
+            Color.white
+            VStack {
+                if isFirst { Rectangle().fill(Theme.divider).frame(height: 1) }
+                Spacer()
+                if isLast { Rectangle().fill(Theme.divider).frame(height: 1) }
+            }
+            HStack {
+                Rectangle().fill(Theme.divider).frame(width: 1)
+                Spacer()
+                Rectangle().fill(Theme.divider).frame(width: 1)
+            }
+        }
+        .clipShape(shape)
     }
 
     private var qtyCountBadge: some View {
