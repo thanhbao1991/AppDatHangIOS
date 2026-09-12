@@ -166,6 +166,13 @@ struct MenuView: View {
         Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
     }
 
+    /// Chip ghi chú nhanh nhóm "Trà" (Không trà/Trà nóng/Trà đá) chỉ có ý nghĩa với món pha có trà đi
+    /// kèm (Cà Phê — thường có lựa chọn kèm/không kèm trà) — nhóm khác (Trà Sữa, Sinh Tố...) hiện
+    /// chip này chỉ gây rối vì không áp dụng.
+    private var caPheNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Cà Phê" }.map(\.id))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
@@ -274,6 +281,7 @@ struct MenuView: View {
                 toppings: toppings,
                 isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh)
                 }
@@ -490,6 +498,9 @@ struct ProductPickerSheet: View {
     let isThuocLa: Bool
     /// Sinh Tố/Đá Xay luôn xay cùng đá — disable chip "Không đá".
     let khongChoKhongDa: Bool
+    /// Chỉ món nhóm Cà Phê mới hiện chip ghi chú nhanh "Trà" (Không trà/Trà nóng/Trà đá) — nhóm khác
+    /// ẩn hẳn, xem quickNoteGroups.
+    let showTraNote: Bool
     /// Dòng đang sửa (size/topping/số lượng/ghi chú cũ) — nil nghĩa là đang thêm món mới.
     var existing: CartItem? = nil
     let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping]) -> Void
@@ -534,11 +545,18 @@ struct ProductPickerSheet: View {
         return out.string(from: date)
     }
 
-    private let quickNoteGroups: [(title: String, notes: [String])] = [
-        ("Đường", ["Không đường", "Ít ngọt", "Ngọt", "Nhiều ngọt", "Đường riêng"]),
-        ("Đá", ["Không đá", "Ít đá", "Vừa đá", "Nhiều đá", "Đá riêng"]),
-        ("Trà", ["Không trà", "Trà nóng", "Trà đá"]),
-    ]
+    /// Nhóm "Trà" chỉ hiện cho món Cà Phê (showTraNote) — món khác (Trà Sữa, Sinh Tố...) không có lựa
+    /// chọn kèm/không kèm trà nên chip này vô nghĩa, ẩn hẳn thay vì hiện disable.
+    private var quickNoteGroups: [(title: String, notes: [String])] {
+        var groups: [(title: String, notes: [String])] = [
+            ("Đường", ["Không đường", "Ít ngọt", "Ngọt", "Nhiều ngọt", "Đường riêng"]),
+            ("Đá", ["Không đá", "Ít đá", "Vừa đá", "Nhiều đá", "Đá riêng"]),
+        ]
+        if showTraNote {
+            groups.append(("Trà", ["Không trà", "Trà nóng", "Trà đá"]))
+        }
+        return groups
+    }
 
     private var activeNotes: Set<String> {
         Set(ghiChu.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })

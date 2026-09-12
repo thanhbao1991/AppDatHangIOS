@@ -121,6 +121,7 @@ struct CheckoutView: View {
                 toppings: toppingChoices,
                 isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 existing: item,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
@@ -452,6 +453,10 @@ struct CheckoutView: View {
 
     private var khongChoKhongDaNhomIds: Set<String> {
         Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
+    }
+
+    private var caPheNhomIds: Set<String> {
+        Set(nhoms.filter { $0.ten == "Cà Phê" }.map(\.id))
     }
 
     /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu,
