@@ -1,6 +1,5 @@
 import SwiftUI
 import CoreLocation
-import UIKit
 
 /// Port từ CheckoutScreen.tsx — giỏ hàng + địa chỉ giao (GPS/kéo ghim MapKit) + đặt hàng.
 struct CheckoutView: View {
@@ -29,8 +28,6 @@ struct CheckoutView: View {
     @State private var editingItem: CartItem?
     /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
     @State private var openingItemId: UUID?
-    /// Đếm ngược tự ẩn bàn phím khi khách ngừng gõ — xem scheduleKeyboardAutoHide().
-    @State private var keyboardIdleTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,16 +41,16 @@ struct CheckoutView: View {
                     // hình trắng, bấm số lượng xoá sạch giỏ hàng) — List không được thiết kế cho 1
                     // row chứa nhiều nhóm nút tương tác thay đổi số lượng động như vậy. Màn này
                     // không cần pull-to-refresh/swipe-action nên bỏ hẳn List, dùng ScrollView an toàn.
-                    // spacing: 0 vì mỗi card đã tự có padding.vertical 6 riêng (cardBoxStyle) — 2 card
-                    // liền nhau cộng lại vừa đúng 12pt, thêm spacing ở đây sẽ bị gấp đôi khoảng cách.
-                    VStack(spacing: 0) {
-                        cartItemsCard
-                        addressBox
-                        footerCard
+                    //
+                    // Trình bày dạng timeline 3 bước (khoanh số + đường nối dọc) — khớp mẫu "Giới
+                    // thiệu bạn bè" khách gửi, giúp phân biệt rõ luồng đặt hàng thay vì 3 card rời rạc
+                    // trông ngang hàng nhau.
+                    VStack(alignment: .leading, spacing: 0) {
+                        stepCard(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox }
+                        stepCard(2, title: "Giao đến") { addressBox }
+                        stepCard(3, title: "Thanh toán", isLast: true) { footerBox }
                     }
-                    // +6pt để khớp đúng khoảng cách 12pt giống giữa 2 card (card đầu chỉ có 6pt từ
-                    // chính nó, xem comment cardRow trong Theme.swift).
-                    .padding(.top, 6)
+                    .padding(.top, 12)
                 } else {
                     Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
@@ -92,28 +89,66 @@ struct CheckoutView: View {
             .clipShape(Capsule())
     }
 
-    /// Card 1: chi tiết hoá đơn — style khớp itemRow bên HoaDonDetailView (AppQuanLyIOS): header
-    /// icon+"Món"+badge số ly, mỗi dòng có thumbnail + số lượng dạng khoanh tròn, topping tô màu
-    /// primary, ghi chú in nghiêng màu warning. Bấm vào dòng (trừ nút xoá) mở ProductPickerSheet ở
-    /// chế độ sửa.
-    private var cartItemsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Món", systemImage: "cup.and.saucer.fill").font(.headline).foregroundColor(Theme.primary)
-                Spacer()
-                Text("\(cart.totalCount) ly")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Theme.primary)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(Theme.primaryTint)
-                    .clipShape(Capsule())
+    /// 1 bước trong timeline — khoanh số + đường nối dọc bên trái (đường nối co giãn theo chiều cao
+    /// nội dung thật của bước đó nhờ HStack(alignment: .top) tự lấy chiều cao theo nhánh cao nhất,
+    /// KHÔNG cần đo thủ công bằng GeometryReader), tiêu đề + nội dung bên phải.
+    private func stepCard<Content: View>(_ number: Int, title: String, trailing: AnyView? = nil, isLast: Bool = false, @ViewBuilder content: () -> Content) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 0) {
+                Text("\(number)")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(Theme.primary))
+                if !isLast {
+                    Rectangle().fill(Theme.divider).frame(width: 2).frame(maxHeight: .infinity)
+                }
             }
-            ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { Divider() }
-                itemRow(item)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                    Spacer()
+                    if let trailing { trailing }
+                }
+                content()
+            }
+            .padding(.bottom, isLast ? 0 : 16)
+        }
+        .padding(.horizontal)
+    }
+
+    /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal
+    /// riêng (stepCard đã tự canh lề ngang cho cả bước rồi, cộng thêm sẽ bị thụt lề đôi).
+    private func stepBoxStyle<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+    }
+
+    private var qtyCountBadge: some View {
+        Text("\(cart.totalCount) ly")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundColor(Theme.primary)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Theme.primaryTint)
+            .clipShape(Capsule())
+    }
+
+    /// Bước 1: chi tiết hoá đơn — style khớp itemRow bên HoaDonDetailView (AppQuanLyIOS): thumbnail
+    /// + số lượng dạng khoanh tròn, topping tô màu primary, ghi chú in nghiêng màu warning. Bấm vào
+    /// dòng (trừ nút xoá) mở ProductPickerSheet ở chế độ sửa.
+    private var cartItemsBox: some View {
+        stepBoxStyle {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
+                    if index > 0 { Divider() }
+                    itemRow(item)
+                }
             }
         }
-        .cardBoxStyle()
     }
 
     @ViewBuilder
@@ -127,11 +162,10 @@ struct CheckoutView: View {
     }
 
     private var addressBox: some View {
+        stepBoxStyle {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Giao đến").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
-                .onChange(of: diaChi) { _ in scheduleKeyboardAutoHide() }
 
             if !savedDiaChi.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -188,15 +222,15 @@ struct CheckoutView: View {
                 }
             }
         }
-        .cardBoxStyle()
+        }
     }
 
-    /// Card cuối: ghi chú + tạm tính + nút đặt hàng.
-    private var footerCard: some View {
+    /// Bước cuối: ghi chú + tạm tính + nút đặt hàng.
+    private var footerBox: some View {
+        stepBoxStyle {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Ghi chú", text: $ghiChu)
                 .textFieldStyle(.roundedBorder)
-                .onChange(of: ghiChu) { _ in scheduleKeyboardAutoHide() }
             HStack {
                 Text("Tạm tính")
                 Spacer()
@@ -216,7 +250,7 @@ struct CheckoutView: View {
             .tint(Theme.primary)
             .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
         }
-        .cardBoxStyle()
+        }
     }
 
     /// Nhóm chứa thuốc lá/sinh tố/đá xay — cần cho ProductPickerSheet lúc sửa (cảnh báo 18 tuổi,
@@ -285,18 +319,6 @@ struct CheckoutView: View {
                 Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                 Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
             }
-        }
-    }
-
-    /// Tự ẩn bàn phím sau 3s khách ngừng gõ (ô địa chỉ hoặc ghi chú) — mỗi lần gõ reset lại đếm
-    /// ngược, gõ tiếp thì không ẩn giữa chừng. Dùng resignFirstResponder trực tiếp thay vì FocusState
-    /// riêng từng field vì chỉ cần "có bàn phím đang mở thì ẩn đi", không cần biết đang ở field nào.
-    private func scheduleKeyboardAutoHide() {
-        keyboardIdleTask?.cancel()
-        keyboardIdleTask = Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            guard !Task.isCancelled else { return }
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
 
