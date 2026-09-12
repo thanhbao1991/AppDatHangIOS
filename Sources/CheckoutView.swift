@@ -64,7 +64,14 @@ struct CheckoutView: View {
                             .padding(.bottom, isLast ? 12 : 6)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(cardEdgeBackground(isFirst: isFirst, isLast: isLast))
-                            .listRowInsets(EdgeInsets(top: 0, leading: 54, bottom: 0, trailing: 16))
+                            // Lề ngoài áp bằng .padding SAU frame+background (KHÔNG dùng
+                            // listRowInsets) — .swipeActions khiến List bỏ qua listRowInsets, render
+                            // row edge-to-edge, đó là lý do card từng dính sát mép màn hình dù đã set
+                            // insets 54/16. .padding ở đây co width của background lại đúng như lề
+                            // thật, không phụ thuộc hành vi insets của row.
+                            .padding(.leading, 54)
+                            .padding(.trailing, 16)
+                            .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                             .swipeActions(edge: .trailing) {
