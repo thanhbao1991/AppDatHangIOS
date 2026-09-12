@@ -60,7 +60,10 @@ func cardBox<Content: View>(@ViewBuilder content: () -> Content) -> some View {
 /// card cộng lại thành 12, còn card đầu chỉ có 6 từ chính nó nên thiếu 6pt so với các card sau).
 @ViewBuilder
 func cardRow<Content: View>(topExtra: CGFloat = 0, @ViewBuilder content: () -> Content) -> some View {
-    Section { content() }
+    // KHÔNG bọc bằng Section — List tự thêm khoảng cách ngầm giữa các Section (kể cả không có
+    // header/footer), khiến đường nối dọc (đường kẻ nối các khoanh số bước) bị đứt đoạn ở ranh
+    // giới giữa 2 card liền nhau dù mỗi card tự vẽ đường kẻ tràn hết chiều cao của nó.
+    content()
         .listRowInsets(EdgeInsets(top: topExtra, leading: 0, bottom: 0, trailing: 0))
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
