@@ -567,90 +567,96 @@ struct ProductPickerSheet: View {
         VStack(spacing: 0) {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 16) {
-                            HStack(alignment: .top) {
-                                if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-                                }
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(sanPham.ten).font(.headline)
+                    HStack(alignment: .top) {
+                        if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
+                            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(sanPham.ten).font(.headline)
 
-                                    // Chip size cuộn ngang, gắn ngay dưới tên món thay vì tách hàng
-                                    // riêng — khớp configSection bên ProductPickerPanel (AppQuanLyIOS).
-                                    if sanPham.bienThe.count > 1 {
-                                        ScrollView(.horizontal, showsIndicators: false) {
-                                            HStack(spacing: 8) {
-                                                ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
-                                                    let active = bienThe?.id == b.id
-                                                    Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
-                                                        .font(.system(size: 12, weight: .bold))
-                                                        .padding(.horizontal, 10).padding(.vertical, 6)
-                                                        .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                                        .foregroundColor(active ? .white : .primary)
-                                                        .clipShape(Capsule())
-                                                }
-                                            }
+                            // Chip size cuộn ngang, gắn ngay dưới tên món thay vì tách hàng
+                            // riêng — khớp configSection bên ProductPickerPanel (AppQuanLyIOS).
+                            if sanPham.bienThe.count > 1 {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
+                                            let active = bienThe?.id == b.id
+                                            // .buttonStyle(.plain) BẮT BUỘC ở đây — Button khởi tạo
+                                            // bằng String title (không phải label closure riêng) mặc
+                                            // định tô chữ theo tint hệ thống (xanh), .foregroundColor()
+                                            // chain sau KHÔNG override được trừ khi có .plain, khiến
+                                            // chip từng hiện chữ xanh thay vì trắng/primary như code định.
+                                            Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
+                                                .buttonStyle(.plain)
+                                                .font(.system(size: 12, weight: .bold))
+                                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                                .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                                .foregroundColor(active ? .white : .primary)
+                                                .clipShape(Capsule())
                                         }
                                     }
                                 }
                             }
+                        }
+                    }
 
-                            if isThuocLa {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
-                                        .font(.system(size: 12, weight: .semibold))
+                    if isThuocLa {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.danger)
+
+                            if loadingNgaySinh {
+                                ProgressView()
+                            } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
+                                if duTuoiMuaThuocLa {
+                                    Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                        .foregroundColor(Theme.success)
+                                } else {
+                                    Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
                                         .foregroundColor(Theme.danger)
-    
-                                    if loadingNgaySinh {
-                                        ProgressView()
-                                    } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
-                                        if duTuoiMuaThuocLa {
-                                            Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
-                                                .foregroundColor(Theme.success)
-                                        } else {
-                                            Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
-                                                .foregroundColor(Theme.danger)
-                                        }
-                                    } else {
-                                        // Ép locale vi_VN — máy đặt hệ thống tiếng Anh sẽ hiện DatePicker
-                                        // kiểu "January 2026"/mm-dd-yyyy giữa 1 màn toàn chữ Việt, lạc quẻ.
-                                        DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
-                                            .environment(\.locale, Locale(identifier: "vi_VN"))
-                                        if let dobError {
-                                            Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
-                                        }
-                                        Button {
-                                            Task { await xacNhanNgaySinh() }
-                                        } label: {
-                                            if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .disabled(savingDob)
-                                    }
                                 }
-                                .padding(12)
-                                .background(Theme.danger.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            } else {
+                                // Ép locale vi_VN — máy đặt hệ thống tiếng Anh sẽ hiện DatePicker
+                                // kiểu "January 2026"/mm-dd-yyyy giữa 1 màn toàn chữ Việt, lạc quẻ.
+                                DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                    .environment(\.locale, Locale(identifier: "vi_VN"))
+                                if let dobError {
+                                    Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
+                                }
+                                Button {
+                                    Task { await xacNhanNgaySinh() }
+                                } label: {
+                                    if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(savingDob)
                             }
+                        }
+                        .padding(12)
+                        .background(Theme.danger.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
 
-                            HStack {
-                                Text("Số lượng").font(.subheadline)
-                                Spacer()
-                                // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
-                                // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping.
-                                Stepper(value: $soLuong, in: 1...20) {
-                                    Text("\(soLuong)").fontWeight(.bold)
-                                }
-                                .fixedSize()
-                            }
-    
-                            if !toppings.isEmpty {
-                                Picker("", selection: $tab) {
-                                    Text("Ghi chú").tag(0)
-                                    Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
-                                }
-                                .pickerStyle(.segmented)
-                            }
+                    HStack {
+                        Text("Số lượng").font(.subheadline)
+                        Spacer()
+                        // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
+                        // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping.
+                        Stepper(value: $soLuong, in: 1...20) {
+                            Text("\(soLuong)").fontWeight(.bold)
+                        }
+                        .fixedSize()
+                    }
+
+                    if !toppings.isEmpty {
+                        Picker("", selection: $tab) {
+                            Text("Ghi chú").tag(0)
+                            Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
+                        }
+                        .pickerStyle(.segmented)
+                    }
 
                     if !toppings.isEmpty && tab == 1 {
                         toppingSection
@@ -746,6 +752,9 @@ struct ProductPickerSheet: View {
             noteSectionContent
         }
         .frame(maxHeight: .infinity)
+        // Trước đây gõ ghi chú xong không có cách nào ẩn bàn phím ngoài bấm đúng chip/nút khác —
+        // chạm ra vùng trống trong ScrollView không tự ẩn bàn phím như TextField thường thấy.
+        .scrollDismissesKeyboard(.interactively)
     }
 
     private var noteSectionContent: some View {
@@ -758,7 +767,11 @@ struct ProductPickerSheet: View {
                             ForEach(group.notes, id: \.self) { note in
                                 let active = activeNotes.contains(note)
                                 let disabled = khongChoKhongDa && (note == "Không đá" || note == "Đá riêng")
+                                // .buttonStyle(.plain) BẮT BUỘC — cùng lý do chip size ở trên (String
+                                // title Button mặc định tô chữ theo tint hệ thống, foregroundColor() sau
+                                // không ăn nếu thiếu .plain).
                                 Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note, in: group.notes) }
+                                    .buttonStyle(.plain)
                                     .font(.system(size: 11, weight: .semibold))
                                     .padding(.horizontal, 6)
                                     .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
