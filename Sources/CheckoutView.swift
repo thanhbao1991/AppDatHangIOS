@@ -63,14 +63,6 @@ struct CheckoutView: View {
                     // hết dòng tiêu đề (không xuyên hết danh sách món như 2 bước còn lại), đã xác
                     // nhận đánh đổi với khách trước khi làm.
                     cardRow(topExtra: 6) { stepHeaderRow(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) }
-                    cardRow {
-                        // Hướng dẫn thao tác xoá món — khớp UX Shopee (swipe-to-delete) đã áp dụng
-                        // ở đây nhưng không có gợi ý trực quan nào, khách dễ không biết phải vuốt.
-                        Text("Vuốt trái để xoá món")
-                            .font(.system(size: 11))
-                            .foregroundColor(Theme.textFaint)
-                            .padding(.leading, 54)
-                    }
                     ForEach(cart.items) { item in
                         let isFirst = item.id == cart.items.first?.id
                         let isLast = item.id == cart.items.last?.id
@@ -96,7 +88,20 @@ struct CheckoutView: View {
                                 }
                             }
                     }
-                    Color.clear.frame(height: 6)
+                    // Hướng dẫn thao tác xoá món — khớp UX Shopee (swipe-to-delete) đã áp dụng ở
+                    // đây nhưng không có gợi ý trực quan nào, khách dễ không biết phải vuốt. Đặt
+                    // NGOÀI card (dưới card, góc phải) thay vì bên trong ở đầu card như trước.
+                    Text("Vuốt trái để xoá món")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textFaint)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.top, 4)
+                        .padding(.trailing, 16)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+
+                    Color.clear.frame(height: 2)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
