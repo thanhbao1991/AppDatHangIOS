@@ -38,14 +38,33 @@ struct CheckoutView: View {
         VStack(spacing: 0) {
             TitleBar(title: "Giỏ hàng", icon: "🛒", centerTitle: true, trailing: notificationBell)
 
-            // Quay lại dùng List theo yêu cầu — mỗi bước timeline là 1 row/Section RIÊNG (qua
-            // cardRow) để giữ đúng identity theo item, tránh lặp lại kiểu lỗi trước đây (nhồi
-            // nhiều nút tương tác động vào chung 1 row khiến UITableView tái dùng cell sai). itemRow
-            // bên trong bước 1 giờ chỉ còn 1 vùng bấm sửa (onTapGesture) + 1 nút xoá SIBLING, không
-            // còn +/- lồng nhau như bản cũ từng gây lỗi.
+            // Quay lại dùng List theo yêu cầu. Bước 2/3 mỗi bước 1 row/Section riêng (qua cardRow).
+            // Bước 1 (chi tiết hoá đơn) mỗi MÓN cũng là 1 row List thật riêng (ForEach trực tiếp,
+            // không nhồi chung 1 row như bản trước từng nghi gây lỗi) — bắt buộc phải vậy để
+            // .swipeActions hoạt động (chỉ áp dụng được trên row thật).
             List {
                 if !cart.items.isEmpty {
-                    cardRow(topExtra: 6) { stepCard(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox } }
+                    // Bước 1 tách thành nhiều row THẬT (không nhồi chung 1 row như trước) để
+                    // .swipeActions hoạt động trên từng món — đổi lại đường nối dọc chỉ còn kéo
+                    // hết dòng tiêu đề (không xuyên hết danh sách món như 2 bước còn lại), đã xác
+                    // nhận đánh đổi với khách trước khi làm.
+                    cardRow(topExtra: 6) { stepHeaderRow(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) }
+                    ForEach(cart.items) { item in
+                        itemRow(item)
+                            .padding(.vertical, 4)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 54, bottom: 0, trailing: 16))
+                            .listRowBackground(Color.white)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) { cart.removeItem(item.id) } label: {
+                                    Label("Xoá", systemImage: "trash")
+                                }
+                            }
+                    }
+                    Color.clear.frame(height: 6)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+
                     cardRow { stepCard(2, title: "Giao đến") { addressBox } }
                     cardRow { stepCard(3, title: "Thanh toán", isLast: true) { footerBox } }
                 } else {
@@ -110,6 +129,28 @@ struct CheckoutView: View {
         .padding(.horizontal)
     }
 
+    /// Chỉ phần tiêu đề của 1 bước (khoanh số + đường nối NGẮN + tên bước) — dùng khi nội dung bước
+    /// đó cần tách thành nhiều row List thật riêng (vd bước 1 để .swipeActions hoạt động), khác
+    /// stepCard ở chỗ không nhận content nên đường nối không giãn theo được, cố định ngắn.
+    private func stepHeaderRow(_ number: Int, title: String, trailing: AnyView? = nil) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 0) {
+                Text("\(number)")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(Theme.primary))
+                Rectangle().fill(Theme.divider).frame(width: 2, height: 16)
+            }
+            HStack {
+                Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                Spacer()
+                if let trailing { trailing }
+            }
+        }
+        .padding(.horizontal)
+    }
+
     /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal
     /// riêng (stepCard đã tự canh lề ngang cho cả bước rồi, cộng thêm sẽ bị thụt lề đôi).
     private func stepBoxStyle<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -128,20 +169,6 @@ struct CheckoutView: View {
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(Theme.primaryTint)
             .clipShape(Capsule())
-    }
-
-    /// Bước 1: chi tiết hoá đơn — style khớp itemRow bên HoaDonDetailView (AppQuanLyIOS): thumbnail
-    /// + số lượng dạng khoanh tròn, topping tô màu primary, ghi chú in nghiêng màu warning. Bấm vào
-    /// dòng (trừ nút xoá) mở ProductPickerSheet ở chế độ sửa.
-    private var cartItemsBox: some View {
-        stepBoxStyle {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Divider() }
-                    itemRow(item)
-                }
-            }
-        }
     }
 
     @ViewBuilder
@@ -313,11 +340,9 @@ struct CheckoutView: View {
         }
     }
 
-    /// Dòng xoá nằm CÙNG dòng với tên sản phẩm (không phải cạnh giá) — Button xoá là SIBLING của
-    /// Text tên, không nằm trong Button mở sửa, để tránh lồng Button-trong-Button (không đáng tin
-    /// cậy trong SwiftUI, xem bài học ở lịch sử sửa file này). Phần còn lại (thumbnail/topping/ghi
-    /// chú/giá) dùng .onTapGesture để mở sửa — Button xoá vẫn nhận tap của riêng nó trước vì nằm
-    /// trong 1 view con có gesture recognizer riêng, ưu tiên hơn onTapGesture của view cha.
+    /// Xoá giờ qua vuốt trái (.swipeActions ở call site trong body, cần món là row List thật) thay
+    /// vì nút X hiện sẵn trên dòng — đổi theo yêu cầu, khớp UX Shopee. Cả dòng dùng .onTapGesture để
+    /// mở sửa (xem cách gắn ở body).
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item.hinhAnh)
@@ -327,11 +352,7 @@ struct CheckoutView: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.primary)
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .top, spacing: 8) {
-                    Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Spacer()
-                    Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
-                }
+                Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                 if !item.toppings.isEmpty {
                     // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
                     // ngay sau tên ("Trân châu +5k") thay vì chỉ hiện tên trơn không ai biết tốn
