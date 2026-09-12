@@ -62,8 +62,11 @@ struct CheckoutView: View {
                             .padding(.horizontal, 12)
                             .padding(.top, isFirst ? 12 : 6)
                             .padding(.bottom, isLast ? 12 : 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(cardEdgeBackground(isFirst: isFirst, isLast: isLast))
                             .listRowInsets(EdgeInsets(top: 0, leading: 54, bottom: 0, trailing: 16))
-                            .listRowBackground(cardEdgeBackground(isFirst: isFirst, isLast: isLast))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) { cart.removeItem(item.id) } label: {
                                     Label("Xoá", systemImage: "trash")
