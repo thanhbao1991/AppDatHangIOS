@@ -26,6 +26,8 @@ struct CheckoutView: View {
     @State private var nhoms: [NhomSanPham] = []
     @State private var toppings: [Topping] = []
     @State private var editingItem: CartItem?
+    /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
+    @State private var openingItemId: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -207,10 +209,27 @@ struct CheckoutView: View {
         sanPhams.first { $0.bienThe.contains { $0.id == item.sanPhamBienTheId } }
     }
 
+    /// CheckoutView bị tạo lại mỗi lần chuyển qua tab Giỏ hàng (MainTabView dùng switch chứ không
+    /// phải TabView giữ sống các tab — xem MainTabView.body), nên `sanPhams` luôn rỗng lúc mới vào
+    /// tab và .task nạp lại từ đầu. Nếu khách bấm sửa món NGAY lúc đó (trước khi catalog kịp về),
+    /// sanPham(for:) trả nil và sheet hiện trắng trơn — đợi nạp xong rồi mới quyết định mở sheet
+    /// thay vì chỉ kiểm tra 1 lần lúc bấm.
+    private func openEdit(_ item: CartItem) {
+        guard openingItemId == nil else { return }
+        Task {
+            if sanPhams.isEmpty {
+                openingItemId = item.id
+                await loadCatalog()
+                openingItemId = nil
+            }
+            if sanPham(for: item) != nil { editingItem = item }
+        }
+    }
+
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Button {
-                if sanPham(for: item) != nil { editingItem = item }
+                openEdit(item)
             } label: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
@@ -219,6 +238,9 @@ struct CheckoutView: View {
                     }
                     if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
                         Text(itemGhiChu).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
+                    }
+                    if openingItemId == item.id {
+                        ProgressView().scaleEffect(0.7)
                     }
                 }
             }
