@@ -12,6 +12,8 @@ struct CartItem: Identifiable, Hashable {
     var soLuong: Int
     var ghiChu: String?
     let toppings: [CartTopping]
+    /// Ảnh menu — hiện thumbnail ở CheckoutView giống itemRow bên HoaDonDetailView (AppQuanLyIOS).
+    let hinhAnh: String?
 
     var donGia: Double { giaBan + toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) } }
     var thanhTien: Double { donGia * Double(soLuong) }
@@ -24,8 +26,8 @@ final class CartStore: ObservableObject {
     var totalCount: Int { items.reduce(0) { $0 + $1.soLuong } }
     var totalPrice: Double { items.reduce(0) { $0 + $1.thanhTien } }
 
-    func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
-        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings))
+    func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil) {
+        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh))
     }
 
     func removeItem(_ id: UUID) {
@@ -42,7 +44,7 @@ final class CartStore: ObservableObject {
     /// món ở CheckoutView để mở lại ProductPickerSheet ở chế độ sửa, thay vì thêm dòng mới.
     func updateItem(_ id: UUID, sanPhamBienTheId: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
         guard let idx = items.firstIndex(where: { $0.id == id }) else { return }
-        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh)
     }
 
     func clear() { items.removeAll() }

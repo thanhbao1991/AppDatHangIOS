@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import UIKit
 
 /// Port từ CheckoutScreen.tsx — giỏ hàng + địa chỉ giao (GPS/kéo ghim MapKit) + đặt hàng.
 struct CheckoutView: View {
@@ -28,6 +29,8 @@ struct CheckoutView: View {
     @State private var editingItem: CartItem?
     /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
     @State private var openingItemId: UUID?
+    /// Đếm ngược tự ẩn bàn phím khi khách ngừng gõ — xem scheduleKeyboardAutoHide().
+    @State private var keyboardIdleTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -89,17 +92,38 @@ struct CheckoutView: View {
             .clipShape(Capsule())
     }
 
-    /// Card 1: chi tiết hoá đơn — mỗi dòng bấm vào (trừ vùng số lượng/xoá) mở lại ProductPickerSheet
-    /// ở chế độ sửa.
+    /// Card 1: chi tiết hoá đơn — style khớp itemRow bên HoaDonDetailView (AppQuanLyIOS): header
+    /// icon+"Món"+badge số ly, mỗi dòng có thumbnail + số lượng dạng khoanh tròn, topping tô màu
+    /// primary, ghi chú in nghiêng màu warning. Bấm vào dòng (trừ nút xoá) mở ProductPickerSheet ở
+    /// chế độ sửa.
     private var cartItemsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Chi tiết hoá đơn").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+            HStack {
+                Label("Món", systemImage: "cup.and.saucer.fill").font(.headline).foregroundColor(Theme.primary)
+                Spacer()
+                Text("\(cart.totalCount) ly")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Theme.primary)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Theme.primaryTint)
+                    .clipShape(Capsule())
+            }
             ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { Divider() }
                 itemRow(item)
-                if index < cart.items.count - 1 { Divider() }
             }
         }
         .cardBoxStyle()
+    }
+
+    @ViewBuilder
+    private func itemThumbnail(_ hinhAnh: String?) -> some View {
+        if let hinhAnh, let url = URL(string: hinhAnh) {
+            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                .frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 8))
+        } else {
+            RoundedRectangle(cornerRadius: 8).fill(Theme.primaryTint).frame(width: 36, height: 36)
+        }
     }
 
     private var addressBox: some View {
@@ -107,6 +131,7 @@ struct CheckoutView: View {
             Text("Giao đến").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
+                .onChange(of: diaChi) { _ in scheduleKeyboardAutoHide() }
 
             if !savedDiaChi.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -171,6 +196,7 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Ghi chú", text: $ghiChu)
                 .textFieldStyle(.roundedBorder)
+                .onChange(of: ghiChu) { _ in scheduleKeyboardAutoHide() }
             HStack {
                 Text("Tạm tính")
                 Spacer()
@@ -227,35 +253,50 @@ struct CheckoutView: View {
     }
 
     private func itemRow(_ item: CartItem) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .center, spacing: 10) {
             Button {
                 openEdit(item)
             } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    if !item.toppings.isEmpty {
-                        Text("+ " + item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                    }
-                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                        Text(itemGhiChu).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
-                    }
-                    if openingItemId == item.id {
-                        ProgressView().scaleEffect(0.7)
+                HStack(alignment: .center, spacing: 10) {
+                    itemThumbnail(item.hinhAnh)
+                    Text("\(item.soLuong)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Theme.primary))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                        if !item.toppings.isEmpty {
+                            Text(item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", "))
+                                .font(.system(size: 12)).foregroundColor(Theme.primary)
+                        }
+                        if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                            Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                        }
+                        if openingItemId == item.id {
+                            ProgressView().scaleEffect(0.7)
+                        }
                     }
                 }
             }
             .buttonStyle(.plain)
             Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .trailing, spacing: 6) {
                 Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                HStack(spacing: 10) {
-                    Button { cart.setQuantity(item.id, soLuong: item.soLuong - 1) } label: { Image(systemName: "minus.circle") }
-                    Text("\(item.soLuong)").fontWeight(.bold)
-                    Button { cart.setQuantity(item.id, soLuong: item.soLuong + 1) } label: { Image(systemName: "plus.circle") }
-                    Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
-                }
-                .tint(Theme.primary)
+                Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
             }
+        }
+    }
+
+    /// Tự ẩn bàn phím sau 3s khách ngừng gõ (ô địa chỉ hoặc ghi chú) — mỗi lần gõ reset lại đếm
+    /// ngược, gõ tiếp thì không ẩn giữa chừng. Dùng resignFirstResponder trực tiếp thay vì FocusState
+    /// riêng từng field vì chỉ cần "có bàn phím đang mở thì ẩn đi", không cần biết đang ở field nào.
+    private func scheduleKeyboardAutoHide() {
+        keyboardIdleTask?.cancel()
+        keyboardIdleTask = Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
 
