@@ -48,6 +48,10 @@ struct CheckoutView: View {
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
 
+    /// Toạ độ Y các khoanh số timeline, publish qua publishTimelineCircleY() ở từng khoanh số — dùng
+    /// vẽ timelineConnector() nối bước 1→2 xuyên qua nhiều row List thật riêng biệt.
+    @State private var timelineY: [String: CGFloat] = [:]
+
     var body: some View {
         VStack(spacing: 0) {
             TitleBar(title: "Giỏ hàng", icon: "🛒", centerTitle: true, trailing: notificationBell)
@@ -115,7 +119,10 @@ struct CheckoutView: View {
                 }
             }
             .cardListBackground()
+            .onPreferenceChange(TimelineYKey.self) { timelineY = $0 }
         }
+        .coordinateSpace(name: Self.timelineSpace)
+        .overlay(alignment: .topLeading) { timelineConnector }
         .task {
             await loadDiaChi()
             await loadCatalog()
@@ -154,6 +161,7 @@ struct CheckoutView: View {
                     .foregroundColor(.white)
                     .frame(width: 26, height: 26)
                     .background(Circle().fill(Theme.primary))
+                    .publishTimelineCircleY(number: number, space: Self.timelineSpace)
                 if !isLast {
                     Rectangle().fill(Theme.divider).frame(width: 2).frame(maxHeight: .infinity)
                 }
@@ -171,19 +179,19 @@ struct CheckoutView: View {
         .padding(.horizontal)
     }
 
-    /// Chỉ phần tiêu đề của 1 bước (khoanh số + đường nối NGẮN + tên bước) — dùng khi nội dung bước
-    /// đó cần tách thành nhiều row List thật riêng (vd bước 1 để .swipeActions hoạt động), khác
-    /// stepCard ở chỗ không nhận content nên đường nối không giãn theo được, cố định ngắn.
+    /// Chỉ phần tiêu đề của 1 bước (khoanh số + tên bước) — dùng khi nội dung bước đó cần tách thành
+    /// nhiều row List thật riêng (vd bước 1 để .swipeActions hoạt động trên từng món). Khác stepCard
+    /// ở chỗ KHÔNG tự vẽ đường nối nội bộ (nội dung nằm ở nhiều row khác, không cùng 1 HStack để co
+    /// giãn theo) — đường nối xuyên suốt các row đó do timelineConnector() vẽ đè lên trên cùng, dựa
+    /// vào toạ độ Y của khoanh số publish qua publishTimelineCircleY (xem timelineY/timelineSpace).
     private func stepHeaderRow(_ number: Int, title: String, trailing: AnyView? = nil) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 0) {
-                Text("\(number)")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 26, height: 26)
-                    .background(Circle().fill(Theme.primary))
-                Rectangle().fill(Theme.divider).frame(width: 2, height: 16)
-            }
+            Text("\(number)")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(Theme.primary))
+                .publishTimelineCircleY(number: number, space: Self.timelineSpace)
             HStack {
                 Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
                 Spacer()
@@ -191,6 +199,25 @@ struct CheckoutView: View {
             }
         }
         .padding(.horizontal)
+    }
+
+    static let timelineSpace = "checkoutTimeline"
+
+    /// Đường nối dọc từ đáy khoanh số 1 đến đỉnh khoanh số 2, vẽ ĐÈ LÊN List (không phải bên trong 1
+    /// row) — bước 1 bị tách thành nhiều row List thật riêng (header + từng món) để .swipeActions
+    /// hoạt động, nên không thể dùng 1 Rectangle nội bộ co giãn theo chiều cao như bước 2/3
+    /// (stepCard). Toạ độ lấy từ timelineY (đã publish qua .onPreferenceChange(TimelineYKey.self)).
+    /// x = 16 (padding.horizontal của cả 2 row) + 13 (nửa bề rộng khoanh số 26) - 1 (nửa bề rộng
+    /// đường kẻ 2pt) = 28, khớp cả 2 vị trí vì stepHeaderRow/stepCard dùng cùng padding.horizontal.
+    private var timelineConnector: some View {
+        let y1 = timelineY["circleBottom-1"]
+        let y2 = timelineY["circleTop-2"]
+        return Group {
+            if let y1, let y2, y2 > y1 {
+                Rectangle().fill(Theme.divider).frame(width: 2, height: y2 - y1)
+                    .offset(x: 28, y: y1)
+            }
+        }
     }
 
     /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal

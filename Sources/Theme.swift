@@ -69,6 +69,30 @@ func cardRow<Content: View>(topExtra: CGFloat = 0, @ViewBuilder content: () -> C
         .listRowSeparator(.hidden)
 }
 
+/// Gom toạ độ Y (trong 1 named coordinate space chung) của các khoanh số timeline (CheckoutView) —
+/// dùng để vẽ đường nối xuyên qua nhiều row List THẬT riêng biệt (vd bước 1 phải tách row cho
+/// .swipeActions hoạt động nên không thể dùng 1 Rectangle nội bộ kéo dài như bước 2/3). Key dạng
+/// "circleTop-<n>"/"circleBottom-<n>".
+struct TimelineYKey: PreferenceKey {
+    static var defaultValue: [String: CGFloat] = [:]
+    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+extension View {
+    /// Gắn lên khoanh số timeline — publish cả top lẫn bottom của khoanh số đó (trong coordinateSpace
+    /// `space`) vào TimelineYKey để nơi khác đọc lại qua .onPreferenceChange.
+    func publishTimelineCircleY(number: Int, space: String) -> some View {
+        background(GeometryReader { geo in
+            Color.clear.preference(key: TimelineYKey.self, value: [
+                "circleTop-\(number)": geo.frame(in: .named(space)).minY,
+                "circleBottom-\(number)": geo.frame(in: .named(space)).maxY,
+            ])
+        })
+    }
+}
+
 /// Chuẩn hoá chuỗi tiếng Việt để so khớp không dấu — dùng cho tìm kiếm món (MenuView) và gợi ý tên
 /// đường khi nhập địa chỉ (CheckoutView). Gom về 1 chỗ thay vì mỗi màn tự viết lại 1 bản.
 func normalizeVN(_ s: String) -> String {
