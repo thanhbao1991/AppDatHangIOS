@@ -263,8 +263,8 @@ actor APIClient {
         return await decode("/dat-hang/dat-mon", method: "POST", body: jsonBody(body))
     }
 
-    func uocTinhShip(lat: Double, long: Double) async -> ApiEnvelope<UocTinhShip> {
-        await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long)))
+    func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {
+        await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon)))
     }
 
     func getDonCuaToi() async -> [DonHangKhach] {

@@ -87,14 +87,18 @@ struct DatMonRequest: Encodable {
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 
-struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double }
+struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double; let tongTienDon: Double }
 struct TuyenDuongPoint: Decodable { let lat: Double; let long: Double }
 struct UocTinhShip: Decodable {
-    let khoangCachKm: Double
+    // nil khi đơn đã đạt ShipDonGiaMienPhi — miễn phí luôn, không cần biết khoảng cách (xem
+    // DatHangService.UocTinhPhiShip).
+    let khoangCachKm: Double?
     let phiShip: Double
     let shopLat: Double
     let shopLong: Double
     let tuyenDuong: [TuyenDuongPoint]?
+    // Ngưỡng đơn miễn phí ship — dùng để hiện gợi ý "còn thiếu Xđ để miễn ship" trong giỏ hàng.
+    let donGiaMienPhi: Double
 }
 
 struct DonHangKhachItemTopping: Decodable, Identifiable, Hashable {

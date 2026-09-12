@@ -341,21 +341,49 @@ struct CheckoutView: View {
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
             if let coord, let ship {
-                DeliveryMapView(
-                    shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
-                    deliveryCoordinate: coord,
-                    routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                    onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
-                )
-                .frame(height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                // khoangCachKm nil = đơn đã đạt ShipDonGiaMienPhi, server bỏ qua OSRM luôn (miễn phí
+                // chắc chắn bất kể xa gần) — không có gì để vẽ map/khoảng cách, chỉ hiện huy hiệu.
+                if let km = ship.khoangCachKm {
+                    DeliveryMapView(
+                        shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
+                        deliveryCoordinate: coord,
+                        routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
+                        onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
+                    )
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                HStack {
-                    Text("Khoảng cách ~\(String(format: "%.1f", ship.khoangCachKm))km").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                    Spacer()
-                    Text("Phí ship: \(formatTien(ship.phiShip))").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+                    HStack {
+                        Text("Khoảng cách ~\(String(format: "%.1f", km))km").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                        Spacer()
+                        if ship.phiShip > 0 {
+                            Text("Phí ship: \(formatTien(ship.phiShip))").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+                        } else {
+                            Text("🎉 Miễn phí ship").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.success)
+                        }
+                    }
+                } else {
+                    Text("🎉 Miễn phí giao hàng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.success)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 8)
+                        .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                // Gợi ý mua thêm để đạt mốc miễn ship — chỉ hiện khi đang thật sự trả phí (nếu đã
+                // trong bán kính miễn phí hoặc đã đạt mốc thì thừa, gây rối).
+                if ship.phiShip > 0 {
+                    let conThieu = ship.donGiaMienPhi - cart.totalPrice
+                    if conThieu > 0 {
+                        Text("Thêm \(formatTien(conThieu)) nữa để được miễn phí ship 🎁")
+                            .font(.system(size: 12)).foregroundColor(Theme.primary)
+                    }
                 }
             }
+        }
+        .onChange(of: cart.totalPrice) { _ in
+            // Tổng tiền đổi (thêm/bớt món) trong lúc đã có toạ độ — phí ship phụ thuộc CẢ giá trị đơn
+            // lẫn khoảng cách nên phải tính lại, không thì hiện sai/cũ.
+            if let coord { Task { await applyCoord(coord) } }
         }
     }
 
@@ -537,7 +565,7 @@ struct CheckoutView: View {
         coord = c
         ship = nil
         locError = ""
-        let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude)
+        let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude, tongTienDon: cart.totalPrice)
         if result.isSuccess {
             ship = result.data
         } else {
