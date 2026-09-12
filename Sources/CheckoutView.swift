@@ -19,6 +19,12 @@ struct CheckoutView: View {
     @State private var locError = ""
     @State private var ship: UocTinhShip?
 
+    /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định, giữ
+    /// hành vi cũ). Xem nhanHangBox — toggle nằm ở bước 2, đổi tên từ "Giao đến" thành "Nhận hàng".
+    @State private var nhanTaiQuan = false
+    @State private var dangQuay = false
+    @State private var ketQuaQuay: String?
+
     /// Catalog nạp riêng cho CheckoutView (không dùng chung state với MenuView) — chỉ để dựng lại
     /// SanPham gốc khi khách bấm sửa 1 dòng trong giỏ (ProductPickerSheet cần đủ danh sách bienThe/
     /// topping để hiện lại UI chọn, giống lúc thêm mới ở MenuView).
@@ -69,7 +75,7 @@ struct CheckoutView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
 
-                    cardRow { stepCard(2, title: "Giao đến") { addressBox } }
+                    cardRow { stepCard(2, title: "Nhận hàng") { nhanHangBox } }
                     cardRow { stepCard(3, title: "Thanh toán", isLast: true) { footerBox } }
                 } else {
                     Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
@@ -213,8 +219,54 @@ struct CheckoutView: View {
         }
     }
 
-    private var addressBox: some View {
+    /// Bước 2: toggle "Giao tận nơi"/"Nhận tại quán" + nội dung tương ứng — 1 box duy nhất (khác
+    /// addressContent/pickupContent bên dưới, KHÔNG tự bọc stepBoxStyle) để toggle và nội dung nằm
+    /// chung 1 card, đổi mượt khi bấm chứ không nhảy 2 khối tách rời.
+    private var nhanHangBox: some View {
         stepBoxStyle {
+        VStack(alignment: .leading, spacing: 10) {
+            Picker("", selection: $nhanTaiQuan) {
+                Text("Giao tận nơi").tag(false)
+                Text("Nhận tại quán").tag(true)
+            }
+            .pickerStyle(.segmented)
+
+            if nhanTaiQuan { pickupContent } else { addressContent }
+        }
+        }
+    }
+
+    /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — kèm nút mở quà tặng Xu (dùng lại nguyên
+    /// vòng quay may mắn hiện có bên UuDaiView, 1 lượt/ngày) để khuyến khích khách tự đến lấy, đỡ tốn
+    /// phí ship cho quán.
+    private var pickupContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Ghé quán lấy hàng — không mất phí ship!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+
+            if let ketQuaQuay {
+                Text("🎉 " + ketQuaQuay)
+                    .font(.system(size: 15, weight: .bold)).foregroundColor(Theme.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 10)
+                    .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                Button {
+                    Task { await moQuaXu() }
+                } label: {
+                    HStack {
+                        Spacer()
+                        if dangQuay { ProgressView().tint(.white) } else { Text("🎁 Mở quà nhận Xu").fontWeight(.bold) }
+                        Spacer()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.primary)
+                .disabled(dangQuay)
+            }
+        }
+    }
+
+    private var addressContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
@@ -295,7 +347,6 @@ struct CheckoutView: View {
                 }
             }
         }
-        }
     }
 
     /// Bước cuối: ghi chú + tạm tính + nút đặt hàng.
@@ -321,7 +372,7 @@ struct CheckoutView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.primary)
-            .disabled(loading || diaChi.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(loading || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
         }
         }
     }
@@ -475,8 +526,15 @@ struct CheckoutView: View {
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
         coord = c
         ship = nil
+        locError = ""
         let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude)
-        if result.isSuccess { ship = result.data }
+        if result.isSuccess {
+            ship = result.data
+        } else {
+            // Không còn fallback đường chim bay phía server (xem DatHangService.UocTinhPhiShip) —
+            // OSRM lỗi thì hiện lỗi thẳng ở đây thay vì âm thầm hiện phí ship sai/thiếu.
+            locError = result.message ?? "Không tính được phí ship lúc này, vui lòng thử lại."
+        }
     }
 
     private func dungViTriHienTai() async {
@@ -494,7 +552,7 @@ struct CheckoutView: View {
     }
 
     private func datHang() async {
-        guard !cart.items.isEmpty, !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
+        guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
             error = "Vui lòng nhập địa chỉ giao hàng."
             return
         }
@@ -503,8 +561,9 @@ struct CheckoutView: View {
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
         let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
         let result = await APIClient.shared.datMon(
-            items: items, diaChiText: diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChu.isEmpty ? nil : ghiChu,
-            soDienThoaiText: nil, deliveryLat: coord?.latitude, deliveryLong: coord?.longitude, clientOrderId: clientOrderId
+            items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChu.isEmpty ? nil : ghiChu,
+            soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
+            clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
@@ -512,6 +571,21 @@ struct CheckoutView: View {
             path.append(.thanhToan(hoaDonId: data.id))
         } else {
             error = result.message ?? "Đặt hàng thất bại."
+        }
+    }
+
+    /// Mở quà tặng Xu khi khách chọn "Nhận tại quán" — dùng lại NGUYÊN vòng quay may mắn hiện có
+    /// (1 lượt/ngày, xem UuDaiView.quay()), không phải cơ chế thưởng riêng. Nếu khách đã quay hết
+    /// lượt hôm nay (ở tab Ưu đãi hoặc lần "Nhận tại quán" trước), API trả lỗi — hiện thẳng message
+    /// đó thay vì nút, không giả vờ còn lượt.
+    private func moQuaXu() async {
+        dangQuay = true
+        defer { dangQuay = false }
+        let res = await APIClient.shared.quayVongQuay()
+        if res.isSuccess, let data = res.data {
+            ketQuaQuay = data.label
+        } else {
+            ketQuaQuay = res.message ?? "Bạn đã dùng hết lượt quay hôm nay."
         }
     }
 }

@@ -83,6 +83,7 @@ struct DatMonRequest: Encodable {
     let deliveryLat: Double?
     let deliveryLong: Double?
     let clientOrderId: String?
+    let nhanTaiQuan: Bool
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 
