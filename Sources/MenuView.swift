@@ -788,11 +788,14 @@ struct ProductPickerSheet: View {
                                 // .buttonStyle(.plain) BẮT BUỘC — cùng lý do chip size ở trên (String
                                 // title Button mặc định tô chữ theo tint hệ thống, foregroundColor() sau
                                 // không ăn nếu thiếu .plain).
+                                // minHeight 44 = ngưỡng tối thiểu Apple HIG cho vùng chạm — 34 cũ nhỏ
+                                // hơn hẳn, đúng lý do khách thấy khó bấm (nhất là 5 chip xếp dọc sát
+                                // nhau trong cùng 1 cột, dễ chạm lệch sang chip liền kề).
                                 Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note, in: group.notes) }
                                     .buttonStyle(.plain)
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .padding(.horizontal, 6)
-                                    .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .padding(.horizontal, 8)
+                                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.75)
                                     .contentShape(Rectangle())
