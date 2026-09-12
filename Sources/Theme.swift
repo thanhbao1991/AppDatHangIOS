@@ -84,6 +84,12 @@ func formatTien(_ value: Double) -> String {
     return "\(number)đ"
 }
 
+/// Viết tắt kiểu "5k" — khớp HoaDonFormatting.moneyShort bên AppQuanLyIOS, dùng cho phụ chú ngắn
+/// (giá topping đi kèm tên) nơi không cần rõ số, chỉ cần ước lượng nhanh.
+func formatTienShort(_ value: Double) -> String {
+    "\(Int((value / 1000).rounded()))k"
+}
+
 /// Số dư ví/giao dịch ví hiển thị dưới nhãn "Xu" thay vì "đ" — quy đổi 1 Xu = 1đ y hệt bên dưới
 /// (dùng thẳng để trừ trực tiếp vào hoá đơn), CHỈ đổi tên hiển thị. Lý do: gắn số tiền thật (15.000đ)
 /// kích hoạt "nỗi đau chi tiêu" khiến khách ngại tiêu/nạp hơn hẳn so với 1 đơn vị game-hoá (15.000

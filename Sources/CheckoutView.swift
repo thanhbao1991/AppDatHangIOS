@@ -340,12 +340,12 @@ struct CheckoutView: View {
                     Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
                 }
                 if !item.toppings.isEmpty {
-                    // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá ngay sau
-                    // tên ("Trân châu +5.000đ") thay vì chỉ hiện tên trơn không ai biết tốn thêm
-                    // bao nhiêu.
+                    // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
+                    // ngay sau tên ("Trân châu +5k") thay vì chỉ hiện tên trơn không ai biết tốn
+                    // thêm bao nhiêu.
                     Text(item.toppings.map { t in
                         let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
-                        return "\(label) +\(formatTien(t.gia * Double(t.soLuong)))"
+                        return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
                     }.joined(separator: ", "))
                         .font(.system(size: 12)).foregroundColor(Theme.primary)
                 }
