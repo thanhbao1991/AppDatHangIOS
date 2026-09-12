@@ -187,9 +187,6 @@ struct MenuView: View {
                     List(searchResults) { sp in productRow(sp) }
                         .listStyle(.plain)
                 } else {
-                    // Ly Bí Mật tạm ẩn (2026-09-08) — đang cân nhắc lại luồng gộp chung giỏ hàng
-                    // thay vì tạo đơn riêng ngay khi bốc, xem lyBiMatBanner bên dưới.
-                    //
                     // List (UITableView) .plain tự ghim (pin) header của Section khi cuộn — không
                     // cần hack GeometryReader/preference như lần thử trước (đo minY thủ công mới là
                     // phần KHÔNG ổn định, không phải do dùng Section). Theo dõi "đang xem nhóm nào"
@@ -298,25 +295,6 @@ struct MenuView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-    }
-
-    private var lyBiMatBanner: some View {
-        Button {
-            path.append(.lyBiMat)
-        } label: {
-            HStack(spacing: 10) {
-                Text("🎁").font(.system(size: 26))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Ly Bí Mật — chỉ 25.000đ").font(.system(size: 14, weight: .bold)).foregroundColor(Color(red: 0.54, green: 0.33, blue: 0)).multilineTextAlignment(.leading)
-                    Text("Bốc ngẫu nhiên 1 món, có thể trúng món giá cao hơn nhiều!").font(.system(size: 11)).foregroundColor(Color(red: 0.64, green: 0.44, blue: 0.18)).multilineTextAlignment(.leading)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
-            }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .background(Color(red: 1, green: 0.953, blue: 0.878))
-        }
-        .buttonStyle(.plain)
     }
 
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
