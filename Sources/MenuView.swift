@@ -600,25 +600,26 @@ struct ProductPickerSheet: View {
                                     HStack(spacing: 8) {
                                         ForEach(sanPham.bienThe.sorted(by: { $0.giaBan < $1.giaBan })) { b in
                                             let active = bienThe?.id == b.id
-                                            // .buttonStyle(.plain) BẮT BUỘC ở đây — Button khởi tạo
-                                            // bằng String title (không phải label closure riêng) mặc
-                                            // định tô chữ theo tint hệ thống (xanh), .foregroundColor()
-                                            // chain sau KHÔNG override được trừ khi có .plain, khiến
-                                            // chip từng hiện chữ xanh thay vì trắng/primary như code định.
-                                            // Thiếu .contentShape(Rectangle()) — vùng chạm THẬT của
-                                            // Button chỉ khớp bounding box của chữ (Text glyph), KHÔNG
-                                            // tính phần padding/nền màu xung quanh dù nhìn như 1 khối
-                                            // liền. Size chữ ngắn (vd "Size M") thì glyph bé hơn hẳn
-                                            // khối chip nhìn thấy — chạm vào phần đệm coi như trượt,
-                                            // đúng kiểu lỗi "bấm hoài không ăn" ở 1-2 chip cụ thể.
-                                            Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
-                                                .buttonStyle(.plain)
-                                                .font(.system(size: 12, weight: .bold))
-                                                .padding(.horizontal, 10).padding(.vertical, 6)
-                                                .contentShape(Rectangle())
-                                                .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                                .foregroundColor(active ? .white : .primary)
-                                                .clipShape(Capsule())
+                                            // Button(String title) { } rồi chain .contentShape() KHÔNG
+                                            // đáng tin — vùng chạm thật vẫn co về bounding box chữ trong
+                                            // nhiều trường hợp (đã xác nhận qua test thật: bấm trúng chữ
+                                            // mới ăn, bấm phần đệm quanh chip thì trượt). Cách CHẮC ĂN
+                                            // (khớp sectionHeader bên dưới đã chạy đúng từ trước): dùng
+                                            // label closure riêng, đặt .contentShape() NGAY TRONG label
+                                            // (sau background/clipShape), .buttonStyle(.plain) áp SAU
+                                            // CÙNG ở ngoài Button.
+                                            Button {
+                                                bienThe = b
+                                            } label: {
+                                                Text("\(b.tenBienThe) \(formatTien(b.giaBan))")
+                                                    .font(.system(size: 12, weight: .bold))
+                                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
+                                                    .foregroundColor(active ? .white : .primary)
+                                                    .clipShape(Capsule())
+                                                    .contentShape(Rectangle())
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                 }
@@ -792,25 +793,32 @@ struct ProductPickerSheet: View {
                             ForEach(group.notes, id: \.self) { note in
                                 let active = activeNotes.contains(note)
                                 let disabled = khongChoKhongDa && (note == "Không đá" || note == "Đá riêng")
-                                // .buttonStyle(.plain) BẮT BUỘC — cùng lý do chip size ở trên (String
-                                // title Button mặc định tô chữ theo tint hệ thống, foregroundColor() sau
-                                // không ăn nếu thiếu .plain).
                                 // minHeight 44 = ngưỡng tối thiểu Apple HIG cho vùng chạm — 34 cũ nhỏ
                                 // hơn hẳn, đúng lý do khách thấy khó bấm (nhất là 5 chip xếp dọc sát
                                 // nhau trong cùng 1 cột, dễ chạm lệch sang chip liền kề).
-                                Button(Self.shortNoteLabels[note] ?? note) { toggleNote(note, in: group.notes) }
-                                    .buttonStyle(.plain)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .padding(.horizontal, 8)
-                                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.75)
-                                    .contentShape(Rectangle())
-                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
-                                    .foregroundColor(active ? .white : Theme.textMuted)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                    .disabled(disabled)
-                                    .opacity(disabled ? 0.4 : 1)
+                                //
+                                // Button(String title) { } rồi chain .contentShape() KHÔNG đáng tin —
+                                // đã xác nhận qua test thật: bấm trúng CHỮ mới ăn, bấm phần đệm quanh
+                                // chip thì trượt, y hệt chip size từng bị. Chuyển sang label closure
+                                // riêng, .contentShape() NGAY TRONG label (khớp sectionHeader bên trên
+                                // đã chạy đúng), .buttonStyle(.plain) áp SAU CÙNG ở ngoài Button.
+                                Button {
+                                    toggleNote(note, in: group.notes)
+                                } label: {
+                                    Text(Self.shortNoteLabels[note] ?? note)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .padding(.horizontal, 8)
+                                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.75)
+                                        .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
+                                        .foregroundColor(active ? .white : Theme.textMuted)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(disabled)
+                                .opacity(disabled ? 0.4 : 1)
                             }
                         }
                     }
