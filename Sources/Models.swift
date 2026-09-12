@@ -66,6 +66,9 @@ struct SanPham: Decodable, Identifiable {
 }
 
 struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
+/// Danh sách tên đường dùng gợi ý khi khách gõ địa chỉ giao hàng — cùng nguồn TenDuong Desktop dùng
+/// cho TenDuongBox (nhân viên tạo đơn), xem CheckoutView.diaChiSuggestions.
+struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
 struct Topping: Decodable, Identifiable { let id: String; let ten: String; let gia: Double; let ngungBan: Bool }
 
 // ---- Đặt món ----

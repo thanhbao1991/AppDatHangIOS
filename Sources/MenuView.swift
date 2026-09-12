@@ -42,12 +42,6 @@ struct MenuView: View {
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
 
-    private func normalizeVN(_ s: String) -> String {
-        s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
-            .replacingOccurrences(of: "đ", with: "d", options: .caseInsensitive)
-            .lowercased()
-            .trimmingCharacters(in: .whitespaces)
-    }
 
     /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
     /// có thể nằm ở nhiều nhóm khác nhau nên bó theo 1 nhóm đang chọn không hợp lý lúc này).

@@ -29,9 +29,14 @@ struct CheckoutView: View {
     /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
     @State private var openingItemId: UUID?
 
+    /// Gợi ý tên đường khi gõ địa chỉ — cùng danh sách TenDuong Desktop dùng cho TenDuongBox, xem
+    /// diaChiSuggestions/streetFragment bên dưới.
+    @State private var tenDuongs: [TenDuong] = []
+    @FocusState private var diaChiFocused: Bool
+
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Giỏ hàng", center: cart.items.isEmpty ? nil : AnyView(qtyBadge), trailing: notificationBell)
+            TitleBar(title: "Giỏ hàng", icon: "🛒", centerTitle: true, trailing: notificationBell)
 
             ScrollView {
                 if !cart.items.isEmpty {
@@ -61,6 +66,7 @@ struct CheckoutView: View {
         .task {
             await loadDiaChi()
             await loadCatalog()
+            await loadTenDuong()
         }
         .sheet(item: $editingItem) { item in
             if let sp = sanPham(for: item) {
@@ -76,17 +82,6 @@ struct CheckoutView: View {
                 ) { editingItem = nil }
             }
         }
-    }
-
-    /// Badge "X Ly" giữa thanh tiêu đề — nền trắng nổi trên gradient navy của TitleBar, gọn hơn số
-    /// đặt cạnh icon giỏ vì tab Giỏ hàng đã tự là màn hình giỏ, không cần icon nhắc lại.
-    private var qtyBadge: some View {
-        Text("\(cart.totalCount) Ly")
-            .font(.system(size: 13, weight: .bold))
-            .foregroundColor(Theme.primary)
-            .padding(.horizontal, 10).padding(.vertical, 4)
-            .background(Color.white)
-            .clipShape(Capsule())
     }
 
     /// 1 bước trong timeline — khoanh số + đường nối dọc bên trái (đường nối co giãn theo chiều cao
@@ -166,6 +161,27 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
+                .focused($diaChiFocused)
+
+            // Gợi ý tên đường (khớp fragment sau số nhà) — giống TenDuongBox bên TraSuaApp.Desktop,
+            // chỉ hiện khi đang gõ trong ô này và chưa khớp chính xác 1 tên đường.
+            if !diaChiSuggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(diaChiSuggestions, id: \.self) { ten in
+                        Button { selectTenDuong(ten) } label: {
+                            Text(ten)
+                                .font(.system(size: 13))
+                                .foregroundColor(.primary)
+                                .padding(.horizontal, 10).padding(.vertical, 8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        if ten != diaChiSuggestions.last { Divider() }
+                    }
+                }
+                .background(Theme.primaryTint.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
 
             if !savedDiaChi.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -286,40 +302,43 @@ struct CheckoutView: View {
         }
     }
 
+    /// Dòng xoá nằm CÙNG dòng với tên sản phẩm (không phải cạnh giá) — Button xoá là SIBLING của
+    /// Text tên, không nằm trong Button mở sửa, để tránh lồng Button-trong-Button (không đáng tin
+    /// cậy trong SwiftUI, xem bài học ở lịch sử sửa file này). Phần còn lại (thumbnail/topping/ghi
+    /// chú/giá) dùng .onTapGesture để mở sửa — Button xoá vẫn nhận tap của riêng nó trước vì nằm
+    /// trong 1 view con có gesture recognizer riêng, ưu tiên hơn onTapGesture của view cha.
     private func itemRow(_ item: CartItem) -> some View {
-        HStack(alignment: .center, spacing: 10) {
-            Button {
-                openEdit(item)
-            } label: {
-                HStack(alignment: .center, spacing: 10) {
-                    itemThumbnail(item.hinhAnh)
-                    Text("\(item.soLuong)")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Theme.primary))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                        if !item.toppings.isEmpty {
-                            Text(item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", "))
-                                .font(.system(size: 12)).foregroundColor(Theme.primary)
-                        }
-                        if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                            Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
-                        }
-                        if openingItemId == item.id {
-                            ProgressView().scaleEffect(0.7)
-                        }
-                    }
+        HStack(alignment: .top, spacing: 10) {
+            itemThumbnail(item.hinhAnh)
+            Text("\(item.soLuong)")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(Theme.primary))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    Spacer()
+                    Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
+                }
+                if !item.toppings.isEmpty {
+                    Text(item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", "))
+                        .font(.system(size: 12)).foregroundColor(Theme.primary)
+                }
+                if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                }
+                if openingItemId == item.id {
+                    ProgressView().scaleEffect(0.7)
+                }
+                HStack {
+                    Spacer()
+                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                 }
             }
-            .buttonStyle(.plain)
-            Spacer()
-            VStack(alignment: .trailing, spacing: 6) {
-                Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
-            }
         }
+        .contentShape(Rectangle())
+        .onTapGesture { openEdit(item) }
     }
 
     private func loadDiaChi() async {
@@ -341,6 +360,46 @@ struct CheckoutView: View {
         sanPhams = sp
         nhoms = nhom
         toppings = top
+    }
+
+    private func loadTenDuong() async {
+        tenDuongs = await APIClient.shared.getTenDuongList()
+    }
+
+    /// Khớp TenDuongBox bên Desktop: số nhà + ký tự phụ (vd "12A", "12/3B") + dấu ngăn cách phía sau
+    /// — phần CÒN LẠI sau prefix này mới là fragment để so khớp/thay thế tên đường.
+    private static let houseNumberPrefixRegex = try! NSRegularExpression(pattern: "^\\d+[A-Za-z]{0,2}(/\\d+[A-Za-z]{0,2})?[\\s.,-]*")
+
+    private static func houseNumberPrefixRange(in text: String) -> Range<String.Index>? {
+        let range = NSRange(text.startIndex..., in: text)
+        guard let m = houseNumberPrefixRegex.firstMatch(in: text, range: range) else { return nil }
+        return Range(m.range, in: text)
+    }
+
+    private func streetFragment(_ text: String) -> String {
+        guard let r = Self.houseNumberPrefixRange(in: text) else { return text }
+        return String(text[r.upperBound...])
+    }
+
+    private func housePrefix(_ text: String) -> String {
+        guard let r = Self.houseNumberPrefixRange(in: text) else { return "" }
+        return String(text[..<r.upperBound])
+    }
+
+    /// Gợi ý hiện khi đang gõ (còn focus) VÀ fragment sau số nhà chưa khớp CHÍNH XÁC 1 tên đường có
+    /// sẵn — tránh hiện lại dropdown thừa ngay sau khi vừa chọn 1 gợi ý hoặc gõ đủ tên.
+    private var diaChiSuggestions: [String] {
+        guard diaChiFocused else { return [] }
+        let fragment = streetFragment(diaChi).trimmingCharacters(in: .whitespaces)
+        guard !fragment.isEmpty else { return [] }
+        let norm = normalizeVN(fragment)
+        let matches = tenDuongs.map(\.ten).filter { normalizeVN($0).contains(norm) }
+        if matches.count == 1 && normalizeVN(matches[0]) == norm { return [] }
+        return Array(matches.prefix(8))
+    }
+
+    private func selectTenDuong(_ ten: String) {
+        diaChi = housePrefix(diaChi) + ten
     }
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {

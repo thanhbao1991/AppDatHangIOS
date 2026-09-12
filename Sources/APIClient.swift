@@ -244,6 +244,11 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    func getTenDuongList() async -> [TenDuong] {
+        let env: ApiEnvelope<[TenDuong]> = await cachedDecode("/dat-hang/menu/ten-duong")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     /// SanPhamId theo tổng số lượng bán ra giảm dần (30 ngày gần nhất) — dùng để xếp "bán chạy"
     /// lên trước trong từng nhóm ở màn Thực đơn.
     func getBanChayIds() async -> [String] {

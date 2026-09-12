@@ -21,7 +21,7 @@ struct UuDaiView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Ưu đãi", trailing: notificationBell)
+            TitleBar(title: "Ưu đãi", icon: "🎁", centerTitle: true, trailing: notificationBell)
 
             Group {
                 if loading {

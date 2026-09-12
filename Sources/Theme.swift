@@ -66,6 +66,15 @@ func cardRow<Content: View>(topExtra: CGFloat = 0, @ViewBuilder content: () -> C
         .listRowSeparator(.hidden)
 }
 
+/// Chuẩn hoá chuỗi tiếng Việt để so khớp không dấu — dùng cho tìm kiếm món (MenuView) và gợi ý tên
+/// đường khi nhập địa chỉ (CheckoutView). Gom về 1 chỗ thay vì mỗi màn tự viết lại 1 bản.
+func normalizeVN(_ s: String) -> String {
+    s.folding(options: .diacriticInsensitive, locale: Locale(identifier: "vi_VN"))
+        .replacingOccurrences(of: "đ", with: "d", options: .caseInsensitive)
+        .lowercased()
+        .trimmingCharacters(in: .whitespaces)
+}
+
 func formatTien(_ value: Double) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .decimal

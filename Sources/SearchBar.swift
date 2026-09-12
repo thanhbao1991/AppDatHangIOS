@@ -40,22 +40,37 @@ struct SearchBar: View {
 /// khớp cách DayDateBar ép cùng chiều cao DaySearchBar bên AppQuanLyIOS.
 struct TitleBar: View {
     let title: String
-    /// Đặt đúng GIỮA MÀN HÌNH (vd badge số lượng Ly ở tab Giỏ hàng) qua .overlay ở dưới — không
-    /// dùng 2 Spacer 2 bên vì cách đó chỉ căn giữa KHOẢNG TRỐNG giữa title/trailing, bị lệch khi 2
-    /// bên rộng hẹp khác nhau, không phải giữa màn hình thật.
-    var center: AnyView?
+    /// Emoji hiện trước title (vd "🛒" cho Giỏ hàng) — chỉ cosmetic, ghép trực tiếp vào chuỗi hiện.
+    var icon: String? = nil
+    /// true: đặt title đúng GIỮA MÀN HÌNH qua .overlay bên dưới — không dùng 2 Spacer 2 bên vì cách
+    /// đó chỉ căn giữa KHOẢNG TRỐNG giữa title/trailing, bị lệch khi 2 bên rộng hẹp khác nhau, không
+    /// phải giữa màn hình thật. Dùng cho tab gốc (Giỏ hàng/Đơn hàng/Ưu đãi); màn khác (Tài khoản,
+    /// màn con có nút back...) giữ mặc định false để không đổi hành vi.
+    var centerTitle: Bool = false
     var trailing: AnyView?
     var tinted: Bool = true
 
+    private var displayTitle: String {
+        icon.map { "\($0) \(title)" } ?? title
+    }
+
     var body: some View {
         HStack {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(tinted ? .white : .primary)
+            if !centerTitle {
+                Text(displayTitle)
+                    .font(.headline)
+                    .foregroundColor(tinted ? .white : .primary)
+            }
             Spacer()
             if let trailing { trailing }
         }
-        .overlay { if let center { center } }
+        .overlay {
+            if centerTitle {
+                Text(displayTitle)
+                    .font(.headline)
+                    .foregroundColor(tinted ? .white : .primary)
+            }
+        }
         .frame(height: HeaderBarMetrics.rowHeight)
         .padding(.horizontal)
         .padding(.vertical, HeaderBarMetrics.verticalPadding)
