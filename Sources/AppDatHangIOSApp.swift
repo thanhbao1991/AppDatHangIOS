@@ -8,7 +8,6 @@ struct AppDatHangIOSApp: App {
         // khi mới mở tab). Set 0 app-wide vì AppDatHangIOS không dùng List section header nào
         // khác cần giữ padding này.
         UITableView.appearance().sectionHeaderTopPadding = 0
-        GlobalKeyboardAutoHide.shared.start()
     }
 
     var body: some Scene {

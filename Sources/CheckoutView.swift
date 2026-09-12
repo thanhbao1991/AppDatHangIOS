@@ -69,18 +69,23 @@ struct CheckoutView: View {
             await loadTenDuong()
         }
         .sheet(item: $editingItem) { item in
-            if let sp = sanPham(for: item) {
-                ProductPickerSheet(
-                    sanPham: sp,
-                    toppings: toppings,
-                    isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                    khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                    existing: item,
-                    onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
-                    }
-                ) { editingItem = nil }
-            }
+            // sanPham(for:) có thể trả nil (chưa nạp xong catalog, món đã đổi/ẩn khỏi menu, hoặc
+            // không khớp được vì lý do khác) — dùng fallbackSanPham(for:) để sheet LUÔN mở được,
+            // không bao giờ trắng trơn. Khi dùng fallback, chỉ đưa đúng các topping đã chọn sẵn vào
+            // danh sách chọn (không biết đủ topping thật của món để hiện hết).
+            let realSp = sanPham(for: item)
+            let sp = realSp ?? fallbackSanPham(for: item)
+            let toppingChoices = realSp != nil ? toppings : item.toppings.map { Topping(id: $0.id, ten: $0.ten, gia: $0.gia, ngungBan: false) }
+            ProductPickerSheet(
+                sanPham: sp,
+                toppings: toppingChoices,
+                isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                existing: item,
+                onConfirm: { bienThe, soLuong, ghiChu, toppings in
+                    cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                }
+            ) { editingItem = nil }
         }
     }
 
@@ -279,26 +284,39 @@ struct CheckoutView: View {
         Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
     }
 
-    /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu
-    /// (khi đó dòng vẫn hiện bình thường trong giỏ nhưng không bấm sửa được, chỉ xoá được).
+    /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu,
+    /// hoặc catalog chưa nạp/nạp lỗi, hoặc không khớp được vì lý do khác. Có fallbackSanPham(for:)
+    /// bên dưới để sheet sửa KHÔNG BAO GIỜ trắng trơn dù trường hợp này xảy ra.
     private func sanPham(for item: CartItem) -> SanPham? {
         sanPhams.first { $0.bienThe.contains { $0.id == item.sanPhamBienTheId } }
     }
 
+    /// Dùng khi không dựng lại được SanPham thật từ catalog — tự tạo 1 SanPham "tối giản" chỉ có
+    /// đúng biến thể đang có trong giỏ, đủ để sheet sửa mở ra sửa được số lượng/ghi chú/topping đã
+    /// chọn (không đổi được sang size khác vì không biết các size khác). Đảm bảo bấm vào món LUÔN
+    /// mở được sheet, không phụ thuộc catalog khớp đúng hay không.
+    private func fallbackSanPham(for item: CartItem) -> SanPham {
+        SanPham(
+            id: item.sanPhamBienTheId, ten: item.tenSanPham, ngungBan: false, nhomSanPhamId: nil,
+            hinhAnh: item.hinhAnh,
+            bienThe: [SanPhamBienThe(id: item.sanPhamBienTheId, tenBienThe: item.tenBienThe, giaBan: item.giaBan, macDinh: true)],
+            timKiem: nil, storeFoodId: nil, khongLenStore: false
+        )
+    }
+
     /// CheckoutView bị tạo lại mỗi lần chuyển qua tab Giỏ hàng (MainTabView dùng switch chứ không
     /// phải TabView giữ sống các tab — xem MainTabView.body), nên `sanPhams` luôn rỗng lúc mới vào
-    /// tab và .task nạp lại từ đầu. Nếu khách bấm sửa món NGAY lúc đó (trước khi catalog kịp về),
-    /// sanPham(for:) trả nil và sheet hiện trắng trơn — đợi nạp xong rồi mới quyết định mở sheet
-    /// thay vì chỉ kiểm tra 1 lần lúc bấm.
+    /// tab và .task nạp lại từ đầu. Đợi catalog nạp xong (nếu chưa có) rồi mới mở sheet để ưu tiên
+    /// dùng SanPham thật (đổi được size) khi có; luôn mở sheet dù catalog lỗi/không khớp, dùng
+    /// fallbackSanPham(for:) — xem ProductPickerSheet ở .sheet(item:) bên trên.
     private func openEdit(_ item: CartItem) {
         guard openingItemId == nil else { return }
+        if !sanPhams.isEmpty { editingItem = item; return }
         Task {
-            if sanPhams.isEmpty {
-                openingItemId = item.id
-                await loadCatalog()
-                openingItemId = nil
-            }
-            if sanPham(for: item) != nil { editingItem = item }
+            openingItemId = item.id
+            await loadCatalog()
+            openingItemId = nil
+            editingItem = item
         }
     }
 
@@ -310,11 +328,11 @@ struct CheckoutView: View {
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item.hinhAnh)
+            // Khớp style "Số lượng" bên ProductPickerSheet (màn thêm món) — chữ to đậm, không
+            // khoanh tròn/nền, thay vì badge tròn trước đây.
             Text("\(item.soLuong)")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 22, height: 22)
-                .background(Circle().fill(Theme.primary))
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(.primary)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .top, spacing: 8) {
                     Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
