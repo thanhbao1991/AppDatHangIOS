@@ -234,6 +234,13 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Bản có kèm isSuccess/message — getSanPhamList() ở trên nuốt hẳn lỗi thành [] rỗng, không phân
+    /// biệt được "thực đơn thật sự trống" với "mất mạng/server lỗi". MenuView cần phân biệt 2 trường
+    /// hợp đó để hiện đúng thông báo (xem MenuView.load) — các nơi khác không cần thì cứ dùng bản cũ.
+    func getSanPhamListResult() async -> ApiEnvelope<[SanPham]> {
+        await cachedDecode("/dat-hang/menu/san-pham")
+    }
+
     func getNhomSanPhamList() async -> [NhomSanPham] {
         let env: ApiEnvelope<[NhomSanPham]> = await cachedDecode("/dat-hang/menu/nhom")
         return env.isSuccess ? (env.data ?? []) : []

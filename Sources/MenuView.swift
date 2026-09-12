@@ -467,18 +467,28 @@ struct MenuView: View {
     private func load(silent: Bool = false) async {
         if !silent { loading = true }
         error = ""
-        async let spTask = APIClient.shared.getSanPhamList()
+        // getSanPhamListResult() (khác getSanPhamList() ở CheckoutView) để phân biệt được "thực đơn
+        // thật sự trống" với "mất mạng/server lỗi" — trước đây getSanPhamList() nuốt hẳn lỗi thành []
+        // rỗng, khiến nhánh hiện lỗi + nút "Thử lại" ở body KHÔNG BAO GIỜ chạy tới dù mất mạng thật:
+        // khách chỉ thấy menu trống trơn, không biết là do lỗi hay quán chưa có món nào.
+        async let spTask = APIClient.shared.getSanPhamListResult()
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
         async let viTask = APIClient.shared.getVi()
         async let banChayTask = APIClient.shared.getBanChayIds()
-        let (sp, nhom, top, vi, banChay) = await (spTask, nhomTask, topTask, viTask, banChayTask)
+        let (spResult, nhom, top, vi, banChay) = await (spTask, nhomTask, topTask, viTask, banChayTask)
+        let sp = spResult.data ?? []
         sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         monHayMua = vi?.monHayMua ?? []
         banChayIds = banChay
-        if sanPhams.isEmpty && sp.isEmpty { error = "" }
+        // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
+        // thất bại khi menu đã có sẵn dữ liệu cũ thì giữ nguyên danh sách đang hiện, không xoá sạch
+        // màn hình chỉ vì 1 lần mất mạng thoáng qua.
+        if !spResult.isSuccess && sanPhams.isEmpty {
+            error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
+        }
         // Mục đầu tiên khi mở app luôn là "Yêu thích" (id cố định, luôn có mặt trong sections dù
         // rỗng) — không nhớ nhóm khách chọn lần trước nữa.
         if selectedNhomId.isEmpty {
@@ -624,7 +634,10 @@ struct ProductPickerSheet: View {
                                                 .foregroundColor(Theme.danger)
                                         }
                                     } else {
+                                        // Ép locale vi_VN — máy đặt hệ thống tiếng Anh sẽ hiện DatePicker
+                                        // kiểu "January 2026"/mm-dd-yyyy giữa 1 màn toàn chữ Việt, lạc quẻ.
                                         DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                            .environment(\.locale, Locale(identifier: "vi_VN"))
                                         if let dobError {
                                             Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
                                         }
@@ -679,10 +692,14 @@ struct ProductPickerSheet: View {
             Button {
                 confirmAdd()
             } label: {
-                Text("\(existing == nil ? "Thêm giỏ" : "Cập nhật") · \(bienThe != nil ? formatTien(thanhTienDraft) : "")")
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
+                // Trước ghép chuỗi vô điều kiện "· \(...)" — bienThe nil (khung hình đầu tiên trước
+                // khi .onAppear kịp set) thì hiện dấu "·" trơ trọi không có gì theo sau, nháy 1 khung
+                // hình xấu lúc mở sheet. Chỉ ghép " · giá" khi thật sự có giá để hiện.
+                Text(existing == nil ? "Thêm giỏ" : "Cập nhật")
+                    + Text(bienThe != nil ? " · \(formatTien(thanhTienDraft))" : "")
             }
+            .fontWeight(.bold)
+            .frame(maxWidth: .infinity)
             .buttonStyle(.borderedProminent)
             .tint(Theme.primary)
             .controlSize(.large)
