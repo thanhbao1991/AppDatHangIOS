@@ -38,30 +38,23 @@ struct CheckoutView: View {
         VStack(spacing: 0) {
             TitleBar(title: "Giỏ hàng", icon: "🛒", centerTitle: true, trailing: notificationBell)
 
-            ScrollView {
+            // Quay lại dùng List theo yêu cầu — mỗi bước timeline là 1 row/Section RIÊNG (qua
+            // cardRow) để giữ đúng identity theo item, tránh lặp lại kiểu lỗi trước đây (nhồi
+            // nhiều nút tương tác động vào chung 1 row khiến UITableView tái dùng cell sai). itemRow
+            // bên trong bước 1 giờ chỉ còn 1 vùng bấm sửa (onTapGesture) + 1 nút xoá SIBLING, không
+            // còn +/- lồng nhau như bản cũ từng gây lỗi.
+            List {
                 if !cart.items.isEmpty {
-                    // ScrollView + VStack thay vì List — từng thử dồn nhiều dòng món (ForEach động,
-                    // mỗi dòng vài Button riêng: sửa/+/-/xoá) vào chung 1 "card" bên trong MỘT List
-                    // row/Section duy nhất, gặp lỗi UITableView tái sử dụng cell sai (bấm sửa ra màn
-                    // hình trắng, bấm số lượng xoá sạch giỏ hàng) — List không được thiết kế cho 1
-                    // row chứa nhiều nhóm nút tương tác thay đổi số lượng động như vậy. Màn này
-                    // không cần pull-to-refresh/swipe-action nên bỏ hẳn List, dùng ScrollView an toàn.
-                    //
-                    // Trình bày dạng timeline 3 bước (khoanh số + đường nối dọc) — khớp mẫu "Giới
-                    // thiệu bạn bè" khách gửi, giúp phân biệt rõ luồng đặt hàng thay vì 3 card rời rạc
-                    // trông ngang hàng nhau.
-                    VStack(alignment: .leading, spacing: 0) {
-                        stepCard(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox }
-                        stepCard(2, title: "Giao đến") { addressBox }
-                        stepCard(3, title: "Thanh toán", isLast: true) { footerBox }
-                    }
-                    .padding(.top, 12)
+                    cardRow(topExtra: 6) { stepCard(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox } }
+                    cardRow { stepCard(2, title: "Giao đến") { addressBox } }
+                    cardRow { stepCard(3, title: "Thanh toán", isLast: true) { footerBox } }
                 } else {
                     Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
+                        .listRowSeparator(.hidden)
                 }
             }
-            .background(Theme.bg)
+            .cardListBackground()
         }
         .task {
             await loadDiaChi()
