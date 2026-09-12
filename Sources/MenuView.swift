@@ -605,10 +605,17 @@ struct ProductPickerSheet: View {
                                             // định tô chữ theo tint hệ thống (xanh), .foregroundColor()
                                             // chain sau KHÔNG override được trừ khi có .plain, khiến
                                             // chip từng hiện chữ xanh thay vì trắng/primary như code định.
+                                            // Thiếu .contentShape(Rectangle()) — vùng chạm THẬT của
+                                            // Button chỉ khớp bounding box của chữ (Text glyph), KHÔNG
+                                            // tính phần padding/nền màu xung quanh dù nhìn như 1 khối
+                                            // liền. Size chữ ngắn (vd "Size M") thì glyph bé hơn hẳn
+                                            // khối chip nhìn thấy — chạm vào phần đệm coi như trượt,
+                                            // đúng kiểu lỗi "bấm hoài không ăn" ở 1-2 chip cụ thể.
                                             Button("\(b.tenBienThe) \(formatTien(b.giaBan))") { bienThe = b }
                                                 .buttonStyle(.plain)
                                                 .font(.system(size: 12, weight: .bold))
                                                 .padding(.horizontal, 10).padding(.vertical, 6)
+                                                .contentShape(Rectangle())
                                                 .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
                                                 .foregroundColor(active ? .white : .primary)
                                                 .clipShape(Capsule())
