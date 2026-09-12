@@ -84,6 +84,11 @@ struct MenuView: View {
     private static let defaultNhomIcon = "🥤"
     private static let yeuThichNhomId = "yeu-thich"
 
+    /// Chiều cao CỐ ĐỊNH dùng chung cho hàng nhóm bên sidebar (nhomSidebar) VÀ header nhóm bên cột
+    /// phải (sectionHeader) — trước đây mỗi bên tự co theo nội dung (sidebar minHeight 44, header
+    /// card ~50pt, header rỗng ~33pt) nên 2 bên lệch chiều cao ở hàng đầu tiên, nhìn mất cân đối.
+    private static let categoryHeaderHeight: CGFloat = 52
+
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
     /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
     private static let nhomShortLabels: [String: String] = [:]
@@ -334,7 +339,8 @@ struct MenuView: View {
                     Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
                     Spacer()
                 }
-                .padding(.horizontal, 16).padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .frame(height: Self.categoryHeaderHeight)
                 .background(.bar)
             } else {
                 Button {
@@ -367,7 +373,8 @@ struct MenuView: View {
                             .background(Theme.primary)
                             .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .frame(height: Self.categoryHeaderHeight)
                     // Nền tint fill sát mép luôn (không còn card nổi thụt lề/bo góc/shadow như
                     // trước) — tint khác hẳn nền trắng của list món phía dưới là đủ để phân biệt,
                     // không cần thêm lớp viền.
@@ -407,10 +414,9 @@ struct MenuView: View {
                                     .lineLimit(2)
                                     .minimumScaleFactor(0.8)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 12)
                                     .padding(.trailing, 4)
                             }
-                            .frame(minHeight: 44)
+                            .frame(height: Self.categoryHeaderHeight)
                             .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
                             .contentShape(Rectangle())
                         }
