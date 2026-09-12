@@ -18,6 +18,14 @@ struct CheckoutView: View {
     @State private var locLoading = false
     @State private var locError = ""
     @State private var ship: UocTinhShip?
+    /// true trong lúc gọi API ước tính ship — RIÊNG với locLoading (chỉ cho nút "Dùng vị trí hiện
+    /// tại"), vì applyCoord còn được gọi từ nhiều chỗ khác (chọn địa chỉ đã lưu, kéo ghim bản đồ, đổi
+    /// giỏ hàng) cũng cần feedback đang tải, không riêng gì đường GPS.
+    @State private var estimatingShip = false
+    /// Địa chỉ khách tự gõ tay (không chọn gợi ý/địa chỉ lưu sẵn/GPS/kéo bản đồ) trước đây KHÔNG có
+    /// toạ độ nên bị tính ship = miễn phí bất kể xa gần — geocode thử khi rời focus ô nhập, xem
+    /// geocodeTypedAddressIfNeeded().
+    @State private var geocodingTyped = false
 
     /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định, giữ
     /// hành vi cũ). Xem nhanHangBox — toggle nằm ở bước 2, đổi tên từ "Giao đến" thành "Nhận hàng".
@@ -210,6 +218,13 @@ struct CheckoutView: View {
         .clipShape(shape)
     }
 
+    /// Chữ dùng CHUNG cho mọi trường hợp miễn phí ship (đạt ngưỡng giá trị hoặc trong bán kính km) —
+    /// trước đây 2 chỗ dùng 2 câu khác nhau ("Miễn phí giao hàng" vs "Miễn phí ship") dù cùng 1 ý,
+    /// không nhất quán.
+    private func freeShipBadge(size: CGFloat = 14) -> some View {
+        Text("🎉 Miễn phí giao hàng").font(.system(size: size, weight: .bold)).foregroundColor(Theme.success)
+    }
+
     private var qtyCountBadge: some View {
         Text("\(cart.totalCount) ly")
             .font(.system(size: 12, weight: .bold))
@@ -281,6 +296,10 @@ struct CheckoutView: View {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .focused($diaChiFocused)
+                .onSubmit { Task { await geocodeTypedAddressIfNeeded() } }
+                .onChange(of: diaChiFocused) { focused in
+                    if !focused { Task { await geocodeTypedAddressIfNeeded() } }
+                }
 
             // Gợi ý tên đường (khớp fragment sau số nhà) — giống TenDuongBox bên TraSuaApp.Desktop,
             // chỉ hiện khi đang gõ trong ô này và chưa khớp chính xác 1 tên đường.
@@ -340,7 +359,15 @@ struct CheckoutView: View {
 
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
-            if let coord, let ship {
+            // Feedback tải chung cho MỌI đường gọi applyCoord (chọn địa chỉ lưu sẵn, kéo ghim bản đồ,
+            // đổi giỏ hàng, gõ địa chỉ tay) — trước đây chỉ nút GPS có spinner riêng (locLoading), các
+            // đường còn lại im lặng vài trăm ms tới 1s, cảm giác đứng hình.
+            if estimatingShip {
+                HStack(spacing: 6) {
+                    ProgressView().scaleEffect(0.8)
+                    Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                }
+            } else if let coord, let ship {
                 // khoangCachKm nil = đơn đã đạt ShipDonGiaMienPhi, server bỏ qua OSRM luôn (miễn phí
                 // chắc chắn bất kể xa gần) — không có gì để vẽ map/khoảng cách, chỉ hiện huy hiệu.
                 if let km = ship.khoangCachKm {
@@ -359,21 +386,23 @@ struct CheckoutView: View {
                         if ship.phiShip > 0 {
                             Text("Phí ship: \(formatTien(ship.phiShip))").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
                         } else {
-                            Text("🎉 Miễn phí ship").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.success)
+                            freeShipBadge(size: 13)
                         }
                     }
                 } else {
-                    Text("🎉 Miễn phí giao hàng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.success)
+                    freeShipBadge()
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.vertical, 8)
                         .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
-                // Gợi ý mua thêm để đạt mốc miễn ship — chỉ hiện khi đang thật sự trả phí (nếu đã
-                // trong bán kính miễn phí hoặc đã đạt mốc thì thừa, gây rối).
+                // Gợi ý mua thêm để đạt mốc miễn ship — chỉ hiện khi đang thật sự trả phí VÀ khoản
+                // chênh lệch còn hợp lý so với phí đang trả (không đề nghị khách "thêm 90k để tiết
+                // kiệm 3k ship", đó là ép mua chứ không phải gợi ý thông minh). Trần tuyệt đối 50k
+                // (~1-2 ly) — vượt mức đó coi như không đáng nhắc tới, cứ để khách trả phí bình thường.
                 if ship.phiShip > 0 {
                     let conThieu = ship.donGiaMienPhi - cart.totalPrice
-                    if conThieu > 0 {
+                    if conThieu > 0 && conThieu <= 50_000 {
                         Text("Thêm \(formatTien(conThieu)) nữa để được miễn phí ship 🎁")
                             .font(.system(size: 12)).foregroundColor(Theme.primary)
                     }
@@ -565,6 +594,8 @@ struct CheckoutView: View {
         coord = c
         ship = nil
         locError = ""
+        estimatingShip = true
+        defer { estimatingShip = false }
         let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude, tongTienDon: cart.totalPrice)
         if result.isSuccess {
             ship = result.data
@@ -573,6 +604,19 @@ struct CheckoutView: View {
             // OSRM lỗi thì hiện lỗi thẳng ở đây thay vì âm thầm hiện phí ship sai/thiếu.
             locError = result.message ?? "Không tính được phí ship lúc này, vui lòng thử lại."
         }
+    }
+
+    /// Khách gõ tay địa chỉ (không chọn gợi ý/địa chỉ lưu sẵn/GPS/kéo bản đồ) thì trước giờ KHÔNG có
+    /// toạ độ, khiến ship bị tính miễn phí bất kể xa gần thật — thử geocode xuôi (Apple CLGeocoder)
+    /// khi rời focus ô nhập, best-effort. Bỏ qua nếu đã có coord rồi (từ 1 trong các đường khác) hoặc
+    /// đang geocode dở — không ép geocode lại mỗi lần gõ thêm ký tự.
+    private func geocodeTypedAddressIfNeeded() async {
+        let trimmed = diaChi.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, coord == nil, !geocodingTyped else { return }
+        geocodingTyped = true
+        defer { geocodingTyped = false }
+        guard let found = await LocationHelper.shared.geocodeAddressString(trimmed) else { return }
+        await applyCoord(found)
     }
 
     private func dungViTriHienTai() async {

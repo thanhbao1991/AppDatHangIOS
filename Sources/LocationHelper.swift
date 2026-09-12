@@ -24,6 +24,16 @@ final class LocationHelper: NSObject, CLLocationManagerDelegate {
         }
     }
 
+    /// Địa chỉ khách tự gõ tay (không chọn gợi ý/địa chỉ lưu sẵn/GPS/kéo bản đồ) — trước đây KHÔNG có
+    /// toạ độ nên bị tính ship miễn phí bất kể xa gần thật, lỗ hổng thật (xem thảo luận 2026-09-12).
+    /// Thử geocode xuôi khi khách rời focus ô nhập — best-effort, trả nil nếu Apple không tìm được
+    /// (địa chỉ mơ hồ/thiếu thông tin), KHÔNG chặn khách đặt hàng khi thất bại.
+    func geocodeAddressString(_ address: String) async -> CLLocationCoordinate2D? {
+        guard let placemark = try? await CLGeocoder().geocodeAddressString(address).first,
+              let location = placemark.location else { return nil }
+        return location.coordinate
+    }
+
     func reverseGeocode(_ location: CLLocation) async -> String? {
         guard let placemark = try? await CLGeocoder().reverseGeocodeLocation(location).first else { return nil }
         let raw = [placemark.subThoroughfare, placemark.thoroughfare, placemark.subAdministrativeArea ?? placemark.locality, placemark.administrativeArea]
