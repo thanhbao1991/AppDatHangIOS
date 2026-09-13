@@ -44,16 +44,18 @@ struct MainTabView: View {
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .lyBiMat: LyBiMatView(path: $homePath)
+                                case .checkout: CheckoutView(path: $homePath, selectedTab: $selectedTab)
                                 case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
                                 }
                             }
                     }
                 case .cart:
                     NavigationStack(path: $cartPath) {
-                        CheckoutView(path: $cartPath, notificationBell: AnyView(notificationBell))
+                        GioHangView(path: $cartPath, notificationBell: AnyView(notificationBell))
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .lyBiMat: LyBiMatView(path: $cartPath)
+                                case .checkout: CheckoutView(path: $cartPath, selectedTab: $selectedTab)
                                 case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; cartPath = [] }
                                 }
                             }

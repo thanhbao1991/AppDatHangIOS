@@ -1,11 +1,15 @@
 import SwiftUI
 import CoreLocation
 
-/// Port từ CheckoutScreen.tsx — giỏ hàng + địa chỉ giao (GPS/kéo ghim MapKit) + đặt hàng.
+/// Bước 2 = trang "Thanh toán" (địa chỉ + hình thức thanh toán) sau khi khách bấm "Đặt hàng" ở tab
+/// Giỏ hàng (GioHangView) — tách khỏi tab Giỏ hàng theo bố cục Shopee: card Địa chỉ (gộp cả chọn
+/// Giao tận nơi/Nhận tại quán), card Hình thức thanh toán, ghi chú + tổng tiền + nút Đặt hàng cố
+/// định dưới cùng. KHÔNG còn timeline đánh số 1/2/3 (bản cũ gộp cả bước Hoá đơn vào đây) vì giờ mỗi
+/// bước là 1 màn riêng, không cần đường nối giữa các card nữa.
 struct CheckoutView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
-    var notificationBell: AnyView
+    @Binding var selectedTab: AppTab
 
     @State private var ghiChu = ""
     @State private var diaChi = ""
@@ -18,201 +22,58 @@ struct CheckoutView: View {
     @State private var locLoading = false
     @State private var locError = ""
     @State private var ship: UocTinhShip?
-    /// true trong lúc gọi API ước tính ship — RIÊNG với locLoading (chỉ cho nút "Dùng vị trí hiện
-    /// tại"), vì applyCoord còn được gọi từ nhiều chỗ khác (chọn địa chỉ đã lưu, kéo ghim bản đồ, đổi
-    /// giỏ hàng) cũng cần feedback đang tải, không riêng gì đường GPS.
+    /// true trong lúc gọi API ước tính ship — RIÊNG với locLoading, vì applyCoord còn được gọi từ
+    /// nhiều chỗ khác (chọn địa chỉ đã lưu, kéo ghim bản đồ, đổi giỏ hàng, tự xin định vị lúc vào
+    /// trang) cũng cần feedback đang tải.
     @State private var estimatingShip = false
-    /// Địa chỉ khách tự gõ tay (không chọn gợi ý/địa chỉ lưu sẵn/GPS/kéo bản đồ) trước đây KHÔNG có
-    /// toạ độ nên bị tính ship = miễn phí bất kể xa gần — geocode thử khi rời focus ô nhập, xem
-    /// geocodeTypedAddressIfNeeded().
+    /// Địa chỉ khách tự gõ tay trước đây KHÔNG có toạ độ nên bị tính ship = miễn phí bất kể xa gần —
+    /// geocode thử khi rời focus ô nhập, xem geocodeTypedAddressIfNeeded().
     @State private var geocodingTyped = false
 
-    /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định, giữ
-    /// hành vi cũ). Xem nhanHangBox — toggle nằm ở bước 2, đổi tên từ "Giao đến" thành "Nhận hàng".
+    /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định).
     @State private var nhanTaiQuan = false
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
 
-    /// Catalog nạp riêng cho CheckoutView (không dùng chung state với MenuView) — chỉ để dựng lại
-    /// SanPham gốc khi khách bấm sửa 1 dòng trong giỏ (ProductPickerSheet cần đủ danh sách bienThe/
-    /// topping để hiện lại UI chọn, giống lúc thêm mới ở MenuView).
-    @State private var sanPhams: [SanPham] = []
-    @State private var nhoms: [NhomSanPham] = []
-    @State private var toppings: [Topping] = []
-    @State private var editingItem: CartItem?
-    /// true cho tới khi loadCatalog() nạp xong — khớp cách HoaDonEditFormView (AppQuanLyIOS) chặn
-    /// tương tác bằng cờ `loading` tới khi có đủ dữ liệu, thay vì lazy-load ngay lúc bấm (kiểu cũ ở
-    /// đây từng gây race: bấm "sửa" quá nhanh lúc vừa mở tab trùng lúc .task cũng đang tự nạp catalog
-    /// — 2 lượt gọi chồng nhau, lượt xong sau lỡ rỗng thì đè mất dữ liệu tốt của lượt xong trước,
-    /// sheet sửa rơi vào fallbackSanPham dù bấm y hệt vẫn phải ra kết quả đúng, không thể bắt người
-    /// dùng bấm chậm lại). Chặn hẳn thao tác sửa cho tới khi chắc chắn có catalog thay vì cố lazy-load
-    /// đúng lúc cần.
-    @State private var loadingCatalog = true
+    /// Hình thức thanh toán khách chọn — chỉ ảnh hưởng bước SAU khi đặt xong (có hiện trang QR hay
+    /// không) + ghi vào ghi chú cho nhân viên biết trước, KHÔNG có schema riêng ở backend (xem
+    /// datHang() — tiền tố gắn thẳng vào GhiChu, giữ tối giản vì thu tiền COD vốn đã qua quy trình
+    /// "thu tiền mặt" sẵn có của nhân viên/shipper, không cần trường trạng thái mới).
+    @State private var hinhThucThanhToan: HinhThucThanhToan = .chuyenKhoanQR
 
-    /// Gợi ý tên đường khi gõ địa chỉ — cùng danh sách TenDuong Desktop dùng cho TenDuongBox, xem
-    /// diaChiSuggestions/streetFragment bên dưới.
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Giỏ hàng", icon: "cart", centerTitle: true, trailing: notificationBell)
-
-            // Quay lại dùng List theo yêu cầu — mỗi bước timeline là 1 row/Section riêng (qua
-            // cardRow). Đã BỎ vuốt trái để xoá món (không ổn — khách khó phát hiện thao tác) quay
-            // lại nút X hiện sẵn trên dòng, nên bước 1 gộp lại thành 1 row duy nhất như bước 2/3
-            // (không cần tách row riêng cho từng món nữa vì không còn .swipeActions).
             List {
-                if !cart.items.isEmpty {
-                    cardRow(topExtra: 6) { stepCard(1, title: "Hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox } }
-                    cardRow { stepCard(2, title: "Nhận hàng") { nhanHangBox } }
-                    cardRow { stepCard(3, title: "Thanh toán", isLast: true) { footerBox } }
-                } else {
-                    Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
-                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .center)
-                        .listRowSeparator(.hidden)
-                }
+                cardRow(topExtra: 6) { cardBox { diaChiCardContent } }
+                cardRow { cardBox { thanhToanCardContent } }
+                cardRow { cardBox { ghiChuCardContent } }
             }
             .cardListBackground()
+            bottomBar
         }
+        .navigationTitle("Thanh toán")
+        .navigationBarTitleDisplayMode(.inline)
+        .brandNavBar()
         .task {
-            // loadCatalog() chạy TRƯỚC, gắn xong loadingCatalog=false ngay khi có kết quả — không
-            // đợi loadDiaChi()/loadTenDuong() (không liên quan sửa món) để khách bấm "sửa" được sớm
-            // nhất có thể, nhưng vẫn đảm bảo tuần tự (không lazy-load lại lúc bấm) nên không có race.
-            //
-            // Ép trần thời gian chờ (8s) — lần mở app ĐẦU TIÊN (chưa cache gì, DNS/TLS còn "lạnh")
-            // request có thể treo lâu hơn hẳn bình thường, khiến cả dòng món mờ (loadingCatalog=true)
-            // "mãi không hết" cho tới khi đổi tab (tạo lại CheckoutView, request cũ bị huỷ + request
-            // mới may mắn nhanh hơn) — thay vì phó mặc, chủ động bỏ qua sau 8s để UI luôn phản hồi,
-            // fallbackSanPham() vẫn đảm bảo sheet sửa hoạt động dù catalog lỡ chưa kịp có.
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await loadCatalog() }
-                group.addTask { try? await Task.sleep(nanoseconds: 8_000_000_000) }
-                await group.next()
-                group.cancelAll()
-            }
-            loadingCatalog = false
             await loadDiaChi()
             await loadTenDuong()
-        }
-        .sheet(item: $editingItem) { item in
-            // sanPham(for:) có thể trả nil (chưa nạp xong catalog, món đã đổi/ẩn khỏi menu, hoặc
-            // không khớp được vì lý do khác) — dùng fallbackSanPham(for:) để sheet LUÔN mở được,
-            // không bao giờ trắng trơn. Khi dùng fallback, chỉ đưa đúng các topping đã chọn sẵn vào
-            // danh sách chọn (không biết đủ topping thật của món để hiện hết).
-            let realSp = sanPham(for: item)
-            let sp = realSp ?? fallbackSanPham(for: item)
-            let toppingChoices = realSp != nil ? toppings : item.toppings.map { Topping(id: $0.id, ten: $0.ten, gia: $0.gia, ngungBan: false) }
-            ProductPickerSheet(
-                sanPham: sp,
-                toppings: toppingChoices,
-                isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
-                existing: item,
-                onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    // Số lượng về 0 = xoá món (thay cho nút X riêng đã bỏ ở itemRow) — Stepper trong
-                    // ProductPickerSheet cho về 0 khi existing != nil, xem confirmAdd()/isDeleting.
-                    if soLuong <= 0 {
-                        cart.removeItem(item.id)
-                    } else {
-                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
-                    }
-                }
-            ) { editingItem = nil }
-        }
-    }
-
-    /// 1 bước trong timeline — khoanh số + đường nối dọc bên trái (đường nối co giãn theo chiều cao
-    /// nội dung thật của bước đó nhờ HStack(alignment: .top) tự lấy chiều cao theo nhánh cao nhất,
-    /// KHÔNG cần đo thủ công bằng GeometryReader), tiêu đề + nội dung bên phải.
-    private func stepCard<Content: View>(_ number: Int, title: String, trailing: AnyView? = nil, isLast: Bool = false, @ViewBuilder content: () -> Content) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 0) {
-                Text("\(number)")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 26, height: 26)
-                    .background(Circle().fill(Theme.primary))
-                if !isLast {
-                    Rectangle().fill(Theme.divider).frame(width: 2).frame(maxHeight: .infinity)
-                }
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                    Spacer()
-                    if let trailing { trailing }
-                }
-                content()
-            }
-            .padding(.bottom, isLast ? 0 : 16)
-        }
-        .padding(.horizontal)
-    }
-
-    /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal
-    /// riêng (stepCard đã tự canh lề ngang cho cả bước rồi, cộng thêm sẽ bị thụt lề đôi).
-    private func stepBoxStyle<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
-    }
-
-    /// Bước 1: chi tiết hoá đơn — 1 card trắng duy nhất chứa mọi món, ngăn cách bằng Divider. Xoá
-    /// món qua nút X trên dòng (itemRow), KHÔNG còn vuốt trái (.swipeActions) — đã bỏ vì khách khó
-    /// phát hiện thao tác vuốt.
-    private var cartItemsBox: some View {
-        stepBoxStyle {
-            // spacing 8 (trước 12) — tiết kiệm chiều cao giữa các món để hiện được nhiều món hơn.
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Divider() }
-                    itemRow(item)
-                }
+            // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
+            // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
+            // loadDiaChi(), hoặc chọn "Nhận tại quán" không cần).
+            if !nhanTaiQuan && coord == nil {
+                await dungViTriHienTai()
             }
         }
     }
 
-    /// Chữ dùng CHUNG cho mọi trường hợp miễn phí ship (đạt ngưỡng giá trị hoặc trong bán kính km) —
-    /// trước đây 2 chỗ dùng 2 câu khác nhau ("Miễn phí giao hàng" vs "Miễn phí ship") dù cùng 1 ý,
-    /// không nhất quán.
-    private func freeShipBadge(size: CGFloat = 14) -> some View {
-        Text("🎉 Miễn phí giao hàng").font(.system(size: size, weight: .bold)).foregroundColor(Theme.success)
-    }
+    // MARK: - Card 1: Địa chỉ (gộp toggle Giao tận nơi/Nhận tại quán)
 
-    private var qtyCountBadge: some View {
-        Text("\(cart.totalCount) ly")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(Theme.primary)
-            .padding(.horizontal, 8).padding(.vertical, 3)
-            .background(Theme.primaryTint)
-            .clipShape(Capsule())
-    }
-
-    @ViewBuilder
-    private func itemThumbnail(_ item: CartItem) -> some View {
-        if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                .frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 8))
-        } else {
-            // Icon nhóm (emoji) thay vì ô trơn không có gì — khớp cách MenuView.productRow làm
-            // (Theme.nhomIcons), tra nhóm qua sanPham(for:) vì CartItem không tự lưu nhomSanPhamId.
-            let ten = sanPham(for: item).flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
-            RoundedRectangle(cornerRadius: 8).fill(Theme.primaryTint).frame(width: 36, height: 36)
-                .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 18)))
-        }
-    }
-
-    /// Bước 2: toggle "Giao tận nơi"/"Nhận tại quán" + nội dung tương ứng — 1 box duy nhất (khác
-    /// addressContent/pickupContent bên dưới, KHÔNG tự bọc stepBoxStyle) để toggle và nội dung nằm
-    /// chung 1 card, đổi mượt khi bấm chứ không nhảy 2 khối tách rời.
-    private var nhanHangBox: some View {
-        stepBoxStyle {
+    private var diaChiCardContent: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text("Địa chỉ").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
             Picker("", selection: $nhanTaiQuan) {
                 Text("Giao tận nơi").tag(false)
                 Text("Nhận tại quán").tag(true)
@@ -221,12 +82,10 @@ struct CheckoutView: View {
 
             if nhanTaiQuan { pickupContent } else { addressContent }
         }
-        }
     }
 
     /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — kèm nút mở quà tặng Xu (dùng lại nguyên
-    /// vòng quay may mắn hiện có bên UuDaiView, 1 lượt/ngày) để khuyến khích khách tự đến lấy, đỡ tốn
-    /// phí ship cho quán.
+    /// vòng quay may mắn hiện có bên UuDaiView, 1 lượt/ngày) để khuyến khích khách tự đến lấy.
     private var pickupContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Ghé quán lấy hàng — không mất phí ship!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
@@ -264,8 +123,6 @@ struct CheckoutView: View {
                     if !focused { Task { await geocodeTypedAddressIfNeeded() } }
                 }
 
-            // Gợi ý tên đường (khớp fragment sau số nhà) — giống TenDuongBox bên TraSuaApp.Desktop,
-            // chỉ hiện khi đang gõ trong ô này và chưa khớp chính xác 1 tên đường.
             if !diaChiSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(diaChiSuggestions, id: \.self) { ten in
@@ -322,17 +179,12 @@ struct CheckoutView: View {
 
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
-            // Feedback tải chung cho MỌI đường gọi applyCoord (chọn địa chỉ lưu sẵn, kéo ghim bản đồ,
-            // đổi giỏ hàng, gõ địa chỉ tay) — trước đây chỉ nút GPS có spinner riêng (locLoading), các
-            // đường còn lại im lặng vài trăm ms tới 1s, cảm giác đứng hình.
             if estimatingShip {
                 HStack(spacing: 6) {
                     ProgressView().scaleEffect(0.8)
                     Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             } else if let coord, let ship {
-                // khoangCachKm nil = đơn đã đạt ShipDonGiaMienPhi, server bỏ qua OSRM luôn (miễn phí
-                // chắc chắn bất kể xa gần) — không có gì để vẽ map/khoảng cách, chỉ hiện huy hiệu.
                 if let km = ship.khoangCachKm {
                     DeliveryMapView(
                         shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
@@ -359,10 +211,6 @@ struct CheckoutView: View {
                         .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
-                // Gợi ý mua thêm để đạt mốc miễn ship — chỉ hiện khi đang thật sự trả phí VÀ khoản
-                // chênh lệch còn hợp lý so với phí đang trả (không đề nghị khách "thêm 90k để tiết
-                // kiệm 3k ship", đó là ép mua chứ không phải gợi ý thông minh). Trần tuyệt đối 50k
-                // (~1-2 ly) — vượt mức đó coi như không đáng nhắc tới, cứ để khách trả phí bình thường.
                 if ship.phiShip > 0 {
                     let conThieu = ship.donGiaMienPhi - cart.totalPrice
                     if conThieu > 0 && conThieu <= 50_000 {
@@ -373,154 +221,78 @@ struct CheckoutView: View {
             }
         }
         .onChange(of: cart.totalPrice) { _ in
-            // Tổng tiền đổi (thêm/bớt món) trong lúc đã có toạ độ — phí ship phụ thuộc CẢ giá trị đơn
-            // lẫn khoảng cách nên phải tính lại, không thì hiện sai/cũ.
             if let coord { Task { await applyCoord(coord) } }
         }
     }
 
-    /// Bước cuối: ghi chú + tạm tính + nút đặt hàng.
-    private var footerBox: some View {
-        stepBoxStyle {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField("Ghi chú", text: $ghiChu)
-                .textFieldStyle(.roundedBorder)
+    private func freeShipBadge(size: CGFloat = 14) -> some View {
+        Text("🎉 Miễn phí giao hàng").font(.system(size: size, weight: .bold)).foregroundColor(Theme.success)
+    }
+
+    // MARK: - Card 2: Hình thức thanh toán
+
+    private var thanhToanCardContent: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Hình thức thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            paymentOptionRow(.codTraKhiNhanHang, icon: "banknote", label: "Thanh toán khi nhận hàng")
+            Divider()
+            paymentOptionRow(.chuyenKhoanQR, icon: "qrcode", label: "Chuyển khoản qua mã QR")
+        }
+    }
+
+    private func paymentOptionRow(_ method: HinhThucThanhToan, icon: String, label: String) -> some View {
+        Button { hinhThucThanhToan = method } label: {
             HStack {
-                Text("Tạm tính")
+                Image(systemName: icon).foregroundColor(Theme.primary).frame(width: 24)
+                Text(label).foregroundColor(.primary)
                 Spacer()
-                Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).fontWeight(.bold)
+                Image(systemName: hinhThucThanhToan == method ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(hinhThucThanhToan == method ? Theme.primary : Theme.divider)
             }
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Card 3: Ghi chú
+
+    private var ghiChuCardContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Ghi chú").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            TextField("Ghi chú cho quán (không bắt buộc)", text: $ghiChu)
+                .textFieldStyle(.roundedBorder)
+        }
+    }
+
+    // MARK: - Thanh dưới cùng: tổng tiền + nút Đặt hàng
+
+    private var bottomBar: some View {
+        VStack(spacing: 8) {
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
-            Button {
-                Task { await datHang() }
-            } label: {
-                HStack {
-                    Spacer()
-                    if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
-                    Spacer()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.primary)
-            .disabled(loading || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
-        }
-        }
-    }
-
-    /// Nhóm chứa thuốc lá/sinh tố/đá xay — cần cho ProductPickerSheet lúc sửa (cảnh báo 18 tuổi,
-    /// disable "Không đá"), khớp y hệt logic bên MenuView.
-    private var thuocLaNhomIds: Set<String> {
-        Set(nhoms.filter { $0.ten == "Thuốc lá" }.map(\.id))
-    }
-
-    private var khongChoKhongDaNhomIds: Set<String> {
-        Set(nhoms.filter { $0.ten == "Sinh Tố" || $0.ten == "Đá Xay" }.map(\.id))
-    }
-
-    private var caPheNhomIds: Set<String> {
-        Set(nhoms.filter { $0.ten == "Cà Phê" }.map(\.id))
-    }
-
-    /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu,
-    /// hoặc catalog chưa nạp/nạp lỗi, hoặc không khớp được vì lý do khác. Có fallbackSanPham(for:)
-    /// bên dưới để sheet sửa KHÔNG BAO GIỜ trắng trơn dù trường hợp này xảy ra.
-    ///
-    /// Khớp theo id trước, rồi rơi về khớp theo TÊN sản phẩm nếu id không tìm thấy — "Đặt lại"
-    /// (OrderDetailView.datLai) copy sanPhamBienTheId từ đơn CŨ vào giỏ, id đó không còn tồn tại nếu
-    /// biến thể đã bị sửa/tạo lại trên Desktop (SequentialGuid mới) dù sản phẩm vẫn còn bán — không
-    /// khớp theo tên thì sheet sửa rơi vào fallbackSanPham (mất hẳn chọn size/topping) dù món thực ra
-    /// vẫn còn đầy đủ trong menu.
-    private func sanPham(for item: CartItem) -> SanPham? {
-        sanPhams.first { $0.bienThe.contains { $0.id == item.sanPhamBienTheId } }
-            ?? sanPhams.first { $0.ten == item.tenSanPham }
-    }
-
-    /// Dùng khi không dựng lại được SanPham thật từ catalog — tự tạo 1 SanPham "tối giản" chỉ có
-    /// đúng biến thể đang có trong giỏ, đủ để sheet sửa mở ra sửa được số lượng/ghi chú/topping đã
-    /// chọn (không đổi được sang size khác vì không biết các size khác). Đảm bảo bấm vào món LUÔN
-    /// mở được sheet, không phụ thuộc catalog khớp đúng hay không.
-    private func fallbackSanPham(for item: CartItem) -> SanPham {
-        SanPham(
-            id: item.sanPhamBienTheId, ten: item.tenSanPham, ngungBan: false, nhomSanPhamId: nil,
-            hinhAnh: item.hinhAnh,
-            bienThe: [SanPhamBienThe(id: item.sanPhamBienTheId, tenBienThe: item.tenBienThe, giaBan: item.giaBan, macDinh: true)],
-            timKiem: nil, storeFoodId: nil, khongLenStore: false
-        )
-    }
-
-    /// CheckoutView bị tạo lại mỗi lần chuyển qua tab Giỏ hàng (MainTabView dùng switch chứ không
-    /// phải TabView giữ sống các tab — xem MainTabView.body), nên `sanPhams` luôn rỗng lúc mới vào
-    /// tab và .task nạp lại từ đầu — nhưng APIClient.shared có cache in-memory dùng chung toàn app
-    /// (TTL 5 phút), nên nếu MenuView vừa nạp trước đó, loadCatalog() đọc lại cache gần như tức thì,
-    /// không thật sự gọi mạng lại. openEdit() chỉ mở sheet SAU khi loadingCatalog đã tắt (xem .task) —
-    /// không tự lazy-load lúc bấm nữa (bản cũ làm vậy từng gây race khi bấm quá nhanh). Luôn mở sheet
-    /// dù catalog lỗi/không khớp, dùng fallbackSanPham(for:) — xem ProductPickerSheet ở .sheet(item:).
-    private func openEdit(_ item: CartItem) {
-        guard !loadingCatalog else { return }
-        editingItem = item
-    }
-
-    /// Xoá món có 2 cách: nút X ngay dưới số tiền (dòng riêng, căn phải khớp cột giá), HOẶC kéo
-    /// Stepper "Số lượng" về 0 trong sheet sửa rồi bấm "Xoá món" (xem MenuView.confirmAdd()/
-    /// isDeleting và onConfirm ở .sheet(item:) bên trên). Nút X là SIBLING của Text tên (không nằm
-    /// trong Button mở sửa) để tránh lồng Button-trong-Button — không đáng tin cậy trong SwiftUI.
-    /// Phần còn lại (thumbnail/topping/ghi chú/giá) dùng .onTapGesture để mở sửa; nút X cần tự thêm
-    /// .contentShape(Rectangle()) + .buttonStyle(.plain) để thắng .onTapGesture của view cha (đã
-    /// xác nhận qua test thật, khớp bài học ở ProductPickerSheet).
-    private func itemRow(_ item: CartItem) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            itemThumbnail(item)
-            // Khớp style "Số lượng" bên ProductPickerSheet (màn thêm món) — chữ to đậm, không
-            // khoanh tròn/nền, thay vì badge tròn trước đây.
-            Text("\(item.soLuong)")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.primary)
-            // Tên+topping+ghi chú gộp thành 1 CỘT riêng (leading), giá+nút X thành 1 cột riêng
-            // (trailing) — 2 cột độc lập chiều cao, đặt cạnh nhau trong HStack thay vì lồng cột
-            // giá+X vào ngay hàng đầu của cột tên. Trước đây giá+X (2 dòng) cao hơn tên (1 dòng) làm
-            // CẢ HÀNG bị kéo cao theo, khiến topping/ghi chú (nằm NGOÀI hàng đó) bắt đầu ở đáy hàng
-            // cao thay vì ngay dưới tên — nhìn như dư khoảng trống giữa tên và topping/ghi chú. Tách
-            // cột thì topping/ghi chú nằm ngay trong cột tên, không phụ thuộc chiều cao cột giá+X.
-            HStack(alignment: .top, spacing: 8) {
+            HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    if !item.toppings.isEmpty {
-                        // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
-                        // ngay sau tên ("Trân châu +5k") thay vì chỉ hiện tên trơn không ai biết tốn
-                        // thêm bao nhiêu.
-                        Text(item.toppings.map { t in
-                            let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
-                            return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
-                        }.joined(separator: ", "))
-                            .font(.system(size: 12)).foregroundColor(Theme.primary)
-                    }
-                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                        Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
-                    }
+                    Text("Tổng cộng").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).font(.system(size: 18, weight: .bold))
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                    Button {
-                        cart.removeItem(item.id)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.danger)
-                            .padding(.horizontal, 8).padding(.vertical, 4)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+                Button {
+                    Task { await datHang() }
+                } label: {
+                    if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.primary)
+                .frame(minWidth: 140)
+                .disabled(loading || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
             }
         }
-        // Chặn bấm sửa cho tới khi catalog nạp xong (xem loadingCatalog/openEdit) — không còn spinner
-        // riêng từng dòng như bản cũ, dòng chỉ hơi mờ đi trong lúc chờ (thường rất nhanh vì
-        // APIClient.shared đã có cache sẵn từ MenuView).
-        .opacity(loadingCatalog ? 0.6 : 1)
-        .contentShape(Rectangle())
-        .onTapGesture { openEdit(item) }
+        .padding(.horizontal).padding(.vertical, 12)
+        .background(Color.white)
+        .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .top)
     }
+
+    // MARK: - Data loading / logic (giữ nguyên từ bản gộp cũ)
 
     private func loadDiaChi() async {
         let list = await APIClient.shared.getDiaChiList()
@@ -531,16 +303,6 @@ struct CheckoutView: View {
                 await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
             }
         }
-    }
-
-    private func loadCatalog() async {
-        async let spTask = APIClient.shared.getSanPhamList()
-        async let nhomTask = APIClient.shared.getNhomSanPhamList()
-        async let topTask = APIClient.shared.getToppingList()
-        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
-        sanPhams = sp
-        nhoms = nhom
-        toppings = top
     }
 
     private func loadTenDuong() async {
@@ -567,8 +329,6 @@ struct CheckoutView: View {
         return String(text[..<r.upperBound])
     }
 
-    /// Gợi ý hiện khi đang gõ (còn focus) VÀ fragment sau số nhà chưa khớp CHÍNH XÁC 1 tên đường có
-    /// sẵn — tránh hiện lại dropdown thừa ngay sau khi vừa chọn 1 gợi ý hoặc gõ đủ tên.
     private var diaChiSuggestions: [String] {
         guard diaChiFocused else { return [] }
         let fragment = streetFragment(diaChi).trimmingCharacters(in: .whitespaces)
@@ -593,16 +353,10 @@ struct CheckoutView: View {
         if result.isSuccess {
             ship = result.data
         } else {
-            // Không còn fallback đường chim bay phía server (xem DatHangService.UocTinhPhiShip) —
-            // OSRM lỗi thì hiện lỗi thẳng ở đây thay vì âm thầm hiện phí ship sai/thiếu.
             locError = result.message ?? "Không tính được phí ship lúc này, vui lòng thử lại."
         }
     }
 
-    /// Khách gõ tay địa chỉ (không chọn gợi ý/địa chỉ lưu sẵn/GPS/kéo bản đồ) thì trước giờ KHÔNG có
-    /// toạ độ, khiến ship bị tính miễn phí bất kể xa gần thật — thử geocode xuôi (Apple CLGeocoder)
-    /// khi rời focus ô nhập, best-effort. Bỏ qua nếu đã có coord rồi (từ 1 trong các đường khác) hoặc
-    /// đang geocode dở — không ép geocode lại mỗi lần gõ thêm ký tự.
     private func geocodeTypedAddressIfNeeded() async {
         let trimmed = diaChi.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, coord == nil, !geocodingTyped else { return }
@@ -626,6 +380,10 @@ struct CheckoutView: View {
         }
     }
 
+    /// Đặt hàng — hình thức thanh toán KHÔNG có field riêng ở backend (xem @State hinhThucThanhToan),
+    /// gắn tiền tố vào GhiChu để nhân viên biết trước khách định trả kiểu gì, rồi điều hướng khác
+    /// nhau: chọn QR thì sang trang quét mã ngay (như hành vi cũ), chọn COD thì về thẳng tab Đơn hàng
+    /// (tiền thu sau qua quy trình "thu tiền mặt" sẵn có, không cần khách xem QR).
     private func datHang() async {
         guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
             error = "Vui lòng nhập địa chỉ giao hàng."
@@ -635,24 +393,30 @@ struct CheckoutView: View {
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
         let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
+        let ghiChuPrefix = hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR"
+        let ghiChuTrimmed = ghiChu.trimmingCharacters(in: .whitespaces)
+        let ghiChuFull = ghiChuTrimmed.isEmpty ? ghiChuPrefix : "\(ghiChuPrefix) — \(ghiChuTrimmed)"
         let result = await APIClient.shared.datMon(
-            items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChu.isEmpty ? nil : ghiChu,
+            items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
             cart.clear()
-            path.append(.thanhToan(hoaDonId: data.id))
+            if hinhThucThanhToan == .chuyenKhoanQR {
+                path.append(.thanhToan(hoaDonId: data.id))
+            } else {
+                selectedTab = .donHang
+                path = []
+            }
         } else {
             error = result.message ?? "Đặt hàng thất bại."
         }
     }
 
     /// Mở quà tặng Xu khi khách chọn "Nhận tại quán" — dùng lại NGUYÊN vòng quay may mắn hiện có
-    /// (1 lượt/ngày, xem UuDaiView.quay()), không phải cơ chế thưởng riêng. Nếu khách đã quay hết
-    /// lượt hôm nay (ở tab Ưu đãi hoặc lần "Nhận tại quán" trước), API trả lỗi — hiện thẳng message
-    /// đó thay vì nút, không giả vờ còn lượt.
+    /// (1 lượt/ngày, xem UuDaiView.quay()).
     private func moQuaXu() async {
         dangQuay = true
         defer { dangQuay = false }
@@ -663,4 +427,9 @@ struct CheckoutView: View {
             ketQuaQuay = res.message ?? "Bạn đã dùng hết lượt quay hôm nay."
         }
     }
+}
+
+enum HinhThucThanhToan {
+    case codTraKhiNhanHang
+    case chuyenKhoanQR
 }
