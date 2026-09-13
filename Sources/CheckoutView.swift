@@ -485,7 +485,7 @@ struct CheckoutView: View {
                         Button {
                             cart.removeItem(item.id)
                         } label: {
-                            Image(systemName: "xmark")
+                            Text("❌")
                                 .font(.system(size: 12))
                                 .foregroundColor(Theme.danger)
                                 .padding(.horizontal, 8).padding(.vertical, 4)

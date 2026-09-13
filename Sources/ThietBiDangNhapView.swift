@@ -14,8 +14,7 @@ struct ThietBiDangNhapView: View {
             } else {
                 List(sessions, id: \.id) { item in
                     HStack(spacing: 12) {
-                        Image(systemName: item.nenTang == "Desktop" ? "desktopcomputer" : "iphone")
-                            .foregroundColor(item.laThietBiHienTai ? Theme.success : Theme.primary)
+                        Text(item.nenTang == "Desktop" ? "🖥️" : "📱")
                             .frame(width: 32)
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
@@ -32,7 +31,7 @@ struct ThietBiDangNhapView: View {
                         Spacer()
                         if !item.laThietBiHienTai {
                             Button { revokingSession = item } label: {
-                                Image(systemName: "xmark").foregroundColor(Theme.danger)
+                                Text("❌").foregroundColor(Theme.danger)
                             }
                         }
                     }

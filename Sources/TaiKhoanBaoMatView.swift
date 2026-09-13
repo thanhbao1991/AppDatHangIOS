@@ -17,10 +17,10 @@ struct TaiKhoanBaoMatView: View {
             List {
                 Section {
                     NavigationLink { DoiMatKhauView() } label: {
-                        Label("Đổi mật khẩu", systemImage: "key.fill")
+                        EmojiLabel("Đổi mật khẩu", "🔑")
                     }
                     NavigationLink { ThietBiDangNhapView() } label: {
-                        Label("Thiết bị đăng nhập", systemImage: "iphone")
+                        EmojiLabel("Thiết bị đăng nhập", "📱")
                     }
                 }
 
@@ -38,7 +38,7 @@ struct TaiKhoanBaoMatView: View {
 
                 Section {
                     Link(destination: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) {
-                        Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
+                        EmojiLabel("Chính sách bảo mật", "🔐")
                     }
                 }
             }

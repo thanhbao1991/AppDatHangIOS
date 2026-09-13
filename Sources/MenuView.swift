@@ -293,9 +293,8 @@ struct MenuView: View {
     /// vì sao mục "Yêu thích" chưa có gì và món sẽ tự xuất hiện sau khi khách đặt hàng.
     private var yeuThichEmptyState: some View {
         VStack(spacing: 8) {
-            Image(systemName: "heart.text.square")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary)
+            Text("💕")
+                .font(.system(size: 30))
             Text("Món hay gọi sẽ hiện ở đây!")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.secondary)
@@ -629,7 +628,7 @@ struct ProductPickerSheet: View {
 
                     if isThuocLa {
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                            EmojiLabel("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", "⚠️")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(Theme.danger)
 
@@ -637,10 +636,10 @@ struct ProductPickerSheet: View {
                                 ProgressView()
                             } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
                                 if duTuoiMuaThuocLa {
-                                    Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                    EmojiLabel("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", "✅")
                                         .foregroundColor(Theme.success)
                                 } else {
-                                    Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                                    EmojiLabel("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", "❌")
                                         .foregroundColor(Theme.danger)
                                 }
                             } else {

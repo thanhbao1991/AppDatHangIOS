@@ -49,7 +49,7 @@ struct OrderDetailView: View {
 
                 card {
                     HStack {
-                        Label("Món", systemImage: "cup.and.saucer.fill")
+                        EmojiLabel("Món", "☕")
                         Spacer()
                         Text("\(order.items.reduce(0) { $0 + $1.soLuong }) ly")
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)

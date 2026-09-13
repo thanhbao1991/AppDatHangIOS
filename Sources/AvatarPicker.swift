@@ -44,7 +44,7 @@ struct AvatarPickerView: View {
                     }
                 } else {
                     Circle().fill(Theme.primaryTint)
-                    Image(systemName: "person.fill").font(.system(size: 28)).foregroundColor(Theme.primary)
+                    Text("👤").font(.system(size: 26))
                 }
                 if uploading {
                     Circle().fill(Color.black.opacity(0.35))
@@ -55,9 +55,9 @@ struct AvatarPickerView: View {
             .clipShape(Circle())
             .overlay(Circle().stroke(Theme.divider, lineWidth: 1))
             .overlay(alignment: .bottomTrailing) {
-                Image(systemName: "camera.circle.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(Theme.primary)
+                Text("📷")
+                    .font(.system(size: 18))
+                    .padding(2)
                     .background(Circle().fill(.white))
             }
         }

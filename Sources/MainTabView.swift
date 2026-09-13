@@ -119,9 +119,8 @@ struct MainTabView: View {
             unreadCount = 0
         } label: {
             ZStack(alignment: .topTrailing) {
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(.white)
+                Text("🔔")
+                    .font(.system(size: 17))
                     .frame(width: 30, height: 30)
                 if unreadCount > 0 {
                     Text("\(unreadCount)")
@@ -142,20 +141,19 @@ struct MainTabView: View {
         Button {
             showTaiKhoanBaoMat = true
         } label: {
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 18))
-                .foregroundColor(.white)
+            Text("⚙️")
+                .font(.system(size: 17))
                 .frame(width: 30, height: 30)
         }
     }
 
     private var tabBar: some View {
         HStack(spacing: 0) {
-            tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
-            tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
-            tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
-            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
-            tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
+            tabButton(.home, label: "Thực đơn", icon: "☕")
+            tabButton(.cart, label: "Giỏ hàng", icon: "🛒", badgeText: cartBadgeText)
+            tabButton(.donHang, label: "Đơn hàng", icon: "🧾")
+            tabButton(.sanThuong, label: "Ưu đãi", icon: "🎁")
+            tabButton(.settings, label: "Tài khoản", icon: "👤")
         }
         .padding(.top, 6)
         .padding(.bottom, 6)
@@ -170,8 +168,14 @@ struct MainTabView: View {
         } label: {
             VStack(spacing: 3) {
                 ZStack(alignment: .topTrailing) {
-                    Image(systemName: isSelected ? "\(icon).fill" : icon)
-                        .font(.system(size: 20))
+                    // Emoji thay SF Symbol (đổi 2026-09-13) — không còn bản .fill riêng để phân biệt
+                    // đã chọn/chưa chọn (emoji không đổi theo .foregroundColor), dùng nền tròn nhạt
+                    // phía sau icon khi đang chọn thay thế, khớp cách MainTabView AppQuanLyIOS đã làm.
+                    Text(icon)
+                        .font(.system(size: 18))
+                        .frame(width: 30, height: 30)
+                        .background(isSelected ? Theme.primary.opacity(0.15) : Color.clear)
+                        .clipShape(Circle())
                     if let badgeText {
                         tabBadge(badgeText, pulse: tab == .cart)
                     } else if badgeCount > 0 {
@@ -180,8 +184,8 @@ struct MainTabView: View {
                 }
                 Text(label)
                     .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(isSelected ? Theme.primary : Theme.textMuted)
             }
-            .foregroundColor(isSelected ? Theme.primary : Theme.textMuted)
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
