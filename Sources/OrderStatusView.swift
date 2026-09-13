@@ -13,7 +13,7 @@ struct OrderStatusView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Đơn hàng", icon: "📦", centerTitle: true, trailing: notificationBell)
+            TitleBar(title: "Đơn hàng", icon: "shippingbox", centerTitle: true, trailing: notificationBell)
 
             Group {
                 if loading {

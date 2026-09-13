@@ -56,7 +56,7 @@ struct CheckoutView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Giỏ hàng", icon: "🛒", centerTitle: true, trailing: notificationBell)
+            TitleBar(title: "Giỏ hàng", icon: "cart", centerTitle: true, trailing: notificationBell)
 
             // Quay lại dùng List theo yêu cầu — mỗi bước timeline là 1 row/Section riêng (qua
             // cardRow). Đã BỎ vuốt trái để xoá món (không ổn — khách khó phát hiện thao tác) quay

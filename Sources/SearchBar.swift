@@ -40,7 +40,9 @@ struct SearchBar: View {
 /// khớp cách DayDateBar ép cùng chiều cao DaySearchBar bên AppQuanLyIOS.
 struct TitleBar: View {
     let title: String
-    /// Emoji hiện trước title (vd "🛒" cho Giỏ hàng) — chỉ cosmetic, ghép trực tiếp vào chuỗi hiện.
+    /// SF Symbol hiện trước title (vd "cart" cho Giỏ hàng) — trước dùng emoji cosmetic ghép thẳng
+    /// vào chuỗi, đổi lại SF Symbol thật (2026-09-13): AppDatHangIOS là app khách public, cần icon
+    /// nhất quán trên mọi máy khách hàng thay vì emoji tuỳ hệ điều hành (khác AppQuanLyIOS nội bộ).
     var icon: String? = nil
     /// true: đặt title đúng GIỮA MÀN HÌNH qua .overlay bên dưới — không dùng 2 Spacer 2 bên vì cách
     /// đó chỉ căn giữa KHOẢNG TRỐNG giữa title/trailing, bị lệch khi 2 bên rộng hẹp khác nhau, không
@@ -50,25 +52,29 @@ struct TitleBar: View {
     var trailing: AnyView?
     var tinted: Bool = true
 
-    private var displayTitle: String {
-        icon.map { "\($0) \(title)" } ?? title
+    @ViewBuilder
+    private var titleView: some View {
+        HStack(spacing: 8) {
+            if let icon {
+                Image(systemName: icon)
+            }
+            Text(title)
+        }
+        .font(.headline)
+        .foregroundColor(tinted ? .white : .primary)
     }
 
     var body: some View {
         HStack {
             if !centerTitle {
-                Text(displayTitle)
-                    .font(.headline)
-                    .foregroundColor(tinted ? .white : .primary)
+                titleView
             }
             Spacer()
             if let trailing { trailing }
         }
         .overlay {
             if centerTitle {
-                Text(displayTitle)
-                    .font(.headline)
-                    .foregroundColor(tinted ? .white : .primary)
+                titleView
             }
         }
         .frame(height: HeaderBarMetrics.rowHeight)
