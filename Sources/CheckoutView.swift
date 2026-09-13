@@ -452,8 +452,11 @@ struct CheckoutView: View {
 
     /// Nút xoá X là SIBLING của Text tên (không nằm trong Button mở sửa) để tránh lồng
     /// Button-trong-Button — không đáng tin cậy trong SwiftUI. Phần còn lại (thumbnail/topping/ghi
-    /// chú/giá) dùng .onTapGesture để mở sửa; nút X vẫn nhận tap của riêng nó trước vì nằm trong 1
-    /// view con có gesture recognizer riêng, ưu tiên hơn onTapGesture của view cha.
+    /// chú/giá) dùng .onTapGesture để mở sửa. Button(label: Image) mặc định KHÔNG đủ tin cậy để
+    /// thắng .onTapGesture của view cha khi nằm lồng sâu (đã xác nhận qua test thật — khớp bài học
+    /// ở ProductPickerSheet: contentShape chain trên Button không đáng tin) — phải tự thêm
+    /// .contentShape(Rectangle()) NGAY TRONG label (sau padding) + .buttonStyle(.plain) áp SAU CÙNG
+    /// ở ngoài Button thì vùng chạm mới ăn chắc.
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item.hinhAnh)
@@ -466,7 +469,15 @@ struct CheckoutView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
-                    Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
+                    Button {
+                        cart.removeItem(item.id)
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundColor(Theme.danger)
+                            .padding(8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
                 if !item.toppings.isEmpty {
                     // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
