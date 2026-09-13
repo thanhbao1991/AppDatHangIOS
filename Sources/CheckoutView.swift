@@ -42,6 +42,8 @@ struct CheckoutView: View {
     @State private var editingItem: CartItem?
     /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
     @State private var openingItemId: UUID?
+    /// DEBUG TẠM — message lỗi thật khi getSanPhamListResult() thất bại, xem loadCatalog().
+    @State private var catalogDebugMessage: String?
 
     /// Gợi ý tên đường khi gõ địa chỉ — cùng danh sách TenDuong Desktop dùng cho TenDuongBox, xem
     /// diaChiSuggestions/streetFragment bên dưới.
@@ -97,7 +99,7 @@ struct CheckoutView: View {
                 // DEBUG TẠM — xoá sau khi xác định được vì sao sheet sửa món thiếu size/topping dù
                 // món vừa thêm mới từ Thực đơn (lẽ ra phải khớp id ngay, không cần fallback theo tên).
                 if realSp == nil {
-                    Text("DEBUG: không khớp catalog (sanPhams.count=\(sanPhams.count)) — dùng bản dự phòng")
+                    Text("DEBUG: không khớp catalog (sanPhams.count=\(sanPhams.count), lỗi=\(catalogDebugMessage ?? "không có")) — dùng bản dự phòng")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white)
                         .padding(4)
@@ -500,11 +502,15 @@ struct CheckoutView: View {
     }
 
     private func loadCatalog() async {
-        async let spTask = APIClient.shared.getSanPhamList()
+        // DEBUG TẠM: dùng bản *Result để bắt được message lỗi thật (getSanPhamList() nuốt hẳn lỗi
+        // thành [] rỗng) — sanPhams.count=0 vẫn xảy ra dù món vừa thêm mới thành công từ Thực đơn,
+        // cần biết đây là lỗi mạng/401 hay gì khác.
+        async let spTask = APIClient.shared.getSanPhamListResult()
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
-        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
-        sanPhams = sp
+        let (spResult, nhom, top) = await (spTask, nhomTask, topTask)
+        sanPhams = spResult.data ?? []
+        catalogDebugMessage = spResult.isSuccess ? nil : (spResult.message ?? "lỗi không rõ")
         nhoms = nhom
         toppings = top
     }
