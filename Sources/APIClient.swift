@@ -229,15 +229,6 @@ actor APIClient {
 
     func xoaCacheCatalog() { catalogCache.removeAll() }
 
-    /// DEBUG TẠM — gọi thẳng, bỏ qua cache, trả về (status, JSON thô rút gọn) để soi lỗi thật khi
-    /// getSanPhamList() trả về [] mà không rõ lý do (xem CheckoutView loadCatalog()).
-    func debugRawFetch(_ path: String) async -> (status: Int, body: String, hasToken: Bool) {
-        let req = makeRequest(path)
-        let (data, status) = await send(req)
-        let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? "(no data)"
-        return (status, String(body.prefix(300)), Prefs.token != nil)
-    }
-
     func getSanPhamList() async -> [SanPham] {
         let env: ApiEnvelope<[SanPham]> = await cachedDecode("/dat-hang/menu/san-pham")
         return env.isSuccess ? (env.data ?? []) : []
