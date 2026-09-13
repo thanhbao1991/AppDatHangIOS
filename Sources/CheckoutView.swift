@@ -194,12 +194,16 @@ struct CheckoutView: View {
     }
 
     @ViewBuilder
-    private func itemThumbnail(_ hinhAnh: String?) -> some View {
-        if let hinhAnh, let url = URL(string: hinhAnh) {
+    private func itemThumbnail(_ item: CartItem) -> some View {
+        if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                 .frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 8))
         } else {
+            // Icon nhóm (emoji) thay vì ô trơn không có gì — khớp cách MenuView.productRow làm
+            // (Theme.nhomIcons), tra nhóm qua sanPham(for:) vì CartItem không tự lưu nhomSanPhamId.
+            let ten = sanPham(for: item).flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
             RoundedRectangle(cornerRadius: 8).fill(Theme.primaryTint).frame(width: 36, height: 36)
+                .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 18)))
         }
     }
 
@@ -465,7 +469,7 @@ struct CheckoutView: View {
     /// xác nhận qua test thật, khớp bài học ở ProductPickerSheet).
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            itemThumbnail(item.hinhAnh)
+            itemThumbnail(item)
             // Khớp style "Số lượng" bên ProductPickerSheet (màn thêm món) — chữ to đậm, không
             // khoanh tròn/nền, thay vì badge tròn trước đây.
             Text("\(item.soLuong)")

@@ -57,31 +57,8 @@ struct MenuView: View {
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
     /// Emoji dự phòng cho từng nhóm — dùng khi nhóm không có món nào có ảnh thật (xem
-    /// nhomImageUrl/pickNhomImages bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Chọn theo đúng
-    /// nghĩa đồ uống của từng nhóm, tránh trùng giữa các nhóm hiện diện riêng ở sidebar (4 nhóm gom
-    /// chung vào "#Khác" không cần phân biệt nên vẫn để trùng thoải mái).
-    private static let nhomIcons: [String: String] = [
-        "Ăn Vặt": "🥫",
-        "Bạc Xỉu": "🥃",
-        "Ca Cao": "🧉",
-        "Cà Phê": "☕",
-        "Đá Xay": "🍧",
-        "Khác": "🥫",
-        "Latte": "🍶",
-        "Nước Ép": "🍊",
-        "Nước Lon": "🥫",
-        "Sinh Tố": "🍓",
-        "Soda": "🥤",
-        "Sữa Chua": "🥣",
-        "Sữa Tươi": "🥛",
-        "Thuốc lá": "🥫",
-        "Trà": "🍃",
-        "Trà Hiện Đại": "🍹",
-        "Trà Sữa": "🧋",
-        "Trà Truyền Thống": "🍵",
-        "Yêu thích": "❤️",
-    ]
-    private static let defaultNhomIcon = "🥤"
+    /// nhomImageUrl/pickNhomImages bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Gom về
+    /// Theme.nhomIcons/defaultNhomIcon (dùng chung với CheckoutView.itemThumbnail).
     private static let yeuThichNhomId = "yeu-thich"
 
     /// Chiều cao CỐ ĐỊNH dùng chung cho hàng nhóm bên sidebar (nhomSidebar) VÀ header nhóm bên cột
@@ -320,7 +297,7 @@ struct MenuView: View {
         Group {
             if items.isEmpty {
                 HStack(spacing: 6) {
-                    Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                    Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
                         .font(.system(size: 14))
                     Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
                     Spacer()
@@ -336,7 +313,7 @@ struct MenuView: View {
                     // (mép phải) xuyên suốt mọi nhóm khi cuộn, quan trọng hơn việc tránh khoảng
                     // trống co giãn giữa tên nhóm ngắn/dài và pill (chấp nhận đánh đổi).
                     HStack(spacing: 10) {
-                        Text(Self.nhomIcons[nhom.ten] ?? Self.defaultNhomIcon)
+                        Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
                             .font(.system(size: 16))
                             .frame(width: 30, height: 30)
                             .background(Theme.primaryTint)
@@ -425,9 +402,9 @@ struct MenuView: View {
     /// thể đang xem "Yêu thích"/"#Khác" gom nhiều nhóm khác nhau).
     private func nhomIcon(for item: SanPham) -> String {
         guard let id = item.nhomSanPhamId, let ten = nhoms.first(where: { $0.id == id })?.ten else {
-            return Self.defaultNhomIcon
+            return Theme.defaultNhomIcon
         }
-        return Self.nhomIcons[ten] ?? Self.defaultNhomIcon
+        return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
     }
 
     @ViewBuilder

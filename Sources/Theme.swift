@@ -12,6 +12,32 @@ enum Theme {
     static let textFaint = Color(red: 0x99 / 255, green: 0x99 / 255, blue: 0x99 / 255)
     static let divider = Color(red: 0xEE / 255, green: 0xEE / 255, blue: 0xEE / 255)
     static let bg = Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
+
+    /// Emoji dự phòng cho từng nhóm — dùng khi món chưa có ảnh thật (MenuView.productRow,
+    /// CheckoutView.itemThumbnail). Gom về đây (trước ở riêng MenuView) để CheckoutView dùng chung
+    /// được, không phải tách bản riêng. Chọn theo đúng nghĩa đồ uống của từng nhóm.
+    static let nhomIcons: [String: String] = [
+        "Ăn Vặt": "🥫",
+        "Bạc Xỉu": "🥃",
+        "Ca Cao": "🧉",
+        "Cà Phê": "☕",
+        "Đá Xay": "🍧",
+        "Khác": "🥫",
+        "Latte": "🍶",
+        "Nước Ép": "🍊",
+        "Nước Lon": "🥫",
+        "Sinh Tố": "🍓",
+        "Soda": "🥤",
+        "Sữa Chua": "🥣",
+        "Sữa Tươi": "🥛",
+        "Thuốc lá": "🥫",
+        "Trà": "🍃",
+        "Trà Hiện Đại": "🍹",
+        "Trà Sữa": "🧋",
+        "Trà Truyền Thống": "🍵",
+        "Yêu thích": "❤️",
+    ]
+    static let defaultNhomIcon = "🥤"
 }
 
 extension View {
