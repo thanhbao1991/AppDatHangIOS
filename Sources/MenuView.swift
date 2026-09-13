@@ -669,8 +669,11 @@ struct ProductPickerSheet: View {
                         Text("Số lượng").font(.subheadline)
                         Spacer()
                         // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
-                        // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping.
-                        Stepper(value: $soLuong, in: 1...20) {
+                        // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping. Chỉ cho
+                        // giảm về 0 khi đang SỬA món có sẵn trong giỏ (existing != nil) — về 0 rồi
+                        // bấm nút dưới cùng sẽ xoá món khỏi giỏ (thay cho nút X riêng đã bỏ). Thêm
+                        // mới (existing nil) vẫn giữ tối thiểu 1, "0 món mới" vô nghĩa.
+                        Stepper(value: $soLuong, in: (existing == nil ? 1 : 0)...20) {
                             Text("\(soLuong)").fontWeight(.bold)
                         }
                         .fixedSize()
@@ -699,21 +702,29 @@ struct ProductPickerSheet: View {
                 }
             }
 
+            // existing != nil && soLuong == 0 → xoá món (thay cho nút X riêng đã bỏ ở CheckoutView,
+            // xem itemRow) — đổi hẳn chữ + màu nút thành "Xoá món" để rõ ý, tránh tưởng nhầm là cập
+            // nhật số lượng 0 (vô nghĩa).
+            let isDeleting = existing != nil && soLuong == 0
             Button {
                 confirmAdd()
             } label: {
-                // Trước ghép chuỗi vô điều kiện "· \(...)" — bienThe nil (khung hình đầu tiên trước
-                // khi .onAppear kịp set) thì hiện dấu "·" trơ trọi không có gì theo sau, nháy 1 khung
-                // hình xấu lúc mở sheet. Chỉ ghép " · giá" khi thật sự có giá để hiện.
-                Text(existing == nil ? "Thêm giỏ" : "Cập nhật")
-                    + Text(bienThe != nil ? " · \(formatTien(thanhTienDraft))" : "")
+                if isDeleting {
+                    Text("Xoá món")
+                } else {
+                    // Trước ghép chuỗi vô điều kiện "· \(...)" — bienThe nil (khung hình đầu tiên
+                    // trước khi .onAppear kịp set) thì hiện dấu "·" trơ trọi không có gì theo sau,
+                    // nháy 1 khung hình xấu lúc mở sheet. Chỉ ghép " · giá" khi thật sự có giá để hiện.
+                    Text(existing == nil ? "Thêm giỏ" : "Cập nhật")
+                        + Text(bienThe != nil ? " · \(formatTien(thanhTienDraft))" : "")
+                }
             }
             .fontWeight(.bold)
             .frame(maxWidth: .infinity)
             .buttonStyle(.borderedProminent)
-            .tint(Theme.primary)
+            .tint(isDeleting ? Theme.danger : Theme.primary)
             .controlSize(.large)
-            .disabled(bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa))
+            .disabled(!isDeleting && (bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa)))
             .padding(.horizontal, 16)
             .padding(.top, 10)
             .padding(.bottom, 8)

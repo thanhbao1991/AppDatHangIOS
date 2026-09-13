@@ -100,7 +100,13 @@ struct CheckoutView: View {
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 existing: item,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                    // Số lượng về 0 = xoá món (thay cho nút X riêng đã bỏ ở itemRow) — Stepper trong
+                    // ProductPickerSheet cho về 0 khi existing != nil, xem confirmAdd()/isDeleting.
+                    if soLuong <= 0 {
+                        cart.removeItem(item.id)
+                    } else {
+                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                    }
                 }
             ) { editingItem = nil }
         }
@@ -131,7 +137,9 @@ struct CheckoutView: View {
             }
             .padding(.bottom, isLast ? 0 : 16)
         }
-        .padding(.horizontal)
+        // 10 (trước là mặc định 16) — tăng chiều rộng 3 card bước (Chi tiết hoá đơn/Nhận hàng/Thanh
+        // toán) theo yêu cầu, đỡ chật lề 2 bên.
+        .padding(.horizontal, 10)
     }
 
     /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal
@@ -439,13 +447,9 @@ struct CheckoutView: View {
         editingItem = item
     }
 
-    /// Nút xoá X là SIBLING của Text tên (không nằm trong Button mở sửa) để tránh lồng
-    /// Button-trong-Button — không đáng tin cậy trong SwiftUI. Phần còn lại (thumbnail/topping/ghi
-    /// chú/giá) dùng .onTapGesture để mở sửa. Button(label: Image) mặc định KHÔNG đủ tin cậy để
-    /// thắng .onTapGesture của view cha khi nằm lồng sâu (đã xác nhận qua test thật — khớp bài học
-    /// ở ProductPickerSheet: contentShape chain trên Button không đáng tin) — phải tự thêm
-    /// .contentShape(Rectangle()) NGAY TRONG label (sau padding) + .buttonStyle(.plain) áp SAU CÙNG
-    /// ở ngoài Button thì vùng chạm mới ăn chắc.
+    /// Đã bỏ hẳn nút X trên dòng — xoá món giờ qua sheet sửa: kéo Stepper "Số lượng" về 0 rồi bấm
+    /// "Xoá món" (xem MenuView.confirmAdd()/isDeleting và onConfirm ở .sheet(item:) bên trên). Cả
+    /// dòng dùng .onTapGesture để mở sửa.
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item.hinhAnh)
@@ -461,15 +465,6 @@ struct CheckoutView: View {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
                     Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                    Button {
-                        cart.removeItem(item.id)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundColor(Theme.danger)
-                            .padding(6)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
                 }
                 if !item.toppings.isEmpty {
                     // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
