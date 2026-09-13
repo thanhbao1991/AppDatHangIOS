@@ -48,6 +48,8 @@ struct CheckoutView: View {
     /// dùng bấm chậm lại). Chặn hẳn thao tác sửa cho tới khi chắc chắn có catalog thay vì cố lazy-load
     /// đúng lúc cần.
     @State private var loadingCatalog = true
+    /// DEBUG TẠM — xem debugRawFetch()/loadCatalog().
+    @State private var rawDebug: String = "(chưa gọi)"
 
     /// Gợi ý tên đường khi gõ địa chỉ — cùng danh sách TenDuong Desktop dùng cho TenDuongBox, xem
     /// diaChiSuggestions/streetFragment bên dưới.
@@ -104,10 +106,9 @@ struct CheckoutView: View {
                 }
             ) { editingItem = nil }
             .overlay(alignment: .top) {
-                // DEBUG TẠM lần 2 — vẫn thiếu size/topping dù đã chặn race (loadingCatalog). Cần biết
-                // CHÍNH XÁC bước nào fail: không khớp catalog (realSp nil) hay khớp được nhưng chính
-                // sp đó chỉ có 1 size + list topping toàn app rỗng thật.
-                Text("DEBUG: realSp=\(realSp == nil ? "nil" : "found") sanPhams.count=\(sanPhams.count) matchedBienThe=\(realSp?.bienThe.count ?? -1) toppings.count=\(toppings.count) itemTen=\"\(item.tenSanPham)\" itemBienTheId=\(item.sanPhamBienTheId)")
+                // DEBUG TẠM lần 3 — vẫn rỗng dù loadingCatalog đã chắc chắn nạp xong (loại race).
+                // rawDebug gọi thẳng bỏ qua cache để soi HTTP status + JSON thô thật.
+                Text("DEBUG: realSp=\(realSp == nil ? "nil" : "found") sanPhams.count=\(sanPhams.count) toppings.count=\(toppings.count)\nRAW: \(rawDebug)")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundColor(.white)
                     .padding(4)
@@ -513,6 +514,10 @@ struct CheckoutView: View {
         sanPhams = sp
         nhoms = nhom
         toppings = top
+        // DEBUG TẠM — bỏ qua cache, gọi thẳng để soi status/JSON thô thật khi sanPhams rỗng bất
+        // thường dù loadingCatalog đã chắc chắn nạp xong (không phải race).
+        let raw = await APIClient.shared.debugRawFetch("/dat-hang/menu/san-pham")
+        rawDebug = "status=\(raw.status) hasToken=\(raw.hasToken) body=\(raw.body)"
     }
 
     private func loadTenDuong() async {
