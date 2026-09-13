@@ -150,7 +150,8 @@ struct CheckoutView: View {
     /// phát hiện thao tác vuốt.
     private var cartItemsBox: some View {
         stepBoxStyle {
-            VStack(alignment: .leading, spacing: 12) {
+            // spacing 8 (trước 12) — tiết kiệm chiều cao giữa các món để hiện được nhiều món hơn.
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { Divider() }
                     itemRow(item)
@@ -453,16 +454,19 @@ struct CheckoutView: View {
             Text("\(item.soLuong)")
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.primary)
-            VStack(alignment: .leading, spacing: 4) {
+            // spacing 2 (trước 4) + gộp giá vào chung dòng tên (bỏ hẳn dòng giá riêng ở cuối) — tiết
+            // kiệm chiều cao mỗi dòng món để hiện được nhiều món hơn mà không cuộn, theo yêu cầu.
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .top, spacing: 8) {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
+                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                     Button {
                         cart.removeItem(item.id)
                     } label: {
                         Image(systemName: "xmark")
                             .foregroundColor(Theme.danger)
-                            .padding(8)
+                            .padding(6)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -479,10 +483,6 @@ struct CheckoutView: View {
                 }
                 if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
                     Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
-                }
-                HStack {
-                    Spacer()
-                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                 }
             }
         }
