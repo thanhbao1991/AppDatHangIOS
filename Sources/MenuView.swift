@@ -721,7 +721,13 @@ struct ProductPickerSheet: View {
         }
         .onAppear {
             if let existing {
-                bienThe = sanPham.bienThe.first(where: { $0.id == existing.sanPhamBienTheId }) ?? sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
+                // Ưu tiên khớp đúng id, rồi tới tên biến thể — "Đặt lại" (OrderDetailView.datLai)
+                // copy sanPhamBienTheId từ đơn CŨ, id đó có thể không còn tồn tại nếu biến thể đã bị
+                // sửa/tạo lại trên Desktop (SequentialGuid mới) dù sản phẩm/size vẫn còn bán, nên
+                // khớp theo tên để vẫn chọn đúng size cũ thay vì rơi về mặc định.
+                bienThe = sanPham.bienThe.first(where: { $0.id == existing.sanPhamBienTheId })
+                    ?? sanPham.bienThe.first(where: { $0.tenBienThe == existing.tenBienThe })
+                    ?? sanPham.bienThe.first(where: \.macDinh) ?? sanPham.bienThe.first
                 soLuong = existing.soLuong
                 ghiChu = existing.ghiChu ?? ""
                 toppingQty = Dictionary(uniqueKeysWithValues: existing.toppings.map { ($0.id, $0.soLuong) })

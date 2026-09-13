@@ -392,8 +392,15 @@ struct CheckoutView: View {
     /// Dựng lại SanPham gốc chứa biến thể của 1 dòng trong giỏ — nil nếu món đã bị xoá/ẩn khỏi menu,
     /// hoặc catalog chưa nạp/nạp lỗi, hoặc không khớp được vì lý do khác. Có fallbackSanPham(for:)
     /// bên dưới để sheet sửa KHÔNG BAO GIỜ trắng trơn dù trường hợp này xảy ra.
+    ///
+    /// Khớp theo id trước, rồi rơi về khớp theo TÊN sản phẩm nếu id không tìm thấy — "Đặt lại"
+    /// (OrderDetailView.datLai) copy sanPhamBienTheId từ đơn CŨ vào giỏ, id đó không còn tồn tại nếu
+    /// biến thể đã bị sửa/tạo lại trên Desktop (SequentialGuid mới) dù sản phẩm vẫn còn bán — không
+    /// khớp theo tên thì sheet sửa rơi vào fallbackSanPham (mất hẳn chọn size/topping) dù món thực ra
+    /// vẫn còn đầy đủ trong menu.
     private func sanPham(for item: CartItem) -> SanPham? {
         sanPhams.first { $0.bienThe.contains { $0.id == item.sanPhamBienTheId } }
+            ?? sanPhams.first { $0.ten == item.tenSanPham }
     }
 
     /// Dùng khi không dựng lại được SanPham thật từ catalog — tự tạo 1 SanPham "tối giản" chỉ có
