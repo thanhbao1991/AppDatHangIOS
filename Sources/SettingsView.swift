@@ -155,10 +155,12 @@ struct SettingsView: View {
                             }
                         }
                         Spacer()
-                        Button { diaChiChoXoa = item } label: {
-                            Image(systemName: "xmark").foregroundColor(Theme.danger)
+                        if item.coTheXoa {
+                            Button { diaChiChoXoa = item } label: {
+                                Image(systemName: "xmark").foregroundColor(Theme.danger)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -320,7 +322,7 @@ struct SettingsView: View {
     private func datMacDinh(_ id: String) async {
         let result = await APIClient.shared.datDiaChiMacDinh(id)
         if result.success {
-            diaChiList = diaChiList.map { DiaChiKhachHang(id: $0.id, diaChi: $0.diaChi, isDefault: $0.id == id, lat: $0.lat, long: $0.long) }
+            diaChiList = diaChiList.map { DiaChiKhachHang(id: $0.id, diaChi: $0.diaChi, isDefault: $0.id == id, lat: $0.lat, long: $0.long, coTheXoa: $0.coTheXoa) }
         }
     }
 }

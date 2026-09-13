@@ -172,6 +172,9 @@ struct DiaChiKhachHang: Decodable, Identifiable {
     let isDefault: Bool
     let lat: Double?
     let long: Double?
+    // false = địa chỉ do quán nhập từ Desktop — khách chỉ được dùng, không xoá được (backend cũng
+    // chặn nếu app lỡ gọi xoaDiaChi, nhưng ẩn nút ở đây cho khỏi bấm hụt).
+    let coTheXoa: Bool
 }
 
 // ---- Thông báo ----
