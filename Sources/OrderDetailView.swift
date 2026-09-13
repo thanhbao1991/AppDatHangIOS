@@ -22,11 +22,6 @@ struct OrderDetailView: View {
     private let steps: [TrangThaiDon] = [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat]
     private var currentStep: Int { steps.firstIndex(of: order.trangThai) ?? 0 }
 
-    /// "Mặc định"/"Size Chuẩn"/"Chuẩn" là biến thể mặc định — khớp bienTheSuffix bên AppQuanLyIOS.
-    private func bienTheSuffix(_ ten: String) -> String {
-        ["", "Mặc định", "Size Chuẩn", "Chuẩn"].contains(ten) ? "" : " (\(ten))"
-    }
-
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {

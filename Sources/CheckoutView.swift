@@ -40,10 +40,14 @@ struct CheckoutView: View {
     @State private var nhoms: [NhomSanPham] = []
     @State private var toppings: [Topping] = []
     @State private var editingItem: CartItem?
-    /// Dòng đang chờ catalog nạp xong để mở sheet sửa — xem openEdit().
-    @State private var openingItemId: UUID?
-    /// DEBUG TẠM — message lỗi thật khi getSanPhamListResult() thất bại, xem loadCatalog().
-    @State private var catalogDebugMessage: String?
+    /// true cho tới khi loadCatalog() nạp xong — khớp cách HoaDonEditFormView (AppQuanLyIOS) chặn
+    /// tương tác bằng cờ `loading` tới khi có đủ dữ liệu, thay vì lazy-load ngay lúc bấm (kiểu cũ ở
+    /// đây từng gây race: bấm "sửa" quá nhanh lúc vừa mở tab trùng lúc .task cũng đang tự nạp catalog
+    /// — 2 lượt gọi chồng nhau, lượt xong sau lỡ rỗng thì đè mất dữ liệu tốt của lượt xong trước,
+    /// sheet sửa rơi vào fallbackSanPham dù bấm y hệt vẫn phải ra kết quả đúng, không thể bắt người
+    /// dùng bấm chậm lại). Chặn hẳn thao tác sửa cho tới khi chắc chắn có catalog thay vì cố lazy-load
+    /// đúng lúc cần.
+    @State private var loadingCatalog = true
 
     /// Gợi ý tên đường khi gõ địa chỉ — cùng danh sách TenDuong Desktop dùng cho TenDuongBox, xem
     /// diaChiSuggestions/streetFragment bên dưới.
@@ -72,8 +76,12 @@ struct CheckoutView: View {
             .cardListBackground()
         }
         .task {
-            await loadDiaChi()
+            // loadCatalog() chạy TRƯỚC, gắn xong loadingCatalog=false ngay khi có kết quả — không
+            // đợi loadDiaChi()/loadTenDuong() (không liên quan sửa món) để khách bấm "sửa" được sớm
+            // nhất có thể, nhưng vẫn đảm bảo tuần tự (không lazy-load lại lúc bấm) nên không có race.
             await loadCatalog()
+            loadingCatalog = false
+            await loadDiaChi()
             await loadTenDuong()
         }
         .sheet(item: $editingItem) { item in
@@ -95,18 +103,6 @@ struct CheckoutView: View {
                     cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
                 }
             ) { editingItem = nil }
-            .overlay(alignment: .top) {
-                // DEBUG TẠM — xoá sau khi xác định được vì sao sheet sửa món thiếu size/topping dù
-                // món vừa thêm mới từ Thực đơn (lẽ ra phải khớp id ngay, không cần fallback theo tên).
-                if realSp == nil {
-                    Text("DEBUG: không khớp catalog (sanPhams.count=\(sanPhams.count), lỗi=\(catalogDebugMessage ?? "không có")) — dùng bản dự phòng")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(4)
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red)
-                }
-            }
         }
     }
 
@@ -432,18 +428,14 @@ struct CheckoutView: View {
 
     /// CheckoutView bị tạo lại mỗi lần chuyển qua tab Giỏ hàng (MainTabView dùng switch chứ không
     /// phải TabView giữ sống các tab — xem MainTabView.body), nên `sanPhams` luôn rỗng lúc mới vào
-    /// tab và .task nạp lại từ đầu. Đợi catalog nạp xong (nếu chưa có) rồi mới mở sheet để ưu tiên
-    /// dùng SanPham thật (đổi được size) khi có; luôn mở sheet dù catalog lỗi/không khớp, dùng
-    /// fallbackSanPham(for:) — xem ProductPickerSheet ở .sheet(item:) bên trên.
+    /// tab và .task nạp lại từ đầu — nhưng APIClient.shared có cache in-memory dùng chung toàn app
+    /// (TTL 5 phút), nên nếu MenuView vừa nạp trước đó, loadCatalog() đọc lại cache gần như tức thì,
+    /// không thật sự gọi mạng lại. openEdit() chỉ mở sheet SAU khi loadingCatalog đã tắt (xem .task) —
+    /// không tự lazy-load lúc bấm nữa (bản cũ làm vậy từng gây race khi bấm quá nhanh). Luôn mở sheet
+    /// dù catalog lỗi/không khớp, dùng fallbackSanPham(for:) — xem ProductPickerSheet ở .sheet(item:).
     private func openEdit(_ item: CartItem) {
-        guard openingItemId == nil else { return }
-        if !sanPhams.isEmpty { editingItem = item; return }
-        Task {
-            openingItemId = item.id
-            await loadCatalog()
-            openingItemId = nil
-            editingItem = item
-        }
+        guard !loadingCatalog else { return }
+        editingItem = item
     }
 
     /// Nút xoá X là SIBLING của Text tên (không nằm trong Button mở sửa) để tránh lồng
@@ -460,7 +452,7 @@ struct CheckoutView: View {
                 .foregroundColor(.primary)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .top, spacing: 8) {
-                    Text("\(item.tenSanPham) (\(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
                     Button { cart.removeItem(item.id) } label: { Image(systemName: "xmark").foregroundColor(Theme.danger) }
                 }
@@ -477,15 +469,16 @@ struct CheckoutView: View {
                 if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
                     Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
                 }
-                if openingItemId == item.id {
-                    ProgressView().scaleEffect(0.7)
-                }
                 HStack {
                     Spacer()
                     Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
                 }
             }
         }
+        // Chặn bấm sửa cho tới khi catalog nạp xong (xem loadingCatalog/openEdit) — không còn spinner
+        // riêng từng dòng như bản cũ, dòng chỉ hơi mờ đi trong lúc chờ (thường rất nhanh vì
+        // APIClient.shared đã có cache sẵn từ MenuView).
+        .opacity(loadingCatalog ? 0.6 : 1)
         .contentShape(Rectangle())
         .onTapGesture { openEdit(item) }
     }
@@ -502,15 +495,11 @@ struct CheckoutView: View {
     }
 
     private func loadCatalog() async {
-        // DEBUG TẠM: dùng bản *Result để bắt được message lỗi thật (getSanPhamList() nuốt hẳn lỗi
-        // thành [] rỗng) — sanPhams.count=0 vẫn xảy ra dù món vừa thêm mới thành công từ Thực đơn,
-        // cần biết đây là lỗi mạng/401 hay gì khác.
-        async let spTask = APIClient.shared.getSanPhamListResult()
+        async let spTask = APIClient.shared.getSanPhamList()
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
-        let (spResult, nhom, top) = await (spTask, nhomTask, topTask)
-        sanPhams = spResult.data ?? []
-        catalogDebugMessage = spResult.isSuccess ? nil : (spResult.message ?? "lỗi không rõ")
+        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
+        sanPhams = sp
         nhoms = nhom
         toppings = top
     }

@@ -69,6 +69,13 @@ func cardRow<Content: View>(topExtra: CGFloat = 0, @ViewBuilder content: () -> C
         .listRowSeparator(.hidden)
 }
 
+/// "Mặc định"/"Size Chuẩn"/"Chuẩn" là biến thể mặc định — khớp cách AppQuanLyIOS ẩn hậu tố size khi
+/// là size mặc định (chỉ hiện "(size)" khi khác size chuẩn). Dùng chung cho OrderDetailView và
+/// CheckoutView thay vì mỗi chỗ tự viết lại 1 bản.
+func bienTheSuffix(_ ten: String) -> String {
+    ["", "Mặc định", "Size Chuẩn", "Chuẩn"].contains(ten) ? "" : " (\(ten))"
+}
+
 /// Chuẩn hoá chuỗi tiếng Việt để so khớp không dấu — dùng cho tìm kiếm món (MenuView) và gợi ý tên
 /// đường khi nhập địa chỉ (CheckoutView). Gom về 1 chỗ thay vì mỗi màn tự viết lại 1 bản.
 func normalizeVN(_ s: String) -> String {
