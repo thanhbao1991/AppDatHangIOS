@@ -447,9 +447,13 @@ struct CheckoutView: View {
         editingItem = item
     }
 
-    /// Đã bỏ hẳn nút X trên dòng — xoá món giờ qua sheet sửa: kéo Stepper "Số lượng" về 0 rồi bấm
-    /// "Xoá món" (xem MenuView.confirmAdd()/isDeleting và onConfirm ở .sheet(item:) bên trên). Cả
-    /// dòng dùng .onTapGesture để mở sửa.
+    /// Xoá món có 2 cách: nút X ngay dưới số tiền (dòng riêng, căn phải khớp cột giá), HOẶC kéo
+    /// Stepper "Số lượng" về 0 trong sheet sửa rồi bấm "Xoá món" (xem MenuView.confirmAdd()/
+    /// isDeleting và onConfirm ở .sheet(item:) bên trên). Nút X là SIBLING của Text tên (không nằm
+    /// trong Button mở sửa) để tránh lồng Button-trong-Button — không đáng tin cậy trong SwiftUI.
+    /// Phần còn lại (thumbnail/topping/ghi chú/giá) dùng .onTapGesture để mở sửa; nút X cần tự thêm
+    /// .contentShape(Rectangle()) + .buttonStyle(.plain) để thắng .onTapGesture của view cha (đã
+    /// xác nhận qua test thật, khớp bài học ở ProductPickerSheet).
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item.hinhAnh)
@@ -465,6 +469,19 @@ struct CheckoutView: View {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
                     Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                }
+                HStack {
+                    Spacer()
+                    Button {
+                        cart.removeItem(item.id)
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.danger)
+                            .padding(6)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
                 if !item.toppings.isEmpty {
                     // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
