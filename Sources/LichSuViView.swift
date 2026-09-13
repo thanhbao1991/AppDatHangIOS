@@ -16,8 +16,9 @@ struct LichSuViView: View {
             } else {
                 List(items) { item in
                     HStack(spacing: 12) {
-                        Text(item.soTienThayDoi >= 0 ? "⬇️" : "⬆️")
-                            .font(.system(size: 20))
+                        Image(systemName: item.soTienThayDoi >= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
+                            .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
+                            .font(.system(size: 22))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.tenLoai).font(.system(size: 14, weight: .bold))
                             if let ghiChu = item.ghiChu, !ghiChu.isEmpty {

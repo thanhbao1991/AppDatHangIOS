@@ -94,13 +94,13 @@ struct UuDaiView: View {
                 Spacer()
                 Text(g.maGioiThieu).font(.system(size: 22, weight: .bold)).foregroundColor(Theme.primary).kerning(4)
                 Button { UIPasteboard.general.string = g.maGioiThieu; alertMessage = ("Đã sao chép", "Mã \(g.maGioiThieu) đã được chép vào clipboard.") } label: {
-                    Text("📋")
+                    Image(systemName: "doc.on.doc")
                 }
                 Button {
                     let av = UIActivityViewController(activityItems: ["Đặt món qua app Đenn Coffee bằng mã giới thiệu của mình \"\(g.maGioiThieu)\" là cả hai đều nhận thưởng nhé!"], applicationActivities: nil)
                     UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first?.rootViewController?.present(av, animated: true)
                 } label: {
-                    Text("📤")
+                    Image(systemName: "square.and.arrow.up")
                 }
                 Spacer()
             }

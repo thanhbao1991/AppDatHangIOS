@@ -48,7 +48,7 @@ struct LoginView: View {
                     VStack(spacing: 14) {
                         if !error.isEmpty {
                             HStack(spacing: 8) {
-                                Text("⚠️")
+                                Image(systemName: "exclamationmark.triangle.fill")
                                 Text(error).font(.system(size: 13, weight: .semibold))
                             }
                             .foregroundColor(Theme.danger)
@@ -86,7 +86,7 @@ struct LoginView: View {
 
     private var phoneStep: some View {
         VStack(spacing: 14) {
-            fieldBox(icon: "📞") {
+            fieldBox(icon: "phone") {
                 TextField("Số điện thoại", text: $phone)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: "phone")
@@ -98,15 +98,15 @@ struct LoginView: View {
 
     private var passwordStep: some View {
         VStack(spacing: 14) {
-            fieldBox(icon: "✅") { Text(phone) }
-            fieldBox(icon: "🔒") {
+            fieldBox(icon: "checkmark.circle") { Text(phone) }
+            fieldBox(icon: "lock") {
                 Group {
                     if showPassword { TextField("Mật khẩu", text: $password) }
                     else { SecureField("Mật khẩu", text: $password) }
                 }
                 .focused($focusedField, equals: "password")
                 Button { showPassword.toggle() } label: {
-                    Text(showPassword ? "🙈" : "👁️").foregroundColor(Theme.textMuted)
+                    Image(systemName: showPassword ? "eye.slash" : "eye").foregroundColor(Theme.textMuted)
                 }
             }
             primaryButton("Đăng nhập", disabled: loading || password.isEmpty) { Task { await submitPassword() } }
@@ -116,7 +116,7 @@ struct LoginView: View {
 
     private var otpCodeStep: some View {
         VStack(spacing: 14) {
-            fieldBox(icon: "🔢") {
+            fieldBox(icon: "number") {
                 TextField("Mã xác thực (SMS)", text: $otpCode)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: "otpCode")
@@ -135,17 +135,17 @@ struct LoginView: View {
 
     private var otpPasswordStep: some View {
         VStack(spacing: 14) {
-            fieldBox(icon: "🔒") {
+            fieldBox(icon: "lock") {
                 Group {
                     if showNewPassword { TextField("Mật khẩu mới", text: $newPassword) }
                     else { SecureField("Mật khẩu mới", text: $newPassword) }
                 }
                 .focused($focusedField, equals: "newPassword")
                 Button { showNewPassword.toggle() } label: {
-                    Text(showNewPassword ? "🙈" : "👁️").foregroundColor(Theme.textMuted)
+                    Image(systemName: showNewPassword ? "eye.slash" : "eye").foregroundColor(Theme.textMuted)
                 }
             }
-            fieldBox(icon: "🔒") {
+            fieldBox(icon: "lock") {
                 Group {
                     if showNewPassword { TextField("Nhập lại mật khẩu mới", text: $confirmPassword) }
                     else { SecureField("Nhập lại mật khẩu mới", text: $confirmPassword) }
@@ -165,7 +165,7 @@ struct LoginView: View {
     private func fieldBox<Content: View>(icon: String, @ViewBuilder content: () -> Content) -> some View {
         let isFocused = focusedField != nil && fieldBoxFocusIcons.contains(icon)
         HStack(spacing: 10) {
-            Text(icon).frame(width: 20)
+            Image(systemName: icon).foregroundColor(isFocused ? Theme.primary : Theme.textMuted).frame(width: 20)
             content()
             Spacer(minLength: 0)
         }
@@ -185,10 +185,10 @@ struct LoginView: View {
     private var fieldBoxFocusIcons: Set<String> {
         guard let focusedField else { return [] }
         switch focusedField {
-        case "phone": return ["📞"]
-        case "password": return ["🔒"]
-        case "otpCode": return ["🔢"]
-        case "newPassword", "confirmPassword": return ["🔒"]
+        case "phone": return ["phone"]
+        case "password": return ["lock"]
+        case "otpCode": return ["number"]
+        case "newPassword", "confirmPassword": return ["lock"]
         default: return []
         }
     }

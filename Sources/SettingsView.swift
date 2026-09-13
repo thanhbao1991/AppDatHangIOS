@@ -144,7 +144,7 @@ struct SettingsView: View {
                         }
                         Spacer()
                         Button { Task { await xoaDiaChi(item.id) } } label: {
-                            Text("❌").foregroundColor(Theme.danger)
+                            Image(systemName: "xmark").foregroundColor(Theme.danger)
                         }
                     }
                 }
