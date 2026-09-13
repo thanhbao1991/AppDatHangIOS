@@ -103,6 +103,17 @@ struct CheckoutView: View {
                     cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
                 }
             ) { editingItem = nil }
+            .overlay(alignment: .top) {
+                // DEBUG TẠM lần 2 — vẫn thiếu size/topping dù đã chặn race (loadingCatalog). Cần biết
+                // CHÍNH XÁC bước nào fail: không khớp catalog (realSp nil) hay khớp được nhưng chính
+                // sp đó chỉ có 1 size + list topping toàn app rỗng thật.
+                Text("DEBUG: realSp=\(realSp == nil ? "nil" : "found") sanPhams.count=\(sanPhams.count) matchedBienThe=\(realSp?.bienThe.count ?? -1) toppings.count=\(toppings.count) itemTen=\"\(item.tenSanPham)\" itemBienTheId=\(item.sanPhamBienTheId)")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(4)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red)
+            }
         }
     }
 
