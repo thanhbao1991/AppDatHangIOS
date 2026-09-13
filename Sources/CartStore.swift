@@ -1,9 +1,9 @@
 import Foundation
 
 /// Port từ CartContext.tsx (bản RN cũ).
-struct CartTopping: Identifiable, Hashable { let id: String; let ten: String; let gia: Double; let soLuong: Int }
+struct CartTopping: Identifiable, Hashable, Codable { let id: String; let ten: String; let gia: Double; let soLuong: Int }
 
-struct CartItem: Identifiable, Hashable {
+struct CartItem: Identifiable, Hashable, Codable {
     let id: UUID
     let sanPhamBienTheId: String
     let tenSanPham: String
@@ -21,7 +21,24 @@ struct CartItem: Identifiable, Hashable {
 
 @MainActor
 final class CartStore: ObservableObject {
-    @Published private(set) var items: [CartItem] = []
+    @Published private(set) var items: [CartItem] = [] {
+        didSet { persist() }
+    }
+
+    /// Giỏ hàng lưu qua UserDefaults (JSON) — trước đây thuần in-memory nên tắt app (không chỉ gỡ
+    /// cài) là mất sạch giỏ, khách đang chọn dở món phải làm lại từ đầu.
+    private static let storageKey = "cart.items.v1"
+
+    init() {
+        guard let data = UserDefaults.standard.data(forKey: Self.storageKey),
+              let saved = try? JSONDecoder().decode([CartItem].self, from: data) else { return }
+        items = saved
+    }
+
+    private func persist() {
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        UserDefaults.standard.set(data, forKey: Self.storageKey)
+    }
 
     var totalCount: Int { items.reduce(0) { $0 + $1.soLuong } }
     var totalPrice: Double { items.reduce(0) { $0 + $1.thanhTien } }
