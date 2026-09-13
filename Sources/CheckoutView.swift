@@ -79,7 +79,18 @@ struct CheckoutView: View {
             // loadCatalog() chạy TRƯỚC, gắn xong loadingCatalog=false ngay khi có kết quả — không
             // đợi loadDiaChi()/loadTenDuong() (không liên quan sửa món) để khách bấm "sửa" được sớm
             // nhất có thể, nhưng vẫn đảm bảo tuần tự (không lazy-load lại lúc bấm) nên không có race.
-            await loadCatalog()
+            //
+            // Ép trần thời gian chờ (8s) — lần mở app ĐẦU TIÊN (chưa cache gì, DNS/TLS còn "lạnh")
+            // request có thể treo lâu hơn hẳn bình thường, khiến cả dòng món mờ (loadingCatalog=true)
+            // "mãi không hết" cho tới khi đổi tab (tạo lại CheckoutView, request cũ bị huỷ + request
+            // mới may mắn nhanh hơn) — thay vì phó mặc, chủ động bỏ qua sau 8s để UI luôn phản hồi,
+            // fallbackSanPham() vẫn đảm bảo sheet sửa hoạt động dù catalog lỡ chưa kịp có.
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await loadCatalog() }
+                group.addTask { try? await Task.sleep(nanoseconds: 8_000_000_000) }
+                await group.next()
+                group.cancelAll()
+            }
             loadingCatalog = false
             await loadDiaChi()
             await loadTenDuong()
