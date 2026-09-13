@@ -420,6 +420,16 @@ struct MenuView: View {
         }
     }
 
+    /// Icon nhóm (emoji) của 1 món — dùng làm fallback thumbnail khi món chưa có hình, xem
+    /// productRow(). Tra theo nhomSanPhamId của món, không phải nhóm đang chọn ở sidebar (khách có
+    /// thể đang xem "Yêu thích"/"#Khác" gom nhiều nhóm khác nhau).
+    private func nhomIcon(for item: SanPham) -> String {
+        guard let id = item.nhomSanPhamId, let ten = nhoms.first(where: { $0.id == id })?.ten else {
+            return Self.defaultNhomIcon
+        }
+        return Self.nhomIcons[ten] ?? Self.defaultNhomIcon
+    }
+
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
         let prices = item.bienThe.map(\.giaBan)
@@ -430,8 +440,10 @@ struct MenuView: View {
                     CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                         .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
                 } else {
+                    // Icon nhóm món (emoji, khớp nhomIcons dùng ở sidebar) thay vì chữ cái đầu tên
+                    // món — chữ cái đầu nhìn khô khan, icon nhóm gợi hình đồ uống hơn hẳn.
                     RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
-                        .overlay(Text(item.ten.trimmingCharacters(in: .whitespaces).prefix(1).uppercased()).foregroundColor(Theme.primary).fontWeight(.bold))
+                        .overlay(Text(nhomIcon(for: item)).font(.system(size: 26)))
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.ten)
