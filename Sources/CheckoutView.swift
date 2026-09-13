@@ -93,6 +93,18 @@ struct CheckoutView: View {
                     cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
                 }
             ) { editingItem = nil }
+            .overlay(alignment: .top) {
+                // DEBUG TẠM — xoá sau khi xác định được vì sao sheet sửa món thiếu size/topping dù
+                // món vừa thêm mới từ Thực đơn (lẽ ra phải khớp id ngay, không cần fallback theo tên).
+                if realSp == nil {
+                    Text("DEBUG: không khớp catalog (sanPhams.count=\(sanPhams.count)) — dùng bản dự phòng")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red)
+                }
+            }
         }
     }
 
