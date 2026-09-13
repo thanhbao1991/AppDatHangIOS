@@ -137,9 +137,7 @@ struct CheckoutView: View {
             }
             .padding(.bottom, isLast ? 0 : 16)
         }
-        // 10 (trước là mặc định 16) — tăng chiều rộng 3 card bước (Chi tiết hoá đơn/Nhận hàng/Thanh
-        // toán) theo yêu cầu, đỡ chật lề 2 bên.
-        .padding(.horizontal, 10)
+        .padding(.horizontal)
     }
 
     /// Style khối trắng bo góc bên trong 1 bước — như cardBoxStyle() nhưng KHÔNG có padding.horizontal
@@ -468,20 +466,22 @@ struct CheckoutView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
                     Spacer()
-                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                }
-                HStack {
-                    Spacer()
-                    Button {
-                        cart.removeItem(item.id)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.danger)
-                            .padding(6)
-                            .contentShape(Rectangle())
+                    // Giá + nút X gộp chung 1 cột dọc sát nhau (spacing 2) NGAY DƯỚI giá, thay vì 1
+                    // hàng riêng — hàng riêng trước đó bị Button đẩy thêm khoảng trống dư ra dưới do
+                    // vùng chạm mặc định của Button, nhìn như 1 dòng trống trước phần topping/ghi chú.
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                        Button {
+                            cart.removeItem(item.id)
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.danger)
+                                .padding(.horizontal, 8).padding(.vertical, 4)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
                 if !item.toppings.isEmpty {
                     // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
