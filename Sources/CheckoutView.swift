@@ -471,41 +471,42 @@ struct CheckoutView: View {
             Text("\(item.soLuong)")
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.primary)
-            // spacing 2 (trước 4) + gộp giá vào chung dòng tên (bỏ hẳn dòng giá riêng ở cuối) — tiết
-            // kiệm chiều cao mỗi dòng món để hiện được nhiều món hơn mà không cuộn, theo yêu cầu.
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .top, spacing: 8) {
+            // Tên+topping+ghi chú gộp thành 1 CỘT riêng (leading), giá+nút X thành 1 cột riêng
+            // (trailing) — 2 cột độc lập chiều cao, đặt cạnh nhau trong HStack thay vì lồng cột
+            // giá+X vào ngay hàng đầu của cột tên. Trước đây giá+X (2 dòng) cao hơn tên (1 dòng) làm
+            // CẢ HÀNG bị kéo cao theo, khiến topping/ghi chú (nằm NGOÀI hàng đó) bắt đầu ở đáy hàng
+            // cao thay vì ngay dưới tên — nhìn như dư khoảng trống giữa tên và topping/ghi chú. Tách
+            // cột thì topping/ghi chú nằm ngay trong cột tên, không phụ thuộc chiều cao cột giá+X.
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Spacer()
-                    // Giá + nút X gộp chung 1 cột dọc sát nhau (spacing 2) NGAY DƯỚI giá, thay vì 1
-                    // hàng riêng — hàng riêng trước đó bị Button đẩy thêm khoảng trống dư ra dưới do
-                    // vùng chạm mặc định của Button, nhìn như 1 dòng trống trước phần topping/ghi chú.
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                        Button {
-                            cart.removeItem(item.id)
-                        } label: {
-                            Text("❌")
-                                .font(.system(size: 12))
-                                .foregroundColor(Theme.danger)
-                                .padding(.horizontal, 8).padding(.vertical, 4)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                    if !item.toppings.isEmpty {
+                        // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
+                        // ngay sau tên ("Trân châu +5k") thay vì chỉ hiện tên trơn không ai biết tốn
+                        // thêm bao nhiêu.
+                        Text(item.toppings.map { t in
+                            let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
+                            return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
+                        }.joined(separator: ", "))
+                            .font(.system(size: 12)).foregroundColor(Theme.primary)
+                    }
+                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
                     }
                 }
-                if !item.toppings.isEmpty {
-                    // Khớp cách hiện topping bên HoaDonDetailView (AppQuanLyIOS): kèm giá viết tắt
-                    // ngay sau tên ("Trân châu +5k") thay vì chỉ hiện tên trơn không ai biết tốn
-                    // thêm bao nhiêu.
-                    Text(item.toppings.map { t in
-                        let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
-                        return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
-                    }.joined(separator: ", "))
-                        .font(.system(size: 12)).foregroundColor(Theme.primary)
-                }
-                if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                    Button {
+                        cart.removeItem(item.id)
+                    } label: {
+                        Text("❌")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.danger)
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
