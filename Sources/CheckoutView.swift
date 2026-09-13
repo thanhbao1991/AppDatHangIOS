@@ -64,7 +64,7 @@ struct CheckoutView: View {
             // (không cần tách row riêng cho từng món nữa vì không còn .swipeActions).
             List {
                 if !cart.items.isEmpty {
-                    cardRow(topExtra: 6) { stepCard(1, title: "Chi tiết hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox } }
+                    cardRow(topExtra: 6) { stepCard(1, title: "Hoá đơn", trailing: AnyView(qtyCountBadge)) { cartItemsBox } }
                     cardRow { stepCard(2, title: "Nhận hàng") { nhanHangBox } }
                     cardRow { stepCard(3, title: "Thanh toán", isLast: true) { footerBox } }
                 } else {

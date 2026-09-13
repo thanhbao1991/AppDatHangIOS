@@ -110,7 +110,7 @@ struct LoginView: View {
                 }
             }
             primaryButton("Đăng nhập", disabled: loading || password.isEmpty) { Task { await submitPassword() } }
-            Button("Đổi số khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
+            Button("Đổi SĐT khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
 
@@ -129,7 +129,7 @@ struct LoginView: View {
                 .foregroundColor(resendConLai > 0 ? Theme.textFaint : Theme.primary)
                 .fontWeight(.semibold)
                 .disabled(loading || resendConLai > 0)
-            Button("Đổi số khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
+            Button("Đổi SĐT khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
 

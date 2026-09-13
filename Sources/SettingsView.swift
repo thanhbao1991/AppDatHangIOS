@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var dangLuuSinhNhat = false
     @State private var dangNhanQua = false
     @State private var alertMessage: (title: String, message: String)?
+    @State private var diaChiChoXoa: DiaChiKhachHang?
 
     @State private var tenHienThi: String = Prefs.tenKhachHang ?? ""
     @State private var dangLuuTen = false
@@ -43,6 +44,16 @@ struct SettingsView: View {
             Button("OK") {}
         } message: {
             Text(alertMessage?.message ?? "")
+        }
+        .confirmationDialog(
+            "Xoá địa chỉ \"\(diaChiChoXoa?.diaChi ?? "")\"?",
+            isPresented: Binding(get: { diaChiChoXoa != nil }, set: { if !$0 { diaChiChoXoa = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Xoá", role: .destructive) {
+                if let id = diaChiChoXoa?.id { Task { await xoaDiaChi(id) } }
+            }
+            Button("Huỷ", role: .cancel) {}
         }
     }
 
@@ -139,13 +150,15 @@ struct SettingsView: View {
                             Text((item.isDefault ? "★ " : "") + item.diaChi)
                             if !item.isDefault {
                                 Button("Đặt làm mặc định") { Task { await datMacDinh(item.id) } }
+                                    .buttonStyle(.plain)
                                     .font(.system(size: 12)).foregroundColor(Theme.primary)
                             }
                         }
                         Spacer()
-                        Button { Task { await xoaDiaChi(item.id) } } label: {
+                        Button { diaChiChoXoa = item } label: {
                             Image(systemName: "xmark").foregroundColor(Theme.danger)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
