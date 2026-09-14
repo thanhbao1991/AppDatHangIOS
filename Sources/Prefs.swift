@@ -66,6 +66,10 @@ enum Prefs {
     private static let keyAvatarUrl = "avatar_url"
     private static let keyThietBiId = "thiet_bi_id"
     private static let keyHinhThucThanhToan = "hinh_thuc_thanh_toan"
+    // Khớp key "thongBaoLastSeen" tự đặt trực tiếp ở MainTabView/ThongBaoView (không đi qua Prefs
+    // property) — liệt kê ở đây CHỈ để clear() xoá được, không thêm accessor riêng vì chỉ 2 chỗ đó
+    // dùng trực tiếp UserDefaults.
+    private static let keyThongBaoLastSeen = "thongBaoLastSeen"
 
     static var token: String? {
         get { Keychain.get(keyToken) }
@@ -114,6 +118,10 @@ enum Prefs {
         refreshToken = nil
         tenKhachHang = nil
         avatarUrl = nil
+        // Không xoá thì mốc "đã xem thông báo" lưu CHUNG CẢ MÁY (UserDefaults.standard, không theo
+        // tài khoản) — đổi sang tài khoản khác trên cùng máy sẽ không thấy badge đỏ dù có thông báo
+        // mới, vì mốc cũ của tài khoản trước vẫn còn đó (phát hiện 2026-09-14 lúc test QuayLai).
+        defaults.removeObject(forKey: keyThongBaoLastSeen)
     }
 
     /// Trang QR chuyển khoản — [AllowAnonymous], HTML tự vẽ (không phải ảnh thuần), dùng lại nguyên
