@@ -265,9 +265,16 @@ actor APIClient {
 
     // ===== Đặt món =====
 
-    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil) async -> ApiEnvelope<DatMonResponse> {
-        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan, dungVi: dungVi, hinhThucThanhToan: hinhThucThanhToan)
+    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil, voucherId: String? = nil) async -> ApiEnvelope<DatMonResponse> {
+        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan, dungVi: dungVi, hinhThucThanhToan: hinhThucThanhToan, voucherId: voucherId)
         return await decode("/dat-hang/dat-mon", method: "POST", body: jsonBody(body))
+    }
+
+    /// Voucher khách hiện tại ĐANG đủ điều kiện dùng — không cache (điều kiện đổi ngay sau đơn đầu
+    /// tiên, không muốn khách thấy voucher "còn dùng được" đã hết hạn vì cache cũ).
+    func getVoucherKhaDung() async -> [Voucher] {
+        let env: ApiEnvelope<[Voucher]> = await decode("/dat-hang/voucher/kha-dung")
+        return env.isSuccess ? (env.data ?? []) : []
     }
 
     func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {

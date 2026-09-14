@@ -69,6 +69,16 @@ struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
 /// Danh sách tên đường dùng gợi ý khi khách gõ địa chỉ giao hàng — cùng nguồn TenDuong Desktop dùng
 /// cho TenDuongBox (nhân viên tạo đơn), xem CheckoutView.diaChiSuggestions.
 struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
+
+/// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem
+/// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
+struct Voucher: Decodable, Identifiable, Equatable {
+    let id: String
+    let ma: String
+    let ten: String
+    let moTa: String?
+    let soTienGiam: Double
+}
 struct Topping: Decodable, Identifiable { let id: String; let ten: String; let gia: Double; let ngungBan: Bool }
 
 // ---- Đặt món ----
@@ -86,6 +96,7 @@ struct DatMonRequest: Encodable {
     let nhanTaiQuan: Bool
     let dungVi: Bool
     let hinhThucThanhToan: String?
+    let voucherId: String?
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 

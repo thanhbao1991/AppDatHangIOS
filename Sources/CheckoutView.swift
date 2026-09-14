@@ -47,13 +47,21 @@ struct CheckoutView: View {
     @State private var vi: KhachHangVi?
     @State private var dungXu = false
 
+    /// Voucher khách ĐANG đủ điều kiện dùng — tải lại mỗi lần vào trang (điều kiện có thể đổi ngay
+    /// sau khi đặt đơn đầu tiên). Cùng 1 card với "Dùng Xu" theo yêu cầu, hiện phía trên.
+    @State private var vouchers: [Voucher] = []
+    @State private var selectedVoucher: Voucher?
+    @State private var showVoucherSheet = false
+
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
 
     private var soDu: Double { vi?.soDu ?? 0 }
     private var tongTienHang: Double { cart.totalPrice }
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
-    private var tongCanTra: Double { tongTienHang + phiShip }
+    /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
+    private var voucherGiam: Double { min(selectedVoucher?.soTienGiam ?? 0, tongTienHang) }
+    private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
     private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
     private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
     /// Xu trả đủ 100% đơn — ẩn hẳn card Hình thức thanh toán (không còn gì phải chọn COD/QR nữa) và
@@ -66,8 +74,8 @@ struct CheckoutView: View {
             List {
                 cardRow(topExtra: 6) { diaChiSection }
                 cardRow { cardBox { donHangCardContent } }
-                if soDu > 0 {
-                    cardRow { cardBox { dungXuCardContent } }
+                if soDu > 0 || !vouchers.isEmpty {
+                    cardRow { cardBox { uuDaiCardContent } }
                 }
                 if !xuTraDu {
                     cardRow { cardBox { thanhToanCardContent } }
@@ -79,11 +87,14 @@ struct CheckoutView: View {
             bottomBar
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showVoucherSheet) { voucherSheet }
         .task {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
+            async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
+            vouchers = await voucherTask
             diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
@@ -297,16 +308,88 @@ struct CheckoutView: View {
         }
     }
 
-    // MARK: - Card: Dùng Xu
+    // MARK: - Card: Voucher (trên) + Dùng Xu (dưới) — chung 1 card theo yêu cầu, khớp bố cục Shopee.
 
-    private var dungXuCardContent: some View {
-        Toggle(isOn: $dungXu) {
-            HStack(spacing: 8) {
-                Text("🟡").font(.system(size: 16))
-                Text("Dùng Xu (số dư \(formatTien(soDu)))").font(.system(size: 14)).foregroundColor(.primary)
+    private var uuDaiCardContent: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if !vouchers.isEmpty {
+                Button { showVoucherSheet = true } label: {
+                    HStack {
+                        Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 24)
+                        if let selectedVoucher {
+                            Text(selectedVoucher.ten).foregroundColor(.primary)
+                        } else {
+                            Text("Chọn voucher").foregroundColor(.primary)
+                        }
+                        Spacer()
+                        if let selectedVoucher {
+                            Text("-\(formatTien(selectedVoucher.soTienGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                        }
+                        Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if soDu > 0 { Divider() }
+            }
+            if soDu > 0 {
+                Toggle(isOn: $dungXu) {
+                    HStack(spacing: 8) {
+                        Text("🟡").font(.system(size: 16))
+                        Text("Dùng Xu (số dư \(formatTien(soDu)))").font(.system(size: 14)).foregroundColor(.primary)
+                    }
+                }
+                .tint(Theme.primary)
+                .padding(.vertical, vouchers.isEmpty ? 0 : 6)
             }
         }
-        .tint(Theme.primary)
+    }
+
+    private var voucherSheet: some View {
+        NavigationStack {
+            List {
+                Button {
+                    selectedVoucher = nil
+                    showVoucherSheet = false
+                } label: {
+                    HStack {
+                        Text("Không dùng voucher").foregroundColor(.primary)
+                        Spacer()
+                        if selectedVoucher == nil {
+                            Image(systemName: "checkmark").foregroundColor(Theme.primary)
+                        }
+                    }
+                }
+                ForEach(vouchers) { v in
+                    Button {
+                        selectedVoucher = v
+                        showVoucherSheet = false
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(v.ten).font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                                if let moTa = v.moTa, !moTa.isEmpty {
+                                    Text(moTa).font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                                }
+                            }
+                            Spacer()
+                            Text("-\(formatTien(v.soTienGiam))").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
+                            if selectedVoucher?.id == v.id {
+                                Image(systemName: "checkmark").foregroundColor(Theme.primary)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Chọn voucher")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Đóng") { showVoucherSheet = false }
+                }
+            }
+        }
     }
 
     // MARK: - Card: Hình thức thanh toán
@@ -344,6 +427,9 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Chi tiết thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
             chiTietRow("Tổng tiền hàng", formatTien(tongTienHang))
+            if voucherGiam > 0 {
+                chiTietRow("Giảm giá voucher", "-" + formatTien(voucherGiam), color: Theme.danger)
+            }
             if !nhanTaiQuan {
                 chiTietRow("Phí vận chuyển", formatTien(phiShip))
             }
@@ -511,7 +597,7 @@ struct CheckoutView: View {
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
-            dungVi: dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue
+            dungVi: dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: selectedVoucher?.id
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
