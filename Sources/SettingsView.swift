@@ -8,6 +8,8 @@ struct SettingsView: View {
     var notificationBell: AnyView
     var accountSettingsGear: AnyView
 
+    @Environment(\.openURL) private var openURL
+
     @State private var diaChiList: [DiaChiKhachHang] = []
     @State private var vi: KhachHangVi?
     @State private var loading = true
@@ -73,9 +75,43 @@ struct SettingsView: View {
                 }
 
                 cardRow { thongTinCaNhanCard }
+                cardRow { danhGiaCard }
             }
         }
         .cardListBackground()
+    }
+
+    // ID số của app trên App Store — CHƯA CÓ THẬT vì app hiện chỉ phân phối qua Sideloadly (xem
+    // README), chưa publish lên store. Thay giá trị này khi app thật sự lên App Store, lấy từ URL
+    // trang app trong App Store Connect (dạng id1234567890).
+    private static let appStoreId = "TODO_APP_STORE_ID"
+
+    /// Mời khách đánh giá — CHỈ mở trang App Store trung lập, KHÔNG kèm bất kỳ quà/voucher/Xu nào
+    /// (vi phạm chính sách Apple nếu gắn khuyến khích, và cũng không có API verify ai đã đánh giá).
+    private var danhGiaCard: some View {
+        cardBox {
+            HStack {
+                Text("⭐ Thích ứng dụng Đenn?").font(.system(size: 14, weight: .bold))
+                Spacer()
+            }
+            Text("Để lại vài dòng đánh giá giúp Đenn cải thiện app tốt hơn nhé!")
+                .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+            Button {
+                moDanhGia()
+            } label: {
+                HStack {
+                    Text("Đánh giá trên App Store").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func moDanhGia() {
+        guard let url = URL(string: "https://apps.apple.com/app/\(Self.appStoreId)?action=write-review") else { return }
+        openURL(url)
     }
 
     private var avatarCard: some View {
