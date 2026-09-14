@@ -28,10 +28,16 @@ struct SettingsView: View {
     @State private var avatarUrl: String? = Prefs.avatarUrl
     @State private var dangUploadAvatar = false
 
-    private let hangColor: [String: Color] = [
-        "Kim Cương": Color(red: 0, green: 0.51, blue: 0.56),
-        "Vàng": Color(red: 0.72, green: 0.53, blue: 0.04),
-        "Bạc": Color(red: 0.38, green: 0.38, blue: 0.38),
+    // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
+    // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước.
+    private let hangGradient: [String: [Color]] = [
+        "Kim Cương": [Color(red: 0.05, green: 0.35, blue: 0.42), Color(red: 0.02, green: 0.14, blue: 0.18)],
+        "Vàng": [Color(red: 0.62, green: 0.47, blue: 0.08), Color(red: 0.22, green: 0.16, blue: 0.02)],
+        "Bạc": [Color(red: 0.42, green: 0.44, blue: 0.47), Color(red: 0.16, green: 0.17, blue: 0.19)],
+        "Thành Viên": [Theme.primary, Theme.primaryDark],
+    ]
+    private let hangIcon: [String: String] = [
+        "Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈", "Thành Viên": "🌱",
     ]
 
     var body: some View {
@@ -147,22 +153,55 @@ struct SettingsView: View {
         }
     }
 
-    /// Card Điểm & Hạng thành viên đi CHUNG một card vì Hạng được xét trực tiếp từ điểm tích luỹ —
-    /// không liên quan Xu.
+    /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
+    /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
+    /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
-        cardBox {
-            HStack {
-                Text("👑 Hạng \(vi.hang)")
-                    .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-                    .padding(.horizontal, 12).padding(.vertical, 5)
-                    .background(hangColor[vi.hang] ?? Theme.primary).clipShape(Capsule())
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("HẠNG THÀNH VIÊN")
+                        .font(.system(size: 10, weight: .bold)).tracking(1.2)
+                        .foregroundColor(.white.opacity(0.65))
+                    Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hang)")
+                        .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
+                }
                 Spacer()
             }
+
+            if let hangTiepTheo = vi.hangTiepTheo {
+                VStack(alignment: .leading, spacing: 6) {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.2))
+                            Capsule().fill(Color.white)
+                                .frame(width: max(8, geo.size.width * vi.phanTramTienDoLenHang))
+                        }
+                    }
+                    .frame(height: 6)
+                    Text("Còn \(formatTien(vi.conLaiDeLenHang)) nữa để lên hạng \(hangTiepTheo) \(hangIcon[hangTiepTheo] ?? "")")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                }
+            } else {
+                Text("🎉 Bạn đang ở hạng cao nhất tháng này!")
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+            }
+
             HStack(spacing: 12) {
-                statBox(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
-                statBox(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
+                statBoxDark(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
+                statBoxDark(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
             }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark],
+                startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+        .padding(.vertical, 6)
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
@@ -277,6 +316,19 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity)
         .padding(10)
         .background(Theme.bg)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// Biến thể statBox cho nền tối (diemHangCard) — chữ trắng thay vì Theme.primary/textMuted vốn
+    /// chỉ đọc được trên nền sáng.
+    private func statBoxDark(_ value: String, _ label: String) -> some View {
+        VStack {
+            Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+            Text(label).font(.system(size: 11)).foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(10)
+        .background(Color.white.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 

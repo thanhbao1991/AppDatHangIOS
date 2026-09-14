@@ -243,6 +243,12 @@ struct KhachHangVi: Decodable {
     let tongNo: Double
     let tongChiTieuThangNay: Double
     let hang: String
+    // Null nếu đã ở hạng cao nhất (Kim Cương) trong tháng này.
+    let hangTiepTheo: String?
+    let conLaiDeLenHang: Double
+    // 0-1, tiến độ trong khoảng [ngưỡng hạng hiện tại, ngưỡng hangTiepTheo] — chỉ có ý nghĩa khi
+    // hangTiepTheo != nil.
+    let phanTramTienDoLenHang: Double
     let monHayMua: [FavoriteItem]
 }
 
