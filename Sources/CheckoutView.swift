@@ -165,19 +165,15 @@ struct CheckoutView: View {
                 }
             }
 
-            Button {
-                Task { await dungViTriHienTai() }
-            } label: {
-                HStack {
-                    Spacer()
-                    if locLoading { ProgressView() } else { Text("📍 Dùng vị trí hiện tại (tính phí ship chính xác)").font(.system(size: 13, weight: .semibold)) }
-                    Spacer()
+            // Nút "Dùng vị trí hiện tại" đã bỏ — từ khi có auto-xin định vị ngay lúc vào trang này
+            // (.task ở body), bấm tay lại thành thừa. locLoading vẫn còn dùng cho spinner lúc auto-xin
+            // chạy lần đầu (xem estimatingShip bên dưới hiện "Đang tính phí ship...").
+            if locLoading {
+                HStack(spacing: 6) {
+                    ProgressView().scaleEffect(0.8)
+                    Text("Đang lấy vị trí...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             }
-            .buttonStyle(.bordered)
-            .tint(Theme.primary)
-            .disabled(locLoading)
-
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
             if estimatingShip {
@@ -185,49 +181,28 @@ struct CheckoutView: View {
                     ProgressView().scaleEffect(0.8)
                     Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
-            } else if let coord, let ship {
-                if let km = ship.khoangCachKm {
-                    DeliveryMapView(
-                        shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
-                        deliveryCoordinate: coord,
-                        routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                        onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
-                    )
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else if let coord, let ship, let km = ship.khoangCachKm {
+                // Backend LUÔN trả khoangCachKm từ 2026-09-14 (không còn mốc "đơn đủ lớn thì miễn phí
+                // bất kể xa gần" bỏ qua OSRM) nên nhánh else (ship chưa có khoảng cách) không còn xảy
+                // ra thực tế — giữ optional binding cho an toàn kiểu dữ liệu, không xử lý riêng nữa.
+                // Phí ship (kể cả 0đ) hiện rõ ở bottomBar cùng "Tổng cộng", không lặp lại ở đây nữa.
+                DeliveryMapView(
+                    shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
+                    deliveryCoordinate: coord,
+                    routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
+                    onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
+                )
+                .frame(height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                    HStack {
-                        Text("Khoảng cách ~\(String(format: "%.1f", km))km").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                        Spacer()
-                        if ship.phiShip > 0 {
-                            Text("Phí ship: \(formatTien(ship.phiShip))").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
-                        } else {
-                            freeShipBadge(size: 13)
-                        }
-                    }
-                } else {
-                    freeShipBadge()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
-                        .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-
-                if ship.phiShip > 0 {
-                    let conThieu = ship.donGiaMienPhi - cart.totalPrice
-                    if conThieu > 0 && conThieu <= 50_000 {
-                        Text("Thêm \(formatTien(conThieu)) nữa để được miễn phí ship 🎁")
-                            .font(.system(size: 12)).foregroundColor(Theme.primary)
-                    }
-                }
+                Text("Khoảng cách ~\(String(format: "%.1f", km))km")
+                    .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .onChange(of: cart.totalPrice) { _ in
             if let coord { Task { await applyCoord(coord) } }
         }
-    }
-
-    private func freeShipBadge(size: CGFloat = 14) -> some View {
-        Text("🎉 Miễn phí giao hàng").font(.system(size: size, weight: .bold)).foregroundColor(Theme.success)
     }
 
     // MARK: - Card 2: Hình thức thanh toán
@@ -263,8 +238,8 @@ struct CheckoutView: View {
 
     private var ghiChuCardContent: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Ghi chú").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-            TextField("Ghi chú cho quán (không bắt buộc)", text: $ghiChu)
+            Text("Ghi chú thêm").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            TextField("", text: $ghiChu)
                 .textFieldStyle(.roundedBorder)
         }
     }
@@ -274,6 +249,15 @@ struct CheckoutView: View {
     private var bottomBar: some View {
         VStack(spacing: 8) {
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
+            // Phí ship ghi rõ số tiền (kể cả 0đ) ngay cạnh Tổng cộng — thay cho badge/chữ "Miễn phí
+            // giao hàng" ở card Địa chỉ trước đây.
+            if !nhanTaiQuan, let ship {
+                HStack {
+                    Text("Phí ship").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    Spacer()
+                    Text(formatTien(ship.phiShip)).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                }
+            }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tổng cộng").font(.system(size: 12)).foregroundColor(Theme.textMuted)
