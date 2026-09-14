@@ -241,7 +241,7 @@ struct KhachHangVi: Decodable {
     let duocNhanVoucher: Bool
     let daNhanVoucher: Bool
     let tongNo: Double
-    let tongChiTieuLifetime: Double
+    let tongChiTieuThangNay: Double
     let hang: String
     let monHayMua: [FavoriteItem]
 }
