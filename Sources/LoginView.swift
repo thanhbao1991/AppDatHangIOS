@@ -93,8 +93,56 @@ struct LoginView: View {
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
+            #if DEBUG
+            quickTestAccountsRow
+            #endif
         }
     }
+
+    #if DEBUG
+    // CHỈ build Debug, KHÔNG hardcode SĐT khách thật vào source (sẽ nằm mãi trong git history) — đọc
+    // từ TestAccounts.local.json cùng thư mục, file này nằm trong .gitignore nên KHÔNG được commit.
+    // Máy khác/CI không có file này → mảng rỗng → hàng nút tự ẩn, build vẫn qua bình thường. Tạo file
+    // cục bộ dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật khẩu chung "123456" (set tay
+    // qua SQL cho các tài khoản test, xem trao đổi 2026-09-14).
+    private struct TestAccountEntry: Decodable { let label: String; let phone: String }
+
+    private var quickTestAccounts: [TestAccountEntry] {
+        let path = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("TestAccounts.local.json")
+        guard let data = try? Data(contentsOf: path),
+              let arr = try? JSONDecoder().decode([TestAccountEntry].self, from: data) else { return [] }
+        return arr
+    }
+
+    @ViewBuilder
+    private var quickTestAccountsRow: some View {
+        let accounts = quickTestAccounts
+        if !accounts.isEmpty {
+            VStack(spacing: 8) {
+                Text("Test nhanh (Debug only)").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.textFaint)
+                HStack(spacing: 8) {
+                    ForEach(accounts, id: \.phone) { acc in
+                        Button { Task { await quickLogin(acc.phone) } } label: {
+                            Text(acc.label).font(.system(size: 12, weight: .bold))
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .background(Theme.primaryTint)
+                                .foregroundColor(Theme.primary)
+                                .clipShape(Capsule())
+                        }
+                        .disabled(loading)
+                    }
+                }
+            }
+            .padding(.top, 4)
+        }
+    }
+
+    private func quickLogin(_ testPhone: String) async {
+        phone = testPhone
+        password = "123456"
+        await submitPassword()
+    }
+    #endif
 
     private var passwordStep: some View {
         VStack(spacing: 14) {
