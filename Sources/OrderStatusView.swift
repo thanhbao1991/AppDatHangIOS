@@ -4,12 +4,17 @@ import SwiftUI
 private let pollInterval: TimeInterval = 10
 
 struct OrderStatusView: View {
+    @EnvironmentObject var cart: CartStore
     @Binding var path: [DonHangRoute]
+    @Binding var selectedTab: AppTab
+    @Binding var cartPath: [HomeRoute]
     var notificationBell: AnyView
 
     @State private var orders: [DonHangKhach] = []
     @State private var loading = true
     @State private var pollTask: Task<Void, Never>?
+    @State private var dangMoQuaId: String?
+    @State private var alertMessage: (title: String, message: String)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,12 +29,7 @@ struct OrderStatusView: View {
                 } else {
                     List {
                         ForEach(Array(orders.enumerated()), id: \.element.id) { index, order in
-                            cardRow(topExtra: index == 0 ? 6 : 0) {
-                                Button { path.append(.detail(order)) } label: {
-                                    orderCard(order)
-                                }
-                                .foregroundColor(.primary)
-                            }
+                            cardRow(topExtra: index == 0 ? 6 : 0) { orderCard(order) }
                         }
                     }
                     .cardListBackground()
@@ -42,9 +42,17 @@ struct OrderStatusView: View {
             startPolling()
         }
         .onDisappear { pollTask?.cancel() }
+        .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
+            Button("OK") {}
+        } message: {
+            Text(alertMessage?.message ?? "")
+        }
     }
 
-    private func orderCard(_ item: DonHangKhach) -> some View {
+    /// Nội dung chính của card — bấm vào đây (KHÔNG phải cả card) mới mở chi tiết đơn, để hàng nút
+    /// hành động (actionRow) bên dưới có vùng chạm riêng, không bị .onTapGesture của cha nuốt mất
+    /// (cùng bài học nút X trong GioHangView.itemRow — Button con cần .buttonStyle(.plain) mới thắng).
+    private func orderCardContent(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(item.maHoaDon).fontWeight(.bold)
@@ -63,7 +71,50 @@ struct OrderStatusView: View {
                     .clipShape(Capsule())
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture { path.append(.detail(item)) }
+    }
+
+    private func orderCard(_ item: DonHangKhach) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            orderCardContent(item)
+            actionRow(item)
+        }
         .cardBoxStyle()
+    }
+
+    /// Nút hành động góc dưới bên phải mỗi card — hiện tuỳ trạng thái đơn: "Mở quà" chỉ hiện cho đơn
+    /// Nhận tại quán đã hoàn tất và chưa mở; "Thanh toán" chỉ hiện khi còn nợ; "Đặt lại" luôn hiện.
+    private func actionRow(_ item: DonHangKhach) -> some View {
+        HStack(spacing: 8) {
+            Spacer()
+            if item.trangThai == .hoanTat && item.diaChiText == "Nhận tại quán" && !item.daMoQuaXu {
+                actionButton("🎁 Mở quà", loading: dangMoQuaId == item.id) {
+                    Task { await moQua(item) }
+                }
+            }
+            actionButton("🔁 Đặt lại") { datLai(item) }
+            if item.trangThai != .hoanTat {
+                actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
+            }
+        }
+    }
+
+    private func actionButton(_ label: String, filled: Bool = false, loading: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            if loading {
+                ProgressView().scaleEffect(0.7).frame(height: 14)
+                    .padding(.horizontal, 14).padding(.vertical, 6)
+            } else {
+                Text(label).font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+            }
+        }
+        .buttonStyle(.plain)
+        .foregroundColor(filled ? .white : Theme.primary)
+        .background(filled ? Theme.primary : Theme.primaryTint)
+        .clipShape(Capsule())
+        .disabled(loading)
     }
 
     private func load(silent: Bool = false) async {
@@ -81,6 +132,27 @@ struct OrderStatusView: View {
                 if Task.isCancelled { break }
                 await load(silent: true)
             }
+        }
+    }
+
+    private func datLai(_ order: DonHangKhach) {
+        cart.clear()
+        for it in order.items {
+            cart.addItem(sanPhamBienTheId: it.sanPhamBienTheId, tenSanPham: it.tenSanPham, tenBienThe: it.tenBienThe, giaBan: it.donGia, soLuong: it.soLuong, ghiChu: it.ghiChu, toppings: it.toppings.map { CartTopping(id: $0.toppingId, ten: $0.ten, gia: $0.gia, soLuong: $0.soLuong) })
+        }
+        cartPath = []
+        selectedTab = .cart
+    }
+
+    private func moQua(_ order: DonHangKhach) async {
+        dangMoQuaId = order.id
+        defer { dangMoQuaId = nil }
+        let res = await APIClient.shared.moQuaNhanTaiQuan(hoaDonId: order.id)
+        if res.isSuccess, let data = res.data {
+            alertMessage = data.trung ? ("🎉 Chúc mừng!", data.label) : ("Kết quả", data.label)
+            await load(silent: true)
+        } else {
+            alertMessage = ("Chưa mở được", res.message ?? "Có lỗi xảy ra, thử lại nhé.")
         }
     }
 }

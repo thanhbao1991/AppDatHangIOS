@@ -370,4 +370,9 @@ actor APIClient {
     func quayVongQuay() async -> ApiEnvelope<VongQuayResult> {
         await decode("/dat-hang/vong-quay", method: "POST")
     }
+
+    /// Mở quà Xu cho đơn "Nhận tại quán" đã hoàn tất — 1 lượt/đơn (xem DonHangKhach.daMoQuaXu).
+    func moQuaNhanTaiQuan(hoaDonId: String) async -> ApiEnvelope<VongQuayResult> {
+        await decode("/dat-hang/don/\(hoaDonId)/mo-qua", method: "POST")
+    }
 }

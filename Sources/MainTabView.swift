@@ -23,6 +23,12 @@ struct MainTabView: View {
     @State private var showThongBao = false
     @State private var showTaiKhoanBaoMat = false
 
+    /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
+    /// có thể push route .checkout, xem navigationDestination bên dưới) — dùng để ẩn tabBar dưới cùng.
+    private var isCheckoutActive: Bool {
+        homePath.last == .checkout || cartPath.last == .checkout
+    }
+
     /// Badge số tiền giỏ hàng dạng viết tắt trên tab bar (vd "25k", "1.2tr") — nil khi giỏ trống để
     /// ẩn hẳn badge thay vì hiện "0k".
     private var cartBadgeText: String? {
@@ -62,7 +68,7 @@ struct MainTabView: View {
                     }
                 case .donHang:
                     NavigationStack(path: $donHangPath) {
-                        OrderStatusView(path: $donHangPath, notificationBell: AnyView(notificationBell))
+                        OrderStatusView(path: $donHangPath, selectedTab: $selectedTab, cartPath: $cartPath, notificationBell: AnyView(notificationBell))
                             .navigationDestination(for: DonHangRoute.self) { route in
                                 switch route {
                                 case .detail(let order):
@@ -91,8 +97,14 @@ struct MainTabView: View {
             .tint(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            Divider()
-            tabBar
+            // Ẩn hẳn thanh tab dưới cùng khi đang ở trang Thanh toán (CheckoutView) — khớp Shopee:
+            // checkout là luồng riêng tách biệt, không cho lỡ tay chuyển tab giữa chừng khi đang điền
+            // địa chỉ/chọn thanh toán. Trang này tự vẽ header riêng (ẩn navbar hệ thống) nên tự thân
+            // đã chiếm toàn màn hình, ẩn tabBar cho đúng ý đồ đó.
+            if !isCheckoutActive {
+                Divider()
+                tabBar
+            }
         }
         .tint(Theme.primary)
         .environmentObject(cart)

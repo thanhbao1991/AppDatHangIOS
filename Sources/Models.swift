@@ -162,6 +162,9 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     let trangThai: TrangThaiDon
     let daDanhGia: Bool
     let soSaoDaDanh: Int?
+    /// Đơn "Nhận tại quán" đã hoàn tất được mở quà Xu chưa — điều kiện HIỆN nút "Mở quà": trangThai
+    /// == .hoanTat && diaChiText == "Nhận tại quán" && !daMoQuaXu (server validate lại đầy đủ).
+    let daMoQuaXu: Bool
 }
 
 // ---- Địa chỉ ----

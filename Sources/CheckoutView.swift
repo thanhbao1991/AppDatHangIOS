@@ -65,6 +65,7 @@ struct CheckoutView: View {
             header
             List {
                 cardRow(topExtra: 6) { diaChiSection }
+                cardRow { cardBox { donHangCardContent } }
                 if soDu > 0 {
                     cardRow { cardBox { dungXuCardContent } }
                 }
@@ -257,6 +258,42 @@ struct CheckoutView: View {
         }
         .onChange(of: cart.totalPrice) { _ in
             if let coord { Task { await applyCoord(coord) } }
+        }
+    }
+
+    // MARK: - Card: Chi tiết đơn hàng (xem lại, KHÔNG sửa được ở đây — icon khoá nhắc rõ, muốn sửa
+    // món phải quay lại tab Giỏ hàng, tránh nhầm 2 nơi cùng sửa được 1 giỏ hàng).
+
+    private var donHangCardContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text("Chi tiết đơn hàng").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                Image(systemName: "lock.fill").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                Spacer()
+                Text("\(cart.totalCount) ly")
+                    .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Theme.primaryTint).clipShape(Capsule())
+            }
+            Divider()
+            ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { Divider() }
+                HStack(alignment: .top, spacing: 8) {
+                    Text("\(item.soLuong)x").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 14)).foregroundColor(.primary)
+                        if !item.toppings.isEmpty {
+                            Text(item.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", "))
+                                .font(.system(size: 12)).foregroundColor(Theme.primary)
+                        }
+                        if let ghiChu = item.ghiChu, !ghiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                            Text(ghiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                        }
+                    }
+                    Spacer()
+                    Text(formatTien(item.thanhTien)).font(.system(size: 13, weight: .semibold))
+                }
+            }
         }
     }
 
