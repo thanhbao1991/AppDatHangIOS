@@ -93,21 +93,21 @@ struct LoginView: View {
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
-            #if DEBUG
             quickTestAccountsRow
-            #endif
         }
     }
 
-    #if DEBUG
-    // CHỈ build Debug, KHÔNG hardcode SĐT khách thật vào source (repo AppDatHangIOS là PUBLIC — sẽ
-    // lộ công khai và nằm mãi trong git history). Đọc TestAccounts.local.json như 1 BUNDLE RESOURCE
-    // thật (không phải đọc thẳng filesystem qua #file — cách đó chỉ trỏ tới máy build, KHÔNG tồn tại
-    // trên iPhone thật). File nằm trong .gitignore, KHÔNG commit — local dev tự tạo trong Sources/,
-    // CI (build-ios.yml) ghi từ secret TEST_ACCOUNTS_JSON trước bước xcodegen generate (XcodeGen tự
-    // gom .json trong Sources/ vào Copy Bundle Resources). Không có file → mảng rỗng, hàng nút tự ẩn,
-    // build vẫn qua bình thường. Định dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật
-    // khẩu chung "123456" (set tay qua SQL cho tài khoản test, xem trao đổi 2026-09-14).
+    // KHÔNG bọc #if DEBUG — CI (build-ios.yml) build ở cấu hình Release nên #if DEBUG sẽ bị loại
+    // hoàn toàn khỏi .ipa thật cài qua Sideloadly, hàng nút sẽ không bao giờ hiện. An toàn nằm ở chỗ
+    // KHÔNG hardcode SĐT khách thật vào source (repo AppDatHangIOS là PUBLIC — sẽ lộ công khai và
+    // nằm mãi trong git history): đọc TestAccounts.local.json như 1 BUNDLE RESOURCE thật (không phải
+    // đọc thẳng filesystem qua #file — cách đó chỉ trỏ tới máy build, KHÔNG tồn tại trên iPhone
+    // thật). File nằm trong .gitignore, KHÔNG commit — local dev tự tạo trong Sources/, CI ghi từ
+    // secret TEST_ACCOUNTS_JSON trước bước xcodegen generate (XcodeGen tự gom .json trong Sources/
+    // vào Copy Bundle Resources). Không có file → mảng rỗng, hàng nút tự ẩn — ai fork/build repo này
+    // mà không có quyền truy cập secret của org sẽ không bao giờ thấy nút, kể cả bản Release thật.
+    // Định dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật khẩu chung "123456" (set tay
+    // qua SQL cho tài khoản test, xem trao đổi 2026-09-14).
     private struct TestAccountEntry: Decodable { let label: String; let phone: String }
 
     private var quickTestAccounts: [TestAccountEntry] {
@@ -122,7 +122,7 @@ struct LoginView: View {
         let accounts = quickTestAccounts
         if !accounts.isEmpty {
             VStack(spacing: 8) {
-                Text("Test nhanh (Debug only)").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.textFaint)
+                Text("Test nhanh").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.textFaint)
                 HStack(spacing: 8) {
                     ForEach(accounts, id: \.phone) { acc in
                         Button { Task { await quickLogin(acc.phone) } } label: {
@@ -145,7 +145,6 @@ struct LoginView: View {
         password = "123456"
         await submitPassword()
     }
-    #endif
 
     private var passwordStep: some View {
         VStack(spacing: 14) {
