@@ -38,7 +38,6 @@ struct DoiMatKhauView: View {
         }
         .navigationTitle("Đổi mật khẩu")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
     }
 
     private func doiMatKhau() async {

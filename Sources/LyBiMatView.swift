@@ -22,7 +22,6 @@ struct LyBiMatView: View {
         }
         .navigationTitle("Ly Bí Mật 🎁")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task {
             async let diaChiTask = APIClient.shared.getDiaChiList()
             async let giaTask = APIClient.shared.getGiaLyBiMat()

@@ -40,7 +40,6 @@ struct LichSuViView: View {
         }
         .navigationTitle("Lịch sử Xu")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task { await load() }
     }
 

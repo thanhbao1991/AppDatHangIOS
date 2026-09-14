@@ -41,7 +41,6 @@ struct ThietBiDangNhapView: View {
         }
         .navigationTitle("Thiết bị đăng nhập")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task { await load() }
         .confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
             Button("Đăng xuất", role: .destructive) {

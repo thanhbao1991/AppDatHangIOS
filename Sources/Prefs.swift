@@ -65,6 +65,7 @@ enum Prefs {
     private static let keyTenKhachHang = "ten_khach_hang"
     private static let keyAvatarUrl = "avatar_url"
     private static let keyThietBiId = "thiet_bi_id"
+    private static let keyHinhThucThanhToan = "hinh_thuc_thanh_toan"
 
     static var token: String? {
         get { Keychain.get(keyToken) }
@@ -83,6 +84,14 @@ enum Prefs {
         set { defaults.set(newValue, forKey: keyAvatarUrl) }
     }
     static var isLoggedIn: Bool { !(token?.isEmpty ?? true) }
+
+    /// Hình thức thanh toán khách chọn lần đặt hàng GẦN NHẤT (rawValue của HinhThucThanhToan, xem
+    /// CheckoutView.swift) — nhớ lại để lần sau tự chọn sẵn, khỏi bắt khách chọn lại mỗi đơn. nil =
+    /// chưa từng đặt lần nào, CheckoutView tự coi là COD (mặc định).
+    static var hinhThucThanhToan: String? {
+        get { defaults.string(forKey: keyHinhThucThanhToan) }
+        set { defaults.set(newValue, forKey: keyHinhThucThanhToan) }
+    }
 
     /// Sinh 1 lần, ổn định suốt vòng đời cài đặt app — backend dedupe phiên đăng nhập theo thiết bị
     /// bằng id này (đăng nhập lại cùng máy thu hồi phiên cũ thay vì chồng phiên mới).

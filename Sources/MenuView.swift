@@ -685,7 +685,6 @@ struct ProductPickerSheet: View {
                 .padding(16)
                 .navigationTitle(existing == nil ? "Thêm món" : "Sửa món")
                 .navigationBarTitleDisplayMode(.inline)
-                .brandNavBar()
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
                 }

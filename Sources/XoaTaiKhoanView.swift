@@ -63,7 +63,6 @@ struct XoaTaiKhoanView: View {
         }
         .navigationTitle("Xoá tài khoản")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .confirmationDialog("Xoá tài khoản?", isPresented: $showConfirm, titleVisibility: .visible) {
             Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
             Button("Huỷ", role: .cancel) {}

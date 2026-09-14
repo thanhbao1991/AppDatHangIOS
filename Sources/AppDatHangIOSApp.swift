@@ -9,13 +9,13 @@ struct AppDatHangIOSApp: App {
         // khác cần giữ padding này.
         UITableView.appearance().sectionHeaderTopPadding = 0
 
-        // Set nav bar 1 lần ở tầng UIKit thay vì chỉ dựa vào .toolbarBackground/.toolbarColorScheme
-        // (brandNavBar() trong Theme.swift) gắn theo từng View — MainTabView dùng switch selectedTab
-        // để đổi tab (không phải TabView giữ sống), nên mỗi lần rời rồi quay lại 1 tab, NavigationStack
-        // của tab đó bị HUỶ VÀ TẠO LẠI với path đã có sẵn (không phải push mới) — quan sát thực tế:
-        // nền xanh giữ được nhưng chữ tiêu đề/back chevron rớt về màu đen mặc định hệ thống. Set cứng
-        // UINavigationBar.appearance() đảm bảo màu luôn đúng bất kể View modifier có áp lại kịp hay
-        // không. brandNavBar() vẫn giữ nguyên ở từng View — vô hại, chỉ trùng lặp áp dụng.
+        // Set nav bar 1 lần ở tầng UIKit thay vì .toolbarBackground/.toolbarColorScheme gắn theo
+        // từng View (cách cũ, đã bỏ hẳn — xem git log brandNavBar() trong Theme.swift) — MainTabView
+        // dùng switch selectedTab để đổi tab (không phải TabView giữ sống), nên mỗi lần rời rồi quay
+        // lại 1 tab, NavigationStack của tab đó bị HUỶ VÀ TẠO LẠI với path đã có sẵn (không phải push
+        // mới). Modifier gắn theo View không áp lại kịp trong tình huống này (verify thật: đổi
+        // brandNavBar() vẫn KHÔNG hết lỗi) — set cứng UINavigationBar.appearance() 1 lần lúc khởi
+        // động app mới thực sự hết, vì nó không phụ thuộc vòng đời của View nào cả.
         let navAppearance = UINavigationBarAppearance()
         navAppearance.configureWithOpaqueBackground()
         navAppearance.backgroundColor = UIColor(Theme.primary)

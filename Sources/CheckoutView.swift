@@ -38,8 +38,10 @@ struct CheckoutView: View {
     /// Hình thức thanh toán khách chọn — chỉ ảnh hưởng bước SAU khi đặt xong (có hiện trang QR hay
     /// không) + ghi vào ghi chú cho nhân viên biết trước, KHÔNG có schema riêng ở backend (xem
     /// datHang() — tiền tố gắn thẳng vào GhiChu, giữ tối giản vì thu tiền COD vốn đã qua quy trình
-    /// "thu tiền mặt" sẵn có của nhân viên/shipper, không cần trường trạng thái mới).
-    @State private var hinhThucThanhToan: HinhThucThanhToan = .chuyenKhoanQR
+    /// "thu tiền mặt" sẵn có của nhân viên/shipper, không cần trường trạng thái mới). Mặc định COD
+    /// nếu chưa từng đặt lần nào, còn lại nhớ đúng lựa chọn lần đặt gần nhất (Prefs.hinhThucThanhToan)
+    /// để lần sau tự chọn sẵn — xem paymentOptionRow() nơi lưu lại mỗi lần khách đổi.
+    @State private var hinhThucThanhToan: HinhThucThanhToan = HinhThucThanhToan(rawValue: Prefs.hinhThucThanhToan ?? "") ?? .codTraKhiNhanHang
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
@@ -56,7 +58,6 @@ struct CheckoutView: View {
         }
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
-        .brandNavBar()
         .task {
             await loadDiaChi()
             await loadTenDuong()
@@ -241,7 +242,10 @@ struct CheckoutView: View {
     }
 
     private func paymentOptionRow(_ method: HinhThucThanhToan, icon: String, label: String) -> some View {
-        Button { hinhThucThanhToan = method } label: {
+        Button {
+            hinhThucThanhToan = method
+            Prefs.hinhThucThanhToan = method.rawValue
+        } label: {
             HStack {
                 Image(systemName: icon).foregroundColor(Theme.primary).frame(width: 24)
                 Text(label).foregroundColor(.primary)
@@ -429,7 +433,7 @@ struct CheckoutView: View {
     }
 }
 
-enum HinhThucThanhToan {
-    case codTraKhiNhanHang
-    case chuyenKhoanQR
+enum HinhThucThanhToan: String {
+    case codTraKhiNhanHang = "COD"
+    case chuyenKhoanQR = "QR"
 }

@@ -41,15 +41,6 @@ enum Theme {
 }
 
 extension View {
-    /// Tô nền navbar brandPrimary + chữ trắng — khớp y hệt style AppQuanLyIOS đang lan ra toàn app
-    /// (xem toolbarBackground(Color.brandPrimary...) lặp lại ở mọi navigationTitle bên đó).
-    func brandNavBar() -> some View {
-        self
-            .toolbarBackground(Theme.primary, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-    }
-
     /// Style card trắng bo góc dùng chung cho MỌI tab (Giỏ hàng/Đơn hàng/Ưu đãi/Tài khoản) — trước
     /// đây mỗi màn tự định nghĩa card() riêng (padding/corner/border na ná nhau nhưng không giống
     /// hệt), giờ gom 1 chỗ để khoảng cách card-với-top và card-với-card đồng bộ thật sự trên cả 4 tab
