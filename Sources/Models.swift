@@ -79,6 +79,17 @@ struct Voucher: Decodable, Identifiable, Equatable {
     let moTa: String?
     let soTienGiam: Double
 }
+
+/// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở
+/// CheckoutView. Xem DatHangService.GetVoucherCuaToiAsync.
+struct VoucherCuaToi: Decodable, Identifiable {
+    let id: String
+    let ma: String
+    let ten: String
+    let moTa: String?
+    let soTienGiam: Double
+    let daSuDung: Bool
+}
 struct Topping: Decodable, Identifiable { let id: String; let ten: String; let gia: Double; let ngungBan: Bool }
 
 // ---- Đặt món ----

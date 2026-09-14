@@ -42,7 +42,7 @@ struct LyBiMatView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Giao đến").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
-                    TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical).textFieldStyle(.roundedBorder)
+                    TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical).textFieldStyle(.roundedBorder).tint(Theme.primary)
                     if !savedDiaChi.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack {

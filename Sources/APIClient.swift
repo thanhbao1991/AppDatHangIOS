@@ -277,6 +277,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Toàn bộ voucher của tài khoản (kể cả đã dùng) cho tab Ưu đãi.
+    func getVoucherCuaToi() async -> [VoucherCuaToi] {
+        let env: ApiEnvelope<[VoucherCuaToi]> = await decode("/dat-hang/voucher/cua-toi")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {
         await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon)))
     }

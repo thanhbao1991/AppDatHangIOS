@@ -175,6 +175,7 @@ struct SettingsView: View {
             HStack {
                 TextField("Tên hiển thị trong app", text: $tenHienThi)
                     .textFieldStyle(.roundedBorder)
+                    .tint(Theme.primary)
                 Button {
                     Task { await luuTenHienThi() }
                 } label: {

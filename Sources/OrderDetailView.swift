@@ -191,7 +191,7 @@ struct OrderDetailView: View {
                     }
                 }
             }
-            TextField("Nhận xét (không bắt buộc)", text: $nhanXet).textFieldStyle(.roundedBorder)
+            TextField("Nhận xét (không bắt buộc)", text: $nhanXet).textFieldStyle(.roundedBorder).tint(Theme.primary)
             Button {
                 Task { await guiDanhGia() }
             } label: {

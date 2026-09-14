@@ -9,6 +9,7 @@ struct UuDaiView: View {
 
     @State private var theTem: TheTem?
     @State private var gioiThieu: GioiThieuInfo?
+    @State private var vouchers: [VoucherCuaToi] = []
     @State private var loading = true
 
     @State private var maNhap = ""
@@ -29,6 +30,7 @@ struct UuDaiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
+                            if !vouchers.isEmpty { voucherCard }
                             if let theTem { theTemCard(theTem) }
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
                             vongQuayCard
@@ -58,6 +60,35 @@ struct UuDaiView: View {
                 .clipShape(Circle())
             Text(title).font(.system(size: 16, weight: .bold))
             Spacer()
+        }
+    }
+
+    /// Card đầu tiên — danh sách voucher tài khoản, đã dùng xếp CUỐI + mờ đi (server đã sort sẵn,
+    /// xem GetVoucherCuaToiAsync). Không có nút "Áp dụng" ở đây — voucher chỉ dùng được lúc đặt hàng
+    /// (trang Thanh toán), card này chỉ để xem có gì/đã dùng gì chưa.
+    private var voucherCard: some View {
+        cardBox {
+            cardHeader("🎟️", "Voucher của bạn")
+            ForEach(Array(vouchers.enumerated()), id: \.element.id) { index, v in
+                if index > 0 { Divider() }
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(v.ten).font(.system(size: 14, weight: .semibold)).foregroundColor(.primary)
+                        if let moTa = v.moTa, !moTa.isEmpty {
+                            Text(moTa).font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                        }
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("-\(formatTien(v.soTienGiam))").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
+                        if v.daSuDung {
+                            Text("Đã dùng").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                        }
+                    }
+                }
+                .padding(.vertical, 6)
+                .opacity(v.daSuDung ? 0.4 : 1)
+            }
         }
     }
 
@@ -113,6 +144,7 @@ struct UuDaiView: View {
                     TextField("Nhập mã giới thiệu", text: $maNhap)
                         .textInputAutocapitalization(.characters)
                         .textFieldStyle(.roundedBorder)
+                        .tint(Theme.primary)
                     Button {
                         Task { await apDungMa() }
                     } label: {
@@ -147,7 +179,8 @@ struct UuDaiView: View {
     private func load() async {
         async let temTask = APIClient.shared.getTheTem()
         async let gtTask = APIClient.shared.getGioiThieu()
-        (theTem, gioiThieu) = await (temTask, gtTask)
+        async let voucherTask = APIClient.shared.getVoucherCuaToi()
+        (theTem, gioiThieu, vouchers) = await (temTask, gtTask, voucherTask)
         loading = false
     }
 

@@ -189,6 +189,7 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
+                .tint(Theme.primary)
                 .focused($diaChiFocused)
                 .onSubmit { Task { await geocodeTypedAddressIfNeeded() } }
                 .onChange(of: diaChiFocused) { focused in
@@ -456,6 +457,7 @@ struct CheckoutView: View {
             Text("Ghi chú thêm").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
             TextField("", text: $ghiChu)
                 .textFieldStyle(.roundedBorder)
+                .tint(Theme.primary)
         }
     }
 

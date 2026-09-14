@@ -102,6 +102,7 @@ struct SearchFieldRow: View {
                 .foregroundColor(isFocused ? Theme.primary : Theme.textMuted)
                 .font(.system(size: 14))
             TextField(placeholder, text: $text)
+                .tint(Theme.primary)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)

@@ -36,6 +36,7 @@ struct XoaTaiKhoanView: View {
                 Section("Mã xác nhận") {
                     TextField("Nhập mã OTP đã gửi về SĐT", text: $otp)
                         .keyboardType(.numberPad)
+                        .tint(Theme.primary)
                 }
             }
 
