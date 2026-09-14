@@ -80,7 +80,7 @@ struct UuDaiView: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("-\(formatTien(v.soTienGiam))").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
+                        Text(v.nhanGiamGia).font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
                         if v.daSuDung {
                             Text("Đã dùng").font(.system(size: 11)).foregroundColor(Theme.textFaint)
                         }

@@ -78,6 +78,15 @@ struct Voucher: Decodable, Identifiable, Equatable {
     let ten: String
     let moTa: String?
     let soTienGiam: Double
+    // "SoTien" (mặc định) | "PhanTram" — xem VoucherLoaiGiam bên Backend.
+    var loaiGiam: String = "SoTien"
+    var phanTramGiam: Double?
+
+    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng, khớp
+    /// DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo đơn, đây chỉ để hiển thị).
+    func soTienGiamThucTe(tongTienHang: Double) -> Double {
+        loaiGiam == "PhanTram" ? floor(tongTienHang * (phanTramGiam ?? 0) / 100) : soTienGiam
+    }
 }
 
 /// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở
@@ -88,7 +97,15 @@ struct VoucherCuaToi: Decodable, Identifiable {
     let ten: String
     let moTa: String?
     let soTienGiam: Double
+    var loaiGiam: String = "SoTien"
+    var phanTramGiam: Double?
     let daSuDung: Bool
+
+    /// Nhãn giảm giá cho tab Ưu đãi — không có đơn cụ thể để tính số tiền thật cho voucher %,
+    /// nên hiện "-X%" thay vì "-0đ" (khớp cách AppQuanLyIOS hiện cho staff).
+    var nhanGiamGia: String {
+        loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+    }
 }
 struct Topping: Decodable, Identifiable { let id: String; let ten: String; let gia: Double; let ngungBan: Bool }
 
