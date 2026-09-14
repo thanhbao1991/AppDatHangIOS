@@ -1,11 +1,11 @@
 import SwiftUI
 import CoreLocation
 
-/// Bước 2 = trang "Thanh toán" (địa chỉ + hình thức thanh toán) sau khi khách bấm "Đặt hàng" ở tab
-/// Giỏ hàng (GioHangView) — tách khỏi tab Giỏ hàng theo bố cục Shopee: card Địa chỉ (gộp cả chọn
-/// Giao tận nơi/Nhận tại quán), card Hình thức thanh toán, ghi chú + tổng tiền + nút Đặt hàng cố
-/// định dưới cùng. KHÔNG còn timeline đánh số 1/2/3 (bản cũ gộp cả bước Hoá đơn vào đây) vì giờ mỗi
-/// bước là 1 màn riêng, không cần đường nối giữa các card nữa.
+/// Bước 2 = trang "Thanh toán" sau khi khách bấm "Đặt hàng" ở tab Giỏ hàng (GioHangView) — trình bày
+/// theo bố cục Shopee: header tự vẽ (ẩn navbar hệ thống), thanh địa chỉ gọn có thể bung ra sửa, card
+/// "Dùng Xu", card "Hình thức thanh toán" (ẩn nếu Xu trả đủ), card "Chi tiết thanh toán" (tổng tiền
+/// hàng/phí ship/giảm giá Xu/tổng thanh toán), card Ghi chú, cuối cùng là thanh Tổng cộng + nút Đặt
+/// hàng cố định dưới cùng.
 struct CheckoutView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
@@ -35,32 +35,57 @@ struct CheckoutView: View {
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
 
-    /// Hình thức thanh toán khách chọn — chỉ ảnh hưởng bước SAU khi đặt xong (có hiện trang QR hay
-    /// không) + ghi vào ghi chú cho nhân viên biết trước, KHÔNG có schema riêng ở backend (xem
-    /// datHang() — tiền tố gắn thẳng vào GhiChu, giữ tối giản vì thu tiền COD vốn đã qua quy trình
-    /// "thu tiền mặt" sẵn có của nhân viên/shipper, không cần trường trạng thái mới). Mặc định COD
-    /// nếu chưa từng đặt lần nào, còn lại nhớ đúng lựa chọn lần đặt gần nhất (Prefs.hinhThucThanhToan)
-    /// để lần sau tự chọn sẵn — xem paymentOptionRow() nơi lưu lại mỗi lần khách đổi.
+    /// Bung/thu thanh địa chỉ gọn (kiểu Shopee) — mặc định thu gọn nếu đã có địa chỉ mặc định sẵn
+    /// (khách quen), tự bung nếu chưa có gì để nhập (xem .task).
+    @State private var diaChiExpanded = false
+
+    /// Hình thức thanh toán khách chọn — KHÔNG có schema riêng ở backend, chỉ gắn tiền tố vào GhiChu
+    /// cho nhân viên biết trước (xem datHang()). Mặc định COD nếu chưa từng đặt lần nào, còn lại nhớ
+    /// đúng lựa chọn lần đặt gần nhất (Prefs.hinhThucThanhToan).
     @State private var hinhThucThanhToan: HinhThucThanhToan = HinhThucThanhToan(rawValue: Prefs.hinhThucThanhToan ?? "") ?? .codTraKhiNhanHang
+
+    /// Ví Xu của khách — tải riêng (không dùng chung state SettingsView) chỉ để lấy soDu cho toggle
+    /// "Dùng Xu". nil trong lúc chưa tải xong thì ẩn hẳn card Dùng Xu, tránh nhấp nháy "0đ" rồi đổi.
+    @State private var vi: KhachHangVi?
+    @State private var dungXu = false
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
 
+    private var soDu: Double { vi?.soDu ?? 0 }
+    private var tongTienHang: Double { cart.totalPrice }
+    private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
+    private var tongCanTra: Double { tongTienHang + phiShip }
+    private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
+    private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
+    /// Xu trả đủ 100% đơn — ẩn hẳn card Hình thức thanh toán (không còn gì phải chọn COD/QR nữa) và
+    /// điều hướng sau khi đặt giống COD (không có QR để quét vì không còn tiền phải chuyển khoản).
+    private var xuTraDu: Bool { dungXu && tongCanTra > 0 && soTienDungXu >= tongCanTra }
+
     var body: some View {
         VStack(spacing: 0) {
+            header
             List {
-                cardRow(topExtra: 6) { cardBox { diaChiCardContent } }
-                cardRow { cardBox { thanhToanCardContent } }
+                cardRow(topExtra: 6) { diaChiSection }
+                if soDu > 0 {
+                    cardRow { cardBox { dungXuCardContent } }
+                }
+                if !xuTraDu {
+                    cardRow { cardBox { thanhToanCardContent } }
+                }
+                cardRow { cardBox { chiTietThanhToanCardContent } }
                 cardRow { cardBox { ghiChuCardContent } }
             }
             .cardListBackground()
             bottomBar
         }
-        .navigationTitle("Thanh toán")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
+            async let viTask: KhachHangVi? = APIClient.shared.getVi()
             await loadDiaChi()
             await loadTenDuong()
+            vi = await viTask
+            diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
             // loadDiaChi(), hoặc chọn "Nhận tại quán" không cần).
@@ -70,27 +95,82 @@ struct CheckoutView: View {
         }
     }
 
-    // MARK: - Card 1: Địa chỉ (gộp toggle Giao tận nơi/Nhận tại quán)
+    // MARK: - Header tự vẽ (thay navbar hệ thống — khớp bố cục Shopee: nền trắng, back bên trái, tiêu
+    // đề giữa màu đen thay vì thanh xanh brand như các trang khác).
 
-    private var diaChiCardContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Địa chỉ").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-            Picker("", selection: $nhanTaiQuan) {
-                Text("Giao tận nơi").tag(false)
-                Text("Nhận tại quán").tag(true)
+    private var header: some View {
+        ZStack {
+            Text("Thanh toán").font(.system(size: 17, weight: .bold)).foregroundColor(.primary)
+            HStack {
+                Button {
+                    if !path.isEmpty { path.removeLast() }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(Theme.primary)
+                        .frame(width: 44, height: 44, alignment: .leading)
+                }
+                Spacer()
             }
-            .pickerStyle(.segmented)
-
-            if nhanTaiQuan { pickupContent } else { addressContent }
         }
+        .padding(.horizontal, 4)
+        .frame(height: 44)
+        .background(Color.white)
+        .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .bottom)
+    }
+
+    // MARK: - Thanh địa chỉ gọn (bung ra sửa) — gộp toggle Giao tận nơi/Nhận tại quán
+
+    private var diaChiSection: some View {
+        VStack(spacing: 0) {
+            diaChiCompactBar
+            if diaChiExpanded {
+                Divider().padding(.horizontal, 14)
+                VStack(alignment: .leading, spacing: 10) {
+                    Picker("", selection: $nhanTaiQuan) {
+                        Text("Giao tận nơi").tag(false)
+                        Text("Nhận tại quán").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if nhanTaiQuan { pickupContent } else { addressContent }
+                }
+                .padding(14)
+            }
+        }
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+        .padding(.horizontal)
+        .padding(.vertical, 6)
+    }
+
+    private var diaChiCompactBar: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) { diaChiExpanded.toggle() }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "mappin.circle.fill").foregroundColor(Theme.primary).font(.system(size: 20))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(nhanTaiQuan ? "Nhận tại quán" : "Giao tận nơi")
+                        .font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+                    Text(nhanTaiQuan ? "Ghé quán lấy hàng, không mất phí ship" : (diaChi.isEmpty ? "Chưa có địa chỉ giao hàng" : diaChi))
+                        .font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: diaChiExpanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 12)).foregroundColor(Theme.textMuted)
+            }
+            .padding(14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — kèm nút mở quà tặng Xu (dùng lại nguyên
     /// vòng quay may mắn hiện có bên UuDaiView, 1 lượt/ngày) để khuyến khích khách tự đến lấy.
     private var pickupContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Ghé quán lấy hàng — không mất phí ship!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
                     .font(.system(size: 15, weight: .bold)).foregroundColor(Theme.primary)
@@ -167,7 +247,7 @@ struct CheckoutView: View {
 
             // Nút "Dùng vị trí hiện tại" đã bỏ — từ khi có auto-xin định vị ngay lúc vào trang này
             // (.task ở body), bấm tay lại thành thừa. locLoading vẫn còn dùng cho spinner lúc auto-xin
-            // chạy lần đầu (xem estimatingShip bên dưới hiện "Đang tính phí ship...").
+            // chạy lần đầu.
             if locLoading {
                 HStack(spacing: 6) {
                     ProgressView().scaleEffect(0.8)
@@ -182,10 +262,6 @@ struct CheckoutView: View {
                     Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             } else if let coord, let ship, let km = ship.khoangCachKm {
-                // Backend LUÔN trả khoangCachKm từ 2026-09-14 (không còn mốc "đơn đủ lớn thì miễn phí
-                // bất kể xa gần" bỏ qua OSRM) nên nhánh else (ship chưa có khoảng cách) không còn xảy
-                // ra thực tế — giữ optional binding cho an toàn kiểu dữ liệu, không xử lý riêng nữa.
-                // Phí ship (kể cả 0đ) hiện rõ ở bottomBar cùng "Tổng cộng", không lặp lại ở đây nữa.
                 DeliveryMapView(
                     shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
                     deliveryCoordinate: coord,
@@ -205,7 +281,19 @@ struct CheckoutView: View {
         }
     }
 
-    // MARK: - Card 2: Hình thức thanh toán
+    // MARK: - Card: Dùng Xu
+
+    private var dungXuCardContent: some View {
+        Toggle(isOn: $dungXu) {
+            HStack(spacing: 8) {
+                Text("🟡").font(.system(size: 16))
+                Text("Dùng Xu (số dư \(formatTien(soDu)))").font(.system(size: 14)).foregroundColor(.primary)
+            }
+        }
+        .tint(Theme.primary)
+    }
+
+    // MARK: - Card: Hình thức thanh toán
 
     private var thanhToanCardContent: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -234,7 +322,32 @@ struct CheckoutView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Card 3: Ghi chú
+    // MARK: - Card: Chi tiết thanh toán
+
+    private var chiTietThanhToanCardContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Chi tiết thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            chiTietRow("Tổng tiền hàng", formatTien(tongTienHang))
+            if !nhanTaiQuan {
+                chiTietRow("Phí vận chuyển", formatTien(phiShip))
+            }
+            if soTienDungXu > 0 {
+                chiTietRow("Dùng Xu", "-" + formatTien(soTienDungXu), color: Theme.danger)
+            }
+            Divider()
+            chiTietRow("Tổng thanh toán", formatTien(conLaiPhaiTra), bold: true)
+        }
+    }
+
+    private func chiTietRow(_ label: String, _ value: String, bold: Bool = false, color: Color = .primary) -> some View {
+        HStack {
+            Text(label).font(.system(size: 13)).foregroundColor(bold ? .primary : Theme.textMuted)
+            Spacer()
+            Text(value).font(.system(size: bold ? 15 : 13, weight: bold ? .bold : .regular)).foregroundColor(color)
+        }
+    }
+
+    // MARK: - Card: Ghi chú
 
     private var ghiChuCardContent: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -249,19 +362,10 @@ struct CheckoutView: View {
     private var bottomBar: some View {
         VStack(spacing: 8) {
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
-            // Phí ship ghi rõ số tiền (kể cả 0đ) ngay cạnh Tổng cộng — thay cho badge/chữ "Miễn phí
-            // giao hàng" ở card Địa chỉ trước đây.
-            if !nhanTaiQuan, let ship {
-                HStack {
-                    Text("Phí ship").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                    Spacer()
-                    Text(formatTien(ship.phiShip)).font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                }
-            }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tổng cộng").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                    Text(formatTien(cart.totalPrice + (ship?.phiShip ?? 0))).font(.system(size: 18, weight: .bold))
+                    Text(formatTien(conLaiPhaiTra)).font(.system(size: 18, weight: .bold))
                 }
                 Spacer()
                 Button {
@@ -280,7 +384,7 @@ struct CheckoutView: View {
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .top)
     }
 
-    // MARK: - Data loading / logic (giữ nguyên từ bản gộp cũ)
+    // MARK: - Data loading / logic
 
     private func loadDiaChi() async {
         let list = await APIClient.shared.getDiaChiList()
@@ -368,10 +472,11 @@ struct CheckoutView: View {
         }
     }
 
-    /// Đặt hàng — hình thức thanh toán KHÔNG có field riêng ở backend (xem @State hinhThucThanhToan),
-    /// gắn tiền tố vào GhiChu để nhân viên biết trước khách định trả kiểu gì, rồi điều hướng khác
-    /// nhau: chọn QR thì sang trang quét mã ngay (như hành vi cũ), chọn COD thì về thẳng tab Đơn hàng
-    /// (tiền thu sau qua quy trình "thu tiền mặt" sẵn có, không cần khách xem QR).
+    /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
+    /// GhiChu cho nhân viên biết trước, cộng thêm dungVi/hinhThucThanhToan để server tự trừ ví
+    /// (best-effort) và biết PhuongThucThanhToanId nào khi ghi dòng trừ ví. Điều hướng sau khi đặt:
+    /// Xu trả đủ hoặc chọn COD → về thẳng tab Đơn hàng; chọn QR (còn tiền phải chuyển khoản) → sang
+    /// trang quét mã.
     private func datHang() async {
         guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
             error = "Vui lòng nhập địa chỉ giao hàng."
@@ -381,18 +486,21 @@ struct CheckoutView: View {
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
         let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
-        let ghiChuPrefix = hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR"
+        let ghiChuPrefix = xuTraDu
+            ? "🟡 Đã thanh toán bằng Xu"
+            : (hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR")
         let ghiChuTrimmed = ghiChu.trimmingCharacters(in: .whitespaces)
         let ghiChuFull = ghiChuTrimmed.isEmpty ? ghiChuPrefix : "\(ghiChuPrefix) — \(ghiChuTrimmed)"
         let result = await APIClient.shared.datMon(
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
-            clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan
+            clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
+            dungVi: dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
             cart.clear()
-            if hinhThucThanhToan == .chuyenKhoanQR {
+            if !xuTraDu && hinhThucThanhToan == .chuyenKhoanQR {
                 path.append(.thanhToan(hoaDonId: data.id))
             } else {
                 selectedTab = .donHang

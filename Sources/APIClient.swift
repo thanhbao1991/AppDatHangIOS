@@ -265,8 +265,8 @@ actor APIClient {
 
     // ===== Đặt món =====
 
-    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false) async -> ApiEnvelope<DatMonResponse> {
-        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan)
+    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil) async -> ApiEnvelope<DatMonResponse> {
+        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan, dungVi: dungVi, hinhThucThanhToan: hinhThucThanhToan)
         return await decode("/dat-hang/dat-mon", method: "POST", body: jsonBody(body))
     }
 
