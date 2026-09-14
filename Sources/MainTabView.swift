@@ -82,6 +82,13 @@ struct MainTabView: View {
                     }
                 }
             }
+            // Chevron back button do SwiftUI tự vẽ (không đi qua UINavigationBarAppearance ở
+            // AppDatHangIOSApp.init — cái đó chỉ chắc ăn với CHỮ back/tiêu đề) cần .tint() ở tầng
+            // SwiftUI mới lên đúng màu trắng, verify thật: thiếu dòng này mũi tên back biến mất dù
+            // chữ "Menu" vẫn trắng bình thường. Đặt ở đây (ngoài switch) để áp dụng chung mọi tab,
+            // không phải thêm riêng từng NavigationStack — mọi Button/control CÓ set .tint() riêng
+            // (vd nút primary màu Theme.primary) vẫn override được bình thường, không bị đè.
+            .tint(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
