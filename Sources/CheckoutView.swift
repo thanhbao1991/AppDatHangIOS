@@ -32,8 +32,6 @@ struct CheckoutView: View {
 
     /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định).
     @State private var nhanTaiQuan = false
-    @State private var dangQuay = false
-    @State private var ketQuaQuay: String?
 
     /// Bung/thu thanh địa chỉ gọn (kiểu Shopee) — mặc định thu gọn nếu đã có địa chỉ mặc định sẵn
     /// (khách quen), tự bung nếu chưa có gì để nhập (xem .task).
@@ -167,31 +165,12 @@ struct CheckoutView: View {
         .buttonStyle(.plain)
     }
 
-    /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — kèm nút mở quà tặng Xu (dùng lại nguyên
-    /// vòng quay may mắn hiện có bên UuDaiView, 1 lượt/ngày) để khuyến khích khách tự đến lấy.
+    /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — KHÔNG mở quà Xu ngay ở đây nữa (trước
+    /// đây bấm mở luôn lúc đặt, nay chỉ báo trước để khách biết, quà thật sự mở sau khi đơn hoàn
+    /// thành — tránh khách "ăn quà" xong huỷ đơn/không tới lấy).
     private var pickupContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let ketQuaQuay {
-                Text("🎉 " + ketQuaQuay)
-                    .font(.system(size: 15, weight: .bold)).foregroundColor(Theme.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 10)
-                    .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
-                Button {
-                    Task { await moQuaXu() }
-                } label: {
-                    HStack {
-                        Spacer()
-                        if dangQuay { ProgressView().tint(.white) } else { Text("🎁 Mở quà nhận Xu").fontWeight(.bold) }
-                        Spacer()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.primary)
-                .disabled(dangQuay)
-            }
-        }
+        Text("🎁 Bạn sẽ được mở 1 lượt quà Xu sau khi đơn hoàn thành")
+            .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
     private var addressContent: some View {
@@ -508,19 +487,6 @@ struct CheckoutView: View {
             }
         } else {
             error = result.message ?? "Đặt hàng thất bại."
-        }
-    }
-
-    /// Mở quà tặng Xu khi khách chọn "Nhận tại quán" — dùng lại NGUYÊN vòng quay may mắn hiện có
-    /// (1 lượt/ngày, xem UuDaiView.quay()).
-    private func moQuaXu() async {
-        dangQuay = true
-        defer { dangQuay = false }
-        let res = await APIClient.shared.quayVongQuay()
-        if res.isSuccess, let data = res.data {
-            ketQuaQuay = data.label
-        } else {
-            ketQuaQuay = res.message ?? "Bạn đã dùng hết lượt quay hôm nay."
         }
     }
 }
