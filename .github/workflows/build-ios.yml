@@ -45,6 +45,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Chỉ dev/test dùng — danh sách SĐT test (mật khẩu chung "123456") KHÔNG được commit vào repo
+      # PUBLIC này (xem LoginView.swift, quickTestAccounts). Bí mật TEST_ACCOUNTS_JSON rỗng/chưa set
+      # thì bỏ qua, hàng nút chọn nhanh ở màn Login tự ẩn, không ảnh hưởng build thật.
+      - name: Write local test accounts (from secret, not committed)
+        env:
+          TEST_ACCOUNTS_JSON: ${{ secrets.TEST_ACCOUNTS_JSON }}
+        run: |
+          if [ -n "$TEST_ACCOUNTS_JSON" ]; then
+            echo "$TEST_ACCOUNTS_JSON" > Sources/TestAccounts.local.json
+          fi
+
       - name: Install XcodeGen
         run: brew install xcodegen
 

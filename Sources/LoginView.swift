@@ -100,16 +100,19 @@ struct LoginView: View {
     }
 
     #if DEBUG
-    // CHỈ build Debug, KHÔNG hardcode SĐT khách thật vào source (sẽ nằm mãi trong git history) — đọc
-    // từ TestAccounts.local.json cùng thư mục, file này nằm trong .gitignore nên KHÔNG được commit.
-    // Máy khác/CI không có file này → mảng rỗng → hàng nút tự ẩn, build vẫn qua bình thường. Tạo file
-    // cục bộ dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật khẩu chung "123456" (set tay
-    // qua SQL cho các tài khoản test, xem trao đổi 2026-09-14).
+    // CHỈ build Debug, KHÔNG hardcode SĐT khách thật vào source (repo AppDatHangIOS là PUBLIC — sẽ
+    // lộ công khai và nằm mãi trong git history). Đọc TestAccounts.local.json như 1 BUNDLE RESOURCE
+    // thật (không phải đọc thẳng filesystem qua #file — cách đó chỉ trỏ tới máy build, KHÔNG tồn tại
+    // trên iPhone thật). File nằm trong .gitignore, KHÔNG commit — local dev tự tạo trong Sources/,
+    // CI (build-ios.yml) ghi từ secret TEST_ACCOUNTS_JSON trước bước xcodegen generate (XcodeGen tự
+    // gom .json trong Sources/ vào Copy Bundle Resources). Không có file → mảng rỗng, hàng nút tự ẩn,
+    // build vẫn qua bình thường. Định dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật
+    // khẩu chung "123456" (set tay qua SQL cho tài khoản test, xem trao đổi 2026-09-14).
     private struct TestAccountEntry: Decodable { let label: String; let phone: String }
 
     private var quickTestAccounts: [TestAccountEntry] {
-        let path = URL(fileURLWithPath: #file).deletingLastPathComponent().appendingPathComponent("TestAccounts.local.json")
-        guard let data = try? Data(contentsOf: path),
+        guard let url = Bundle.main.url(forResource: "TestAccounts.local", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
               let arr = try? JSONDecoder().decode([TestAccountEntry].self, from: data) else { return [] }
         return arr
     }
