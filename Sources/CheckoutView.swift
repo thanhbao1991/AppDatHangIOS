@@ -59,6 +59,10 @@ struct CheckoutView: View {
     @State private var selectedVoucher: Voucher?
     @State private var showVoucherSheet = false
     @State private var gioMoBan: GioMoBanDto?
+    /// SanPhamId khách đã từng gọi Size L — dùng để CHỈ hiện voucher UpsizeMonMoi (giamTheoSoLuongSizeL)
+    /// khi giỏ hàng thật sự có dòng Size L của sản phẩm CHƯA từng upsize, thay vì hiện tràn lan rồi báo
+    /// "-0đ"/lỗi lúc chọn.
+    @State private var sanPhamDaTungUpsize: Set<String> = []
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
@@ -68,6 +72,17 @@ struct CheckoutView: View {
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
+    /// Voucher hợp lệ để hiện cho khách chọn — với UpsizeMonMoi (giamTheoSoLuongSizeL), giỏ hàng phải
+    /// có ít nhất 1 dòng Size L thuộc sản phẩm CHƯA từng upsize, nếu không ẩn hẳn thay vì hiện rồi báo lỗi.
+    private var vouchersHienThi: [Voucher] {
+        vouchers.filter { v in
+            guard v.giamTheoSoLuongSizeL else { return true }
+            return cart.items.contains { item in
+                guard let spId = item.sanPhamId, isSizeLBienThe(item.tenBienThe) else { return false }
+                return !sanPhamDaTungUpsize.contains(spId)
+            }
+        }
+    }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
     private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
     private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
@@ -81,7 +96,7 @@ struct CheckoutView: View {
             List {
                 cardRow(topExtra: 6) { diaChiSection }
                 cardRow { cardBox { donHangCardContent } }
-                if soDu > 0 || !vouchers.isEmpty {
+                if soDu > 0 || !vouchersHienThi.isEmpty {
                     cardRow { cardBox { uuDaiCardContent } }
                 }
                 if !xuTraDu {
@@ -95,6 +110,11 @@ struct CheckoutView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showVoucherSheet) { voucherSheet }
+        .onChange(of: cart.items) { _ in
+            if let selectedVoucher, !vouchersHienThi.contains(where: { $0.id == selectedVoucher.id }) {
+                self.selectedVoucher = nil
+            }
+        }
         .alert("Lưu ý về voucher", isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
             Button("Đã hiểu") {
                 voucherWarning = nil
@@ -108,11 +128,13 @@ struct CheckoutView: View {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
             async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
+            async let sanPhamDaTungUpsizeTask: [String] = APIClient.shared.getSanPhamDaTungUpsize()
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
             vouchers = await voucherTask
             gioMoBan = await gioMoBanTask
+            sanPhamDaTungUpsize = Set(await sanPhamDaTungUpsizeTask)
             diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
@@ -331,7 +353,7 @@ struct CheckoutView: View {
 
     private var uuDaiCardContent: some View {
         VStack(alignment: .leading, spacing: 4) {
-            if !vouchers.isEmpty {
+            if !vouchersHienThi.isEmpty {
                 Button { showVoucherSheet = true } label: {
                     HStack {
                         Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 24)
@@ -360,7 +382,7 @@ struct CheckoutView: View {
                     }
                 }
                 .tint(Theme.primary)
-                .padding(.vertical, vouchers.isEmpty ? 0 : 6)
+                .padding(.vertical, vouchersHienThi.isEmpty ? 0 : 6)
             }
         }
     }
@@ -384,7 +406,7 @@ struct CheckoutView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                ForEach(vouchers) { v in
+                ForEach(vouchersHienThi) { v in
                     cardRow {
                         Button {
                             selectedVoucher = v

@@ -6,6 +6,10 @@ struct CartTopping: Identifiable, Hashable, Codable { let id: String; let ten: S
 struct CartItem: Identifiable, Hashable, Codable {
     let id: UUID
     let sanPhamBienTheId: String
+    /// Id sản phẩm CHA (khác sanPhamBienTheId là id biến thể) — dùng để đối chiếu "đã từng upsize"
+    /// khi lọc voucher UpsizeMonMoi ở CheckoutView. Optional vì giỏ hàng cũ lưu trước khi có field
+    /// này (JSON decode ra nil), và các luồng "Đặt lại" từ lịch sử đơn chưa có sẵn giá trị này.
+    let sanPhamId: String?
     let tenSanPham: String
     let tenBienThe: String
     let giaBan: Double
@@ -43,8 +47,8 @@ final class CartStore: ObservableObject {
     var totalCount: Int { items.reduce(0) { $0 + $1.soLuong } }
     var totalPrice: Double { items.reduce(0) { $0 + $1.thanhTien } }
 
-    func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil) {
-        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh))
+    func addItem(sanPhamBienTheId: String, sanPhamId: String? = nil, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil) {
+        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, sanPhamId: sanPhamId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh))
     }
 
     func removeItem(_ id: UUID) {
@@ -61,7 +65,7 @@ final class CartStore: ObservableObject {
     /// món ở CheckoutView để mở lại ProductPickerSheet ở chế độ sửa, thay vì thêm dòng mới.
     func updateItem(_ id: UUID, sanPhamBienTheId: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
         guard let idx = items.firstIndex(where: { $0.id == id }) else { return }
-        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh)
+        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, sanPhamId: items[idx].sanPhamId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh)
     }
 
     func clear() { items.removeAll() }
