@@ -350,39 +350,41 @@ struct CheckoutView: View {
     private var voucherSheet: some View {
         NavigationStack {
             List {
-                Button {
-                    selectedVoucher = nil
-                    showVoucherSheet = false
-                } label: {
-                    HStack {
-                        Text("Không dùng voucher").foregroundColor(.primary)
-                        Spacer()
-                        if selectedVoucher == nil {
-                            Image(systemName: "checkmark").foregroundColor(Theme.primary)
-                        }
-                    }
-                }
-                ForEach(vouchers) { v in
+                cardRow(topExtra: 6) {
                     Button {
-                        selectedVoucher = v
+                        selectedVoucher = nil
                         showVoucherSheet = false
                     } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(v.ten).font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                                if let moTa = v.moTa, !moTa.isEmpty {
-                                    Text(moTa).font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                                }
-                            }
+                            Text("Không dùng voucher").foregroundColor(.primary)
                             Spacer()
-                            Text("-\(formatTien(v.soTienGiamThucTe(tongTienHang: tongTienHang)))").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
-                            if selectedVoucher?.id == v.id {
+                            if selectedVoucher == nil {
                                 Image(systemName: "checkmark").foregroundColor(Theme.primary)
                             }
                         }
+                        .cardBoxStyle()
+                    }
+                    .buttonStyle(.plain)
+                }
+                ForEach(vouchers) { v in
+                    cardRow {
+                        Button {
+                            selectedVoucher = v
+                            showVoucherSheet = false
+                        } label: {
+                            VoucherTicketCard(
+                                ten: v.ten, moTa: v.moTa, ma: v.ma,
+                                nhanGiam: "-\(formatTien(v.soTienGiamThucTe(tongTienHang: tongTienHang)))",
+                                nhanGiamToiDa: nil,
+                                daChon: selectedVoucher?.id == v.id
+                            )
+                            .padding(.horizontal).padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
+            .cardListBackground()
             .navigationTitle("Chọn voucher")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
