@@ -93,6 +93,13 @@ func bienTheSuffix(_ ten: String) -> String {
     ["", "Mặc định", "Size Chuẩn", "Chuẩn"].contains(ten) ? "" : " (\(ten))"
 }
 
+/// Khớp "Size L" và lỗi chính tả có thật "Soze L" trong menu — cùng pattern LIKE '%ze L%' bên Backend
+/// (VoucherDieuKien.UpsizeMonMoi). Dùng chung MenuView (chip VIP) và CheckoutView (tính giảm giá
+/// preview cho voucher UpsizeMonMoi) để không lệch nhau.
+func isSizeLBienThe(_ tenBienThe: String) -> Bool {
+    tenBienThe.range(of: "ze L", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+}
+
 /// Chuẩn hoá chuỗi tiếng Việt để so khớp không dấu — dùng cho tìm kiếm món (MenuView) và gợi ý tên
 /// đường khi nhập địa chỉ (CheckoutView). Gom về 1 chỗ thay vì mỗi màn tự viết lại 1 bản.
 func normalizeVN(_ s: String) -> String {

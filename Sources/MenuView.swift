@@ -558,9 +558,7 @@ struct ProductPickerSheet: View {
     /// size khác khi active — gradient vàng kim + viền sáng + icon 👑, để bấm vào tự thấy "lên đời"
     /// thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác chọn Size L,
     /// khớp voucher UpsizeMonMoi (tặng Size L miễn phí món mới) đang khuyến khích thói quen này.
-    private func isSizeL(_ b: SanPhamBienThe) -> Bool {
-        b.tenBienThe.range(of: "ze L", options: [.caseInsensitive, .diacriticInsensitive]) != nil
-    }
+    private func isSizeL(_ b: SanPhamBienThe) -> Bool { isSizeLBienThe(b.tenBienThe) }
 
     @ViewBuilder
     private func sizeChipLabel(_ b: SanPhamBienThe, active: Bool) -> some View {

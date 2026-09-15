@@ -67,7 +67,7 @@ struct CheckoutView: View {
     private var tongTienHang: Double { cart.totalPrice }
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
-    private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang) ?? 0, tongTienHang) }
+    private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
     private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
     private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
@@ -342,7 +342,7 @@ struct CheckoutView: View {
                         }
                         Spacer()
                         if let selectedVoucher {
-                            Text("-\(formatTien(selectedVoucher.soTienGiamThucTe(tongTienHang: tongTienHang)))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                            Text("-\(formatTien(selectedVoucher.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items)))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
                         }
                         Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     }

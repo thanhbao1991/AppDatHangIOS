@@ -122,11 +122,21 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // Chỉ có ý nghĩa khi voucher là bậc thang (DieuKien=DonToiThieuBac nội bộ) — có giá trị thì LOẠI
     // GIẢM/PHẦN TRĂM ở trên vô nghĩa, ưu tiên dùng field này. Xem VoucherEntity.BacThang.
     var bacThang: String?
+    // true khi voucher giảm THEO SỐ LƯỢNG ly Size L trong giỏ (DieuKien=UpsizeMonMoi nội bộ) —
+    // soTienGiam là đơn giá MỖI LY, không phải mức giảm cố định cho cả đơn. Xem VoucherKhaDungDto.
+    var giamTheoSoLuongSizeL: Bool = false
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
-    /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), khớp
-    /// DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo đơn, đây chỉ để hiển thị).
-    func soTienGiamThucTe(tongTienHang: Double) -> Double {
+    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, UpsizeMonMoi thì
+    /// soTienGiam × tổng số ly Size L trong giỏ (ƯỚC LƯỢNG — client không biết được sản phẩm nào
+    /// khách ĐÃ TỪNG upsize trước đây, chỉ server mới tính chính xác lúc tạo đơn; đây chỉ để tránh
+    /// hiện SAI hẳn như trước — vd giỏ không có Size L nào vẫn hiện giảm 5k, phát hiện qua ảnh chụp
+    /// thật 2026-09-15), còn lại PhanTram tính trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi
+    /// chặn trần giamToiDa), khớp DatHangService.TinhSoTienGiam bên Backend.
+    func soTienGiamThucTe(tongTienHang: Double, cartItems: [CartItem] = []) -> Double {
+        if giamTheoSoLuongSizeL {
+            let soLuongSizeL = cartItems.filter { isSizeLBienThe($0.tenBienThe) }.reduce(0) { $0 + $1.soLuong }
+            return min(soTienGiam * Double(soLuongSizeL), tongTienHang)
+        }
         if let bacs = parseBacThang(bacThang) {
             return min(bacApDung(bacs, donGiaTri: tongTienHang) ?? 0, tongTienHang)
         }
@@ -141,6 +151,7 @@ struct Voucher: Decodable, Identifiable, Equatable {
     /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng. Bậc thang không có 1
     /// "rate" duy nhất — hiện mức giảm CAO NHẤT có thể đạt ("Lên đến Xđ").
     var nhanGiamGia: String {
+        if giamTheoSoLuongSizeL { return "-\(formatTien(soTienGiam))/ly Size L" }
         if let bacs = parseBacThang(bacThang), let max = bacs.map(\.giam).max() {
             return "Lên đến -\(formatTien(max))"
         }
