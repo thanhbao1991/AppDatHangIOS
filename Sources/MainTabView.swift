@@ -82,6 +82,10 @@ struct MainTabView: View {
                     NavigationStack {
                         UuDaiView(notificationBell: AnyView(notificationBell))
                     }
+                case .voucher:
+                    NavigationStack {
+                        VoucherCuaToiView(notificationBell: AnyView(notificationBell))
+                    }
                 case .settings:
                     NavigationStack {
                         SettingsView(isLoggedIn: $isLoggedIn, notificationBell: AnyView(notificationBell), accountSettingsGear: AnyView(accountSettingsGear))
@@ -176,6 +180,7 @@ struct MainTabView: View {
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
             tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
+            tabButton(.voucher, label: "Voucher", icon: "ticket")
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
         .padding(.top, 6)

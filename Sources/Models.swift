@@ -106,6 +106,7 @@ struct VoucherCuaToi: Decodable, Identifiable {
     var loaiGiam: String = "SoTien"
     var phanTramGiam: Double?
     var giamToiDa: Double?
+    var donToiThieu: Double?
     let daSuDung: Bool
 
     /// Nhãn giảm giá cho tab Ưu đãi — không có đơn cụ thể để tính số tiền thật cho voucher %,

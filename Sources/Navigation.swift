@@ -16,5 +16,5 @@ enum DonHangRoute: Hashable {
 }
 
 enum AppTab: Hashable {
-    case home, cart, donHang, sanThuong, settings
+    case home, cart, donHang, sanThuong, voucher, settings
 }
