@@ -100,6 +100,13 @@ struct Voucher: Decodable, Identifiable, Equatable {
     var nhanGiamGia: String {
         loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
     }
+
+    /// "Tối đa Xđ" khi voucher % có trần giảm — khớp VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab
+    /// Voucher (không hiện số tiền quy đổi riêng cho đơn hiện tại).
+    var nhanGiamToiDa: String? {
+        guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        return "Tối đa \(formatTien(giamToiDa))"
+    }
 }
 
 /// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở

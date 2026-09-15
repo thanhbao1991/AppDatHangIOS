@@ -372,14 +372,13 @@ struct CheckoutView: View {
                             selectedVoucher = v
                             showVoucherSheet = false
                         } label: {
+                            // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
+                            // tiền quy đổi riêng cho đơn hiện tại nữa, tránh cùng 1 voucher trông như
+                            // 2 voucher khác nhau giữa 2 màn.
                             VoucherTicketCard(
                                 ten: v.ten, moTa: v.moTa, ma: v.ma,
-                                // Headline khớp tab Voucher (luôn hiện % gốc, không phải tiền quy đổi
-                                // cho đơn cụ thể) — tránh cảm giác "lệch số" giữa 2 màn khi cùng 1
-                                // voucher hiện 2 con số khác nhau. Số tiền thực tế cho ĐƠN NÀY chỉ là
-                                // phụ chú nhỏ bên dưới, giống vị trí "Tối đa Xđ".
                                 nhanGiam: v.nhanGiamGia,
-                                nhanGiamToiDa: "= \(formatTien(v.soTienGiamThucTe(tongTienHang: tongTienHang))) cho đơn này",
+                                nhanGiamToiDa: v.nhanGiamToiDa,
                                 daChon: selectedVoucher?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)
