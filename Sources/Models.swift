@@ -81,11 +81,17 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // "SoTien" (mặc định) | "PhanTram" — xem VoucherLoaiGiam bên Backend.
     var loaiGiam: String = "SoTien"
     var phanTramGiam: Double?
+    // Trần giảm tối đa — chỉ có ý nghĩa khi loaiGiam == "PhanTram". Xem VoucherEntity.GiamToiDa.
+    var giamToiDa: Double?
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng, khớp
-    /// DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo đơn, đây chỉ để hiển thị).
+    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng rồi chặn trần
+    /// giamToiDa (nếu có), khớp DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo
+    /// đơn, đây chỉ để hiển thị).
     func soTienGiamThucTe(tongTienHang: Double) -> Double {
-        loaiGiam == "PhanTram" ? floor(tongTienHang * (phanTramGiam ?? 0) / 100) : soTienGiam
+        guard loaiGiam == "PhanTram" else { return soTienGiam }
+        let giam = floor(tongTienHang * (phanTramGiam ?? 0) / 100)
+        if let giamToiDa, giamToiDa > 0 { return min(giam, giamToiDa) }
+        return giam
     }
 }
 
@@ -99,12 +105,19 @@ struct VoucherCuaToi: Decodable, Identifiable {
     let soTienGiam: Double
     var loaiGiam: String = "SoTien"
     var phanTramGiam: Double?
+    var giamToiDa: Double?
     let daSuDung: Bool
 
     /// Nhãn giảm giá cho tab Ưu đãi — không có đơn cụ thể để tính số tiền thật cho voucher %,
     /// nên hiện "-X%" thay vì "-0đ" (khớp cách AppQuanLyIOS hiện cho staff).
     var nhanGiamGia: String {
         loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+    }
+
+    /// "Tối đa Xđ" khi voucher % có trần giảm — nil khi không áp dụng (SoTien hoặc không giới hạn).
+    var nhanGiamToiDa: String? {
+        guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        return "Tối đa \(formatTien(giamToiDa))"
     }
 }
 struct Topping: Decodable, Identifiable { let id: String; let ten: String; let gia: Double; let ngungBan: Bool }

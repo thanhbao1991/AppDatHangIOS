@@ -81,6 +81,9 @@ struct UuDaiView: View {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(v.nhanGiamGia).font(.system(size: 14, weight: .bold)).foregroundColor(Theme.danger)
+                        if let nhanGiamToiDa = v.nhanGiamToiDa {
+                            Text(nhanGiamToiDa).font(.system(size: 11)).foregroundColor(Theme.textMuted)
+                        }
                         if v.daSuDung {
                             Text("Đã dùng").font(.system(size: 11)).foregroundColor(Theme.textFaint)
                         }
