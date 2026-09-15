@@ -13,6 +13,12 @@ struct CheckoutView: View {
 
     @State private var ghiChu = ""
     @State private var diaChi = ""
+    /// Cảnh báo từ server khi voucher đã chọn KHÔNG áp dụng được (đơn vẫn tạo thành công, chỉ không
+    /// giảm giá) — vd voucher hiện trong danh sách lúc CHƯA có đơn nên không kiểm được chính xác giỏ
+    /// hàng (UpsizeMonMoi cần biết dòng hàng cụ thể). Phải xem xong mới điều hướng đi tiếp, tránh
+    /// khách không biết vì sao không được giảm giá.
+    @State private var voucherWarning: String?
+    @State private var pendingNavigationAfterOrder: (() -> Void)?
     @State private var savedDiaChi: [DiaChiKhachHang] = []
     @State private var loading = false
     @State private var error = ""
@@ -89,6 +95,15 @@ struct CheckoutView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showVoucherSheet) { voucherSheet }
+        .alert("Lưu ý về voucher", isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
+            Button("Đã hiểu") {
+                voucherWarning = nil
+                pendingNavigationAfterOrder?()
+                pendingNavigationAfterOrder = nil
+            }
+        } message: {
+            Text(voucherWarning ?? "")
+        }
         .task {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
             async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
@@ -621,11 +636,19 @@ struct CheckoutView: View {
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
             cart.clear()
-            if !xuTraDu && hinhThucThanhToan == .chuyenKhoanQR {
-                path.append(.thanhToan(hoaDonId: data.id))
+            let navigate: () -> Void = {
+                if !xuTraDu && hinhThucThanhToan == .chuyenKhoanQR {
+                    path.append(.thanhToan(hoaDonId: data.id))
+                } else {
+                    selectedTab = .donHang
+                    path = []
+                }
+            }
+            if let warnings = result.warnings, !warnings.isEmpty {
+                pendingNavigationAfterOrder = navigate
+                voucherWarning = warnings.joined(separator: "\n")
             } else {
-                selectedTab = .donHang
-                path = []
+                navigate()
             }
         } else {
             error = result.message ?? "Đặt hàng thất bại."
