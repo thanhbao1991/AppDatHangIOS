@@ -382,6 +382,7 @@ struct CheckoutView: View {
                                 ten: v.ten, moTa: v.moTa, ma: v.ma,
                                 nhanGiam: v.nhanGiamGia,
                                 nhanGiamToiDa: v.nhanGiamToiDa,
+                                donToiThieu: v.donToiThieu,
                                 daChon: selectedVoucher?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)

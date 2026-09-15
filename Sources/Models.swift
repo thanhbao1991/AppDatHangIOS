@@ -87,6 +87,24 @@ struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
 /// cho TenDuongBox (nhân viên tạo đơn), xem CheckoutView.diaChiSuggestions.
 struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
 
+/// Parse "nguong1:giam1,nguong2:giam2,..." (Voucher.BacThang bên Backend) — dùng chung cho Voucher
+/// và VoucherCuaToi, tránh viết lặp 2 lần. nil nếu chuỗi rỗng/không hợp lệ.
+private func parseBacThang(_ raw: String?) -> [(nguong: Double, giam: Double)]? {
+    guard let raw, !raw.isEmpty else { return nil }
+    let bacs = raw.split(separator: ",").compactMap { phan -> (nguong: Double, giam: Double)? in
+        let parts = phan.split(separator: ":")
+        guard parts.count == 2, let n = Double(parts[0]), let g = Double(parts[1]) else { return nil }
+        return (n, g)
+    }
+    return bacs.isEmpty ? nil : bacs
+}
+
+/// Bậc CAO NHẤT mà donGiaTri đạt được trong danh sách bacs — khớp
+/// DatHangService.VoucherBacThangHelper.BacApDung (không cộng dồn nhiều bậc).
+private func bacApDung(_ bacs: [(nguong: Double, giam: Double)], donGiaTri: Double) -> Double? {
+    bacs.filter { donGiaTri >= $0.nguong }.map(\.giam).max()
+}
+
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem
 /// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
 struct Voucher: Decodable, Identifiable, Equatable {
@@ -100,11 +118,18 @@ struct Voucher: Decodable, Identifiable, Equatable {
     var phanTramGiam: Double?
     // Trần giảm tối đa — chỉ có ý nghĩa khi loaiGiam == "PhanTram". Xem VoucherEntity.GiamToiDa.
     var giamToiDa: Double?
+    var donToiThieu: Double?
+    // Chỉ có ý nghĩa khi voucher là bậc thang (DieuKien=DonToiThieuBac nội bộ) — có giá trị thì LOẠI
+    // GIẢM/PHẦN TRĂM ở trên vô nghĩa, ưu tiên dùng field này. Xem VoucherEntity.BacThang.
+    var bacThang: String?
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng, làm tròn LÊN hàng
-    /// nghìn đồng rồi chặn trần giamToiDa (nếu có), khớp DatHangService.TinhSoTienGiam bên Backend
-    /// (server tính lại khi tạo đơn, đây chỉ để hiển thị).
+    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
+    /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), khớp
+    /// DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo đơn, đây chỉ để hiển thị).
     func soTienGiamThucTe(tongTienHang: Double) -> Double {
+        if let bacs = parseBacThang(bacThang) {
+            return min(bacApDung(bacs, donGiaTri: tongTienHang) ?? 0, tongTienHang)
+        }
         guard loaiGiam == "PhanTram" else { return soTienGiam }
         let giam = ceil(tongTienHang * (phanTramGiam ?? 0) / 100 / 1000) * 1000
         if let giamToiDa, giamToiDa > 0 { return min(giam, giamToiDa) }
@@ -113,15 +138,20 @@ struct Voucher: Decodable, Identifiable, Equatable {
 
     /// Nhãn giảm giá dạng RATE (không phải tiền quy đổi cho 1 đơn cụ thể) — khớp
     /// VoucherCuaToi.nhanGiamGia, dùng làm headline ở sheet "Chọn voucher" (CheckoutView) để cùng 1
-    /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng.
+    /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng. Bậc thang không có 1
+    /// "rate" duy nhất — hiện mức giảm CAO NHẤT có thể đạt ("Lên đến Xđ").
     var nhanGiamGia: String {
-        loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+        if let bacs = parseBacThang(bacThang), let max = bacs.map(\.giam).max() {
+            return "Lên đến -\(formatTien(max))"
+        }
+        return loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
     }
 
     /// "Tối đa Xđ" khi voucher % có trần giảm — khớp VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab
-    /// Voucher (không hiện số tiền quy đổi riêng cho đơn hiện tại).
+    /// Voucher (không hiện số tiền quy đổi riêng cho đơn hiện tại). nil cho bậc thang — "Đơn từ Xđ"
+    /// (mốc thấp nhất) đã có sẵn qua field donToiThieu, đủ ngữ cảnh không cần dòng phụ này nữa.
     var nhanGiamToiDa: String? {
-        guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        guard bacThang == nil, loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
         return "Tối đa \(formatTien(giamToiDa))"
     }
 }
@@ -138,17 +168,23 @@ struct VoucherCuaToi: Decodable, Identifiable {
     var phanTramGiam: Double?
     var giamToiDa: Double?
     var donToiThieu: Double?
+    var bacThang: String?
     let daSuDung: Bool
 
     /// Nhãn giảm giá cho tab Ưu đãi — không có đơn cụ thể để tính số tiền thật cho voucher %,
-    /// nên hiện "-X%" thay vì "-0đ" (khớp cách AppQuanLyIOS hiện cho staff).
+    /// nên hiện "-X%" thay vì "-0đ" (khớp cách AppQuanLyIOS hiện cho staff). Bậc thang hiện mức giảm
+    /// CAO NHẤT có thể đạt, khớp Voucher.nhanGiamGia bên CheckoutView.
     var nhanGiamGia: String {
-        loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+        if let bacs = parseBacThang(bacThang), let max = bacs.map(\.giam).max() {
+            return "Lên đến -\(formatTien(max))"
+        }
+        return loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
     }
 
-    /// "Tối đa Xđ" khi voucher % có trần giảm — nil khi không áp dụng (SoTien hoặc không giới hạn).
+    /// "Tối đa Xđ" khi voucher % có trần giảm — nil khi không áp dụng (SoTien/bậc thang hoặc không
+    /// giới hạn).
     var nhanGiamToiDa: String? {
-        guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        guard bacThang == nil, loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
         return "Tối đa \(formatTien(giamToiDa))"
     }
 }
