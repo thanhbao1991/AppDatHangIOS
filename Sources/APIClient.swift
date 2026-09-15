@@ -283,13 +283,6 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
-    /// Danh sách SanPhamId khách đã từng gọi Size L — CheckoutView dùng để chỉ hiện voucher
-    /// UpsizeMonMoi khi giỏ hàng thật sự có dòng Size L hợp lệ (sản phẩm CHƯA từng upsize).
-    func getSanPhamDaTungUpsize() async -> [String] {
-        let env: ApiEnvelope<[String]> = await decode("/dat-hang/voucher/san-pham-da-tung-upsize")
-        return env.isSuccess ? (env.data ?? []) : []
-    }
-
     func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {
         await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon)))
     }

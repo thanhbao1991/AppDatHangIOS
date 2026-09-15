@@ -260,7 +260,7 @@ struct MenuView: View {
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    cart.addItem(sanPhamBienTheId: bienThe.id, sanPhamId: sp.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh)
+                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh)
                 }
             ) { picking = nil }
         }

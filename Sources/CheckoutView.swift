@@ -59,10 +59,6 @@ struct CheckoutView: View {
     @State private var selectedVoucher: Voucher?
     @State private var showVoucherSheet = false
     @State private var gioMoBan: GioMoBanDto?
-    /// SanPhamId khách đã từng gọi Size L — dùng để CHỈ hiện voucher UpsizeMonMoi (giamTheoSoLuongSizeL)
-    /// khi giỏ hàng thật sự có dòng Size L của sản phẩm CHƯA từng upsize, thay vì hiện tràn lan rồi báo
-    /// "-0đ"/lỗi lúc chọn.
-    @State private var sanPhamDaTungUpsize: Set<String> = []
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
@@ -73,14 +69,12 @@ struct CheckoutView: View {
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
     /// Voucher hợp lệ để hiện cho khách chọn — với UpsizeMonMoi (giamTheoSoLuongSizeL), giỏ hàng phải
-    /// có ít nhất 1 dòng Size L thuộc sản phẩm CHƯA từng upsize, nếu không ẩn hẳn thay vì hiện rồi báo lỗi.
+    /// có ít nhất 1 dòng Size L, nếu không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher
+    /// đã dùng hết lượt (1 lần/tài khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { v in
             guard v.giamTheoSoLuongSizeL else { return true }
-            return cart.items.contains { item in
-                guard let spId = item.sanPhamId, isSizeLBienThe(item.tenBienThe) else { return false }
-                return !sanPhamDaTungUpsize.contains(spId)
-            }
+            return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
         }
     }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
@@ -128,13 +122,11 @@ struct CheckoutView: View {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
             async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
-            async let sanPhamDaTungUpsizeTask: [String] = APIClient.shared.getSanPhamDaTungUpsize()
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
             vouchers = await voucherTask
             gioMoBan = await gioMoBanTask
-            sanPhamDaTungUpsize = Set(await sanPhamDaTungUpsizeTask)
             diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ

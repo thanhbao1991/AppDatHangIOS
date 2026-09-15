@@ -116,7 +116,8 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // "SoTien" (mặc định) | "PhanTram" — xem VoucherLoaiGiam bên Backend.
     var loaiGiam: String = "SoTien"
     var phanTramGiam: Double?
-    // Trần giảm tối đa — chỉ có ý nghĩa khi loaiGiam == "PhanTram". Xem VoucherEntity.GiamToiDa.
+    // Trần giảm tối đa — có ý nghĩa khi loaiGiam == "PhanTram" HOẶC giamTheoSoLuongSizeL (UpsizeMonMoi,
+    // bắt buộc nhập cho loại này). Xem VoucherEntity.GiamToiDa.
     var giamToiDa: Double?
     var donToiThieu: Double?
     // Chỉ có ý nghĩa khi voucher là bậc thang (DieuKien=DonToiThieuBac nội bộ) — có giá trị thì LOẠI
@@ -127,15 +128,16 @@ struct Voucher: Decodable, Identifiable, Equatable {
     var giamTheoSoLuongSizeL: Bool = false
 
     /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, UpsizeMonMoi thì
-    /// soTienGiam × tổng số ly Size L trong giỏ (ƯỚC LƯỢNG — client không biết được sản phẩm nào
-    /// khách ĐÃ TỪNG upsize trước đây, chỉ server mới tính chính xác lúc tạo đơn; đây chỉ để tránh
-    /// hiện SAI hẳn như trước — vd giỏ không có Size L nào vẫn hiện giảm 5k, phát hiện qua ảnh chụp
-    /// thật 2026-09-15), còn lại PhanTram tính trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi
-    /// chặn trần giamToiDa), khớp DatHangService.TinhSoTienGiam bên Backend.
+    /// soTienGiam × tổng số ly Size L trong giỏ nhưng chặn trần giamToiDa (BẮT BUỘC nhập cho voucher
+    /// loại này — xem VoucherService.ValidateAndNormalize), còn lại PhanTram tính trên tổng tiền hàng
+    /// (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), khớp DatHangService.TinhSoTienGiam bên
+    /// Backend.
     func soTienGiamThucTe(tongTienHang: Double, cartItems: [CartItem] = []) -> Double {
         if giamTheoSoLuongSizeL {
             let soLuongSizeL = cartItems.filter { isSizeLBienThe($0.tenBienThe) }.reduce(0) { $0 + $1.soLuong }
-            return min(soTienGiam * Double(soLuongSizeL), tongTienHang)
+            let giam = soTienGiam * Double(soLuongSizeL)
+            let giamChanTran = (giamToiDa.map { min(giam, $0) }) ?? giam
+            return min(giamChanTran, tongTienHang)
         }
         if let bacs = parseBacThang(bacThang) {
             return min(bacApDung(bacs, donGiaTri: tongTienHang) ?? 0, tongTienHang)
@@ -158,11 +160,12 @@ struct Voucher: Decodable, Identifiable, Equatable {
         return loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
     }
 
-    /// "Tối đa Xđ" khi voucher % có trần giảm — khớp VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab
-    /// Voucher (không hiện số tiền quy đổi riêng cho đơn hiện tại). nil cho bậc thang — "Đơn từ Xđ"
-    /// (mốc thấp nhất) đã có sẵn qua field donToiThieu, đủ ngữ cảnh không cần dòng phụ này nữa.
+    /// "Tối đa Xđ" khi voucher % có trần giảm, hoặc UpsizeMonMoi (luôn có trần, bắt buộc nhập) — khớp
+    /// VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab Voucher (không hiện số tiền quy đổi riêng cho đơn
+    /// hiện tại). nil cho bậc thang — "Đơn từ Xđ" (mốc thấp nhất) đã có sẵn qua field donToiThieu, đủ
+    /// ngữ cảnh không cần dòng phụ này nữa.
     var nhanGiamToiDa: String? {
-        guard bacThang == nil, loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        guard bacThang == nil, giamTheoSoLuongSizeL || loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
         return "Tối đa \(formatTien(giamToiDa))"
     }
 }
