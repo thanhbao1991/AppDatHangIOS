@@ -68,13 +68,19 @@ struct CheckoutView: View {
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
-    /// Voucher hợp lệ để hiện cho khách chọn — với UpsizeMonMoi (chiApDungKhiCoSizeL), giỏ hàng phải
-    /// có ít nhất 1 dòng Size L, nếu không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher
-    /// đã dùng hết lượt (1 lần/tài khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
+    /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
+    /// dòng Size L, ToppingMienPhi (giamToppingTheoGiaReNhat) cần tổng số lượng topping trong giỏ >= 2,
+    /// nếu không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài
+    /// khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { v in
-            guard v.chiApDungKhiCoSizeL else { return true }
-            return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
+            if v.chiApDungKhiCoSizeL {
+                return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
+            }
+            if v.giamToppingTheoGiaReNhat {
+                return cart.items.flatMap(\.toppings).reduce(0) { $0 + $1.soLuong } >= 2
+            }
+            return true
         }
     }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
