@@ -553,6 +553,44 @@ struct ProductPickerSheet: View {
 
     private var toppingCount: Int { toppingQty.values.reduce(0, +) }
 
+    /// Chip biến thể — riêng Size L (khớp "Size L"/lỗi chính tả có thật "Soze L" trong menu, cùng
+    /// pattern LIKE '%ze L%' bên Backend VoucherDieuKien.UpsizeMonMoi) có giao diện SANG hơn hẳn các
+    /// size khác khi active — gradient vàng kim + viền sáng + icon 👑, để bấm vào tự thấy "lên đời"
+    /// thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác chọn Size L,
+    /// khớp voucher UpsizeMonMoi (tặng Size L miễn phí món mới) đang khuyến khích thói quen này.
+    private func isSizeL(_ b: SanPhamBienThe) -> Bool {
+        b.tenBienThe.range(of: "ze L", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    }
+
+    @ViewBuilder
+    private func sizeChipLabel(_ b: SanPhamBienThe, active: Bool) -> some View {
+        let vip = isSizeL(b)
+        HStack(spacing: 4) {
+            if vip { Text("👑").font(.system(size: 11)) }
+            Text("\(b.tenBienThe) \(formatTien(b.giaBan))")
+                .font(.system(size: 12, weight: .bold))
+        }
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background {
+            if vip && active {
+                LinearGradient(colors: [Color(red: 1.0, green: 0.84, blue: 0.35), Color(red: 0.85, green: 0.62, blue: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            } else if vip {
+                LinearGradient(colors: [Color(red: 1.0, green: 0.84, blue: 0.35).opacity(0.18), Color(red: 0.85, green: 0.62, blue: 0.12).opacity(0.18)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            } else if active {
+                Theme.primary
+            } else {
+                Theme.textMuted.opacity(0.12)
+            }
+        }
+        .foregroundColor(vip && active ? Color(red: 0.35, green: 0.2, blue: 0) : (active ? .white : (vip ? Color(red: 0.6, green: 0.42, blue: 0.05) : .primary)))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule().stroke(vip ? Color(red: 0.85, green: 0.62, blue: 0.12).opacity(active ? 0.9 : 0.5) : .clear, lineWidth: active && vip ? 1.5 : 1)
+        )
+        .shadow(color: vip && active ? Color(red: 0.85, green: 0.62, blue: 0.12).opacity(0.5) : .clear, radius: 4, y: 2)
+        .contentShape(Rectangle())
+    }
+
     /// Thành tiền tạm tính gồm cả topping — khớp thanhTienDraft bên ProductPickerPanel (AppQuanLyIOS).
     private var thanhTienDraft: Double {
         guard let bienThe else { return 0 }
@@ -600,13 +638,7 @@ struct ProductPickerSheet: View {
                                             Button {
                                                 bienThe = b
                                             } label: {
-                                                Text("\(b.tenBienThe) \(formatTien(b.giaBan))")
-                                                    .font(.system(size: 12, weight: .bold))
-                                                    .padding(.horizontal, 10).padding(.vertical, 6)
-                                                    .background(active ? Theme.primary : Theme.textMuted.opacity(0.12))
-                                                    .foregroundColor(active ? .white : .primary)
-                                                    .clipShape(Capsule())
-                                                    .contentShape(Rectangle())
+                                                sizeChipLabel(b, active: active)
                                             }
                                             .buttonStyle(.plain)
                                         }
