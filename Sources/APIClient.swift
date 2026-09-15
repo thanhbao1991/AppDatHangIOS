@@ -338,6 +338,13 @@ actor APIClient {
         return env.isSuccess ? env.data : nil
     }
 
+    /// Giờ mở/đóng cửa quán — dùng để chặn UI đặt hàng ngoài giờ + hiện banner (server vẫn chặn thật
+    /// ở DatMonAsync, đây chỉ để tránh khách điền hết giỏ hàng rồi mới báo lỗi lúc bấm Đặt hàng).
+    func getGioMoBan() async -> GioMoBanDto? {
+        let env: ApiEnvelope<GioMoBanDto> = await decode("/dat-hang/gio-mo-ban")
+        return env.isSuccess ? env.data : nil
+    }
+
     func datLyBiMat(diaChiText: String, ghiChu: String?, clientOrderId: String?) async -> ApiEnvelope<LyBiMatResult> {
         await decode("/dat-hang/ly-bi-mat", method: "POST", body: jsonBody(DatLyBiMatRequest(diaChiText: diaChiText, ghiChu: ghiChu, clientOrderId: clientOrderId)))
     }

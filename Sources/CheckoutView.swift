@@ -52,6 +52,7 @@ struct CheckoutView: View {
     @State private var vouchers: [Voucher] = []
     @State private var selectedVoucher: Voucher?
     @State private var showVoucherSheet = false
+    @State private var gioMoBan: GioMoBanDto?
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
@@ -91,10 +92,12 @@ struct CheckoutView: View {
         .task {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
             async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
+            async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
             vouchers = await voucherTask
+            gioMoBan = await gioMoBanTask
             diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
@@ -468,8 +471,16 @@ struct CheckoutView: View {
 
     // MARK: - Thanh dưới cùng: tổng tiền + nút Đặt hàng
 
+    /// Chỉ chặn UI khi ĐÃ tải được giờ mở bán VÀ xác định là đóng cửa — chưa tải xong (gioMoBan ==
+    /// nil, vd mất mạng) thì KHÔNG khoá nhầm, để server (DatMonAsync) là nơi chặn thật cuối cùng.
+    private var dangDongCua: Bool { gioMoBan?.dangMoCua == false }
+
     private var bottomBar: some View {
         VStack(spacing: 8) {
+            if dangDongCua, let gioMoBan {
+                Text("🕑 Quán đã đóng cửa. Giờ mở bán: \(gioMoBan.gioMoCua)h–\(gioMoBan.gioDongCua)h.")
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+            }
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -485,7 +496,7 @@ struct CheckoutView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.primary)
                 .frame(minWidth: 140)
-                .disabled(loading || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
+                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
             }
         }
         .padding(.horizontal).padding(.vertical, 12)

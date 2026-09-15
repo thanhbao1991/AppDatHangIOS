@@ -4,6 +4,23 @@ import SwiftUI
 // Port 1:1 từ src/api.ts (bản RN cũ, xem lịch sử git trước commit chuyển native) — field name phải
 // khớp tuyệt đối JSON backend trả về (không có CodingKeys riêng, tên property Swift = tên field JSON).
 
+/// Giờ mở/đóng cửa quán — xem GamificationConfig.GioMoCua/GioDongCua bên Backend.
+struct GioMoBanDto: Decodable {
+    let gioMoCua: Int
+    let gioDongCua: Int
+
+    /// So theo giờ VN thật (Asia/Ho_Chi_Minh), không phải giờ hệ thống máy khách — phòng trường hợp
+    /// máy đặt sai múi giờ. Server vẫn là nơi chặn thật (DatMonAsync); đây chỉ để hiện banner/khoá
+    /// nút sớm cho UX, không phải chốt chặn duy nhất.
+    var dangMoCua: Bool {
+        let cal = Calendar(identifier: .gregorian)
+        var vn = cal
+        vn.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        let gio = vn.component(.hour, from: Date())
+        return gio >= gioMoCua && gio < gioDongCua
+    }
+}
+
 struct ApiEnvelope<T: Decodable>: Decodable {
     let isSuccess: Bool
     let message: String?
