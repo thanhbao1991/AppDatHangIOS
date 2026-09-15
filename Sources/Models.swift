@@ -84,12 +84,12 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // Trần giảm tối đa — chỉ có ý nghĩa khi loaiGiam == "PhanTram". Xem VoucherEntity.GiamToiDa.
     var giamToiDa: Double?
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng rồi chặn trần
-    /// giamToiDa (nếu có), khớp DatHangService.TinhSoTienGiam bên Backend (server tính lại khi tạo
-    /// đơn, đây chỉ để hiển thị).
+    /// Số tiền giảm thực tế cho đơn hiện tại — PhanTram tính trên tổng tiền hàng, làm tròn LÊN rồi
+    /// chặn trần giamToiDa (nếu có), khớp DatHangService.TinhSoTienGiam bên Backend (server tính lại
+    /// khi tạo đơn, đây chỉ để hiển thị).
     func soTienGiamThucTe(tongTienHang: Double) -> Double {
         guard loaiGiam == "PhanTram" else { return soTienGiam }
-        let giam = floor(tongTienHang * (phanTramGiam ?? 0) / 100)
+        let giam = ceil(tongTienHang * (phanTramGiam ?? 0) / 100)
         if let giamToiDa, giamToiDa > 0 { return min(giam, giamToiDa) }
         return giam
     }
