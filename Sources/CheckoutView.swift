@@ -68,12 +68,12 @@ struct CheckoutView: View {
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
-    /// Voucher hợp lệ để hiện cho khách chọn — với UpsizeMonMoi (giamTheoSoLuongSizeL), giỏ hàng phải
+    /// Voucher hợp lệ để hiện cho khách chọn — với UpsizeMonMoi (chiApDungKhiCoSizeL), giỏ hàng phải
     /// có ít nhất 1 dòng Size L, nếu không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher
     /// đã dùng hết lượt (1 lần/tài khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { v in
-            guard v.giamTheoSoLuongSizeL else { return true }
+            guard v.chiApDungKhiCoSizeL else { return true }
             return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
         }
     }

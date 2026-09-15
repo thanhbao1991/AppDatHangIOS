@@ -116,29 +116,21 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // "SoTien" (mặc định) | "PhanTram" — xem VoucherLoaiGiam bên Backend.
     var loaiGiam: String = "SoTien"
     var phanTramGiam: Double?
-    // Trần giảm tối đa — có ý nghĩa khi loaiGiam == "PhanTram" HOẶC giamTheoSoLuongSizeL (UpsizeMonMoi,
-    // bắt buộc nhập cho loại này). Xem VoucherEntity.GiamToiDa.
+    // Trần giảm tối đa — chỉ có ý nghĩa khi loaiGiam == "PhanTram". Xem VoucherEntity.GiamToiDa.
     var giamToiDa: Double?
     var donToiThieu: Double?
     // Chỉ có ý nghĩa khi voucher là bậc thang (DieuKien=DonToiThieuBac nội bộ) — có giá trị thì LOẠI
     // GIẢM/PHẦN TRĂM ở trên vô nghĩa, ưu tiên dùng field này. Xem VoucherEntity.BacThang.
     var bacThang: String?
-    // true khi voucher giảm THEO SỐ LƯỢNG ly Size L trong giỏ (DieuKien=UpsizeMonMoi nội bộ) —
-    // soTienGiam là đơn giá MỖI LY, không phải mức giảm cố định cho cả đơn. Xem VoucherKhaDungDto.
-    var giamTheoSoLuongSizeL: Bool = false
+    // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng Size L (DieuKien=UpsizeMonMoi nội bộ) —
+    // KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường), chỉ để CheckoutView tự
+    // ẩn voucher này khi giỏ hàng không có Size L. Xem VoucherKhaDungDto.ChiApDungKhiCoSizeL.
+    var chiApDungKhiCoSizeL: Bool = false
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, UpsizeMonMoi thì
-    /// soTienGiam × tổng số ly Size L trong giỏ nhưng chặn trần giamToiDa (BẮT BUỘC nhập cho voucher
-    /// loại này — xem VoucherService.ValidateAndNormalize), còn lại PhanTram tính trên tổng tiền hàng
-    /// (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), khớp DatHangService.TinhSoTienGiam bên
-    /// Backend.
+    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
+    /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), SoTien (kể cả
+    /// UpsizeMonMoi) thì cố định soTienGiam — khớp DatHangService.TinhSoTienGiam bên Backend.
     func soTienGiamThucTe(tongTienHang: Double, cartItems: [CartItem] = []) -> Double {
-        if giamTheoSoLuongSizeL {
-            let soLuongSizeL = cartItems.filter { isSizeLBienThe($0.tenBienThe) }.reduce(0) { $0 + $1.soLuong }
-            let giam = soTienGiam * Double(soLuongSizeL)
-            let giamChanTran = (giamToiDa.map { min(giam, $0) }) ?? giam
-            return min(giamChanTran, tongTienHang)
-        }
         if let bacs = parseBacThang(bacThang) {
             return min(bacApDung(bacs, donGiaTri: tongTienHang) ?? 0, tongTienHang)
         }
@@ -153,19 +145,17 @@ struct Voucher: Decodable, Identifiable, Equatable {
     /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng. Bậc thang không có 1
     /// "rate" duy nhất — hiện mức giảm CAO NHẤT có thể đạt ("Lên đến Xđ").
     var nhanGiamGia: String {
-        if giamTheoSoLuongSizeL { return "-\(formatTien(soTienGiam))/ly Size L" }
         if let bacs = parseBacThang(bacThang), let max = bacs.map(\.giam).max() {
             return "Lên đến -\(formatTien(max))"
         }
         return loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
     }
 
-    /// "Tối đa Xđ" khi voucher % có trần giảm, hoặc UpsizeMonMoi (luôn có trần, bắt buộc nhập) — khớp
-    /// VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab Voucher (không hiện số tiền quy đổi riêng cho đơn
-    /// hiện tại). nil cho bậc thang — "Đơn từ Xđ" (mốc thấp nhất) đã có sẵn qua field donToiThieu, đủ
-    /// ngữ cảnh không cần dòng phụ này nữa.
+    /// "Tối đa Xđ" khi voucher % có trần giảm — khớp VoucherCuaToi.nhanGiamToiDa, hiện Y HỆT tab
+    /// Voucher (không hiện số tiền quy đổi riêng cho đơn hiện tại). nil cho bậc thang — "Đơn từ Xđ"
+    /// (mốc thấp nhất) đã có sẵn qua field donToiThieu, đủ ngữ cảnh không cần dòng phụ này nữa.
     var nhanGiamToiDa: String? {
-        guard bacThang == nil, giamTheoSoLuongSizeL || loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        guard bacThang == nil, loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
         return "Tối đa \(formatTien(giamToiDa))"
     }
 }
