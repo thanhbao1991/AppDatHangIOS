@@ -93,6 +93,13 @@ struct Voucher: Decodable, Identifiable, Equatable {
         if let giamToiDa, giamToiDa > 0 { return min(giam, giamToiDa) }
         return giam
     }
+
+    /// Nhãn giảm giá dạng RATE (không phải tiền quy đổi cho 1 đơn cụ thể) — khớp
+    /// VoucherCuaToi.nhanGiamGia, dùng làm headline ở sheet "Chọn voucher" (CheckoutView) để cùng 1
+    /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng.
+    var nhanGiamGia: String {
+        loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+    }
 }
 
 /// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở
