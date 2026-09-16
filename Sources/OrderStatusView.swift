@@ -140,6 +140,7 @@ struct OrderStatusView: View {
         for it in order.items {
             cart.addItem(sanPhamBienTheId: it.sanPhamBienTheId, tenSanPham: it.tenSanPham, tenBienThe: it.tenBienThe, giaBan: it.donGia, soLuong: it.soLuong, ghiChu: it.ghiChu, toppings: it.toppings.map { CartTopping(id: $0.toppingId, ten: $0.ten, gia: $0.gia, soLuong: $0.soLuong) }, sanPhamId: it.sanPhamId)
         }
+        cart.markDatLai()
         cartPath = []
         selectedTab = .cart
     }

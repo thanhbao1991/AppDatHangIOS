@@ -138,6 +138,10 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // APIClient.getSanPhamDaTungDat() (CheckoutView tự tải), KHÔNG chỉ nhìn giỏ hiện tại như 2 cờ trên.
     // Xem VoucherKhaDungDto.ChiApDungKhiCoMonMoi.
     var chiApDungKhiCoMonMoi: Bool = false
+    // true khi voucher CHỈ dùng được cho đơn tạo từ nút "Đặt lại" (DieuKien=DatLai nội bộ) — khác 3 cờ
+    // trên (đều nhìn giỏ hàng hiện tại), cờ này CheckoutView tự biết ngay từ cart.laDatLai, không cần
+    // tải thêm dữ liệu gì. Xem VoucherKhaDungDto.ChiApDungKhiDatLai.
+    var chiApDungKhiDatLai: Bool = false
 
     /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
     /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), SoTien (kể cả
@@ -235,6 +239,9 @@ struct DatMonRequest: Encodable {
     let dungVi: Bool
     let hinhThucThanhToan: String?
     let voucherId: String?
+    /// Giỏ hàng hiện tại đến từ nút "Đặt lại" (tab Hoá đơn) — dùng cho voucher DieuKien=DatLai. Xem
+    /// CartStore.laDatLai/markDatLai().
+    let laDatLai: Bool
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 

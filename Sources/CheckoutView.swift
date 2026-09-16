@@ -77,7 +77,8 @@ struct CheckoutView: View {
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
     /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
     /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
-    /// (đối chiếu sanPhamDaTungDat), DonToiThieu/DonToiThieuBac (donToiThieu) cần tổng tiền hàng đạt
+    /// (đối chiếu sanPhamDaTungDat), DatLai (chiApDungKhiDatLai) cần giỏ đến từ nút "Đặt lại"
+    /// (cart.laDatLai), DonToiThieu/DonToiThieuBac (donToiThieu) cần tổng tiền hàng đạt
     /// ngưỡng, SoLuongToiThieu (soLuongToiThieu) cần đủ số ly — nếu không đủ điều kiện thì mờ đi thay
     /// vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài khoản) khỏi
     /// getVoucherKhaDung() nên không cần kiểm lại ở đây.
@@ -100,6 +101,9 @@ struct CheckoutView: View {
                 guard let sanPhamId = item.sanPhamId else { return false }
                 return !sanPhamDaTungDat.contains(sanPhamId)
             }
+        }
+        if v.chiApDungKhiDatLai {
+            return cart.laDatLai
         }
         if let donToiThieu = v.donToiThieu, donToiThieu > 0, tongTienHang < donToiThieu {
             return false
@@ -691,7 +695,7 @@ struct CheckoutView: View {
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
-            dungVi: dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: selectedVoucher?.id
+            dungVi: dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: selectedVoucher?.id, laDatLai: cart.laDatLai
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil

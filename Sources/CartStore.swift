@@ -28,20 +28,30 @@ final class CartStore: ObservableObject {
     @Published private(set) var items: [CartItem] = [] {
         didSet { persist() }
     }
+    /// true khi giỏ hàng HIỆN TẠI được tạo nguyên vẹn từ nút "Đặt lại" (tab Hoá đơn), chưa bị sửa tay
+    /// gì thêm — dùng cho voucher DieuKien=DatLai (Voucher.chiApDungKhiDatLai). Mọi thao tác sửa giỏ
+    /// (thêm/xoá/sửa dòng) đều reset về false để khách không "mượn" 1 lần đặt lại rồi tự ý thêm bớt
+    /// vẫn tính là đặt lại.
+    @Published private(set) var laDatLai = false {
+        didSet { persist() }
+    }
 
     /// Giỏ hàng lưu qua UserDefaults (JSON) — trước đây thuần in-memory nên tắt app (không chỉ gỡ
     /// cài) là mất sạch giỏ, khách đang chọn dở món phải làm lại từ đầu.
     private static let storageKey = "cart.items.v1"
+    private static let laDatLaiKey = "cart.laDatLai.v1"
 
     init() {
         guard let data = UserDefaults.standard.data(forKey: Self.storageKey),
               let saved = try? JSONDecoder().decode([CartItem].self, from: data) else { return }
         items = saved
+        laDatLai = UserDefaults.standard.bool(forKey: Self.laDatLaiKey)
     }
 
     private func persist() {
         guard let data = try? JSONEncoder().encode(items) else { return }
         UserDefaults.standard.set(data, forKey: Self.storageKey)
+        UserDefaults.standard.set(laDatLai, forKey: Self.laDatLaiKey)
     }
 
     var totalCount: Int { items.reduce(0) { $0 + $1.soLuong } }
@@ -49,16 +59,19 @@ final class CartStore: ObservableObject {
 
     func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil, sanPhamId: String? = nil) {
         items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh, sanPhamId: sanPhamId))
+        laDatLai = false
     }
 
     func removeItem(_ id: UUID) {
         items.removeAll { $0.id == id }
+        laDatLai = false
     }
 
     /// soLuong <= 0 xoá luôn dòng — khớp hành vi nút "-" ở CheckoutScreen khi về 0.
     func setQuantity(_ id: UUID, soLuong: Int) {
         if soLuong <= 0 { removeItem(id); return }
         if let idx = items.firstIndex(where: { $0.id == id }) { items[idx].soLuong = soLuong }
+        laDatLai = false
     }
 
     /// Sửa lại 1 dòng đã có trong giỏ (đổi size/topping/ghi chú/số lượng) — dùng khi khách bấm vào
@@ -66,7 +79,17 @@ final class CartStore: ObservableObject {
     func updateItem(_ id: UUID, sanPhamBienTheId: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
         guard let idx = items.firstIndex(where: { $0.id == id }) else { return }
         items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh, sanPhamId: items[idx].sanPhamId)
+        laDatLai = false
     }
 
-    func clear() { items.removeAll() }
+    /// Đánh dấu giỏ hàng HIỆN TẠI đến nguyên vẹn từ nút "Đặt lại" — gọi NGAY SAU khi nạp xong toàn bộ
+    /// dòng hàng của đơn cũ (addItem() ở trên tự reset về false, nên phải gọi hàm này SAU CÙNG).
+    func markDatLai() {
+        laDatLai = true
+    }
+
+    func clear() {
+        items.removeAll()
+        laDatLai = false
+    }
 }
