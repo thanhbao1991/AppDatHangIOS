@@ -57,6 +57,9 @@ struct CheckoutView: View {
     /// sau khi đặt đơn đầu tiên). Cùng 1 card với "Dùng Xu" theo yêu cầu, hiện phía trên.
     @State private var vouchers: [Voucher] = []
     @State private var selectedVoucher: Voucher?
+    /// Lựa chọn TẠM trong sheet "Chọn voucher" — chỉ ghi thật vào selectedVoucher khi bấm "Áp dụng",
+    /// để bấm "Đóng"/vuốt xuống không làm mất lựa chọn đã áp dụng trước đó.
+    @State private var pendingVoucher: Voucher?
     @State private var showVoucherSheet = false
     @State private var gioMoBan: GioMoBanDto?
 
@@ -356,7 +359,10 @@ struct CheckoutView: View {
     private var uuDaiCardContent: some View {
         VStack(alignment: .leading, spacing: 4) {
             if !vouchersHienThi.isEmpty {
-                Button { showVoucherSheet = true } label: {
+                Button {
+                    pendingVoucher = selectedVoucher
+                    showVoucherSheet = true
+                } label: {
                     HStack {
                         Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 24)
                         if let selectedVoucher {
@@ -392,22 +398,8 @@ struct CheckoutView: View {
     private var voucherSheet: some View {
         NavigationStack {
             List {
-                cardRow(topExtra: 6) {
-                    Button {
-                        selectedVoucher = nil
-                        showVoucherSheet = false
-                    } label: {
-                        HStack {
-                            Text("Không dùng voucher").foregroundColor(.primary)
-                            Spacer()
-                            if selectedVoucher == nil {
-                                Image(systemName: "checkmark").foregroundColor(Theme.primary)
-                            }
-                        }
-                        .cardBoxStyle()
-                    }
-                    .buttonStyle(.plain)
-                }
+                // Không còn dòng "Không dùng voucher" riêng — bấm lại voucher đang chọn để bỏ chọn,
+                // rồi bấm "Áp dụng" ở dưới để xác nhận (áp dụng hoặc bỏ áp dụng).
                 // Hiện TẤT CẢ voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn
                 // để khách biết có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
                 ForEach(vouchers) { v in
@@ -415,8 +407,7 @@ struct CheckoutView: View {
                     cardRow {
                         Button {
                             guard duDieuKien else { return }
-                            selectedVoucher = v
-                            showVoucherSheet = false
+                            pendingVoucher = (pendingVoucher?.id == v.id) ? nil : v
                         } label: {
                             // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
                             // tiền quy đổi riêng cho đơn hiện tại nữa, tránh cùng 1 voucher trông như
@@ -426,7 +417,7 @@ struct CheckoutView: View {
                                 nhanGiam: v.nhanGiamGia,
                                 nhanGiamToiDa: v.nhanGiamToiDa,
                                 donToiThieu: v.donToiThieu,
-                                daChon: selectedVoucher?.id == v.id
+                                daChon: pendingVoucher?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)
                             .opacity(duDieuKien ? 1 : 0.4)
@@ -443,6 +434,23 @@ struct CheckoutView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Đóng") { showVoucherSheet = false }
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    selectedVoucher = pendingVoucher
+                    showVoucherSheet = false
+                } label: {
+                    Text("Áp dụng")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Theme.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                }
+                .background(Color(.systemBackground).overlay(Divider(), alignment: .top))
             }
         }
     }

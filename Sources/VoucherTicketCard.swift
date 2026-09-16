@@ -13,7 +13,7 @@ struct VoucherTicketCard: View {
     var donToiThieu: Double? = nil
     /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã dùng".
     var daSuDung: Bool = false
-    /// Đang được chọn (sheet "Chọn voucher") — viền + dấu tick nổi bật thay cho nhãn "Đã dùng".
+    /// Đang được chọn (sheet "Chọn voucher") — viền nổi bật màu primary.
     var daChon: Bool = false
 
     private let leftWidth: CGFloat = 96
@@ -84,10 +84,6 @@ struct VoucherTicketCard: View {
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(Theme.divider))
-                } else if daChon {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(Theme.primary)
                 }
             }
             if let moTa, !moTa.isEmpty {
