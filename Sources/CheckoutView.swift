@@ -73,15 +73,19 @@ struct CheckoutView: View {
     /// không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài
     /// khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
-        vouchers.filter { v in
-            if v.chiApDungKhiCoSizeL {
-                return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
-            }
-            if v.chiApDungKhiCoTopping {
-                return cart.items.contains { !$0.toppings.isEmpty }
-            }
-            return true
+        vouchers.filter { voucherDuDieuKien($0) }
+    }
+
+    /// true nếu giỏ hàng hiện tại thoả điều kiện phụ (Size L/topping) của voucher — voucher không có
+    /// điều kiện phụ luôn trả true.
+    private func voucherDuDieuKien(_ v: Voucher) -> Bool {
+        if v.chiApDungKhiCoSizeL {
+            return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
         }
+        if v.chiApDungKhiCoTopping {
+            return cart.items.contains { !$0.toppings.isEmpty }
+        }
+        return true
     }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
     private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
@@ -404,9 +408,13 @@ struct CheckoutView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                ForEach(vouchersHienThi) { v in
+                // Hiện TẤT CẢ voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn
+                // để khách biết có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
+                ForEach(vouchers) { v in
+                    let duDieuKien = voucherDuDieuKien(v)
                     cardRow {
                         Button {
+                            guard duDieuKien else { return }
                             selectedVoucher = v
                             showVoucherSheet = false
                         } label: {
@@ -421,8 +429,10 @@ struct CheckoutView: View {
                                 daChon: selectedVoucher?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)
+                            .opacity(duDieuKien ? 1 : 0.4)
                         }
                         .buttonStyle(.plain)
+                        .disabled(!duDieuKien)
                     }
                 }
             }
