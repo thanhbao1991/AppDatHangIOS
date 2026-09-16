@@ -112,7 +112,9 @@ struct OrderStatusView: View {
         }
         .buttonStyle(.plain)
         .foregroundColor(filled ? .white : Theme.primary)
-        .background(filled ? Theme.primary : Theme.primaryTint)
+        // filled=true là nút "💳 Thanh toán" — cùng vai trò CTA như nút cùng tên bên OrderDetailView
+        // (đã đổi gradient), lúc trước tưởng đây là chip lọc trạng thái nên bỏ sót.
+        .background(filled ? AnyShapeStyle(Theme.primaryGradient) : AnyShapeStyle(Theme.primaryTint))
         .clipShape(Capsule())
         .disabled(loading)
     }
