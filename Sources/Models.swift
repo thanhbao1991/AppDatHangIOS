@@ -122,6 +122,9 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // Chỉ có ý nghĩa khi voucher là bậc thang (DieuKien=DonToiThieuBac nội bộ) — có giá trị thì LOẠI
     // GIẢM/PHẦN TRĂM ở trên vô nghĩa, ưu tiên dùng field này. Xem VoucherEntity.BacThang.
     var bacThang: String?
+    // Số ly (dòng đồ uống, không tính topping) tối thiểu — chỉ có ý nghĩa khi DieuKien=SoLuongToiThieu
+    // nội bộ. nil với voucher loại khác. Xem VoucherKhaDungDto.SoLuongToiThieu.
+    var soLuongToiThieu: Int?
     // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng Size L (DieuKien=UpsizeMonMoi nội bộ) —
     // KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường), chỉ để CheckoutView tự
     // ẩn voucher này khi giỏ hàng không có Size L. Xem VoucherKhaDungDto.ChiApDungKhiCoSizeL.

@@ -77,15 +77,17 @@ struct CheckoutView: View {
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
     /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
     /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
-    /// (đối chiếu sanPhamDaTungDat) — nếu không đủ điều kiện thì mờ đi thay vì hiện rồi báo lỗi/-0đ.
-    /// Server tự loại voucher đã dùng hết lượt (1 lần/tài khoản) khỏi getVoucherKhaDung() nên không
-    /// cần kiểm lại ở đây.
+    /// (đối chiếu sanPhamDaTungDat), DonToiThieu/DonToiThieuBac (donToiThieu) cần tổng tiền hàng đạt
+    /// ngưỡng, SoLuongToiThieu (soLuongToiThieu) cần đủ số ly — nếu không đủ điều kiện thì mờ đi thay
+    /// vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài khoản) khỏi
+    /// getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { voucherDuDieuKien($0) }
     }
 
-    /// true nếu giỏ hàng hiện tại thoả điều kiện phụ (Size L/topping) của voucher — voucher không có
-    /// điều kiện phụ luôn trả true.
+    /// true nếu giỏ hàng hiện tại thoả điều kiện phụ của voucher — voucher không có điều kiện phụ nào
+    /// (hoặc điều kiện không thể kiểm tra được từ giỏ hàng, vd LenHang phụ thuộc chi tiêu cả tháng)
+    /// luôn trả true, chấp nhận rủi ro chọn nhầm thấp vì server vẫn chặn thật lúc tạo đơn.
     private func voucherDuDieuKien(_ v: Voucher) -> Bool {
         if v.chiApDungKhiCoSizeL {
             return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
@@ -98,6 +100,13 @@ struct CheckoutView: View {
                 guard let sanPhamId = item.sanPhamId else { return false }
                 return !sanPhamDaTungDat.contains(sanPhamId)
             }
+        }
+        if let donToiThieu = v.donToiThieu, donToiThieu > 0, tongTienHang < donToiThieu {
+            return false
+        }
+        if let soLuongToiThieu = v.soLuongToiThieu, soLuongToiThieu > 0 {
+            let tongSoLuong = cart.items.reduce(0) { $0 + $1.soLuong }
+            return tongSoLuong >= soLuongToiThieu
         }
         return true
     }
