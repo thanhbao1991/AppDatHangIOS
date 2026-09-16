@@ -31,7 +31,8 @@ struct OrderDetailView: View {
                     HStack {
                         Text(order.maHoaDon).fontWeight(.bold)
                         Spacer()
-                        Text(order.ngayGio).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                        // Cùng bug ISO thô như OrderStatusView (danh sách đơn) — format lại cho khớp.
+                        Text(formatThongBaoTime(order.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     }
                     timeline
                 }

@@ -57,7 +57,10 @@ struct OrderStatusView: View {
             HStack {
                 Text(item.maHoaDon).fontWeight(.bold)
                 Spacer()
-                Text(item.ngayGio).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                // ngayGio là ISO thô server trả (vd "2026-09-17T19:12:03.8821513") — trước đây hiện
+                // thẳng chuỗi này, dùng lại formatThongBaoTime (ThongBaoView.swift) cho gọn kiểu
+                // "Hôm nay, HH:mm" thay vì lộ hẳn timestamp kỹ thuật ra UI khách hàng.
+                Text(formatThongBaoTime(item.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
             }
             Text(item.tenMonSummary).font(.system(size: 14)).foregroundColor(Theme.textMuted)
             HStack {
