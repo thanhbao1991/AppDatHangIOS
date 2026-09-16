@@ -126,22 +126,16 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường), chỉ để CheckoutView tự
     // ẩn voucher này khi giỏ hàng không có Size L. Xem VoucherKhaDungDto.ChiApDungKhiCoSizeL.
     var chiApDungKhiCoSizeL: Bool = false
-    // true khi voucher là "Topping thứ 2 miễn phí" (DieuKien=ToppingMienPhi nội bộ) — CHỈ dùng được
-    // khi tổng số lượng topping trong giỏ >= 2, số tiền giảm là giá topping RẺ NHẤT trong giỏ (KHÔNG
-    // PHẢI soTienGiam cố định). Xem VoucherKhaDungDto.GiamToppingTheoGiaReNhat.
-    var giamToppingTheoGiaReNhat: Bool = false
+    // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng topping (DieuKien=ToppingMienPhi nội
+    // bộ) — KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường, khớp
+    // UpsizeMonMoi). Xem VoucherKhaDungDto.ChiApDungKhiCoTopping.
+    var chiApDungKhiCoTopping: Bool = false
 
-    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, ToppingMienPhi thì giá
-    /// topping rẻ nhất trong giỏ (0 nếu chưa đủ 2 topping), còn lại PhanTram tính trên tổng tiền hàng
-    /// (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), SoTien (kể cả UpsizeMonMoi) thì cố định
-    /// soTienGiam — khớp DatHangService.TinhSoTienGiam bên Backend.
+    /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
+    /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), SoTien (kể cả
+    /// UpsizeMonMoi/ToppingMienPhi) thì cố định soTienGiam — khớp DatHangService.TinhSoTienGiam bên
+    /// Backend.
     func soTienGiamThucTe(tongTienHang: Double, cartItems: [CartItem] = []) -> Double {
-        if giamToppingTheoGiaReNhat {
-            let toppings = cartItems.flatMap(\.toppings)
-            let tongSoLuongTopping = toppings.reduce(0) { $0 + $1.soLuong }
-            guard tongSoLuongTopping >= 2, let giaReNhat = toppings.map(\.gia).min() else { return 0 }
-            return min(giaReNhat, tongTienHang)
-        }
         if let bacs = parseBacThang(bacThang) {
             return min(bacApDung(bacs, donGiaTri: tongTienHang) ?? 0, tongTienHang)
         }
@@ -154,10 +148,8 @@ struct Voucher: Decodable, Identifiable, Equatable {
     /// Nhãn giảm giá dạng RATE (không phải tiền quy đổi cho 1 đơn cụ thể) — khớp
     /// VoucherCuaToi.nhanGiamGia, dùng làm headline ở sheet "Chọn voucher" (CheckoutView) để cùng 1
     /// voucher không hiện 2 con số khác nhau giữa tab Voucher và lúc đặt hàng. Bậc thang không có 1
-    /// "rate" duy nhất — hiện mức giảm CAO NHẤT có thể đạt ("Lên đến Xđ"). ToppingMienPhi cũng không
-    /// có 1 rate cố định (tuỳ giỏ hàng) — hiện thẳng tên chương trình.
+    /// "rate" duy nhất — hiện mức giảm CAO NHẤT có thể đạt ("Lên đến Xđ").
     var nhanGiamGia: String {
-        if giamToppingTheoGiaReNhat { return "Topping thứ 2 miễn phí" }
         if let bacs = parseBacThang(bacThang), let max = bacs.map(\.giam).max() {
             return "Lên đến -\(formatTien(max))"
         }

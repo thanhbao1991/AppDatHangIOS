@@ -69,16 +69,16 @@ struct CheckoutView: View {
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
-    /// dòng Size L, ToppingMienPhi (giamToppingTheoGiaReNhat) cần tổng số lượng topping trong giỏ >= 2,
-    /// nếu không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài
+    /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping, nếu
+    /// không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài
     /// khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { v in
             if v.chiApDungKhiCoSizeL {
                 return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
             }
-            if v.giamToppingTheoGiaReNhat {
-                return cart.items.flatMap(\.toppings).reduce(0) { $0 + $1.soLuong } >= 2
+            if v.chiApDungKhiCoTopping {
+                return cart.items.contains { !$0.toppings.isEmpty }
             }
             return true
         }
