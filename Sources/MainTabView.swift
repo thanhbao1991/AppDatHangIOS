@@ -155,6 +155,10 @@ struct MainTabView: View {
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(Capsule().fill(Color.red))
+                        // Viền trắng mỏng quanh badge — trước đây đỏ tươi nằm thẳng trên nền header
+                        // đổi màu theo hạng (nâu vàng/đen...) bị chê "chói/gắt", tách bạch bằng viền
+                        // trắng cố định thay vì phải chọn lại 1 màu đỏ khác hoà hợp với TỪNG hạng.
+                        .overlay(Capsule().stroke(Color.white, lineWidth: 1.2))
                         .offset(x: 6, y: -4)
                 }
             }
