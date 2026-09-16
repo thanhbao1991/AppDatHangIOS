@@ -472,7 +472,7 @@ struct CheckoutView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Theme.primary)
+                        .background(Theme.primaryGradient)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
                         .padding(.vertical, 10)
@@ -574,8 +574,7 @@ struct CheckoutView: View {
                 } label: {
                     if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.primary)
+                .buttonStyle(.gradientProminent)
                 .frame(minWidth: 140)
                 .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
             }

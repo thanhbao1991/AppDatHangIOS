@@ -65,7 +65,7 @@ struct LyBiMatView: View {
                 } label: {
                     if loading { ProgressView().tint(.white) } else { Text("Bốc Ly Bí Mật 🎲").fontWeight(.bold) }
                 }
-                .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
+                .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                 .disabled(loading)
             }
             .padding(20)
@@ -85,7 +85,7 @@ struct LyBiMatView: View {
             Text("Mã đơn: \(result.maHoaDon)").font(.system(size: 12)).foregroundColor(Theme.textFaint)
 
             Button("Thanh toán") { path.append(.thanhToan(hoaDonId: result.hoaDonId)) }
-                .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
+                .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
             Button("Bốc thêm 1 ly khác") { self.result = nil }
                 .foregroundColor(Theme.primary)
             Spacer()

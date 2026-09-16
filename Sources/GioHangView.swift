@@ -95,8 +95,7 @@ struct GioHangView: View {
             } label: {
                 Text("Đặt hàng").fontWeight(.bold).frame(minWidth: 120)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.primary)
+            .buttonStyle(.gradientProminent)
         }
         .padding(.horizontal).padding(.vertical, 12)
         .background(Color.white)

@@ -27,6 +27,12 @@ enum Theme {
     /// Trước là hex cố định #EAF1FA (navy nhạt) — giờ tính theo primary hiện tại để lên tông tự động
     /// khi đổi hạng, xấp xỉ đúng độ nhạt của tông cũ khi hang == "Thành Viên" (opacity 0.12 trên nền trắng).
     static var primaryTint: Color { primary.opacity(0.12) }
+    /// Gradient chéo sáng→tối — CÙNG công thức với card "Hạng thành viên" ở SettingsView (được khen
+    /// "đẹp, không phẳng"). Dùng cho nút CTA chính + cuống voucher (VoucherTicketCard) thay vì nền
+    /// đặc Theme.primary, để có cùng cảm giác "sang" ở mọi nơi nổi bật, không chỉ riêng 1 card.
+    static var primaryGradient: LinearGradient {
+        LinearGradient(colors: [primary, primaryDark], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
     static let success = Color(red: 0x2E / 255, green: 0x7D / 255, blue: 0x32 / 255)
     static let danger = Color(red: 0xC6 / 255, green: 0x28 / 255, blue: 0x28 / 255)
     static let warning = Color(red: 0xF9 / 255, green: 0xA8 / 255, blue: 0x25 / 255)
@@ -102,6 +108,31 @@ enum Theme {
             applyNavBarAppearance(to: presented, appearance: appearance)
         }
     }
+}
+
+/// Thay thế .buttonStyle(.borderedProminent).tint(Theme.primary) ở MỌI nút CTA chính trong app —
+/// .borderedProminent là style hệ thống, tự vẽ nền PHẲNG theo .tint(), không nhận gradient được.
+/// Cố tình KHÔNG tự đặt .frame ở đây: label truyền vào (Text/ProgressView) đã tự set .frame riêng
+/// ở từng call site (vd .frame(maxWidth: .infinity) hay .frame(minWidth: 120)) — giữ nguyên layout
+/// cũ, style này chỉ đổi CÁCH TÔ MÀU nền.
+struct GradientProminentButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Theme.primaryGradient)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.45)
+    }
+}
+
+extension ButtonStyle where Self == GradientProminentButtonStyle {
+    /// Dùng như .buttonStyle(.gradientProminent) — khớp cú pháp .buttonStyle(.borderedProminent) cũ,
+    /// đổi call site tối thiểu (chỉ bỏ .tint(Theme.primary) đi kèm, không cần đổi gì khác).
+    static var gradientProminent: GradientProminentButtonStyle { GradientProminentButtonStyle() }
 }
 
 extension View {

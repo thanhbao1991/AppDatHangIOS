@@ -60,7 +60,7 @@ struct VoucherTicketCard: View {
         }
         .frame(width: leftWidth)
         .padding(.vertical, 16)
-        .background(daSuDung ? Theme.textFaint : Theme.primary)
+        .background(daSuDung ? AnyShapeStyle(Theme.textFaint) : AnyShapeStyle(Theme.primaryGradient))
     }
 
     private var dashedDivider: some View {

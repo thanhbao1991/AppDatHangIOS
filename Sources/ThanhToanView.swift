@@ -20,7 +20,7 @@ struct ThanhToanView: View {
                 Text("Quét mã hoặc bấm vào QR để mở app ngân hàng — chuyển khoản xong quán sẽ tự ghi nhận.")
                     .font(.system(size: 12)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
                 Button("Xong, xem đơn của tôi", action: onDone)
-                    .buttonStyle(.borderedProminent).tint(Theme.primary)
+                    .buttonStyle(.gradientProminent)
                     .frame(maxWidth: .infinity)
             }
             .padding()

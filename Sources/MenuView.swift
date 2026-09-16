@@ -164,7 +164,7 @@ struct MenuView: View {
                     VStack(spacing: 12) {
                         Text(error).foregroundColor(Theme.danger)
                         Button("Thử lại") { Task { await load() } }
-                            .buttonStyle(.borderedProminent).tint(Theme.primary)
+                            .buttonStyle(.gradientProminent)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if isSearching {
@@ -333,7 +333,7 @@ struct MenuView: View {
                             .lineLimit(1)
                             .fixedSize()
                             .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Theme.primary)
+                            .background(Theme.primaryGradient)
                             .clipShape(Capsule())
                     }
                     .padding(.horizontal, 16)

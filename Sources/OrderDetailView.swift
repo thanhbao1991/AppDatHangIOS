@@ -94,7 +94,7 @@ struct OrderDetailView: View {
 
                 if order.trangThai != .hoanTat {
                     Button("💳 Thanh toán") { donHangPath.append(.thanhToan(hoaDonId: order.id)) }
-                        .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
+                        .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                 }
 
                 if order.trangThai == .choXacNhan {
@@ -110,7 +110,7 @@ struct OrderDetailView: View {
                     } label: {
                         if dangMoQua { ProgressView() } else { Text("🎁 Mở quà nhận Xu").frame(maxWidth: .infinity) }
                     }
-                    .buttonStyle(.borderedProminent).tint(Theme.primary).disabled(dangMoQua)
+                    .buttonStyle(.gradientProminent).disabled(dangMoQua)
                 }
 
                 Button("🔁 Đặt lại") { datLai() }
@@ -197,7 +197,7 @@ struct OrderDetailView: View {
             } label: {
                 if dangGui { ProgressView().tint(.white) } else { Text("Gửi đánh giá").frame(maxWidth: .infinity) }
             }
-            .buttonStyle(.borderedProminent).tint(Theme.primary).disabled(pickSao == 0 || dangGui)
+            .buttonStyle(.gradientProminent).disabled(pickSao == 0 || dangGui)
         }
     }
 

@@ -253,7 +253,7 @@ struct LoginView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .foregroundColor(.white)
-            .background(disabled ? Theme.primary.opacity(0.35) : Theme.primary)
+            .background(Theme.primaryGradient.opacity(disabled ? 0.35 : 1))
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .disabled(disabled)

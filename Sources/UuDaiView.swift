@@ -81,7 +81,7 @@ struct UuDaiView: View {
                 } label: {
                     if dangDoiTem { ProgressView().tint(.white) } else { Text("Đổi thưởng ngay").fontWeight(.bold) }
                 }
-                .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
+                .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
             }
         }
     }
@@ -119,7 +119,7 @@ struct UuDaiView: View {
                     } label: {
                         if dangApDung { ProgressView().tint(.white) } else { Text("Áp dụng") }
                     }
-                    .buttonStyle(.borderedProminent).tint(Theme.primary)
+                    .buttonStyle(.gradientProminent)
                 }
             }
         }
@@ -141,7 +141,7 @@ struct UuDaiView: View {
             } label: {
                 if dangQuay { ProgressView().tint(.white) } else { Text("Quay ngay 🎲").fontWeight(.bold) }
             }
-            .buttonStyle(.borderedProminent).tint(Theme.primary).frame(maxWidth: .infinity)
+            .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
         }
     }
 
