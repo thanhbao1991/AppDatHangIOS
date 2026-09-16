@@ -161,7 +161,9 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("HẠNG THÀNH VIÊN")
                         .font(.system(size: 10, weight: .bold)).tracking(1.2)
-                        .foregroundColor(.white.opacity(0.65))
+                        // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
+                        // — chữ nhỏ 10pt cần độ tương phản cao hơn văn bản thường để vẫn đọc rõ.
+                        .foregroundColor(.white.opacity(0.78))
                     Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hang)")
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
@@ -323,7 +325,7 @@ struct SettingsView: View {
     private func statBoxDark(_ value: String, _ label: String) -> some View {
         VStack {
             Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
-            Text(label).font(.system(size: 11)).foregroundColor(.white.opacity(0.7))
+            Text(label).font(.system(size: 11)).foregroundColor(.white.opacity(0.8))
         }
         .frame(maxWidth: .infinity)
         .padding(10)

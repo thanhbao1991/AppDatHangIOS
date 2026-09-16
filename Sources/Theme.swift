@@ -7,17 +7,21 @@ import SwiftUI
 enum Theme {
     /// Cặp màu (sáng, tối) từng hạng — dùng cho cả Theme.primary/primaryDark (toàn app) lẫn gradient
     /// thẻ hạng ở SettingsView (gom về đây để không lệch màu giữa 2 nơi).
-    // 2026-09-17: đổi tông Bạc + Kim Cương — bản đầu (xám ám nâu + xanh rêu đục) bị chê "sai tông",
-    // không gợi được chất liệu bạc/kim cương thật. Bạc ngả xanh thép (cool steel) đúng ánh kim loại;
-    // Vàng giữ nguyên (đã được duyệt "ok"). Kim Cương: thử tím amethyst trước, user yêu cầu đổi hẳn
-    // sang đen kiểu thẻ đen ngân hàng (Amex Centurion/thẻ VIP) — đen tuyền ngả chút xanh dương lạnh
-    // (không phải đen thuần #000, quá "chết"/giống mất kết nối) để vẫn có chất "kim loại quý".
+    // Lịch sử đổi tông: Bạc/Kim Cương bản đầu (xám ám nâu + xanh rêu đục) bị chê "sai tông". Kim
+    // Cương thử tím amethyst rồi đổi hẳn sang đen thẻ ngân hàng theo yêu cầu. 2026-09-17: sau khi
+    // xem 4 hạng cạnh nhau, tinh chỉnh theo review chi tiết — giữ nguyên Kim Cương (đen/xám đen,
+    // được chấm "tốt nhất") + Thành Viên (navy, "khá ổn"), CHỈ đổi Bạc (xám ghi "tối/xỉn" → xám thép
+    // sáng hơn có ánh xanh) và Vàng (nâu vàng "tương phản không cao" → vàng kim/gold đậm rõ ràng
+    // hơn) theo đúng mã hex được duyệt.
     static let hangColors: [String: (primary: Color, dark: Color)] = [
-        "Kim Cương": (Color(red: 0.11, green: 0.11, blue: 0.13), Color(red: 0.02, green: 0.02, blue: 0.03)),
-        "Vàng": (Color(red: 0.62, green: 0.47, blue: 0.08), Color(red: 0.22, green: 0.16, blue: 0.02)),
-        "Bạc": (Color(red: 0.52, green: 0.55, blue: 0.60), Color(red: 0.24, green: 0.26, blue: 0.30)),
-        "Thành Viên": (Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255), Color(red: 0x15 / 255, green: 0x35 / 255, blue: 0x5F / 255)),
+        "Kim Cương": (hex(0x1C, 0x1D, 0x21), hex(0x30, 0x31, 0x36)),
+        "Vàng": (hex(0xB7, 0x79, 0x1F), hex(0x74, 0x42, 0x10)),
+        "Bạc": (hex(0x4A, 0x55, 0x68), hex(0x2D, 0x37, 0x48)),
+        "Thành Viên": (hex(0x1E, 0x4E, 0x8C), hex(0x15, 0x35, 0x5F)),
     ]
+    private static func hex(_ r: UInt8, _ g: UInt8, _ b: UInt8) -> Color {
+        Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
+    }
     static var primary: Color { hangColors[KhachHangSession.shared.hang]?.primary ?? hangColors["Thành Viên"]!.primary }
     static var primaryDark: Color { hangColors[KhachHangSession.shared.hang]?.dark ?? hangColors["Thành Viên"]!.dark }
     /// Trước là hex cố định #EAF1FA (navy nhạt) — giờ tính theo primary hiện tại để lên tông tự động
