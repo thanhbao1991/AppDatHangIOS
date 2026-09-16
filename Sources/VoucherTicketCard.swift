@@ -13,7 +13,7 @@ struct VoucherTicketCard: View {
     var donToiThieu: Double? = nil
     /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã dùng".
     var daSuDung: Bool = false
-    /// Đang được chọn (sheet "Chọn voucher") — viền nổi bật màu primary.
+    /// Đang được chọn (sheet "Chọn voucher") — dấu tick tròn góc phải.
     var daChon: Bool = false
 
     private let leftWidth: CGFloat = 96
@@ -35,7 +35,7 @@ struct VoucherTicketCard: View {
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(daChon ? Theme.primary : Theme.divider, lineWidth: daChon ? 1.5 : 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.divider, lineWidth: 1))
         .opacity(daSuDung ? 0.55 : 1)
     }
 
@@ -84,6 +84,10 @@ struct VoucherTicketCard: View {
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(Theme.divider))
+                } else if daChon {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Theme.primary)
                 }
             }
             if let moTa, !moTa.isEmpty {
