@@ -56,6 +56,9 @@ struct CheckoutView: View {
     /// Voucher khách ĐANG đủ điều kiện dùng — tải lại mỗi lần vào trang (điều kiện có thể đổi ngay
     /// sau khi đặt đơn đầu tiên). Cùng 1 card với "Dùng Xu" theo yêu cầu, hiện phía trên.
     @State private var vouchers: [Voucher] = []
+    /// SanPhamId khách ĐÃ TỪNG đặt (mọi kênh bán) — dùng để kiểm tra voucher MonMoiTraiNghiem
+    /// (chiApDungKhiCoMonMoi), xem voucherDuDieuKien.
+    @State private var sanPhamDaTungDat: [String] = []
     @State private var selectedVoucher: Voucher?
     /// Lựa chọn TẠM trong sheet "Chọn voucher" — chỉ ghi thật vào selectedVoucher khi bấm "Áp dụng",
     /// để bấm "Đóng"/vuốt xuống không làm mất lựa chọn đã áp dụng trước đó.
@@ -72,9 +75,11 @@ struct CheckoutView: View {
     /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
     private var voucherGiam: Double { min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: cart.items) ?? 0, tongTienHang) }
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
-    /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping, nếu
-    /// không ẩn hẳn thay vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài
-    /// khoản) khỏi getVoucherKhaDung() nên không cần kiểm lại ở đây.
+    /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
+    /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
+    /// (đối chiếu sanPhamDaTungDat) — nếu không đủ điều kiện thì mờ đi thay vì hiện rồi báo lỗi/-0đ.
+    /// Server tự loại voucher đã dùng hết lượt (1 lần/tài khoản) khỏi getVoucherKhaDung() nên không
+    /// cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
         vouchers.filter { voucherDuDieuKien($0) }
     }
@@ -87,6 +92,12 @@ struct CheckoutView: View {
         }
         if v.chiApDungKhiCoTopping {
             return cart.items.contains { !$0.toppings.isEmpty }
+        }
+        if v.chiApDungKhiCoMonMoi {
+            return cart.items.contains { item in
+                guard let sanPhamId = item.sanPhamId else { return false }
+                return !sanPhamDaTungDat.contains(sanPhamId)
+            }
         }
         return true
     }
@@ -135,11 +146,13 @@ struct CheckoutView: View {
             async let viTask: KhachHangVi? = APIClient.shared.getVi()
             async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
+            async let sanPhamDaTungDatTask: [String] = APIClient.shared.getSanPhamDaTungDat()
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
             vouchers = await voucherTask
             gioMoBan = await gioMoBanTask
+            sanPhamDaTungDat = await sanPhamDaTungDatTask
             diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
             // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
             // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ

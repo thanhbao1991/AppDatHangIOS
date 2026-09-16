@@ -14,6 +14,10 @@ struct CartItem: Identifiable, Hashable, Codable {
     let toppings: [CartTopping]
     /// Ảnh menu — hiện thumbnail ở CheckoutView giống itemRow bên HoaDonDetailView (AppQuanLyIOS).
     let hinhAnh: String?
+    /// SanPham gốc (khác sanPhamBienTheId là biến thể/size) — dùng để CheckoutView tự kiểm tra voucher
+    /// MonMoiTraiNghiem (giỏ có món khách CHƯA TỪNG đặt) mà không cần tải cả menu. nil nếu không rõ
+    /// (không nên xảy ra ở luồng thêm mới từ MenuView, chỉ có thể ở dữ liệu giỏ cũ trước bản này).
+    var sanPhamId: String?
 
     var donGia: Double { giaBan + toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) } }
     var thanhTien: Double { donGia * Double(soLuong) }
@@ -43,8 +47,8 @@ final class CartStore: ObservableObject {
     var totalCount: Int { items.reduce(0) { $0 + $1.soLuong } }
     var totalPrice: Double { items.reduce(0) { $0 + $1.thanhTien } }
 
-    func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil) {
-        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh))
+    func addItem(sanPhamBienTheId: String, tenSanPham: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping], hinhAnh: String? = nil, sanPhamId: String? = nil) {
+        items.append(CartItem(id: UUID(), sanPhamBienTheId: sanPhamBienTheId, tenSanPham: tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: hinhAnh, sanPhamId: sanPhamId))
     }
 
     func removeItem(_ id: UUID) {
@@ -61,7 +65,7 @@ final class CartStore: ObservableObject {
     /// món ở CheckoutView để mở lại ProductPickerSheet ở chế độ sửa, thay vì thêm dòng mới.
     func updateItem(_ id: UUID, sanPhamBienTheId: String, tenBienThe: String, giaBan: Double, soLuong: Int, ghiChu: String?, toppings: [CartTopping]) {
         guard let idx = items.firstIndex(where: { $0.id == id }) else { return }
-        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh)
+        items[idx] = CartItem(id: id, sanPhamBienTheId: sanPhamBienTheId, tenSanPham: items[idx].tenSanPham, tenBienThe: tenBienThe, giaBan: giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: items[idx].hinhAnh, sanPhamId: items[idx].sanPhamId)
     }
 
     func clear() { items.removeAll() }

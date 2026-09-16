@@ -283,6 +283,13 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// SanPhamId khách ĐÃ TỪNG đặt (mọi kênh bán) — CheckoutView dùng để tự kiểm tra voucher
+    /// MonMoiTraiNghiem (Voucher.chiApDungKhiCoMonMoi) trước khi cho chọn.
+    func getSanPhamDaTungDat() async -> [String] {
+        let env: ApiEnvelope<[String]> = await decode("/dat-hang/voucher/san-pham-da-dat")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {
         await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon)))
     }

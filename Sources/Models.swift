@@ -130,6 +130,11 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // bộ) — KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường, khớp
     // UpsizeMonMoi). Xem VoucherKhaDungDto.ChiApDungKhiCoTopping.
     var chiApDungKhiCoTopping: Bool = false
+    // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng SẢN PHẨM khách CHƯA TỪNG đặt trước đây
+    // (DieuKien=MonMoiTraiNghiem nội bộ) — cần đối chiếu sanPhamId từng dòng giỏ với danh sách
+    // APIClient.getSanPhamDaTungDat() (CheckoutView tự tải), KHÔNG chỉ nhìn giỏ hiện tại như 2 cờ trên.
+    // Xem VoucherKhaDungDto.ChiApDungKhiCoMonMoi.
+    var chiApDungKhiCoMonMoi: Bool = false
 
     /// Số tiền giảm thực tế cho đơn hiện tại — bậc thang thì tra bảng bacThang, còn lại PhanTram tính
     /// trên tổng tiền hàng (làm tròn LÊN hàng nghìn đồng rồi chặn trần giamToiDa), SoTien (kể cả
@@ -259,6 +264,9 @@ struct DonHangKhachItem: Decodable, Identifiable, Hashable {
     let ghiChu: String?
     let toppings: [DonHangKhachItemTopping]
     let hinhAnh: String?
+    // SanPham gốc (khác sanPhamBienTheId là biến thể/size) — giữ lại khi "Đặt lại" để voucher
+    // MonMoiTraiNghiem tự kiểm tra đúng "món mới" ở giỏ hàng mới. nil nếu dòng cũ chưa gắn.
+    let sanPhamId: String?
     var id: String { sanPhamBienTheId }
 }
 
