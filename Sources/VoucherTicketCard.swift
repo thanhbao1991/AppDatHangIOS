@@ -15,6 +15,9 @@ struct VoucherTicketCard: View {
     var daSuDung: Bool = false
     /// Đang được chọn (sheet "Chọn voucher") — dấu tick tròn góc phải.
     var daChon: Bool = false
+    /// "Dùng được tối đa 2 lần/tài khoản"/"Đã dùng 1/2 lần" — nil với voucher không cho dùng lại
+    /// (mặc định). Xem VoucherCuaToi.nhanSoLan.
+    var nhanSoLan: String? = nil
 
     private let leftWidth: CGFloat = 96
     private let notchSize: CGFloat = 18
@@ -95,6 +98,11 @@ struct VoucherTicketCard: View {
                     .font(.system(size: 12))
                     .foregroundColor(Theme.textMuted)
                     .lineLimit(2)
+            }
+            if let nhanSoLan {
+                Text("🔁 \(nhanSoLan)")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Theme.primary)
             }
             Spacer(minLength: 4)
             HStack(spacing: 6) {

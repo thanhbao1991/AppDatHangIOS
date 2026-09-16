@@ -179,6 +179,18 @@ struct VoucherCuaToi: Decodable, Identifiable {
     var donToiThieu: Double?
     var bacThang: String?
     let daSuDung: Bool
+    // Có giá trị (vd 2) khi voucher cho phép dùng NHIỀU HƠN 1 lần/tài khoản (UpsizeMonMoi/
+    // ToppingMienPhi) — nil với voucher loại khác (1 lần hoặc không giới hạn).
+    var soLanToiDa: Int?
+    // Số lần ĐÃ dùng — chỉ có ý nghĩa khi soLanToiDa != nil.
+    var soLanDaDung: Int?
+
+    /// "Dùng được tối đa 2 lần/tài khoản" hoặc "Đã dùng 1/2 lần" — chỉ có khi soLanToiDa != nil.
+    var nhanSoLan: String? {
+        guard let soLanToiDa else { return nil }
+        let daDung = soLanDaDung ?? 0
+        return daDung > 0 ? "Đã dùng \(daDung)/\(soLanToiDa) lần" : "Dùng được tối đa \(soLanToiDa) lần/tài khoản"
+    }
 
     /// Nhãn giảm giá cho tab Ưu đãi — không có đơn cụ thể để tính số tiền thật cho voucher %,
     /// nên hiện "-X%" thay vì "-0đ" (khớp cách AppQuanLyIOS hiện cho staff). Bậc thang hiện mức giảm
