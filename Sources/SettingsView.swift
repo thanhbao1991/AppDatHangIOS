@@ -29,13 +29,12 @@ struct SettingsView: View {
     @State private var dangUploadAvatar = false
 
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
-    // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước.
-    private let hangGradient: [String: [Color]] = [
-        "Kim Cương": [Color(red: 0.05, green: 0.35, blue: 0.42), Color(red: 0.02, green: 0.14, blue: 0.18)],
-        "Vàng": [Color(red: 0.62, green: 0.47, blue: 0.08), Color(red: 0.22, green: 0.16, blue: 0.02)],
-        "Bạc": [Color(red: 0.42, green: 0.44, blue: 0.47), Color(red: 0.16, green: 0.17, blue: 0.19)],
-        "Thành Viên": [Theme.primary, Theme.primaryDark],
-    ]
+    // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
+    // Theme.hangColors (2026-09-16) — cùng 1 nguồn màu với Theme.primary/primaryDark toàn app, tránh
+    // 2 nơi định nghĩa lệch nhau.
+    private var hangGradient: [String: [Color]] {
+        Theme.hangColors.mapValues { [$0.primary, $0.dark] }
+    }
     private let hangIcon: [String: String] = [
         "Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈", "Thành Viên": "🌱",
     ]
@@ -337,6 +336,7 @@ struct SettingsView: View {
         async let viTask = APIClient.shared.getVi()
         async let snTask = APIClient.shared.getSinhNhat()
         (diaChiList, vi, sinhNhat) = await (diaChiTask, viTask, snTask)
+        if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         loading = false
     }
 

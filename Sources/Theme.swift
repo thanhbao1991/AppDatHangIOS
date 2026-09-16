@@ -1,10 +1,23 @@
 import SwiftUI
 
 /// Port từ src/theme.ts (bản RN cũ) — xanh navy chuyên nghiệp, khớp tông AppShippingIOS/AppQuanLyIOS.
+/// Từ 2026-09-16: primary/primaryDark đổi màu theo KhachHangSession.shared.hang (2026-09-16) — để
+/// khách lên hạng Bạc/Vàng/Kim Cương thấy app "sang" hơn hẳn ngay khi mở app, không chỉ ở badge nhỏ
+/// trong tab Tài khoản. "Thành Viên" (chưa đạt hạng) giữ nguyên đúng tông navy cũ.
 enum Theme {
-    static let primary = Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255)
-    static let primaryDark = Color(red: 0x15 / 255, green: 0x35 / 255, blue: 0x5F / 255)
-    static let primaryTint = Color(red: 0xEA / 255, green: 0xF1 / 255, blue: 0xFA / 255)
+    /// Cặp màu (sáng, tối) từng hạng — dùng cho cả Theme.primary/primaryDark (toàn app) lẫn gradient
+    /// thẻ hạng ở SettingsView (gom về đây để không lệch màu giữa 2 nơi).
+    static let hangColors: [String: (primary: Color, dark: Color)] = [
+        "Kim Cương": (Color(red: 0.05, green: 0.35, blue: 0.42), Color(red: 0.02, green: 0.14, blue: 0.18)),
+        "Vàng": (Color(red: 0.62, green: 0.47, blue: 0.08), Color(red: 0.22, green: 0.16, blue: 0.02)),
+        "Bạc": (Color(red: 0.42, green: 0.44, blue: 0.47), Color(red: 0.16, green: 0.17, blue: 0.19)),
+        "Thành Viên": (Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255), Color(red: 0x15 / 255, green: 0x35 / 255, blue: 0x5F / 255)),
+    ]
+    static var primary: Color { hangColors[KhachHangSession.shared.hang]?.primary ?? hangColors["Thành Viên"]!.primary }
+    static var primaryDark: Color { hangColors[KhachHangSession.shared.hang]?.dark ?? hangColors["Thành Viên"]!.dark }
+    /// Trước là hex cố định #EAF1FA (navy nhạt) — giờ tính theo primary hiện tại để lên tông tự động
+    /// khi đổi hạng, xấp xỉ đúng độ nhạt của tông cũ khi hang == "Thành Viên" (opacity 0.12 trên nền trắng).
+    static var primaryTint: Color { primary.opacity(0.12) }
     static let success = Color(red: 0x2E / 255, green: 0x7D / 255, blue: 0x32 / 255)
     static let danger = Color(red: 0xC6 / 255, green: 0x28 / 255, blue: 0x28 / 255)
     static let warning = Color(red: 0xF9 / 255, green: 0xA8 / 255, blue: 0x25 / 255)
@@ -38,6 +51,48 @@ enum Theme {
         "Yêu thích": "❤️",
     ]
     static let defaultNhomIcon = "🥤"
+
+    /// Set UINavigationBar.appearance() theo Theme.primary hiện tại — tách khỏi AppDatHangIOSApp.init()
+    /// để gọi lại được mỗi khi KhachHangSession đổi hạng (không chỉ lúc khởi động app). Proxy UIAppearance
+    /// chỉ ăn cho bar tạo MỚI nên còn phải tự tay áp lại cho các UINavigationController ĐANG hiển thị.
+    static func applyNavBarAppearance() {
+        let navAppearance = UINavigationBarAppearance()
+        navAppearance.configureWithOpaqueBackground()
+        navAppearance.backgroundColor = UIColor(primary)
+        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        let backItemAppearance = UIBarButtonItemAppearance()
+        backItemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.backButtonAppearance = backItemAppearance
+
+        UINavigationBar.appearance().standardAppearance = navAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
+        UINavigationBar.appearance().compactAppearance = navAppearance
+        UINavigationBar.appearance().tintColor = .white
+
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            for window in windowScene.windows {
+                applyNavBarAppearance(to: window.rootViewController, appearance: navAppearance)
+            }
+        }
+    }
+
+    private static func applyNavBarAppearance(to viewController: UIViewController?, appearance: UINavigationBarAppearance) {
+        guard let viewController else { return }
+        if let nav = viewController as? UINavigationController {
+            nav.navigationBar.standardAppearance = appearance
+            nav.navigationBar.scrollEdgeAppearance = appearance
+            nav.navigationBar.compactAppearance = appearance
+            nav.navigationBar.tintColor = .white
+        }
+        for child in viewController.children {
+            applyNavBarAppearance(to: child, appearance: appearance)
+        }
+        if let presented = viewController.presentedViewController {
+            applyNavBarAppearance(to: presented, appearance: appearance)
+        }
+    }
 }
 
 extension View {

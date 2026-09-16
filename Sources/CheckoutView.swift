@@ -163,6 +163,7 @@ struct CheckoutView: View {
             await loadDiaChi()
             await loadTenDuong()
             vi = await viTask
+            if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
             vouchers = await voucherTask
             gioMoBan = await gioMoBanTask
             sanPhamDaTungDat = await sanPhamDaTungDatTask

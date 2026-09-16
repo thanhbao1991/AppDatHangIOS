@@ -65,6 +65,9 @@ enum Prefs {
     private static let keyTenKhachHang = "ten_khach_hang"
     private static let keyAvatarUrl = "avatar_url"
     private static let keyThietBiId = "thiet_bi_id"
+    /// Cache hạng lần fetch KhachHangVi gần nhất — chỉ để KhachHangSession lên màu đúng NGAY lúc app
+    /// khởi động (trước khi kịp gọi API), không phải nguồn sự thật (nguồn thật luôn là API).
+    private static let keyHang = "hang_khach_hang"
     private static let keyHinhThucThanhToan = "hinh_thuc_thanh_toan"
     // Khớp key "thongBaoLastSeen" tự đặt trực tiếp ở MainTabView/ThongBaoView (không đi qua Prefs
     // property) — liệt kê ở đây CHỈ để clear() xoá được, không thêm accessor riêng vì chỉ 2 chỗ đó
@@ -88,6 +91,10 @@ enum Prefs {
         set { defaults.set(newValue, forKey: keyAvatarUrl) }
     }
     static var isLoggedIn: Bool { !(token?.isEmpty ?? true) }
+    static var hang: String? {
+        get { defaults.string(forKey: keyHang) }
+        set { defaults.set(newValue, forKey: keyHang) }
+    }
 
     /// Hình thức thanh toán khách chọn lần đặt hàng GẦN NHẤT (rawValue của HinhThucThanhToan, xem
     /// CheckoutView.swift) — nhớ lại để lần sau tự chọn sẵn, khỏi bắt khách chọn lại mỗi đơn. nil =
@@ -118,6 +125,7 @@ enum Prefs {
         refreshToken = nil
         tenKhachHang = nil
         avatarUrl = nil
+        KhachHangSession.shared.reset()
         // Không xoá thì mốc "đã xem thông báo" lưu CHUNG CẢ MÁY (UserDefaults.standard, không theo
         // tài khoản) — đổi sang tài khoản khác trên cùng máy sẽ không thấy badge đỏ dù có thông báo
         // mới, vì mốc cũ của tài khoản trước vẫn còn đó (phát hiện 2026-09-14 lúc test QuayLai).

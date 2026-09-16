@@ -457,6 +457,7 @@ struct MenuView: View {
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
         monHayMua = vi?.monHayMua ?? []
+        if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         banChayIds = banChay
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
         // thất bại khi menu đã có sẵn dữ liệu cũ thì giữ nguyên danh sách đang hiện, không xoá sạch

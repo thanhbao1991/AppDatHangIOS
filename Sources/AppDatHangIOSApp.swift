@@ -16,18 +16,9 @@ struct AppDatHangIOSApp: App {
         // mới). Modifier gắn theo View không áp lại kịp trong tình huống này (verify thật: đổi
         // brandNavBar() vẫn KHÔNG hết lỗi) — set cứng UINavigationBar.appearance() 1 lần lúc khởi
         // động app mới thực sự hết, vì nó không phụ thuộc vòng đời của View nào cả.
-        let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = UIColor(Theme.primary)
-        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        let backItemAppearance = UIBarButtonItemAppearance()
-        backItemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navAppearance.backButtonAppearance = backItemAppearance
-        UINavigationBar.appearance().standardAppearance = navAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
-        UINavigationBar.appearance().compactAppearance = navAppearance
-        UINavigationBar.appearance().tintColor = .white
+        // Đọc Prefs.hang (cache từ phiên trước) để lên đúng màu hạng ngay từ khung hình đầu tiên,
+        // không đợi getVi() trả về mới đổi màu (xem KhachHangSession.swift).
+        Theme.applyNavBarAppearance()
     }
 
     var body: some Scene {
