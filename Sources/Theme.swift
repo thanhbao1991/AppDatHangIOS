@@ -8,11 +8,12 @@ enum Theme {
     /// Cặp màu (sáng, tối) từng hạng — dùng cho cả Theme.primary/primaryDark (toàn app) lẫn gradient
     /// thẻ hạng ở SettingsView (gom về đây để không lệch màu giữa 2 nơi).
     // 2026-09-17: đổi tông Bạc + Kim Cương — bản đầu (xám ám nâu + xanh rêu đục) bị chê "sai tông",
-    // không gợi được chất liệu bạc/kim cương thật. Bạc giờ ngả xanh thép (cool steel) đúng ánh kim
-    // loại; Kim Cương đổi hẳn sang tím ánh (amethyst/sapphire) để tách bạch rõ với xanh navy mặc định
-    // (Thành Viên) — trước dùng xanh rêu dễ lẫn với chính navy đó. Vàng giữ nguyên (đã được duyệt "ok").
+    // không gợi được chất liệu bạc/kim cương thật. Bạc ngả xanh thép (cool steel) đúng ánh kim loại;
+    // Vàng giữ nguyên (đã được duyệt "ok"). Kim Cương: thử tím amethyst trước, user yêu cầu đổi hẳn
+    // sang đen kiểu thẻ đen ngân hàng (Amex Centurion/thẻ VIP) — đen tuyền ngả chút xanh dương lạnh
+    // (không phải đen thuần #000, quá "chết"/giống mất kết nối) để vẫn có chất "kim loại quý".
     static let hangColors: [String: (primary: Color, dark: Color)] = [
-        "Kim Cương": (Color(red: 0.42, green: 0.22, blue: 0.68), Color(red: 0.18, green: 0.08, blue: 0.32)),
+        "Kim Cương": (Color(red: 0.11, green: 0.11, blue: 0.13), Color(red: 0.02, green: 0.02, blue: 0.03)),
         "Vàng": (Color(red: 0.62, green: 0.47, blue: 0.08), Color(red: 0.22, green: 0.16, blue: 0.02)),
         "Bạc": (Color(red: 0.52, green: 0.55, blue: 0.60), Color(red: 0.24, green: 0.26, blue: 0.30)),
         "Thành Viên": (Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255), Color(red: 0x15 / 255, green: 0x35 / 255, blue: 0x5F / 255)),
