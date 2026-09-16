@@ -295,7 +295,10 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
     var mau: Color {
         switch self {
         case .choXacNhan: return Theme.warning
-        case .daXacNhan: return Theme.primary
+        // Cố định navy (giá trị Theme.primary GỐC trước khi đổi theo hạng khách 2026-09-16) — màu
+        // trạng thái đơn phải cố định như 3 trạng thái khác, không được ăn theo Theme.primary nữa vì
+        // giờ nó đổi theo hạng (vàng/đen/xám...), làm badge "Đã xác nhận" lẫn với màu CTA/hạng.
+        case .daXacNhan: return Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255)
         case .dangGiao: return Color(red: 0x19 / 255, green: 0x76 / 255, blue: 0xD2 / 255)
         case .hoanTat: return Theme.success
         }

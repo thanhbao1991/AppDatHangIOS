@@ -116,14 +116,23 @@ enum Theme {
 /// ở từng call site (vd .frame(maxWidth: .infinity) hay .frame(minWidth: 120)) — giữ nguyên layout
 /// cũ, style này chỉ đổi CÁCH TÔ MÀU nền.
 struct GradientProminentButtonStyle: ButtonStyle {
+    /// true cho hành động phá hoại (vd "Xoá món") — KHÔNG theo màu hạng, giữ đỏ cảnh báo cố định
+    /// bất kể khách đang hạng gì (Kim Cương đen, Vàng gold... đỏ luôn phải là đỏ để còn cảnh báo được).
+    var danger: Bool = false
     @Environment(\.isEnabled) private var isEnabled
+
+    private var gradient: LinearGradient {
+        danger
+            ? LinearGradient(colors: [Theme.danger, Theme.danger.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            : Theme.primaryGradient
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(.white)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Theme.primaryGradient)
+            .background(gradient)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.45)
     }
@@ -133,6 +142,7 @@ extension ButtonStyle where Self == GradientProminentButtonStyle {
     /// Dùng như .buttonStyle(.gradientProminent) — khớp cú pháp .buttonStyle(.borderedProminent) cũ,
     /// đổi call site tối thiểu (chỉ bỏ .tint(Theme.primary) đi kèm, không cần đổi gì khác).
     static var gradientProminent: GradientProminentButtonStyle { GradientProminentButtonStyle() }
+    static func gradientProminent(danger: Bool) -> GradientProminentButtonStyle { GradientProminentButtonStyle(danger: danger) }
 }
 
 extension View {

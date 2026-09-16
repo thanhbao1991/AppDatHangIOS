@@ -740,9 +740,9 @@ struct ProductPickerSheet: View {
             }
             .fontWeight(.bold)
             .frame(maxWidth: .infinity)
-            .buttonStyle(.borderedProminent)
-            .tint(isDeleting ? Theme.danger : Theme.primary)
-            .controlSize(.large)
+            // Trước đây .buttonStyle()/.tint() tách 2 dòng nên lần rà soát gradient hoá nút CTA
+            // (grep 1 dòng) bỏ sót — nút "Thêm giỏ" vẫn phẳng trong khi mọi CTA khác đã gradient.
+            .buttonStyle(.gradientProminent(danger: isDeleting))
             .disabled(!isDeleting && (bienThe == nil || (isThuocLa && !duTuoiMuaThuocLa)))
             .padding(.horizontal, 16)
             .padding(.top, 10)
