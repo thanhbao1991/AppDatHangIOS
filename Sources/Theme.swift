@@ -14,9 +14,12 @@ enum Theme {
     // sáng hơn có ánh xanh) và Vàng (nâu vàng "tương phản không cao" → vàng kim/gold đậm rõ ràng
     // hơn) theo đúng mã hex được duyệt.
     static let hangColors: [String: (primary: Color, dark: Color)] = [
-        // Giãn khoảng cách 2 đầu (trước #1C1D21→#303136 quá gần nhau, gradient nhìn gần như solid) —
-        // primary gần đen tuyền, dark kéo lên xám đậm rõ rệt hơn để thấy rõ hiệu ứng gradient.
-        "Kim Cương": (hex(0x0A, 0x0A, 0x0D), hex(0x45, 0x47, 0x4E)),
+        // 2026-09-17 lần 2: vẫn bị chê "như solid" dù đã giãn (#0A0A0D→#45474E) — lý do: mắt người
+        // RẤT kém phân biệt gradient trong dải màu tối (đặc biệt khi gradient trải theo đường CHÉO
+        // trên 1 khung RỘNG/DẸT như nút/voucher, chênh lệch màu dồn theo chiều ngang nên nhìn 1 điểm
+        // bất kỳ gần như không đổi). Đẩy mạnh tay: gần đen tuyền → xám trung tính rõ ràng (không pha
+        // xanh, khác hẳn tông Bạc) để chênh lệch đủ lớn mắt thường thấy được.
+        "Kim Cương": (hex(0x08, 0x08, 0x08), hex(0x5A, 0x5A, 0x5A)),
         "Vàng": (hex(0xB7, 0x79, 0x1F), hex(0x74, 0x42, 0x10)),
         "Bạc": (hex(0x4A, 0x55, 0x68), hex(0x2D, 0x37, 0x48)),
         "Thành Viên": (hex(0x1E, 0x4E, 0x8C), hex(0x15, 0x35, 0x5F)),
