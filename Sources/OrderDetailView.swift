@@ -114,7 +114,7 @@ struct OrderDetailView: View {
                     .buttonStyle(.gradientProminent).disabled(dangMoQua)
                 }
 
-                Button("🔁 Đặt lại") { datLai() }
+                Button("Đặt lại") { datLai() }
                     .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
 
                 if order.trangThai == .hoanTat {
