@@ -78,8 +78,8 @@ struct CheckoutView: View {
     /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
     /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
     /// (đối chiếu sanPhamDaTungDat), DatLai (chiApDungKhiDatLai) cần giỏ đến từ nút "Đặt lại"
-    /// (cart.laDatLai), DonToiThieu/DonToiThieuBac (donToiThieu) cần tổng tiền hàng đạt
-    /// ngưỡng, SoLuongToiThieu (soLuongToiThieu) cần đủ số ly — nếu không đủ điều kiện thì mờ đi thay
+    /// (cart.laDatLai), DonToiThieu (donToiThieu) cần tổng tiền hàng đạt ngưỡng, SoLuongToiThieu
+    /// (soLuongToiThieu) cần đủ số ly — nếu không đủ điều kiện thì mờ đi thay
     /// vì hiện rồi báo lỗi/-0đ. Server tự loại voucher đã dùng hết lượt (1 lần/tài khoản) khỏi
     /// getVoucherKhaDung() nên không cần kiểm lại ở đây.
     private var vouchersHienThi: [Voucher] {
@@ -87,8 +87,8 @@ struct CheckoutView: View {
     }
 
     /// true nếu giỏ hàng hiện tại thoả điều kiện phụ của voucher — voucher không có điều kiện phụ nào
-    /// (hoặc điều kiện không thể kiểm tra được từ giỏ hàng, vd LenHang phụ thuộc chi tiêu cả tháng)
-    /// luôn trả true, chấp nhận rủi ro chọn nhầm thấp vì server vẫn chặn thật lúc tạo đơn.
+    /// luôn trả true, server vẫn chặn thật lúc tạo đơn. LenHangBac/Vang/KimCuong không cần lọc ở đây
+    /// nữa từ 2026-09-17 (đổi sang "đạt hạng tháng trước", không còn phụ thuộc giỏ hàng/đơn hiện tại).
     private func voucherDuDieuKien(_ v: Voucher) -> Bool {
         if v.chiApDungKhiCoSizeL {
             return cart.items.contains { isSizeLBienThe($0.tenBienThe) }
