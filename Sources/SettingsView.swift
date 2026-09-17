@@ -200,7 +200,7 @@ struct SettingsView: View {
                 colors: hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark],
                 startPoint: .topLeading, endPoint: .bottomTrailing)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
         .padding(.vertical, 6)
     }
