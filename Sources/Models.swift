@@ -196,6 +196,27 @@ struct VoucherCuaToi: Decodable, Identifiable {
     var soLanToiDa: Int?
     // Số lần ĐÃ dùng — chỉ có ý nghĩa khi soLanToiDa != nil.
     var soLanDaDung: Int?
+    // true = voucher CHƯA tới ngày bắt đầu, server gửi kèm để khách BIẾT TRƯỚC (vd voucher dịp lễ
+    // hiện trước vài ngày). KHÔNG dùng được — server vẫn từ chối áp dụng, nên hiện dạng xem trước.
+    var chuaBatDau: Bool = false
+    // Ngày bắt đầu có hiệu lực, chuỗi ISO — server chỉ gửi khi chuaBatDau = true. Để String chứ KHÔNG
+    // để Date: app dùng JSONDecoder() trần (không set dateDecodingStrategy) nên Date sẽ decode hỏng,
+    // mà hỏng 1 field là hỏng CẢ struct -> mất sạch danh sách voucher. Mọi field ngày khác trong file
+    // này cũng là String vì lý do đó.
+    var ngayBatDau: String?
+
+    /// "Từ 23/09" — nhãn cho voucher chưa tới ngày, nil với voucher dùng được ngay.
+    var nhanSapDienRa: String? {
+        guard chuaBatDau, let ngayBatDau else { return nil }
+        let inF = DateFormatter()
+        inF.dateFormat = "yyyy-MM-dd"
+        inF.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        guard let date = inF.date(from: String(ngayBatDau.prefix(10))) else { return nil }
+        let out = DateFormatter()
+        out.dateFormat = "dd/MM"
+        out.locale = Locale(identifier: "vi_VN")
+        return "Từ \(out.string(from: date))"
+    }
 
     /// "Dùng được tối đa 2 lần/tài khoản" hoặc "Đã dùng 1/2 lần" — chỉ có khi soLanToiDa != nil.
     var nhanSoLan: String? {

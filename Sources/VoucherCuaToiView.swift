@@ -27,7 +27,7 @@ struct VoucherCuaToiView: View {
                                     ten: v.ten, moTa: v.moTa, ma: v.ma,
                                     nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
                                     donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
-                                    nhanSoLan: v.nhanSoLan
+                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa
                                 )
                             }
                         }

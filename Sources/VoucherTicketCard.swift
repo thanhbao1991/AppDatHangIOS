@@ -18,6 +18,13 @@ struct VoucherTicketCard: View {
     /// "Dùng được tối đa 2 lần/tài khoản"/"Đã dùng 1/2 lần" — nil với voucher không cho dùng lại
     /// (mặc định). Xem VoucherCuaToi.nhanSoLan.
     var nhanSoLan: String? = nil
+    /// "Từ 23/09" — voucher CHƯA tới ngày, đang cho khách xem trước để biết mà quay lại đúng dịp.
+    /// Chưa dùng được (server từ chối áp dụng) nên card làm mờ giống daSuDung, nhưng nhãn khác hẳn:
+    /// "Đã dùng" là hết lượt, cái này là chưa tới lượt. Xem VoucherCuaToi.nhanSapDienRa.
+    var nhanSapDienRa: String? = nil
+
+    /// Card không bấm/dùng được lúc này — gộp 2 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
+    private var mo: Bool { daSuDung || nhanSapDienRa != nil }
 
     private let leftWidth: CGFloat = 96
     private let notchSize: CGFloat = 18
@@ -39,7 +46,7 @@ struct VoucherTicketCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.divider, lineWidth: 1))
-        .opacity(daSuDung ? 0.55 : 1)
+        .opacity(mo ? 0.55 : 1)
     }
 
     private var leftBlock: some View {
@@ -60,7 +67,7 @@ struct VoucherTicketCard: View {
         }
         .frame(width: leftWidth)
         .padding(.vertical, 16)
-        .background(daSuDung ? AnyShapeStyle(Theme.textFaint) : AnyShapeStyle(Theme.primaryGradient))
+        .background(mo ? AnyShapeStyle(Theme.textFaint) : AnyShapeStyle(Theme.primaryGradient))
     }
 
     private var dashedDivider: some View {
@@ -87,6 +94,12 @@ struct VoucherTicketCard: View {
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(Theme.divider))
+                } else if let nhanSapDienRa {
+                    Text(nhanSapDienRa)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Theme.primary))
                 } else if daChon {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16))
