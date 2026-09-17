@@ -75,6 +75,13 @@ enum Theme {
     static func applyNavBarAppearance() {
         let navAppearance = UINavigationBarAppearance()
         navAppearance.configureWithOpaqueBackground()
+        // UINavigationBarAppearance không nhận LinearGradient thẳng — vẽ gradient ra UIImage rồi gán
+        // backgroundImage, khớp hướng chéo (topLeading→bottomTrailing) với Theme.primaryGradient dùng
+        // ở nút CTA/voucher/card hạng, để nav bar không còn là 1 mảng màu đặc lệch tông với phần còn lại.
+        navAppearance.backgroundImage = gradientImage(top: UIColor(primary), bottom: UIColor(primaryDark))
+        // .scaleToFill — mặc định backgroundImageContentMode có thể crop ảnh vuông theo tỉ lệ thanh
+        // nav bar (rộng/lùn), ép kéo giãn full để gradient trải liền mạch, không bị cắt méo.
+        navAppearance.backgroundImageContentMode = .scaleToFill
         navAppearance.backgroundColor = UIColor(primary)
         navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
@@ -92,6 +99,27 @@ enum Theme {
             for window in windowScene.windows {
                 applyNavBarAppearance(to: window.rootViewController, appearance: navAppearance)
             }
+        }
+    }
+
+    /// Vẽ gradient chéo (trái trên → phải dưới, khớp Theme.primaryGradient) ra 1 UIImage nhỏ (44x44 —
+    /// UINavigationBarAppearance.backgroundImage tự stretch ra full chiều rộng/cao thanh nav bar,
+    /// không cần vẽ đúng kích thước thật) để gán vào backgroundImage.
+    private static func gradientImage(top: UIColor, bottom: UIColor) -> UIImage {
+        let size = CGSize(width: 44, height: 44)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            guard let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: [top.cgColor, bottom.cgColor] as CFArray,
+                locations: [0, 1]
+            ) else { return }
+            ctx.cgContext.drawLinearGradient(
+                gradient,
+                start: CGPoint(x: 0, y: 0),
+                end: CGPoint(x: size.width, y: size.height),
+                options: []
+            )
         }
     }
 
