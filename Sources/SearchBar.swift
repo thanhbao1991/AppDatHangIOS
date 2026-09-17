@@ -27,7 +27,10 @@ struct SearchBar: View {
         .background(
             Group {
                 if tinted {
-                    LinearGradient(colors: [Theme.primary, Theme.primary.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                    // Trước dùng [primary, primary.opacity(0.85)] — cùng 1 màu chỉ khác độ mờ nên
+                    // nhìn gần như phẳng. Đổi sang Theme.primaryGradient (primary→primaryDark, khớp
+                    // nút CTA/voucher/card hạng) để thấy rõ 2 tông như mọi nơi khác trong app.
+                    Theme.primaryGradient
                         .ignoresSafeArea(edges: .top)
                 }
             }
@@ -83,7 +86,10 @@ struct TitleBar: View {
         .background(
             Group {
                 if tinted {
-                    LinearGradient(colors: [Theme.primary, Theme.primary.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                    // Trước dùng [primary, primary.opacity(0.85)] — cùng 1 màu chỉ khác độ mờ nên
+                    // nhìn gần như phẳng. Đổi sang Theme.primaryGradient (primary→primaryDark, khớp
+                    // nút CTA/voucher/card hạng) để thấy rõ 2 tông như mọi nơi khác trong app.
+                    Theme.primaryGradient
                         .ignoresSafeArea(edges: .top)
                 }
             }

@@ -30,7 +30,8 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Theme.primary, Theme.primary.opacity(0.75)], startPoint: .top, endPoint: .bottom)
+            // Trước [primary, primary.opacity(0.75)] — cùng 1 màu khác độ mờ, nhìn gần như phẳng.
+            Theme.primaryGradient
                 .ignoresSafeArea()
 
             ScrollView {
