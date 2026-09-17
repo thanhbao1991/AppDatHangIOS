@@ -115,7 +115,7 @@ struct OrderDetailView: View {
                 }
 
                 Button("🔁 Đặt lại") { datLai() }
-                    .buttonStyle(.bordered).tint(Theme.primary).frame(maxWidth: .infinity)
+                    .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
 
                 if order.trangThai == .hoanTat {
                     card { danhGiaSection }

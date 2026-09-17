@@ -96,7 +96,7 @@ struct OrderStatusView: View {
                     Task { await moQua(item) }
                 }
             }
-            actionButton("🔁 Đặt lại") { datLai(item) }
+            actionButton("🔁 Đặt lại", filled: true) { datLai(item) }
             if item.trangThai != .hoanTat {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
