@@ -69,10 +69,7 @@ struct SettingsView: View {
             } else {
                 if let vi {
                     cardRow(topExtra: 6) { diemHangCard(vi) }
-                    cardRow { xuCard(vi) }
-                    if vi.tongNo > 0 {
-                        cardRow { congNoCard(vi) }
-                    }
+                    cardRow { xuCongNoCard(vi) }
                 }
 
                 cardRow { thongTinCaNhanCard }
@@ -136,23 +133,41 @@ struct SettingsView: View {
         openURL(url)
     }
 
-    /// Card Xu — CHỈ số dư Xu (điểm thưởng quy đổi đơn hàng), tách hẳn khỏi Điểm/Hạng thành viên vì
-    /// hai khái niệm khác nhau: Xu tiêu được như tiền, Điểm chỉ dùng xét hạng thành viên.
-    private func xuCard(_ vi: KhachHangVi) -> some View {
+    /// Xu (điểm thưởng quy đổi đơn hàng) + Công nợ gộp CHUNG 1 card (2026-09-18, trước là 2 card
+    /// riêng) — Xu bên trái, Công nợ bên phải ngăn bởi Divider dọc; khách không có công nợ thì Xu
+    /// chiếm trọn card (không có Divider/cột phải).
+    private func xuCongNoCard(_ vi: KhachHangVi) -> some View {
         cardBox {
-            HStack {
-                Text("🪙 Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
-                Spacer()
+            HStack(alignment: .top, spacing: 16) {
+                xuContent(vi)
+                if vi.tongNo > 0 {
+                    Divider()
+                    congNoContent(vi)
+                }
             }
+        }
+    }
+
+    private func xuContent(_ vi: KhachHangVi) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("🪙 Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
             NavigationLink { LichSuViView() } label: {
                 HStack {
                     Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                    Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func congNoContent(_ vi: KhachHangVi) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
+            Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
@@ -302,13 +317,6 @@ struct SettingsView: View {
                 }
             }
             .padding(.vertical, 4)
-        }
-    }
-
-    private func congNoCard(_ vi: KhachHangVi) -> some View {
-        cardBox {
-            Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
-            Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
         }
     }
 
