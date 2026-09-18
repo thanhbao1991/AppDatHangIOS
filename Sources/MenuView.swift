@@ -159,7 +159,7 @@ struct MenuView: View {
 
             Group {
                 if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    fullScreenLoading()
                 } else if !error.isEmpty {
                     VStack(spacing: 12) {
                         Text(error).foregroundColor(Theme.danger)

@@ -10,7 +10,7 @@ struct LichSuCongNoView: View {
     var body: some View {
         Group {
             if loading {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                fullScreenLoading()
             } else if items.isEmpty {
                 Text("Chưa có công nợ nào.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

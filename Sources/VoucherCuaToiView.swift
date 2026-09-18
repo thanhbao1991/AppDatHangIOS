@@ -16,9 +16,12 @@ struct VoucherCuaToiView: View {
 
             Group {
                 if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    fullScreenLoading()
                 } else if vouchers.isEmpty {
-                    emptyState
+                    // Bọc ScrollView để .refreshable hoạt động cả khi rỗng (không thì khách kẹt
+                    // "chưa có voucher" không vuốt xuống tải lại được).
+                    ScrollView { emptyState }
+                        .refreshable { await load() }
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
@@ -35,6 +38,7 @@ struct VoucherCuaToiView: View {
                         .padding(.top, 12)
                         .padding(.bottom, 20)
                     }
+                    .refreshable { await load() }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

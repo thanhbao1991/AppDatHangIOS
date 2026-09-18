@@ -57,7 +57,7 @@ struct ThongBaoView: View {
 
             Group {
                 if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    fullScreenLoading()
                 } else if items.isEmpty {
                     Text("Chưa có thông báo nào.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

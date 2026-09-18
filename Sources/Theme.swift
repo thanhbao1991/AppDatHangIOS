@@ -204,6 +204,17 @@ extension View {
     }
 }
 
+/// Vòng loading toàn màn hình dùng chung mọi tab — mặc định ProgressView() màu xám hệ thống, kích
+/// thước nhỏ, dễ tưởng app treo trên nền sáng (feedback 2026-09-18: "mờ lắm, cứ tưởng app bị
+/// treo"). Phóng to 1.4x + tint theo Theme.primary (đổi màu theo hạng, khớp phong cách toàn app)
+/// để rõ ràng là đang tải chứ không phải đứng hình.
+func fullScreenLoading() -> some View {
+    ProgressView()
+        .scaleEffect(1.4)
+        .tint(Theme.primary)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+}
+
 @ViewBuilder
 func cardBox<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     VStack(alignment: .leading, spacing: 10, content: content)

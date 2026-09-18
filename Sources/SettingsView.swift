@@ -73,7 +73,7 @@ struct SettingsView: View {
     private var settingsList: some View {
         List {
             if loading {
-                ProgressView().frame(maxWidth: .infinity)
+                ProgressView().scaleEffect(1.4).tint(Theme.primary).frame(maxWidth: .infinity).padding(.top, 60)
             } else {
                 if let vi {
                     cardRow(topExtra: 6) { diemHangCard(vi) }
@@ -85,6 +85,7 @@ struct SettingsView: View {
             }
         }
         .cardListBackground()
+        .refreshable { await load() }
     }
 
     /// Thay TitleBar chữ trơn — avatar+tên (nội dung card đầu tiên cũ) đưa lên chung thanh top cùng

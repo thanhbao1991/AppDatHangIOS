@@ -10,7 +10,7 @@ struct ThietBiDangNhapView: View {
     var body: some View {
         Group {
             if loading {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                fullScreenLoading()
             } else {
                 List(sessions, id: \.id) { item in
                     HStack(spacing: 12) {

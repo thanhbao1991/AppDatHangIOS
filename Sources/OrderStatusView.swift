@@ -22,7 +22,7 @@ struct OrderStatusView: View {
 
             Group {
                 if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    fullScreenLoading()
                 } else if orders.isEmpty {
                     Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -25,7 +25,7 @@ struct UuDaiView: View {
 
             Group {
                 if loading {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    fullScreenLoading()
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
@@ -35,6 +35,7 @@ struct UuDaiView: View {
                         }
                         .padding(.top, 6)
                     }
+                    .refreshable { await load() }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
