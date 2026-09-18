@@ -41,9 +41,7 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: Prefs.tenKhachHang ?? "Tài khoản", trailing: AnyView(
-                HStack(spacing: 4) { notificationBell; accountSettingsGear }
-            ))
+            accountHeader
             settingsList
         }
         .task { await load() }
@@ -69,11 +67,9 @@ struct SettingsView: View {
             if loading {
                 ProgressView().frame(maxWidth: .infinity)
             } else {
-                cardRow(topExtra: 6) { avatarCard }
-
                 if let vi {
+                    cardRow(topExtra: 6) { diemHangCard(vi) }
                     cardRow { xuCard(vi) }
-                    cardRow { diemHangCard(vi) }
                     if vi.tongNo > 0 {
                         cardRow { congNoCard(vi) }
                     }
@@ -84,6 +80,27 @@ struct SettingsView: View {
             }
         }
         .cardListBackground()
+    }
+
+    /// Thay TitleBar chữ trơn — avatar+tên (nội dung card đầu tiên cũ) đưa lên chung thanh top cùng
+    /// khu vực chuông/bánh răng (2026-09-18), thay vì nằm thành 1 card riêng trong danh sách bên dưới.
+    private var accountHeader: some View {
+        HStack(spacing: 14) {
+            AvatarPickerView(avatarUrl: avatarUrl, uploading: dangUploadAvatar) { data in
+                Task { await uploadAvatar(data) }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                Text("Bấm vào ảnh để đổi avatar").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
+            }
+            Spacer()
+            notificationBell
+            accountSettingsGear
+        }
+        .padding(.horizontal)
+        .padding(.vertical, HeaderBarMetrics.verticalPadding)
+        .frame(minHeight: HeaderBarMetrics.rowHeight)
+        .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
     }
 
     // ID số của app trên App Store — CHƯA CÓ THẬT vì app hiện chỉ phân phối qua Sideloadly (xem
@@ -117,20 +134,6 @@ struct SettingsView: View {
     private func moDanhGia() {
         guard let url = URL(string: "https://apps.apple.com/app/\(Self.appStoreId)?action=write-review") else { return }
         openURL(url)
-    }
-
-    private var avatarCard: some View {
-        cardBox {
-            HStack(spacing: 14) {
-                AvatarPickerView(avatarUrl: avatarUrl, uploading: dangUploadAvatar) { data in
-                    Task { await uploadAvatar(data) }
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold))
-                    Text("Bấm vào ảnh để đổi avatar").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
-            }
-        }
     }
 
     /// Card Xu — CHỈ số dư Xu (điểm thưởng quy đổi đơn hàng), tách hẳn khỏi Điểm/Hạng thành viên vì
