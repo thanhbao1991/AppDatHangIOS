@@ -233,9 +233,15 @@ struct SettingsView: View {
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
 
-            HStack(spacing: 12) {
-                statBoxDark(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
-                statBoxDark(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
+            // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá
+            // DuocNhanVoucher — hiện tại chỉ 1 số khách được bật (chờ app lên App Store chính thức
+            // mới bật cho TẤT CẢ, xem project_voucher_system_2026_09 trong memory). Ẩn hẳn 2 ô điểm
+            // thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
+            if vi.diemThangNay >= 0 {
+                HStack(spacing: 12) {
+                    statBoxDark(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
+                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
+                }
             }
         }
         .padding(16)
