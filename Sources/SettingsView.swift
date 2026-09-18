@@ -24,6 +24,7 @@ struct SettingsView: View {
 
     @State private var tenHienThi: String = Prefs.tenKhachHang ?? ""
     @State private var dangLuuTen = false
+    @State private var showEditTen = false
 
     @State private var avatarUrl: String? = Prefs.avatarUrl
     @State private var dangUploadAvatar = false
@@ -60,6 +61,13 @@ struct SettingsView: View {
             }
             Button("Huỷ", role: .cancel) {}
         }
+        .alert("Đổi tên hiển thị", isPresented: $showEditTen) {
+            TextField("Tên hiển thị trong app", text: $tenHienThi)
+            Button("Lưu") { Task { await luuTenHienThi() } }
+            Button("Huỷ", role: .cancel) { tenHienThi = Prefs.tenKhachHang ?? "" }
+        } message: {
+            Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
+        }
     }
 
     private var settingsList: some View {
@@ -81,14 +89,27 @@ struct SettingsView: View {
 
     /// Thay TitleBar chữ trơn — avatar+tên (nội dung card đầu tiên cũ) đưa lên chung thanh top cùng
     /// khu vực chuông/bánh răng (2026-09-18), thay vì nằm thành 1 card riêng trong danh sách bên dưới.
+    /// Dòng phụ dưới tên đổi từ "Bấm vào ảnh để đổi avatar" sang địa chỉ mặc định của khách (thông
+    /// tin hữu ích hơn ngay chỗ dễ thấy nhất) — sửa tên giờ bấm trực tiếp vào tên (icon bút chì), sửa
+    /// địa chỉ vẫn ở card Thông tin cá nhân bên dưới như cũ.
     private var accountHeader: some View {
         HStack(spacing: 14) {
             AvatarPickerView(avatarUrl: avatarUrl, uploading: dangUploadAvatar) { data in
                 Task { await uploadAvatar(data) }
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                Text("Bấm vào ảnh để đổi avatar").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
+                Button { showEditTen = true } label: {
+                    HStack(spacing: 4) {
+                        Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                        Image(systemName: "pencil").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
+                    }
+                }
+                .buttonStyle(.plain)
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse").font(.system(size: 11))
+                    Text(diaChiMacDinhText).font(.system(size: 12)).lineLimit(1)
+                }
+                .foregroundColor(.white.opacity(0.85))
             }
             Spacer()
             notificationBell
@@ -98,6 +119,10 @@ struct SettingsView: View {
         .padding(.vertical, HeaderBarMetrics.verticalPadding)
         .frame(minHeight: HeaderBarMetrics.rowHeight)
         .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
+    }
+
+    private var diaChiMacDinhText: String {
+        (diaChiList.first(where: { $0.isDefault }) ?? diaChiList.first)?.diaChi ?? "Chưa có địa chỉ mặc định"
     }
 
     // ID số của app trên App Store — CHƯA CÓ THẬT vì app hiện chỉ phân phối qua Sideloadly (xem
@@ -229,8 +254,6 @@ struct SettingsView: View {
         cardBox {
             Text("Thông tin cá nhân").font(.system(size: 16, weight: .bold))
             Divider()
-            tenHienThiRow
-            Divider()
             sinhNhatRow
             Divider()
 
@@ -259,27 +282,6 @@ struct SettingsView: View {
                 }
             }
         }
-    }
-
-    /// Tên hiển thị (biệt danh) trong app — chỉ đổi cách app hiện tên, không đụng tên thật khách lưu
-    /// ở quán (chỉ nhân viên sửa được qua Desktop). Để trống + Lưu = xoá biệt danh, quay lại tên thật.
-    private var tenHienThiRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Tên hiển thị").font(.system(size: 14))
-            HStack {
-                TextField("Tên hiển thị trong app", text: $tenHienThi)
-                    .textFieldStyle(.roundedBorder)
-                    .tint(Theme.primary)
-                Button {
-                    Task { await luuTenHienThi() }
-                } label: {
-                    if dangLuuTen { ProgressView() } else { Text("Lưu") }
-                }
-                .buttonStyle(.bordered).tint(Theme.primary)
-                .disabled(dangLuuTen || tenHienThi.trimmingCharacters(in: .whitespaces) == (Prefs.tenKhachHang ?? ""))
-            }
-        }
-        .padding(.vertical, 4)
     }
 
     @ViewBuilder
