@@ -371,6 +371,17 @@ struct ViGiaoDich: Decodable, Identifiable {
     let ghiChu: String?
 }
 
+struct CongNoLichSu: Decodable, Identifiable {
+    let hoaDonId: String
+    let maHoaDon: String
+    let ngayNo: String
+    let thanhTien: Double
+    let daThu: Double
+    let conLai: Double
+
+    var id: String { hoaDonId }
+}
+
 struct LyBiMatResult: Decodable {
     let hoaDonId: String
     let maHoaDon: String

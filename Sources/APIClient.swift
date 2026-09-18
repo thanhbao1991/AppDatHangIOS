@@ -340,6 +340,11 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    func getLichSuCongNo() async -> [CongNoLichSu] {
+        let env: ApiEnvelope<[CongNoLichSu]> = await decode("/dat-hang/cong-no-lich-su")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     func getGiaLyBiMat() async -> Double? {
         let env: ApiEnvelope<Double> = await decode("/dat-hang/ly-bi-mat/gia")
         return env.isSuccess ? env.data : nil

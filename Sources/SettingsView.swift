@@ -175,13 +175,12 @@ struct SettingsView: View {
 
     private func xuContent(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("🪙 Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
+            Text("Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
+            // KHÔNG tự thêm chevron — NavigationLink trong List đã tự vẽ 1 mũi tên disclosure riêng,
+            // thêm icon nữa bị thừa 2 mũi tên (phát hiện 2026-09-18).
             NavigationLink { LichSuViView() } label: {
-                HStack {
-                    Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
+                Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -191,6 +190,9 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
+            NavigationLink { LichSuCongNoView() } label: {
+                Text("Lịch sử Công nợ").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
