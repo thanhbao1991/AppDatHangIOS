@@ -70,11 +70,16 @@ struct SettingsView: View {
         }
     }
 
+    // loading nằm NGOÀI List (không phải 1 row trong List) — trước đây đặt ProgressView làm row
+    // đầu List khiến nó bị giới hạn trong chiều cao 1 row + có đường kẻ phân cách List tự vẽ bên
+    // dưới, trông khác hẳn fullScreenLoading() ở mọi tab khác (phát hiện 2026-09-18 qua ảnh chụp
+    // thật: cùng là loading nhưng tab Tài khoản hiện nhỏ/lệch trên, các tab khác thì giữa màn hình).
+    @ViewBuilder
     private var settingsList: some View {
-        List {
-            if loading {
-                ProgressView().scaleEffect(1.4).tint(Theme.primary).frame(maxWidth: .infinity).padding(.top, 60)
-            } else {
+        if loading {
+            fullScreenLoading()
+        } else {
+            List {
                 if let vi {
                     cardRow(topExtra: 6) { diemHangCard(vi) }
                     cardRow { xuCongNoCard(vi) }
@@ -83,9 +88,9 @@ struct SettingsView: View {
                 cardRow { thongTinCaNhanCard }
                 cardRow { danhGiaCard }
             }
+            .cardListBackground()
+            .refreshable { await load() }
         }
-        .cardListBackground()
-        .refreshable { await load() }
     }
 
     /// Thay TitleBar chữ trơn — avatar+tên (nội dung card đầu tiên cũ) đưa lên chung thanh top cùng
