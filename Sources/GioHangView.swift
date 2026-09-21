@@ -113,11 +113,14 @@ struct GioHangView: View {
 
     @ViewBuilder
     private func itemThumbnail(_ item: CartItem) -> some View {
-        if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
+        // Dòng giỏ có thể không mang hinhAnh (giỏ lưu từ bản cũ, "Đặt lại" từ hoá đơn cũ) — rơi về
+        // ảnh trong catalog, khớp với sheet sửa món vốn đã dùng SanPham thật từ catalog.
+        let sp = sanPham(for: item)
+        if let hinhAnh = item.hinhAnh ?? sp?.hinhAnh, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                 .frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 8))
         } else {
-            let ten = sanPham(for: item).flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
+            let ten = sp.flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
             RoundedRectangle(cornerRadius: 8).fill(Theme.primaryTint).frame(width: 36, height: 36)
                 .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 18)))
         }
