@@ -48,14 +48,12 @@ struct SettingsView: View {
             accountHeader
             settingsList
         }
-        // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard).
-        // Da qua 3 lan sua khong an: navigationDestination(for:) bi List dinh link theo row; 2
-        // navigationDestination(isPresented:) rieng gan CUNG 1 view dam vao nhau; gom ve 1 modifier +
-        // enum state van bam Xu ra Cong no (nghi do 2 Button chung 1 List row van gay nham lan o tang
-        // gesture/hit-test cua List, khong phai o tang navigationDestination). Fix that lan nay: gan
-        // MOI navigationDestination(isPresented:) truc tiep len subview rieng cua no (xuContent/
-        // congNoContent) thay vi chong 2 modifier len CUNG 1 view goc — moi diem gan la 1 vi tri khac
-        // nhau trong cay view nen khong con dung cham nhau (fix 2026-09-23 lan 2).
+        // Xu và Công nợ nằm CHUNG 1 row của List (2 Button sibling trong xuCongNoCard). ROOT CAUSE
+        // THẬT SỰ (sau 2 lần sửa sai hướng ở tầng navigationDestination/state): List coi row có nhiều
+        // Button mặc định là "1 vùng chạm", chỉ route gesture cho 1 control — bấm nút đầu vẫn kích
+        // hoạt nút cuối. Fix đúng nằm ở .buttonStyle(.plain) trên từng Button (xem xuContent/
+        // congNoContent), không phải ở navigationDestination — giữ nguyên 2 modifier tách theo subview
+        // (fix 2026-09-23 lần 2) vì đúng hướng, chỉ thiếu buttonStyle (fix 2026-09-23 lần 3, ĐÃ XONG).
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
@@ -196,13 +194,19 @@ struct SettingsView: View {
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
             // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
             // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
+            // .buttonStyle(.plain) LÀ CHỖ SAI THẬT SỰ (fix 2026-09-23 lần 3, sau 2 lần đổi kiến trúc
+            // navigation không trúng): 2 Button mặc định (không set style) trong CÙNG 1 row của List
+            // bị chính List "nuốt" gesture — List coi cả row là 1 vùng chạm và chỉ route tới ĐÚNG 1
+            // control bên trong (thường là control cuối cùng), nên bấm nút đầu (Lịch sử Xu) vẫn kích
+            // hoạt action của nút sau (Công nợ). .buttonStyle(.plain) tắt hành vi "hàng-là-1-nút" đó
+            // của List, trả lại gesture riêng cho từng Button. Đây là bug List quen thuộc của SwiftUI,
+            // không phải lỗi ở tầng navigationDestination như 2 lần sửa trước đoán.
             Button { showLichSuXu = true } label: {
                 Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Gắn RIÊNG trên subview này (không dồn chung với modifier của congNoContent trên view gốc)
-        // — xem comment dài ở body phía trên (fix 2026-09-23 lần 2).
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
     }
 
@@ -213,6 +217,7 @@ struct SettingsView: View {
             Button { showCongNoHienTai = true } label: {
                 Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
