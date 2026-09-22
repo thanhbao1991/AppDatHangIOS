@@ -378,6 +378,8 @@ struct CongNoLichSu: Decodable, Identifiable {
     let thanhTien: Double
     let daThu: Double
     let conLai: Double
+    let phanLoai: String
+    let tenMonSummary: String
 
     var id: String { hoaDonId }
 }

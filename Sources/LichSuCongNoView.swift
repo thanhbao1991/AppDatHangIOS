@@ -47,15 +47,19 @@ struct LichSuCongNoView: View {
         }
     }
 
-    /// Layout tham khảo CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên
-    /// trái + nền pastel đỏ nhạt + shadow, để 2 app khớp phong cách. Bỏ hẳn mã hoá đơn (vd
-    /// "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22), thay bằng nhãn "Hoá đơn" chung
-    /// (khớp đúng cách CongNoRowView fallback khi không có tóm tắt món/tên để hiện).
+    /// Layout khớp CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên trái +
+    /// nền pastel đỏ nhạt + shadow + tóm tắt món làm dòng chính. Khác staff ở nhãn phụ: staff hiện
+    /// TÊN KHÁCH (nhiều khách khác nhau); khách chỉ xem đơn của chính mình nên tên khách vô nghĩa
+    /// (luôn là chính họ) — thay bằng PHÂN LOẠI (Giao hàng/Mang về/Tại quán) cho có ích hơn. Bỏ hẳn
+    /// mã hoá đơn (vd "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22).
     private func hoaDonCard(_ item: CongNoLichSu) -> some View {
         HStack(spacing: 10) {
             Rectangle().fill(Theme.danger).frame(width: 4)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hoá đơn").font(.system(size: 14, weight: .bold))
+                Text(phanLoaiLabel(item.phanLoai)).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted)
+                Text(item.tenMonSummary.isEmpty ? "Hoá đơn" : item.tenMonSummary)
+                    .font(.system(size: 14, weight: .bold))
+                    .lineLimit(2)
                 // Đã trả 1 phần thì thanhTien > conLai, mới cần hiện thêm dòng "Tổng" để phân biệt
                 // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
                 if item.conLai < item.thanhTien {
@@ -74,6 +78,15 @@ struct LichSuCongNoView: View {
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
         .padding(.horizontal)
         .padding(.vertical, 4)
+    }
+
+    /// Cùng cách map PhanLoai với OrderDetailView ("Ship"/"Mv"/khác) — gom về đây vì dùng lại ở đây.
+    private func phanLoaiLabel(_ phanLoai: String) -> String {
+        switch phanLoai {
+        case "Ship": return "Giao hàng"
+        case "Mv": return "Mang về"
+        default: return "Tại quán"
+        }
     }
 
     /// Backend trả DateTime "yyyy-MM-ddTHH:mm:ss.fffffff" (Kind=Unspecified nhưng thực chất UTC) —
