@@ -3,6 +3,11 @@ import SwiftUI
 /// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu. Các thao tác bảo mật/tài khoản
 /// (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài khoản) đã tách sang TaiKhoanBaoMatView,
 /// mở qua icon bánh răng ở MainTabView (chỉ hiện khi đang ở tab này) — tránh trộn với ví/địa chỉ.
+private enum SettingsRoute {
+    case lichSuXu
+    case congNoHienTai
+}
+
 struct SettingsView: View {
     @Binding var isLoggedIn: Bool
     var notificationBell: AnyView
@@ -29,8 +34,8 @@ struct SettingsView: View {
     @State private var avatarUrl: String? = Prefs.avatarUrl
     @State private var dangUploadAvatar = false
 
-    @State private var showLichSuXu = false
-    @State private var showCongNoHienTai = false
+    @State private var settingsRoute: SettingsRoute = .lichSuXu
+    @State private var showSettingsRoute = false
 
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
     // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
@@ -49,14 +54,17 @@ struct SettingsView: View {
             settingsList
         }
         // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard).
-        // Doi sang navigationDestination(for:) o lan sua truoc (2026-09-22 sang) van con loi back
-        // sai man — List van tu quan ly NavigationLink theo row du dung API value-based, nen 2 link
-        // chung row van dam vao nhau. navigationDestination(item:) (Button + Optional state) la fix
-        // dung huong nhung can iOS 17, deploymentTarget o day la 16 nen build CI fail — doi sang 2
-        // navigationDestination(isPresented:) rieng biet (co tu iOS 16), moi cai gan 1 Bool state
-        // rieng, khong con dinh gi den co che link cua List (fix that 2026-09-22 toi).
-        .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
-        .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
+        // Da qua 2 lan sua: navigationDestination(for:) van bi List dinh link theo row; 2
+        // navigationDestination(isPresented:) rieng biet lai dam vao nhau kieu khac (bam Xu ra Cong
+        // no) - 2 modifier nay gan tren CUNG 1 view thi SwiftUI chi thuc su theo doi dung 1 cai, cai
+        // con lai bi lech. Fix that: GOM VE 1 navigationDestination(isPresented:) duy nhat, chon noi
+        // dung bang 1 enum state rieng (settingsRoute) — chi con 1 nguon su that (fix 2026-09-23).
+        .navigationDestination(isPresented: $showSettingsRoute) {
+            switch settingsRoute {
+            case .lichSuXu: LichSuViView()
+            case .congNoHienTai: LichSuCongNoView()
+            }
+        }
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
@@ -197,7 +205,7 @@ struct SettingsView: View {
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
             // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
             // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
-            Button { showLichSuXu = true } label: {
+            Button { settingsRoute = .lichSuXu; showSettingsRoute = true } label: {
                 Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
@@ -208,7 +216,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
-            Button { showCongNoHienTai = true } label: {
+            Button { settingsRoute = .congNoHienTai; showSettingsRoute = true } label: {
                 Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
