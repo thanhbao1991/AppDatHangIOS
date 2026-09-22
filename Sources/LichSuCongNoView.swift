@@ -39,15 +39,22 @@ struct LichSuCongNoView: View {
     }
 
     /// Layout khớp CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên trái +
-    /// nền pastel đỏ nhạt + shadow + tóm tắt món làm dòng chính. Khác staff ở nhãn phụ: staff hiện
-    /// TÊN KHÁCH (nhiều khách khác nhau); khách chỉ xem đơn của chính mình nên tên khách vô nghĩa
-    /// (luôn là chính họ) — thay bằng PHÂN LOẠI (Giao hàng/Mang về/Tại quán) cho có ích hơn. Bỏ hẳn
-    /// mã hoá đơn (vd "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22).
+    /// nền pastel + shadow + tóm tắt món làm dòng chính. Khác staff ở nhãn phụ: staff hiện TÊN KHÁCH
+    /// (nhiều khách khác nhau); khách chỉ xem đơn của chính mình nên tên khách vô nghĩa (luôn là
+    /// chính họ) — thay bằng PHÂN LOẠI (Giao hàng/Mang về/Tại quán) cho có ích hơn. Bỏ hẳn mã hoá đơn
+    /// (vd "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22).
+    /// Nền/thanh màu bên trái đổi theo HẠNG khách (Theme.primary tự đổi theo KhachHangSession.shared.hang)
+    /// thay vì đỏ cố định — số tiền còn nợ vẫn giữ đỏ (Theme.danger) để dễ thấy là cảnh báo (feedback 2026-09-23).
     private func hoaDonCard(_ item: CongNoLichSu) -> some View {
-        HStack(spacing: 10) {
-            Rectangle().fill(Theme.danger).frame(width: 4)
+        // Đơn Ship có địa chỉ thì gộp luôn vào dòng đầu ("Giao hàng tại: ...") thay vì tách riêng
+        // nhãn "Giao hàng" + 1 dòng địa chỉ bên dưới — đỡ dư dòng (feedback 2026-09-23).
+        let diaChi = item.phanLoai == "Ship" ? item.diaChiText?.trimmingCharacters(in: .whitespaces) : nil
+        let dongDau = (diaChi?.isEmpty == false) ? "Giao hàng tại: \(diaChi!)" : phanLoaiLabel(item.phanLoai)
+
+        return HStack(spacing: 10) {
+            Rectangle().fill(Theme.primary).frame(width: 4)
             VStack(alignment: .leading, spacing: 4) {
-                Text(phanLoaiLabel(item.phanLoai)).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted)
+                Text(dongDau).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted).lineLimit(2)
                 Text(item.tenMonSummary.isEmpty ? "Hoá đơn" : item.tenMonSummary)
                     .font(.system(size: 14, weight: .bold))
                     .lineLimit(6)
@@ -55,13 +62,6 @@ struct LichSuCongNoView: View {
                 // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
                 if item.conLai < item.thanhTien {
                     Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                }
-                // Chỉ đơn Ship mới có địa chỉ giao — Mv/Tại quán không cần (feedback 2026-09-23).
-                if item.phanLoai == "Ship", let diaChi = item.diaChiText, !diaChi.isEmpty {
-                    Text("Giao hàng tại: \(diaChi)")
-                        .font(.system(size: 11))
-                        .foregroundColor(Theme.textFaint)
-                        .lineLimit(2)
                 }
             }
             Spacer()
@@ -71,7 +71,7 @@ struct LichSuCongNoView: View {
             }
         }
         .padding(12)
-        .background(Theme.danger.pastelBackground())
+        .background(Theme.primary.pastelBackground())
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
         .padding(.horizontal)

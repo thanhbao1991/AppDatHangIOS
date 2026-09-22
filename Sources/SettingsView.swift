@@ -3,11 +3,6 @@ import SwiftUI
 /// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu. Các thao tác bảo mật/tài khoản
 /// (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài khoản) đã tách sang TaiKhoanBaoMatView,
 /// mở qua icon bánh răng ở MainTabView (chỉ hiện khi đang ở tab này) — tránh trộn với ví/địa chỉ.
-private enum SettingsRoute {
-    case lichSuXu
-    case congNoHienTai
-}
-
 struct SettingsView: View {
     @Binding var isLoggedIn: Bool
     var notificationBell: AnyView
@@ -34,8 +29,8 @@ struct SettingsView: View {
     @State private var avatarUrl: String? = Prefs.avatarUrl
     @State private var dangUploadAvatar = false
 
-    @State private var settingsRoute: SettingsRoute = .lichSuXu
-    @State private var showSettingsRoute = false
+    @State private var showLichSuXu = false
+    @State private var showCongNoHienTai = false
 
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
     // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
@@ -54,17 +49,13 @@ struct SettingsView: View {
             settingsList
         }
         // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard).
-        // Da qua 2 lan sua: navigationDestination(for:) van bi List dinh link theo row; 2
-        // navigationDestination(isPresented:) rieng biet lai dam vao nhau kieu khac (bam Xu ra Cong
-        // no) - 2 modifier nay gan tren CUNG 1 view thi SwiftUI chi thuc su theo doi dung 1 cai, cai
-        // con lai bi lech. Fix that: GOM VE 1 navigationDestination(isPresented:) duy nhat, chon noi
-        // dung bang 1 enum state rieng (settingsRoute) — chi con 1 nguon su that (fix 2026-09-23).
-        .navigationDestination(isPresented: $showSettingsRoute) {
-            switch settingsRoute {
-            case .lichSuXu: LichSuViView()
-            case .congNoHienTai: LichSuCongNoView()
-            }
-        }
+        // Da qua 3 lan sua khong an: navigationDestination(for:) bi List dinh link theo row; 2
+        // navigationDestination(isPresented:) rieng gan CUNG 1 view dam vao nhau; gom ve 1 modifier +
+        // enum state van bam Xu ra Cong no (nghi do 2 Button chung 1 List row van gay nham lan o tang
+        // gesture/hit-test cua List, khong phai o tang navigationDestination). Fix that lan nay: gan
+        // MOI navigationDestination(isPresented:) truc tiep len subview rieng cua no (xuContent/
+        // congNoContent) thay vi chong 2 modifier len CUNG 1 view goc — moi diem gan la 1 vi tri khac
+        // nhau trong cay view nen khong con dung cham nhau (fix 2026-09-23 lan 2).
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
@@ -205,22 +196,26 @@ struct SettingsView: View {
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
             // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
             // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
-            Button { settingsRoute = .lichSuXu; showSettingsRoute = true } label: {
+            Button { showLichSuXu = true } label: {
                 Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Gắn RIÊNG trên subview này (không dồn chung với modifier của congNoContent trên view gốc)
+        // — xem comment dài ở body phía trên (fix 2026-09-23 lần 2).
+        .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
     }
 
     private func congNoContent(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
-            Button { settingsRoute = .congNoHienTai; showSettingsRoute = true } label: {
+            Button { showCongNoHienTai = true } label: {
                 Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
     }
 
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
