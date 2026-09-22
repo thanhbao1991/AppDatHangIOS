@@ -1,4 +1,18 @@
 import SwiftUI
+import UIKit
+
+extension Color {
+    /// Trộn với trắng ra bản pastel đặc (không dùng opacity) — dùng làm nền card cảnh báo (vd công
+    /// nợ), giống cách AppQuanLyIOS tô nền card bằng 1 màu pastel cố định thay vì border color mờ đi
+    /// (opacity phụ thuộc nền phía sau, dễ ra xám/đậm khác ý muốn). Port từ HoaDonFormatting.swift
+    /// bên AppQuanLyIOS (2026-09-22) để 2 app khớp phong cách card công nợ.
+    func pastelBackground(_ amount: CGFloat = 0.85) -> Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        func mix(_ c: CGFloat) -> CGFloat { c + (1 - c) * amount }
+        return Color(red: mix(r), green: mix(g), blue: mix(b))
+    }
+}
 
 /// Port từ src/theme.ts (bản RN cũ) — xanh navy chuyên nghiệp, khớp tông AppShippingIOS/AppQuanLyIOS.
 /// Từ 2026-09-16: primary/primaryDark đổi màu theo KhachHangSession.shared.hang (2026-09-16) — để

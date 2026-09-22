@@ -47,31 +47,33 @@ struct LichSuCongNoView: View {
         }
     }
 
+    /// Layout tham khảo CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên
+    /// trái + nền pastel đỏ nhạt + shadow, để 2 app khớp phong cách. Bỏ hẳn mã hoá đơn (vd
+    /// "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22), thay bằng nhãn "Hoá đơn" chung
+    /// (khớp đúng cách CongNoRowView fallback khi không có tóm tắt món/tên để hiện).
     private func hoaDonCard(_ item: CongNoLichSu) -> some View {
-        cardBox {
-            HStack(spacing: 12) {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .foregroundColor(Theme.danger)
-                    .font(.system(size: 22))
-                VStack(alignment: .leading, spacing: 2) {
-                    // Đảo thứ tự: mã hoá đơn (vd "HD5e5146d7") vô nghĩa với khách, khách chỉ nhận
-                    // biết đơn qua ngày giờ — ngày giờ lên làm nhãn chính, mã hạ xuống làm chú thích
-                    // nhỏ phía dưới để vẫn còn khi cần đối chiếu (feedback 2026-09-22).
-                    Text(formatUtcShort(item.ngayNo)).font(.system(size: 14, weight: .bold))
-                    Text(item.maHoaDon).font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    // Đã trả 1 phần thì thanhTien > conLai, mới cần hiện thêm dòng "Tổng" để phân biệt
-                    // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
-                    if item.conLai < item.thanhTien {
-                        Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                    }
-                    Text(formatTien(item.conLai)).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.danger)
-                    Text("còn nợ").font(.system(size: 10)).foregroundColor(Theme.textFaint)
+        HStack(spacing: 10) {
+            Rectangle().fill(Theme.danger).frame(width: 4)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Hoá đơn").font(.system(size: 14, weight: .bold))
+                // Đã trả 1 phần thì thanhTien > conLai, mới cần hiện thêm dòng "Tổng" để phân biệt
+                // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
+                if item.conLai < item.thanhTien {
+                    Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
                 }
             }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formatUtcShort(item.ngayNo)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                Text(formatTien(item.conLai)).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.danger)
+            }
         }
+        .padding(12)
+        .background(Theme.danger.pastelBackground())
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .padding(.horizontal)
+        .padding(.vertical, 4)
     }
 
     /// Backend trả DateTime "yyyy-MM-ddTHH:mm:ss.fffffff" (Kind=Unspecified nhưng thực chất UTC) —
