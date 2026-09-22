@@ -59,7 +59,7 @@ struct LichSuCongNoView: View {
                 Text(phanLoaiLabel(item.phanLoai)).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted)
                 Text(item.tenMonSummary.isEmpty ? "Hoá đơn" : item.tenMonSummary)
                     .font(.system(size: 14, weight: .bold))
-                    .lineLimit(2)
+                    .lineLimit(6)
                 // Đã trả 1 phần thì thanhTien > conLai, mới cần hiện thêm dòng "Tổng" để phân biệt
                 // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
                 if item.conLai < item.thanhTien {
