@@ -269,6 +269,16 @@ struct SettingsView: View {
                     statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước")
                 }
             }
+
+            // Thưởng voucher đầu tháng sau cho hạng ĐẠT ĐƯỢC tháng này (backend: LenHangBac/Vang/
+            // KimCuong trong VoucherDieuKien.cs, so ĐÚNG TÊN HẠNG chứ không phải "đạt ngưỡng trở lên").
+            // "Thành Viên" không có voucher tương ứng nên không hiện dòng này. Chỉ nhắc chung chung
+            // "có voucher" — không hardcode %/mức giảm ở client vì các mốc này do staff chỉnh qua
+            // AppQuanLyIOS, dễ lệch giống bài học VoucherListView (xem project_voucher_system_2026_09).
+            if vi.hang != "Thành Viên" {
+                Text("🎁 Giữ hạng này đến hết tháng để nhận voucher đầu tháng sau")
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
