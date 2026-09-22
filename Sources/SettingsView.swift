@@ -34,6 +34,8 @@ struct SettingsView: View {
     @State private var avatarUrl: String? = Prefs.avatarUrl
     @State private var dangUploadAvatar = false
 
+    @State private var settingsRoute: SettingsRoute?
+
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
     // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
     // Theme.hangColors (2026-09-16) — cùng 1 nguồn màu với Theme.primary/primaryDark toàn app, tránh
@@ -50,11 +52,13 @@ struct SettingsView: View {
             accountHeader
             settingsList
         }
-        // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard) —
-        // NavigationLink kieu destination-closure bi SwiftUI xu ly sai khi 2 link chung 1 row (bam
-        // link thu 2 lai push nham/long len tren stack cua link dau, back ra sai man). Doi sang
-        // navigationDestination(for:) theo enum route de tach han 2 dich den (fix 2026-09-22).
-        .navigationDestination(for: SettingsRoute.self) { route in
+        // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard).
+        // Doi sang navigationDestination(for:) o lan sua truoc (2026-09-22 sang) van con loi back
+        // sai man — List van tu quan ly NavigationLink theo row du dung API value-based, nen 2 link
+        // chung row van dam vao nhau. Bo han NavigationLink, chuyen sang push bang state thu cong
+        // (navigationDestination(item:) + Button set state) de khong con phu thuoc co che link cua
+        // List nua (fix that 2026-09-22 toi).
+        .navigationDestination(item: $settingsRoute) { route in
             switch route {
             case .lichSuXu: LichSuViView()
             case .congNoHienTai: LichSuCongNoView()
@@ -198,9 +202,9 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
-            // KHÔNG tự thêm chevron — NavigationLink trong List đã tự vẽ 1 mũi tên disclosure riêng,
-            // thêm icon nữa bị thừa 2 mũi tên (phát hiện 2026-09-18).
-            NavigationLink(value: SettingsRoute.lichSuXu) {
+            // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
+            // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
+            Button { settingsRoute = .lichSuXu } label: {
                 Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
@@ -211,7 +215,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
-            NavigationLink(value: SettingsRoute.congNoHienTai) {
+            Button { settingsRoute = .congNoHienTai } label: {
                 Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
