@@ -3,6 +3,11 @@ import SwiftUI
 /// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu. Các thao tác bảo mật/tài khoản
 /// (đổi mật khẩu, thiết bị đăng nhập, đăng xuất, xoá tài khoản) đã tách sang TaiKhoanBaoMatView,
 /// mở qua icon bánh răng ở MainTabView (chỉ hiện khi đang ở tab này) — tránh trộn với ví/địa chỉ.
+private enum SettingsRoute: Hashable {
+    case lichSuXu
+    case congNoHienTai
+}
+
 struct SettingsView: View {
     @Binding var isLoggedIn: Bool
     var notificationBell: AnyView
@@ -44,6 +49,16 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             accountHeader
             settingsList
+        }
+        // Xu và Công nợ nằm CHUNG 1 row của List (2 NavigationLink lam sibling trong xuCongNoCard) —
+        // NavigationLink kieu destination-closure bi SwiftUI xu ly sai khi 2 link chung 1 row (bam
+        // link thu 2 lai push nham/long len tren stack cua link dau, back ra sai man). Doi sang
+        // navigationDestination(for:) theo enum route de tach han 2 dich den (fix 2026-09-22).
+        .navigationDestination(for: SettingsRoute.self) { route in
+            switch route {
+            case .lichSuXu: LichSuViView()
+            case .congNoHienTai: LichSuCongNoView()
+            }
         }
         .task { await load() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -185,7 +200,7 @@ struct SettingsView: View {
             Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
             // KHÔNG tự thêm chevron — NavigationLink trong List đã tự vẽ 1 mũi tên disclosure riêng,
             // thêm icon nữa bị thừa 2 mũi tên (phát hiện 2026-09-18).
-            NavigationLink { LichSuViView() } label: {
+            NavigationLink(value: SettingsRoute.lichSuXu) {
                 Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
@@ -196,7 +211,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
-            NavigationLink { LichSuCongNoView() } label: {
+            NavigationLink(value: SettingsRoute.congNoHienTai) {
                 Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
