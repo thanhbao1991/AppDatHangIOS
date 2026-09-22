@@ -245,8 +245,8 @@ struct SettingsView: View {
             // thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
             if vi.diemThangNay >= 0 {
                 HStack(spacing: 12) {
-                    statBoxDark(String(format: "%.0f", vi.diemThangNay), "Điểm tháng này")
-                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc), "Điểm tháng trước")
+                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này")
+                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước")
                 }
             }
         }
