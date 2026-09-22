@@ -197,7 +197,7 @@ struct SettingsView: View {
             Text("Công nợ hiện tại").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
             Text(formatTien(vi.tongNo)).font(.system(size: 24, weight: .bold)).foregroundColor(Theme.danger)
             NavigationLink { LichSuCongNoView() } label: {
-                Text("Lịch sử Công nợ").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
