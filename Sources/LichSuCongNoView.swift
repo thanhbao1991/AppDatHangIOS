@@ -54,8 +54,11 @@ struct LichSuCongNoView: View {
                     .foregroundColor(Theme.danger)
                     .font(.system(size: 22))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.maHoaDon).font(.system(size: 14, weight: .bold))
-                    Text(formatUtcShort(item.ngayNo)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    // Đảo thứ tự: mã hoá đơn (vd "HD5e5146d7") vô nghĩa với khách, khách chỉ nhận
+                    // biết đơn qua ngày giờ — ngày giờ lên làm nhãn chính, mã hạ xuống làm chú thích
+                    // nhỏ phía dưới để vẫn còn khi cần đối chiếu (feedback 2026-09-22).
+                    Text(formatUtcShort(item.ngayNo)).font(.system(size: 14, weight: .bold))
+                    Text(item.maHoaDon).font(.system(size: 11)).foregroundColor(Theme.textFaint)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
