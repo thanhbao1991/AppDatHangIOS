@@ -59,8 +59,13 @@ struct LichSuCongNoView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    // Đã trả 1 phần thì thanhTien > conLai, mới cần hiện thêm dòng "Tổng" để phân biệt
+                    // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
+                    if item.conLai < item.thanhTien {
+                        Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    }
                     Text(formatTien(item.conLai)).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.danger)
+                    Text("còn nợ").font(.system(size: 10)).foregroundColor(Theme.textFaint)
                 }
             }
         }
