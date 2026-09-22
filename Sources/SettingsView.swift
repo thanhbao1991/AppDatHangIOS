@@ -251,7 +251,10 @@ struct SettingsView: View {
                         }
                     }
                     .frame(height: 6)
-                    Text("Còn \(formatTien(vi.conLaiDeLenHang)) nữa để lên hạng \(hangTiepTheo) \(hangIcon[hangTiepTheo] ?? "")")
+                    // Câu mời gộp cả điều kiện lên hạng lẫn phần thưởng voucher gắn với hạng đó
+                    // (voucherHangTiepTheo nil nếu staff chưa bật LenHang* cho mốc này — vẫn hiện câu
+                    // gốc, không hứa suông thứ chưa cấu hình).
+                    Text(moiLenHang(vi, hangTiepTheo: hangTiepTheo))
                         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                 }
             } else {
@@ -270,13 +273,14 @@ struct SettingsView: View {
                 }
             }
 
-            // Thưởng voucher đầu tháng sau cho hạng ĐẠT ĐƯỢC tháng này (backend: LenHangBac/Vang/
-            // KimCuong trong VoucherDieuKien.cs, so ĐÚNG TÊN HẠNG chứ không phải "đạt ngưỡng trở lên").
-            // "Thành Viên" không có voucher tương ứng nên không hiện dòng này. Chỉ nhắc chung chung
-            // "có voucher" — không hardcode %/mức giảm ở client vì các mốc này do staff chỉnh qua
-            // AppQuanLyIOS, dễ lệch giống bài học VoucherListView (xem project_voucher_system_2026_09).
-            if vi.hang != "Thành Viên" {
-                Text("🎁 Giữ hạng này đến hết tháng để nhận voucher đầu tháng sau")
+            // "Đã nhận" — khác câu mời phía trên (còn PHẢI ĐẠT), đây là hạng ĐÃ đạt tháng này nên
+            // voucher CHẮC CHẮN dùng được tháng sau (backend LenHangBac/Vang/KimCuong, so ĐÚNG TÊN
+            // HẠNG). Tên/mức giảm lấy thẳng từ server (voucherHangHienTai) thay vì hardcode client —
+            // tránh lệch khi staff đổi mức qua AppQuanLyIOS (bài học VoucherListView, xem
+            // project_voucher_system_2026_09). Nil nếu hạng "Thành Viên" hoặc staff chưa bật voucher
+            // cho mốc này.
+            if let voucher = vi.voucherHangHienTai {
+                Text("🎁 Bạn đã nhận được voucher \(voucher.ten) (\(voucherGiaTriText(voucher))) dùng trong tháng sau")
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
         }
@@ -290,6 +294,21 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
         .padding(.vertical, 6)
+    }
+
+    /// "Còn Xđ nữa để lên hạng Y 🥇, nhận voucher TEN (-10%) cho tháng sau" — nếu chưa bật voucher
+    /// LenHang* cho mốc hangTiepTheo thì bớt lại đúng câu gốc, không nhắc tới voucher.
+    private func moiLenHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
+        let coBan = "Còn \(formatTien(vi.conLaiDeLenHang)) nữa để lên hạng \(hangTiepTheo) \(hangIcon[hangTiepTheo] ?? "")"
+        guard let voucher = vi.voucherHangTiepTheo else { return coBan }
+        return "\(coBan), nhận voucher \(voucher.ten) (\(voucherGiaTriText(voucher))) cho tháng sau"
+    }
+
+    /// "-10%, tối đa 15.000đ" hoặc "-5.000đ" — gộp nhanGiamGia + nhanGiamToiDa thành 1 cụm cho gọn
+    /// trong câu văn (khác cách 2 dòng tách riêng như sheet "Chọn voucher").
+    private func voucherGiaTriText(_ voucher: HangVoucherThuong) -> String {
+        guard let trandoi = voucher.nhanGiamToiDa else { return voucher.nhanGiamGia }
+        return "\(voucher.nhanGiamGia), \(trandoi)"
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền

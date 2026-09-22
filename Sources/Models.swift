@@ -342,6 +342,27 @@ struct ThongBao: Decodable, Identifiable {
 // ---- Ví / gamification ----
 
 struct FavoriteItem: Decodable, Hashable { let tenSanPham: String; let tenBienThe: String }
+/// Voucher thưởng lên hạng (LenHangBac/Vang/KimCuong bên Backend) gắn với 1 mốc hạng cụ thể — xem
+/// KhachHangViDto.VoucherHangHienTai/VoucherHangTiepTheo.
+struct HangVoucherThuong: Decodable {
+    let ten: String
+    var loaiGiam: String = "SoTien"
+    let soTienGiam: Double
+    var phanTramGiam: Double?
+    var giamToiDa: Double?
+
+    /// "-10%" hoặc "-5.000đ" — cùng công thức nhanGiamGia của Voucher/VoucherCuaToi.
+    var nhanGiamGia: String {
+        loaiGiam == "PhanTram" ? "-\(Int(phanTramGiam ?? 0))%" : "-\(formatTien(soTienGiam))"
+    }
+
+    /// "(tối đa Xđ)" khi voucher % có trần giảm, nil khi không áp dụng.
+    var nhanGiamToiDa: String? {
+        guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
+        return "tối đa \(formatTien(giamToiDa))"
+    }
+}
+
 struct KhachHangVi: Decodable {
     let soDu: Double
     let diemThangNay: Double
@@ -357,6 +378,11 @@ struct KhachHangVi: Decodable {
     // 0-1, tiến độ trong khoảng [ngưỡng hạng hiện tại, ngưỡng hangTiepTheo] — chỉ có ý nghĩa khi
     // hangTiepTheo != nil.
     let phanTramTienDoLenHang: Double
+    // Voucher khớp ĐÚNG hạng hiện tại — có giá trị = khách ĐÃ ĐẠT hạng này tháng này, dùng được
+    // tháng sau. Nil nếu hạng "Thành Viên" hoặc staff chưa bật voucher LenHang* cho mốc này.
+    let voucherHangHienTai: HangVoucherThuong?
+    // Voucher khớp hangTiepTheo — dùng cho câu mời "còn Xđ để nhận voucher Y".
+    let voucherHangTiepTheo: HangVoucherThuong?
     let monHayMua: [FavoriteItem]
 }
 
