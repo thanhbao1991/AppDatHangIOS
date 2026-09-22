@@ -2,14 +2,14 @@ import SwiftUI
 
 /// Công nợ hiện tại — GET /api/dat-hang/cong-no-lich-su, lọc client-side chỉ giữ hoá đơn CÒN NỢ
 /// (conLai > 0). Trước 2026-09-22 hiện cả lịch sử (kể cả đơn đã trả hết) khiến khách khó thấy ngay
-/// đang nợ đơn nào — giờ chỉ hiện đơn còn nợ, kèm card tổng nợ ở đầu, dùng chung style
-/// cardBox/cardRow với các tab khác cho đồng bộ.
+/// đang nợ đơn nào — giờ chỉ hiện đơn còn nợ, dùng chung style cardBox/cardRow với các tab khác cho
+/// đồng bộ. Card tổng nợ ở đầu đã bỏ (feedback 2026-09-23) — tổng đã hiện sẵn ở SettingsView rồi,
+/// thừa khi vào đây lại thấy lần nữa.
 struct LichSuCongNoView: View {
     @State private var items: [CongNoLichSu] = []
     @State private var loading = true
 
     private var conNo: [CongNoLichSu] { items.filter { $0.conLai > 0 } }
-    private var tongConLai: Double { conNo.reduce(0) { $0 + $1.conLai } }
 
     var body: some View {
         Group {
@@ -25,9 +25,8 @@ struct LichSuCongNoView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    cardRow(topExtra: 6) { tongCard }
-                    ForEach(conNo) { item in
-                        cardRow { hoaDonCard(item) }
+                    ForEach(Array(conNo.enumerated()), id: \.element.id) { index, item in
+                        cardRow(topExtra: index == 0 ? 6 : 0) { hoaDonCard(item) }
                     }
                 }
                 .cardListBackground()
@@ -37,14 +36,6 @@ struct LichSuCongNoView: View {
         .navigationTitle("Công nợ hiện tại")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
-    }
-
-    private var tongCard: some View {
-        cardBox {
-            Text("TỔNG CÒN NỢ").font(.system(size: 12, weight: .bold)).tracking(0.6).foregroundColor(Theme.textMuted)
-            Text(formatTien(tongConLai)).font(.system(size: 26, weight: .heavy)).foregroundColor(Theme.danger)
-            Text("\(conNo.count) hoá đơn chưa thanh toán hết").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-        }
     }
 
     /// Layout khớp CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên trái +
@@ -64,6 +55,13 @@ struct LichSuCongNoView: View {
                 // — chưa trả gì thì 2 số bằng nhau, hiện cả 2 chỉ dư thừa (feedback 2026-09-22).
                 if item.conLai < item.thanhTien {
                     Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                }
+                // Chỉ đơn Ship mới có địa chỉ giao — Mv/Tại quán không cần (feedback 2026-09-23).
+                if item.phanLoai == "Ship", let diaChi = item.diaChiText, !diaChi.isEmpty {
+                    Text("Giao hàng tại: \(diaChi)")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textFaint)
+                        .lineLimit(2)
                 }
             }
             Spacer()
