@@ -280,10 +280,12 @@ struct SettingsView: View {
             // DuocNhanVoucher — hiện tại chỉ 1 số khách được bật (chờ app lên App Store chính thức
             // mới bật cho TẤT CẢ, xem project_voucher_system_2026_09 trong memory). Ẩn hẳn 2 ô điểm
             // thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
+            // Bỏ icon hạng ở 2 ô điểm (feedback 2026-09-23: "hơi khó hiểu và nhiều icon quá") — card
+            // đã có 2 icon hạng ở dòng tiến độ ngay trên rồi, thêm nữa ở đây gây rối không cần thiết.
             if vi.diemThangNay >= 0 {
                 HStack(spacing: 12) {
-                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này", icon: hangIcon[vi.hang])
-                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước", icon: hangIcon[vi.hangThangTruoc])
+                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này")
+                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước")
                 }
             }
         }
