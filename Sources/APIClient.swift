@@ -366,16 +366,6 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
-    func getGioiThieu() async -> GioiThieuInfo? {
-        let env: ApiEnvelope<GioiThieuInfo> = await decode("/dat-hang/gioi-thieu")
-        return env.isSuccess ? env.data : nil
-    }
-
-    func apDungMaGioiThieu(_ ma: String) async -> ActionResult {
-        let env: ApiEnvelope<Bool> = await decode("/dat-hang/gioi-thieu/ap-dung", method: "POST", body: jsonBody(ApDungMaGioiThieuRequest(maGioiThieu: ma)))
-        return ActionResult(success: env.isSuccess, message: env.message)
-    }
-
     func getSinhNhat() async -> SinhNhatInfo? {
         let env: ApiEnvelope<SinhNhatInfo> = await decode("/dat-hang/sinh-nhat")
         return env.isSuccess ? env.data : nil

@@ -427,8 +427,6 @@ struct LyBiMatResult: Decodable {
 struct DatLyBiMatRequest: Encodable { let diaChiText: String; let ghiChu: String?; let clientOrderId: String? }
 struct DanhGiaDonRequest: Encodable { let hoaDonId: String; let soSao: Int; let nhanXet: String? }
 
-struct GioiThieuInfo: Decodable { let maGioiThieu: String; let soNguoiDaGioiThieu: Int; let daDuocGioiThieu: Bool }
-struct ApDungMaGioiThieuRequest: Encodable { let maGioiThieu: String }
 
 struct SinhNhatInfo: Decodable { let ngaySinh: String?; let dangTrongThangSinhNhat: Bool; let daNhanQuaNamNay: Bool }
 struct CapNhatNgaySinhRequest: Encodable { let ngaySinh: String }
@@ -439,7 +437,7 @@ struct CapNhatTenHienThiRequest: Encodable { let tenHienThi: String? }
 
 struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; let trung: Bool; var soLuotConLai: Int = 0 }
 
-/// GET /dat-hang/vong-quay/thong-tin — soNgayLienTiepDangNhap 0-6, reset về 0 ngay khi vừa đạt 7.
-struct VongQuayInfo: Decodable { let soLuotConLai: Int; let soNgayLienTiepDangNhap: Int }
+/// GET /dat-hang/vong-quay/thong-tin
+struct VongQuayInfo: Decodable { let soLuotConLai: Int }
 
 struct PushTokenRequest: Encodable { let expoPushToken: String? }
