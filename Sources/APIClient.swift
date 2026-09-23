@@ -403,12 +403,12 @@ actor APIClient {
         await decode("/dat-hang/vong-quay", method: "POST")
     }
 
-    /// Lượt miễn phí hôm nay (nếu chưa quay) + lượt thưởng tích luỹ (từ mã giới thiệu) — hiện dưới
-    /// nút "Quay ngay". Trả về -1 nếu lỗi (nil khó phân biệt "0 lượt thật" — dùng Int đơn giản hơn Optional
-    /// vì UI chỉ cần ẩn dòng chữ khi < 0).
-    func getSoLuotQuayConLai() async -> Int {
-        let env: ApiEnvelope<Int> = await decode("/dat-hang/vong-quay/so-luot-con-lai")
-        return env.isSuccess ? (env.data ?? 0) : -1
+    /// Lượt còn lại hôm nay (miễn phí + thưởng) + tiến độ chuỗi đăng nhập — gọi lúc mở tab Ưu đãi,
+    /// ĐÂY CŨNG LÀ nơi backend ghi nhận "hôm nay có mở app không" cho chuỗi 7 ngày (xem
+    /// GamificationService.GhiNhanDangNhapHomNay), nên không được bỏ gọi hàm này khi vào tab.
+    func getVongQuayInfo() async -> VongQuayInfo? {
+        let env: ApiEnvelope<VongQuayInfo> = await decode("/dat-hang/vong-quay/thong-tin")
+        return env.isSuccess ? env.data : nil
     }
 
     /// Mở quà Xu cho đơn "Nhận tại quán" đã hoàn tất — 1 lượt/đơn (xem DonHangKhach.daMoQuaXu).

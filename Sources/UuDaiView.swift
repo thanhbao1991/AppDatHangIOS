@@ -19,6 +19,9 @@ struct UuDaiView: View {
     // -1 = chưa tải xong/lỗi (ẩn dòng chữ), >=0 = số lượt thật. Cập nhật lại NGAY sau mỗi lần quay
     // từ VongQuayResult.soLuotConLai (server trả kèm), không cần gọi thêm request.
     @State private var soLuotConLai = -1
+    // 0-6, hiện tiến độ "X/7 ngày" — tải qua getVongQuayInfo() (chính nơi backend ghi nhận hôm nay
+    // đã mở app, xem APIClient.getVongQuayInfo).
+    @State private var soNgayLienTiepDangNhap = 0
     @State private var alertMessage: (title: String, message: String)?
     @State private var copiedToast = false
 
@@ -73,7 +76,7 @@ struct UuDaiView: View {
     private func theTemCard(_ t: TheTem) -> some View {
         cardBox {
             cardHeader("🧋", "Thẻ sưu tập ly")
-            Text("Mua đủ \(t.mocThuong) đơn được đổi 1 phần thưởng — báo nhân viên khi đủ điều kiện.")
+            Text("Mua đủ \(t.mocThuong) đơn được đổi lấy 1 lượt vòng quay may mắn.")
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
             Text(String(repeating: "🧋", count: t.temHienTai) + String(repeating: "⚪", count: max(0, t.mocThuong - t.temHienTai)))
                 .font(.system(size: 22))
@@ -157,14 +160,39 @@ struct UuDaiView: View {
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
+
+            // Tiến độ chuỗi đăng nhập 7 ngày — 7 chấm tròn, đầy = đã tính ngày đó trong chuỗi hiện
+            // tại. Đủ 7 backend tự +2 lượt rồi reset về 0, nên chấm KHÔNG BAO GIỜ đầy hết 7/7 lâu —
+            // chuyển thẳng về 0/7 ngay hôm sau, đúng ý "reset chu kỳ mới".
+            VStack(spacing: 6) {
+                Divider()
+                HStack(spacing: 6) {
+                    Text("Chuỗi đăng nhập").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Spacer()
+                    Text("\(soNgayLienTiepDangNhap)/7 ngày").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                }
+                HStack(spacing: 5) {
+                    ForEach(1...7, id: \.self) { ngay in
+                        Circle()
+                            .fill(ngay <= soNgayLienTiepDangNhap ? Theme.primary : Theme.textFaint.opacity(0.25))
+                            .frame(width: 14, height: 14)
+                    }
+                }
+                Text("Đủ 7 ngày liên tiếp: +2 lượt quay!").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+            }
+            .padding(.top, 4)
         }
     }
 
     private func load() async {
         async let temTask = APIClient.shared.getTheTem()
         async let gtTask = APIClient.shared.getGioiThieu()
-        async let luotTask = APIClient.shared.getSoLuotQuayConLai()
-        (theTem, gioiThieu, soLuotConLai) = await (temTask, gtTask, luotTask)
+        async let quayTask = APIClient.shared.getVongQuayInfo()
+        let (tem, gt, quay) = await (temTask, gtTask, quayTask)
+        theTem = tem
+        gioiThieu = gt
+        soLuotConLai = quay?.soLuotConLai ?? -1
+        soNgayLienTiepDangNhap = quay?.soNgayLienTiepDangNhap ?? 0
         loading = false
     }
 
@@ -174,7 +202,10 @@ struct UuDaiView: View {
         let res = await APIClient.shared.doiTem()
         if res.isSuccess, let data = res.data {
             theTem = data
-            alertMessage = ("Thành công", "Đã đổi thưởng! Báo nhân viên để nhận ly miễn phí.")
+            // Đổi 2026-09-23: không còn ly miễn phí giao tay, thưởng thẳng lượt quay qua backend —
+            // tải lại soLuotConLai để card Vòng quay (phía trên) hiện đúng số mới ngay.
+            soLuotConLai = await APIClient.shared.getVongQuayInfo()?.soLuotConLai ?? soLuotConLai
+            alertMessage = ("Thành công", "Đã đổi thưởng! Bạn được +1 lượt quay may mắn.")
         } else {
             alertMessage = ("Chưa đủ điều kiện", res.message ?? "")
         }

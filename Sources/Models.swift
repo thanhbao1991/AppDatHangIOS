@@ -447,4 +447,7 @@ struct CapNhatTenHienThiRequest: Encodable { let tenHienThi: String? }
 
 struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; let trung: Bool; var soLuotConLai: Int = 0 }
 
+/// GET /dat-hang/vong-quay/thong-tin — soNgayLienTiepDangNhap 0-6, reset về 0 ngay khi vừa đạt 7.
+struct VongQuayInfo: Decodable { let soLuotConLai: Int; let soNgayLienTiepDangNhap: Int }
+
 struct PushTokenRequest: Encodable { let expoPushToken: String? }
