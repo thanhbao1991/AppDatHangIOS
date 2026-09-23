@@ -445,6 +445,6 @@ struct DoiMatKhauRequest: Encodable { let matKhauCu: String; let matKhauMoi: Str
 
 struct CapNhatTenHienThiRequest: Encodable { let tenHienThi: String? }
 
-struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; let trung: Bool }
+struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; let trung: Bool; var soLuotConLai: Int = 0 }
 
 struct PushTokenRequest: Encodable { let expoPushToken: String? }

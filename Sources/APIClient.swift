@@ -403,6 +403,14 @@ actor APIClient {
         await decode("/dat-hang/vong-quay", method: "POST")
     }
 
+    /// Lượt miễn phí hôm nay (nếu chưa quay) + lượt thưởng tích luỹ (từ mã giới thiệu) — hiện dưới
+    /// nút "Quay ngay". Trả về -1 nếu lỗi (nil khó phân biệt "0 lượt thật" — dùng Int đơn giản hơn Optional
+    /// vì UI chỉ cần ẩn dòng chữ khi < 0).
+    func getSoLuotQuayConLai() async -> Int {
+        let env: ApiEnvelope<Int> = await decode("/dat-hang/vong-quay/so-luot-con-lai")
+        return env.isSuccess ? (env.data ?? 0) : -1
+    }
+
     /// Mở quà Xu cho đơn "Nhận tại quán" đã hoàn tất — 1 lượt/đơn (xem DonHangKhach.daMoQuaXu).
     func moQuaNhanTaiQuan(hoaDonId: String) async -> ApiEnvelope<VongQuayResult> {
         await decode("/dat-hang/don/\(hoaDonId)/mo-qua", method: "POST")

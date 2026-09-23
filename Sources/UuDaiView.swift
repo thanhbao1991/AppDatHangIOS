@@ -16,6 +16,9 @@ struct UuDaiView: View {
     @State private var dangDoiTem = false
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
+    // -1 = chưa tải xong/lỗi (ẩn dòng chữ), >=0 = số lượt thật. Cập nhật lại NGAY sau mỗi lần quay
+    // từ VongQuayResult.soLuotConLai (server trả kèm), không cần gọi thêm request.
+    @State private var soLuotConLai = -1
     @State private var alertMessage: (title: String, message: String)?
     @State private var copiedToast = false
 
@@ -31,10 +34,12 @@ struct UuDaiView: View {
                         VStack(spacing: 0) {
                             // Vòng quay lên ĐẦU (yêu cầu 2026-09-23) — hành động khách làm MỖI NGÀY
                             // (1 lượt/ngày) nên đáng được thấy trước, khác thẻ tem/giới thiệu bạn bè
-                            // vốn không đổi trạng thái mỗi lần mở tab.
+                            // vốn không đổi trạng thái mỗi lần mở tab. Giới thiệu bạn bè lên vị trí
+                            // thứ 2 (cùng đợt yêu cầu) — vì giờ liên quan trực tiếp tới vòng quay
+                            // (nhập mã cả 2 bên đều +1 lượt quay), đặt gần nhau dễ liên tưởng hơn.
                             vongQuayCard
-                            if let theTem { theTemCard(theTem) }
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
+                            if let theTem { theTemCard(theTem) }
                         }
                         .padding(.top, 6)
                     }
@@ -93,7 +98,7 @@ struct UuDaiView: View {
     private func gioiThieuCard(_ g: GioiThieuInfo) -> some View {
         cardBox {
             cardHeader("👥", "Giới thiệu bạn bè")
-            Text("Chia sẻ mã dưới đây — cả bạn và bạn bè đều nhận thưởng khi họ nhập mã.").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+            Text("Chia sẻ mã dưới đây — cả bạn và bạn bè đều nhận thưởng + thêm 1 lượt vòng quay may mắn khi họ nhập mã.").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             HStack {
                 Spacer()
                 Text(g.maGioiThieu).font(.system(size: 22, weight: .bold)).foregroundColor(Theme.primary).kerning(4)
@@ -146,13 +151,20 @@ struct UuDaiView: View {
                 if dangQuay { ProgressView().tint(.white) } else { Text("Quay ngay 🎲").fontWeight(.bold) }
             }
             .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
+            // -1 = chưa tải xong (ẩn hẳn dòng chữ, tránh nháy "0 lượt" sai trước khi API trả về).
+            if soLuotConLai >= 0 {
+                Text("Còn \(soLuotConLai) lượt")
+                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
         }
     }
 
     private func load() async {
         async let temTask = APIClient.shared.getTheTem()
         async let gtTask = APIClient.shared.getGioiThieu()
-        (theTem, gioiThieu) = await (temTask, gtTask)
+        async let luotTask = APIClient.shared.getSoLuotQuayConLai()
+        (theTem, gioiThieu, soLuotConLai) = await (temTask, gtTask, luotTask)
         loading = false
     }
 
@@ -187,6 +199,7 @@ struct UuDaiView: View {
         let res = await APIClient.shared.quayVongQuay()
         if res.isSuccess, let data = res.data {
             ketQuaQuay = data.label
+            soLuotConLai = data.soLuotConLai
         } else {
             alertMessage = ("Chưa quay được", res.message ?? "")
         }
