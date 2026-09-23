@@ -15,6 +15,9 @@ struct TaiKhoanBaoMatView: View {
                 }
             ))
             List {
+                // Gộp cả 4 mục vào chung 1 Section (kể cả Xoá tài khoản/Chính sách bảo mật — trước
+                // đây tách riêng từng Section khiến card rời rạc không cần thiết) — chỉ Đăng xuất
+                // tách riêng vì là hành động nguy hiểm, cần nền đỏ nổi bật khác hẳn nhóm điều hướng.
                 Section {
                     NavigationLink { DoiMatKhauView() } label: {
                         Label("Đổi mật khẩu", systemImage: "key.fill")
@@ -22,24 +25,18 @@ struct TaiKhoanBaoMatView: View {
                     NavigationLink { ThietBiDangNhapView() } label: {
                         Label("Thiết bị đăng nhập", systemImage: "iphone")
                     }
-                }
-
-                Section {
-                    Button("Đăng xuất") { Task { await logout() } }
-                        .foregroundColor(.white).frame(maxWidth: .infinity)
-                        .listRowBackground(Theme.danger)
-                }
-
-                Section {
+                    Link(destination: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) {
+                        Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
+                    }
                     NavigationLink { XoaTaiKhoanView(isLoggedIn: $isLoggedIn) } label: {
                         Text("Xoá tài khoản").foregroundColor(Theme.textFaint)
                     }
                 }
 
                 Section {
-                    Link(destination: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) {
-                        Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
-                    }
+                    Button("Đăng xuất") { Task { await logout() } }
+                        .foregroundColor(.white).frame(maxWidth: .infinity)
+                        .listRowBackground(Theme.danger)
                 }
             }
             .listStyle(.insetGrouped)
