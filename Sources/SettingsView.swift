@@ -315,7 +315,7 @@ struct SettingsView: View {
     /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
     private var thongTinCaNhanCard: some View {
         cardBox {
-            Text("Thông tin giao hàng").font(.system(size: 16, weight: .bold))
+            Text("Địa chỉ giao hàng").font(.system(size: 16, weight: .bold))
             Divider()
 
             // sinhNhatRow tạm ẩn (yêu cầu 2026-09-23) — chỉ còn giữ lại địa chỉ trong card này. Hàm
@@ -325,9 +325,16 @@ struct SettingsView: View {
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiList) { item in
-                    HStack(alignment: .top) {
+                    HStack(alignment: .top, spacing: 8) {
+                        // Icon sao rỗng/đầy thay cho ký tự "★ " chỉ có ở địa chỉ mặc định trước đây —
+                        // giờ MỌI địa chỉ đều có chỗ cho icon (đầy = mặc định, rỗng = chưa), thay vì
+                        // im lặng không hiện gì cho địa chỉ không mặc định.
+                        Image(systemName: item.isDefault ? "star.fill" : "star")
+                            .foregroundColor(item.isDefault ? Theme.primary : Theme.textFaint)
+                            .font(.system(size: 14))
+                            .padding(.top, 2)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text((item.isDefault ? "★ " : "") + item.diaChi)
+                            Text(item.diaChi)
                             if !item.isDefault {
                                 Button("Đặt làm mặc định") { Task { await datMacDinh(item.id) } }
                                     .buttonStyle(.plain)
