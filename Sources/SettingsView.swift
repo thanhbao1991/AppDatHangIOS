@@ -315,11 +315,11 @@ struct SettingsView: View {
     /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
     private var thongTinCaNhanCard: some View {
         cardBox {
-            Text("Thông tin cá nhân").font(.system(size: 16, weight: .bold))
-            Divider()
-            sinhNhatRow
+            Text("Thông tin giao hàng").font(.system(size: 16, weight: .bold))
             Divider()
 
+            // sinhNhatRow tạm ẩn (yêu cầu 2026-09-23) — chỉ còn giữ lại địa chỉ trong card này. Hàm
+            // sinhNhatRow/nhanQua/luuSinhNhat vẫn giữ nguyên bên dưới, chưa xoá, để bật lại dễ dàng.
             if diaChiList.isEmpty {
                 Text("Chưa có địa chỉ nào — nhập ở bước đặt hàng sẽ tự lưu lại.")
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
