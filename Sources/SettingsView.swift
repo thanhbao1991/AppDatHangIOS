@@ -268,8 +268,8 @@ struct SettingsView: View {
             // thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
             if vi.diemThangNay >= 0 {
                 HStack(spacing: 12) {
-                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này")
-                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước")
+                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này", icon: hangIcon[vi.hang])
+                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước", icon: hangIcon[vi.hangThangTruoc])
                 }
             }
 
@@ -327,20 +327,20 @@ struct SettingsView: View {
                 ForEach(diaChiList) { item in
                     HStack(alignment: .top, spacing: 8) {
                         // Icon sao rỗng/đầy thay cho ký tự "★ " chỉ có ở địa chỉ mặc định trước đây —
-                        // giờ MỌI địa chỉ đều có chỗ cho icon (đầy = mặc định, rỗng = chưa), thay vì
-                        // im lặng không hiện gì cho địa chỉ không mặc định.
-                        Image(systemName: item.isDefault ? "star.fill" : "star")
-                            .foregroundColor(item.isDefault ? Theme.primary : Theme.textFaint)
-                            .font(.system(size: 14))
-                            .padding(.top, 2)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.diaChi)
-                            if !item.isDefault {
-                                Button("Đặt làm mặc định") { Task { await datMacDinh(item.id) } }
-                                    .buttonStyle(.plain)
-                                    .font(.system(size: 12)).foregroundColor(Theme.primary)
-                            }
+                        // giờ MỌI địa chỉ đều có chỗ cho icon (đầy = mặc định, rỗng = chưa). Bỏ hẳn
+                        // dòng chữ "Đặt làm mặc định" cho gọn — bấm THẲNG vào icon sao rỗng để đặt
+                        // làm mặc định, sao đầy thì không bấm được nữa (đã là mặc định).
+                        Button {
+                            if !item.isDefault { Task { await datMacDinh(item.id) } }
+                        } label: {
+                            Image(systemName: item.isDefault ? "star.fill" : "star")
+                                .foregroundColor(item.isDefault ? Theme.primary : Theme.textFaint)
+                                .font(.system(size: 14))
                         }
+                        .buttonStyle(.plain)
+                        .disabled(item.isDefault)
+                        .padding(.top, 2)
+                        Text(item.diaChi)
                         Spacer()
                         if item.coTheXoa {
                             Button { diaChiChoXoa = item } label: {
@@ -404,10 +404,14 @@ struct SettingsView: View {
     }
 
     /// Biến thể statBox cho nền tối (diemHangCard) — chữ trắng thay vì Theme.primary/textMuted vốn
-    /// chỉ đọc được trên nền sáng.
-    private func statBoxDark(_ value: String, _ label: String) -> some View {
+    /// chỉ đọc được trên nền sáng. `icon` = icon hạng tháng tương ứng (hangIcon[...]), đặt SAU điểm
+    /// cho gọn thay vì thêm hẳn 1 dòng chữ hạng riêng.
+    private func statBoxDark(_ value: String, _ label: String, icon: String? = nil) -> some View {
         VStack {
-            Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+            HStack(spacing: 4) {
+                Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+                if let icon { Text(icon).font(.system(size: 13)) }
+            }
             Text(label).font(.system(size: 11)).foregroundColor(.white.opacity(0.8))
         }
         .frame(maxWidth: .infinity)

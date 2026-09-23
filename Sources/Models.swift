@@ -372,6 +372,9 @@ struct KhachHangVi: Decodable {
     let tongNo: Double
     let tongChiTieuThangNay: Double
     let hang: String
+    // Hạng tính theo chi tiêu THÁNG TRƯỚC — chỉ để hiển thị tham khảo cạnh "Điểm tháng trước", KHÁC
+    // hang (hạng đang xét trong tháng hiện tại, dùng cho card lớn + voucher).
+    var hangThangTruoc: String = ""
     // Null nếu đã ở hạng cao nhất (Kim Cương) trong tháng này.
     let hangTiepTheo: String?
     let conLaiDeLenHang: Double
