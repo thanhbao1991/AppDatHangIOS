@@ -254,18 +254,11 @@ struct SettingsView: View {
                         }
                     }
                     .frame(height: 6)
-                    // 2 nhãn 2 đầu thanh tiến độ thay hẳn 2 câu văn dài (feedback 2026-09-23 "nhiều
-                    // chữ quá rối" + ảnh chụp tràn dòng): trái = voucher hạng ĐANG đạt (đầu 0% của
-                    // thanh), phải = voucher hạng SẮP tới (đầu 100%) — tự nói lên ý nghĩa qua vị trí,
-                    // không cần câu giải thích kèm theo.
-                    HStack {
-                        voucherEndpoint(hang: vi.hang, voucher: vi.voucherHangHienTai)
-                        Spacer()
-                        Text(formatTien(vi.conLaiDeLenHang))
-                            .font(.system(size: 10)).foregroundColor(.white.opacity(0.6))
-                        Spacer()
-                        voucherEndpoint(hang: hangTiepTheo, voucher: vi.voucherHangTiepTheo)
-                    }
+                    // Câu đơn giản thay hẳn cặp nhãn voucher 2 đầu thanh (feedback 2026-09-23 lần 3:
+                    // "hơi khó hiểu và nhiều icon quá") — bỏ luôn 2 voucherEndpoint ở đây, chỉ còn
+                    // đúng 1 câu số tiền + tên hạng, dễ hiểu ngay không cần suy luận qua vị trí.
+                    Text("Cần chi tiêu thêm \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo)")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                 }
             } else {
                 HStack {
