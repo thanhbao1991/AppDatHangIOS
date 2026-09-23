@@ -29,9 +29,12 @@ struct UuDaiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
+                            // Vòng quay lên ĐẦU (yêu cầu 2026-09-23) — hành động khách làm MỖI NGÀY
+                            // (1 lượt/ngày) nên đáng được thấy trước, khác thẻ tem/giới thiệu bạn bè
+                            // vốn không đổi trạng thái mỗi lần mở tab.
+                            vongQuayCard
                             if let theTem { theTemCard(theTem) }
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
-                            vongQuayCard
                         }
                         .padding(.top, 6)
                     }
