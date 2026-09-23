@@ -266,7 +266,11 @@ struct DonHangKhachItem: Decodable, Identifiable, Hashable {
 }
 
 enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
-    case choXacNhan = "ChoXacNhan", daXacNhan = "DaXacNhan", dangGiao = "DangGiao", hoanTat = "HoanTat"
+    // "Huy" thêm 2026-09-23 — khách tự huỷ đơn (HuyDonAsync bên Backend, chỉ cho phép khi quán CHƯA
+    // xác nhận). Đơn gốc đã bị XOÁ CỨNG khỏi HoaDons (hoàn tồn kho), backend dựng lại DTO này từ
+    // snapshot AuditLogs.Detail (xem GetDonDaHuyAsync) — field vẫn đủ để hiện card + chi tiết, chỉ
+    // KHÔNG có action "Đặt lại"/"Thanh toán" ý nghĩa (xem OrderStatusView.actionRow).
+    case choXacNhan = "ChoXacNhan", daXacNhan = "DaXacNhan", dangGiao = "DangGiao", hoanTat = "HoanTat", huy = "Huy"
 
     var nhan: String {
         switch self {
@@ -274,6 +278,7 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
         case .daXacNhan: return "Quán đã nhận, đang chuẩn bị"
         case .dangGiao: return "Đang giao"
         case .hoanTat: return "Hoàn tất"
+        case .huy: return "Đã huỷ"
         }
     }
 
@@ -286,6 +291,42 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
         case .daXacNhan: return Color(red: 0x1E / 255, green: 0x4E / 255, blue: 0x8C / 255)
         case .dangGiao: return Color(red: 0x19 / 255, green: 0x76 / 255, blue: 0xD2 / 255)
         case .hoanTat: return Theme.success
+        case .huy: return Theme.textFaint
+        }
+    }
+
+    /// Nhóm 4 icon kiểu Long Châu (mục 4 = "Đã huỷ" thay vì "Đổi/Trả" — app này không có đổi/trả).
+    /// "Đang xử lý" gộp choXacNhan+daXacNhan (chưa giao), vì khách không cần phân biệt kỹ 2 bước nội
+    /// bộ đó ở tầng lọc nhanh — bấm vào card vẫn thấy đúng nhãn "Chờ quán xác nhận"/"đang chuẩn bị".
+    var nhom: NhomDonHang {
+        switch self {
+        case .choXacNhan, .daXacNhan: return .dangXuLy
+        case .dangGiao: return .dangGiao
+        case .hoanTat: return .daGiao
+        case .huy: return .daHuy
+        }
+    }
+}
+
+enum NhomDonHang: String, CaseIterable, Identifiable {
+    case dangXuLy, dangGiao, daGiao, daHuy
+    var id: String { rawValue }
+
+    var nhan: String {
+        switch self {
+        case .dangXuLy: return "Đang xử lý"
+        case .dangGiao: return "Đang giao"
+        case .daGiao: return "Đã giao"
+        case .daHuy: return "Đã huỷ"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .dangXuLy: return "tray.full.fill"
+        case .dangGiao: return "shippingbox.fill"
+        case .daGiao: return "checkmark.seal.fill"
+        case .daHuy: return "xmark.bin.fill"
         }
     }
 }

@@ -33,7 +33,16 @@ struct OrderDetailView: View {
                         // Cùng bug ISO thô như OrderStatusView (danh sách đơn) — format lại cho khớp.
                         Text(formatThongBaoTime(order.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     }
-                    timeline
+                    // Đơn huỷ không đi qua timeline 4 bước (steps.firstIndex trả nil, sẽ hiện sai
+                    // thành "bước 0" như chưa huỷ gì) — thay bằng 1 dòng trạng thái đơn giản.
+                    if order.trangThai == .huy {
+                        HStack(spacing: 6) {
+                            Image(systemName: "xmark.circle.fill").foregroundColor(Theme.textFaint)
+                            Text("Đơn đã huỷ").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
+                        }
+                    } else {
+                        timeline
+                    }
                 }
 
                 card {
@@ -92,7 +101,7 @@ struct OrderDetailView: View {
                     }
                 }
 
-                if order.trangThai != .hoanTat {
+                if order.trangThai != .hoanTat && order.trangThai != .huy {
                     Button("💳 Thanh toán") { donHangPath.append(.thanhToan(hoaDonId: order.id)) }
                         .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                 }

@@ -14,6 +14,14 @@ struct OrderStatusView: View {
     @State private var loading = true
     @State private var pollTask: Task<Void, Never>?
     @State private var alertMessage: (title: String, message: String)?
+    // Lọc nhanh theo nhóm kiểu Long Châu (2026-09-23) — nil = xem tất cả. Bấm lại đúng icon đang chọn
+    // để bỏ lọc, giống hành vi toggle chip lọc quen thuộc ở CatalogView.
+    @State private var filter: NhomDonHang?
+
+    private var filteredOrders: [DonHangKhach] {
+        guard let filter else { return orders }
+        return orders.filter { $0.trangThai.nhom == filter }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,8 +35,15 @@ struct OrderStatusView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List {
-                        ForEach(Array(orders.enumerated()), id: \.element.id) { index, order in
-                            cardRow(topExtra: index == 0 ? 6 : 0) { orderCard(order) }
+                        cardRow(topExtra: 6) { nhomFilterCard }
+                        if filteredOrders.isEmpty {
+                            Text("Không có đơn nào ở mục này.")
+                                .font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                                .frame(maxWidth: .infinity).padding(.vertical, 24)
+                        } else {
+                            ForEach(filteredOrders, id: \.id) { order in
+                                cardRow { orderCard(order) }
+                            }
                         }
                     }
                     .cardListBackground()
@@ -77,6 +92,48 @@ struct OrderStatusView: View {
         .onTapGesture { path.append(.detail(item)) }
     }
 
+    /// Card "Đơn của tôi" 4 icon kiểu Long Châu (ảnh mẫu người dùng gửi 2026-09-23) — mục 4 đổi thành
+    /// "Đã huỷ" thay vì "Đổi/Trả" (app không có tính năng đổi/trả). Badge đỏ số lượng chỉ hiện ở
+    /// "Đang xử lý" (đơn cần khách theo dõi/hành động), giống cách Long Châu chỉ badge mục đầu tiên.
+    private var nhomFilterCard: some View {
+        cardBox {
+            HStack(spacing: 0) {
+                ForEach(NhomDonHang.allCases) { nhom in
+                    nhomButton(nhom)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    private func nhomButton(_ nhom: NhomDonHang) -> some View {
+        let count = orders.filter { $0.trangThai.nhom == nhom }.count
+        let selected = filter == nhom
+        return Button {
+            filter = selected ? nil : nhom
+        } label: {
+            VStack(spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: nhom.icon)
+                        .font(.system(size: 22))
+                        .foregroundColor(selected ? Theme.primary : Theme.textMuted)
+                        .frame(width: 32, height: 32)
+                    if nhom == .dangXuLy && count > 0 {
+                        Text("\(count)")
+                            .font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                            .padding(4).background(Theme.danger).clipShape(Circle())
+                            .offset(x: 8, y: -6)
+                    }
+                }
+                Text(nhom.nhan)
+                    .font(.system(size: 12, weight: selected ? .bold : .regular))
+                    .foregroundColor(selected ? Theme.primary : Theme.textMuted)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     private func orderCard(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             orderCardContent(item)
@@ -91,7 +148,7 @@ struct OrderStatusView: View {
         HStack(spacing: 8) {
             Spacer()
             actionButton("Đặt lại", filled: true) { datLai(item) }
-            if item.trangThai != .hoanTat {
+            if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
         }
