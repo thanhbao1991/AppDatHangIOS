@@ -366,15 +366,6 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
-    func getTheTem() async -> TheTem? {
-        let env: ApiEnvelope<TheTem> = await decode("/dat-hang/the-tem")
-        return env.isSuccess ? env.data : nil
-    }
-
-    func doiTem() async -> ApiEnvelope<TheTem> {
-        await decode("/dat-hang/the-tem/doi-thuong", method: "POST")
-    }
-
     func getGioiThieu() async -> GioiThieuInfo? {
         let env: ApiEnvelope<GioiThieuInfo> = await decode("/dat-hang/gioi-thieu")
         return env.isSuccess ? env.data : nil

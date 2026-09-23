@@ -427,14 +427,6 @@ struct LyBiMatResult: Decodable {
 struct DatLyBiMatRequest: Encodable { let diaChiText: String; let ghiChu: String?; let clientOrderId: String? }
 struct DanhGiaDonRequest: Encodable { let hoaDonId: String; let soSao: Int; let nhanXet: String? }
 
-struct TheTem: Decodable {
-    let tongDonLifetime: Int
-    let mocThuong: Int
-    let temHienTai: Int
-    let duDieuKienDoiThuong: Bool
-    let soLanDaDoiThuong: Int
-}
-
 struct GioiThieuInfo: Decodable { let maGioiThieu: String; let soNguoiDaGioiThieu: Int; let daDuocGioiThieu: Bool }
 struct ApDungMaGioiThieuRequest: Encodable { let maGioiThieu: String }
 

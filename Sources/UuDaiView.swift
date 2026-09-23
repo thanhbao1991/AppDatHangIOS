@@ -1,19 +1,18 @@
 import SwiftUI
 import UIKit
 
-/// Port từ UuDaiScreen.tsx — thẻ tem, giới thiệu bạn bè, vòng quay may mắn. Ngày sinh (khai báo +
-/// nhận quà sinh nhật) đã chuyển sang SettingsView (mục "Thông tin cá nhân", tab Tài khoản) — đây là
-/// thông tin cá nhân, không phải phần thưởng, nên không thuộc tab Ưu đãi.
+/// Port từ UuDaiScreen.tsx — giới thiệu bạn bè, vòng quay may mắn. Ngày sinh (khai báo + nhận quà
+/// sinh nhật) đã chuyển sang SettingsView (mục "Thông tin cá nhân", tab Tài khoản) — đây là thông
+/// tin cá nhân, không phải phần thưởng, nên không thuộc tab Ưu đãi. Thẻ sưu tập ly đã XOÁ HẲN
+/// 2026-09-23 (backend không còn endpoint the-tem nữa).
 struct UuDaiView: View {
     var notificationBell: AnyView
 
-    @State private var theTem: TheTem?
     @State private var gioiThieu: GioiThieuInfo?
     @State private var loading = true
 
     @State private var maNhap = ""
     @State private var dangApDung = false
-    @State private var dangDoiTem = false
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
     // -1 = chưa tải xong/lỗi (ẩn dòng chữ), >=0 = số lượt thật. Cập nhật lại NGAY sau mỗi lần quay
@@ -36,13 +35,11 @@ struct UuDaiView: View {
                     ScrollView {
                         VStack(spacing: 0) {
                             // Vòng quay lên ĐẦU (yêu cầu 2026-09-23) — hành động khách làm MỖI NGÀY
-                            // (1 lượt/ngày) nên đáng được thấy trước, khác thẻ tem/giới thiệu bạn bè
-                            // vốn không đổi trạng thái mỗi lần mở tab. Giới thiệu bạn bè lên vị trí
-                            // thứ 2 (cùng đợt yêu cầu) — vì giờ liên quan trực tiếp tới vòng quay
-                            // (nhập mã cả 2 bên đều +1 lượt quay), đặt gần nhau dễ liên tưởng hơn.
+                            // (1 lượt/ngày) nên đáng được thấy trước, khác giới thiệu bạn bè vốn
+                            // không đổi trạng thái mỗi lần mở tab. Giới thiệu bạn bè giờ liên quan
+                            // trực tiếp tới vòng quay (nhập mã cả 2 bên đều +1 lượt quay).
                             vongQuayCard
                             if let gioiThieu { gioiThieuCard(gioiThieu) }
-                            if let theTem { theTemCard(theTem) }
                         }
                         .padding(.top, 6)
                     }
@@ -70,31 +67,6 @@ struct UuDaiView: View {
                 .clipShape(Circle())
             Text(title).font(.system(size: 16, weight: .bold))
             Spacer()
-        }
-    }
-
-    private func theTemCard(_ t: TheTem) -> some View {
-        cardBox {
-            cardHeader("🧋", "Thẻ sưu tập ly")
-            Text("Mua đủ \(t.mocThuong) đơn được đổi lấy 1 lượt vòng quay may mắn.")
-                .font(.system(size: 13)).foregroundColor(Theme.textMuted)
-            Text(String(repeating: "🧋", count: t.temHienTai) + String(repeating: "⚪", count: max(0, t.mocThuong - t.temHienTai)))
-                .font(.system(size: 22))
-            ProgressView(value: Double(t.temHienTai), total: Double(max(t.mocThuong, 1)))
-                .tint(Theme.primary)
-            HStack {
-                Text("\(t.temHienTai)/\(t.mocThuong) tem").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
-                Spacer()
-                Text("Đã đổi \(t.soLanDaDoiThuong) lần").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-            }
-            if t.duDieuKienDoiThuong {
-                Button {
-                    Task { await doiTem() }
-                } label: {
-                    if dangDoiTem { ProgressView().tint(.white) } else { Text("Đổi thưởng ngay").fontWeight(.bold) }
-                }
-                .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-            }
         }
     }
 
@@ -185,30 +157,13 @@ struct UuDaiView: View {
     }
 
     private func load() async {
-        async let temTask = APIClient.shared.getTheTem()
         async let gtTask = APIClient.shared.getGioiThieu()
         async let quayTask = APIClient.shared.getVongQuayInfo()
-        let (tem, gt, quay) = await (temTask, gtTask, quayTask)
-        theTem = tem
+        let (gt, quay) = await (gtTask, quayTask)
         gioiThieu = gt
         soLuotConLai = quay?.soLuotConLai ?? -1
         soNgayLienTiepDangNhap = quay?.soNgayLienTiepDangNhap ?? 0
         loading = false
-    }
-
-    private func doiTem() async {
-        dangDoiTem = true
-        defer { dangDoiTem = false }
-        let res = await APIClient.shared.doiTem()
-        if res.isSuccess, let data = res.data {
-            theTem = data
-            // Đổi 2026-09-23: không còn ly miễn phí giao tay, thưởng thẳng lượt quay qua backend —
-            // tải lại soLuotConLai để card Vòng quay (phía trên) hiện đúng số mới ngay.
-            soLuotConLai = await APIClient.shared.getVongQuayInfo()?.soLuotConLai ?? soLuotConLai
-            alertMessage = ("Thành công", "Đã đổi thưởng! Bạn được +1 lượt quay may mắn.")
-        } else {
-            alertMessage = ("Chưa đủ điều kiện", res.message ?? "")
-        }
     }
 
     private func apDungMa() async {

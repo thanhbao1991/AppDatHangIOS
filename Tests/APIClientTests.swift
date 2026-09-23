@@ -9,10 +9,10 @@ final class APIClientTests: XCTestCase {
 
     func testDecodeEnvelope() throws {
         let json = """
-        {"isSuccess":true,"message":"ok","data":{"tongDonLifetime":3,"mocThuong":10,"temHienTai":3,"duDieuKienDoiThuong":false,"soLanDaDoiThuong":0}}
+        {"isSuccess":true,"message":"ok","data":{"maGioiThieu":"ABC123","soNguoiDaGioiThieu":3,"daDuocGioiThieu":false}}
         """.data(using: .utf8)!
-        let env = try JSONDecoder().decode(ApiEnvelope<TheTem>.self, from: json)
+        let env = try JSONDecoder().decode(ApiEnvelope<GioiThieuInfo>.self, from: json)
         XCTAssertTrue(env.isSuccess)
-        XCTAssertEqual(env.data?.temHienTai, 3)
+        XCTAssertEqual(env.data?.soNguoiDaGioiThieu, 3)
     }
 }
