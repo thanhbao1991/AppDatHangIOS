@@ -11,6 +11,9 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
 
     @State private var diaChiList: [DiaChiKhachHang] = []
+    // Chỉ địa chỉ khách TỰ TẠO (coTheXoa=true) — ẩn địa chỉ nhân viên nhập qua Desktop khỏi card này
+    // theo yêu cầu 2026-09-23 (CheckoutView lúc đặt hàng vẫn dùng đầy đủ, không lọc).
+    private var diaChiHienThi: [DiaChiKhachHang] { diaChiList.filter(\.coTheXoa) }
     @State private var vi: KhachHangVi?
     @State private var loading = true
 
@@ -251,15 +254,26 @@ struct SettingsView: View {
                         }
                     }
                     .frame(height: 6)
-                    // Câu ngắn gọn — bản trước gộp thêm tên/mức giảm voucher vào cùng câu này bị
-                    // tràn dòng, rối mắt (feedback 2026-09-23 kèm ảnh chụp). Voucher hạng kế tiếp
-                    // không còn nhắc ở đây nữa, chỉ còn dòng "Đã có voucher" bên dưới cho hạng ĐÃ đạt.
-                    Text("Còn \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo) \(hangIcon[hangTiepTheo] ?? "")")
-                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                    // 2 nhãn 2 đầu thanh tiến độ thay hẳn 2 câu văn dài (feedback 2026-09-23 "nhiều
+                    // chữ quá rối" + ảnh chụp tràn dòng): trái = voucher hạng ĐANG đạt (đầu 0% của
+                    // thanh), phải = voucher hạng SẮP tới (đầu 100%) — tự nói lên ý nghĩa qua vị trí,
+                    // không cần câu giải thích kèm theo.
+                    HStack {
+                        voucherEndpoint(hang: vi.hang, voucher: vi.voucherHangHienTai)
+                        Spacer()
+                        Text(formatTien(vi.conLaiDeLenHang))
+                            .font(.system(size: 10)).foregroundColor(.white.opacity(0.6))
+                        Spacer()
+                        voucherEndpoint(hang: hangTiepTheo, voucher: vi.voucherHangTiepTheo)
+                    }
                 }
             } else {
-                Text("🎉 Bạn đang ở hạng cao nhất tháng này!")
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                HStack {
+                    Text("🎉 Hạng cao nhất")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                    Spacer()
+                    voucherEndpoint(hang: vi.hang, voucher: vi.voucherHangHienTai)
+                }
             }
 
             // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá
@@ -271,15 +285,6 @@ struct SettingsView: View {
                     statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này", icon: hangIcon[vi.hang])
                     statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước", icon: hangIcon[vi.hangThangTruoc])
                 }
-            }
-
-            // Hạng ĐÃ đạt tháng này nên voucher CHẮC CHẮN dùng được tháng sau (backend LenHangBac/
-            // Vang/KimCuong, so ĐÚNG TÊN HẠNG). Câu rút ngắn (bỏ "Bạn đã nhận được"/"dùng trong") sau
-            // feedback "nhiều chữ quá rối" — chỉ còn TÊN + mức giảm, đủ hiểu mà không tràn dòng. Nil
-            // nếu hạng "Thành Viên" hoặc staff chưa bật voucher cho mốc này.
-            if let voucher = vi.voucherHangHienTai {
-                Text("🎁 Voucher \(voucher.ten) \(voucherGiaTriText(voucher)) — dùng tháng sau")
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
         }
         .padding(16)
@@ -294,11 +299,15 @@ struct SettingsView: View {
         .padding(.vertical, 6)
     }
 
-    /// "-10%, tối đa 15.000đ" hoặc "-5.000đ" — gộp nhanGiamGia + nhanGiamToiDa thành 1 cụm cho gọn
-    /// trong câu văn (khác cách 2 dòng tách riêng như sheet "Chọn voucher").
-    private func voucherGiaTriText(_ voucher: HangVoucherThuong) -> String {
-        guard let trandoi = voucher.nhanGiamToiDa else { return voucher.nhanGiamGia }
-        return "\(voucher.nhanGiamGia), \(trandoi)"
+    /// Nhãn gọn 1 đầu thanh tiến độ: icon hạng + mức giảm voucher (vd "🥈 -10%"). Không hiện Ten
+    /// voucher/GiamToiDa nữa — quá nhiều chữ cho 1 nhãn nhỏ, bấm vào hạng lớn phía trên card hoặc
+    /// tab Ưu đãi nếu cần chi tiết. Chỉ hiện icon (không kèm số) nếu staff chưa bật voucher cho hạng.
+    private func voucherEndpoint(hang: String, voucher: HangVoucherThuong?) -> some View {
+        HStack(spacing: 3) {
+            Text(hangIcon[hang] ?? "")
+            if let voucher { Text(voucher.nhanGiamGia) }
+        }
+        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
@@ -310,11 +319,13 @@ struct SettingsView: View {
 
             // sinhNhatRow tạm ẩn (yêu cầu 2026-09-23) — chỉ còn giữ lại địa chỉ trong card này. Hàm
             // sinhNhatRow/nhanQua/luuSinhNhat vẫn giữ nguyên bên dưới, chưa xoá, để bật lại dễ dàng.
-            if diaChiList.isEmpty {
+            // CHỈ ẨN địa chỉ nhân viên nhập (coTheXoa=false) ở ĐÚNG card này — CheckoutView (chọn địa
+            // chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo yêu cầu.
+            if diaChiHienThi.isEmpty {
                 Text("Chưa có địa chỉ nào — nhập ở bước đặt hàng sẽ tự lưu lại.")
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
-                ForEach(diaChiList) { item in
+                ForEach(diaChiHienThi) { item in
                     HStack(alignment: .top, spacing: 8) {
                         // Icon sao rỗng/đầy thay cho ký tự "★ " chỉ có ở địa chỉ mặc định trước đây —
                         // giờ MỌI địa chỉ đều có chỗ cho icon (đầy = mặc định, rỗng = chưa). Bỏ hẳn
