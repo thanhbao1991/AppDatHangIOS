@@ -261,12 +261,8 @@ struct SettingsView: View {
                         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                 }
             } else {
-                HStack {
-                    Text("🎉 Hạng cao nhất")
-                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
-                    Spacer()
-                    voucherEndpoint(hang: vi.hang, voucher: vi.voucherHangHienTai)
-                }
+                Text("🎉 Hạng cao nhất")
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
 
             // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá
@@ -292,17 +288,6 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
         .padding(.vertical, 6)
-    }
-
-    /// Nhãn gọn 1 đầu thanh tiến độ: icon hạng + mức giảm voucher (vd "🥈 -10%"). Không hiện Ten
-    /// voucher/GiamToiDa nữa — quá nhiều chữ cho 1 nhãn nhỏ, bấm vào hạng lớn phía trên card hoặc
-    /// tab Ưu đãi nếu cần chi tiết. Chỉ hiện icon (không kèm số) nếu staff chưa bật voucher cho hạng.
-    private func voucherEndpoint(hang: String, voucher: HangVoucherThuong?) -> some View {
-        HStack(spacing: 3) {
-            Text(hangIcon[hang] ?? "")
-            if let voucher { Text(voucher.nhanGiamGia) }
-        }
-        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
