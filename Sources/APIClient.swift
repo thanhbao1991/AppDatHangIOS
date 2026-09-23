@@ -385,16 +385,9 @@ actor APIClient {
         await decode("/dat-hang/vong-quay", method: "POST")
     }
 
-    /// Lượt còn lại hôm nay (miễn phí + thưởng) + tiến độ chuỗi đăng nhập — gọi lúc mở tab Ưu đãi,
-    /// ĐÂY CŨNG LÀ nơi backend ghi nhận "hôm nay có mở app không" cho chuỗi 7 ngày (xem
-    /// GamificationService.GhiNhanDangNhapHomNay), nên không được bỏ gọi hàm này khi vào tab.
+    /// Lượt còn lại hôm nay (miễn phí + thưởng) — gọi lúc mở tab Ưu đãi.
     func getVongQuayInfo() async -> VongQuayInfo? {
         let env: ApiEnvelope<VongQuayInfo> = await decode("/dat-hang/vong-quay/thong-tin")
         return env.isSuccess ? env.data : nil
-    }
-
-    /// Mở quà Xu cho đơn "Nhận tại quán" đã hoàn tất — 1 lượt/đơn (xem DonHangKhach.daMoQuaXu).
-    func moQuaNhanTaiQuan(hoaDonId: String) async -> ApiEnvelope<VongQuayResult> {
-        await decode("/dat-hang/don/\(hoaDonId)/mo-qua", method: "POST")
     }
 }

@@ -18,7 +18,6 @@ struct OrderDetailView: View {
     @State private var dangGui = false
     @State private var dangHuy = false
     @State private var showHuyConfirm = false
-    @State private var dangMoQua = false
     @State private var alertMessage: (title: String, message: String)?
 
     private let steps: [TrangThaiDon] = [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat]
@@ -103,15 +102,6 @@ struct OrderDetailView: View {
                         if dangHuy { ProgressView() } else { Text("Huỷ đơn").frame(maxWidth: .infinity) }
                     }
                     .buttonStyle(.bordered).disabled(dangHuy)
-                }
-
-                if order.trangThai == .hoanTat && order.diaChiText == "Nhận tại quán" && !order.daMoQuaXu {
-                    Button {
-                        Task { await moQua() }
-                    } label: {
-                        if dangMoQua { ProgressView() } else { Text("🎁 Mở quà nhận Xu").frame(maxWidth: .infinity) }
-                    }
-                    .buttonStyle(.gradientProminent).disabled(dangMoQua)
                 }
 
                 Button("Đặt lại") { datLai() }
@@ -209,18 +199,6 @@ struct OrderDetailView: View {
         if moi.daDanhGia {
             daDanhGia = true
             soSaoDaDanh = moi.soSaoDaDanh ?? 0
-        }
-    }
-
-    private func moQua() async {
-        dangMoQua = true
-        defer { dangMoQua = false }
-        let res = await APIClient.shared.moQuaNhanTaiQuan(hoaDonId: order.id)
-        if res.isSuccess, let data = res.data {
-            alertMessage = data.trung ? ("🎉 Chúc mừng!", data.label) : ("Kết quả", data.label)
-            await reload()
-        } else {
-            alertMessage = ("Chưa mở được", res.message ?? "Có lỗi xảy ra, thử lại nhé.")
         }
     }
 

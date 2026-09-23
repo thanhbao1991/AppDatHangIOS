@@ -13,7 +13,6 @@ struct OrderStatusView: View {
     @State private var orders: [DonHangKhach] = []
     @State private var loading = true
     @State private var pollTask: Task<Void, Never>?
-    @State private var dangMoQuaId: String?
     @State private var alertMessage: (title: String, message: String)?
 
     var body: some View {
@@ -86,16 +85,11 @@ struct OrderStatusView: View {
         .cardBoxStyle()
     }
 
-    /// Nút hành động góc dưới bên phải mỗi card — hiện tuỳ trạng thái đơn: "Mở quà" chỉ hiện cho đơn
-    /// Nhận tại quán đã hoàn tất và chưa mở; "Thanh toán" chỉ hiện khi còn nợ; "Đặt lại" luôn hiện.
+    /// Nút hành động góc dưới bên phải mỗi card — hiện tuỳ trạng thái đơn: "Thanh toán" chỉ hiện khi
+    /// còn nợ; "Đặt lại" luôn hiện.
     private func actionRow(_ item: DonHangKhach) -> some View {
         HStack(spacing: 8) {
             Spacer()
-            if item.trangThai == .hoanTat && item.diaChiText == "Nhận tại quán" && !item.daMoQuaXu {
-                actionButton("🎁 Mở quà", loading: dangMoQuaId == item.id) {
-                    Task { await moQua(item) }
-                }
-            }
             actionButton("Đặt lại", filled: true) { datLai(item) }
             if item.trangThai != .hoanTat {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
@@ -150,15 +144,4 @@ struct OrderStatusView: View {
         selectedTab = .cart
     }
 
-    private func moQua(_ order: DonHangKhach) async {
-        dangMoQuaId = order.id
-        defer { dangMoQuaId = nil }
-        let res = await APIClient.shared.moQuaNhanTaiQuan(hoaDonId: order.id)
-        if res.isSuccess, let data = res.data {
-            alertMessage = data.trung ? ("🎉 Chúc mừng!", data.label) : ("Kết quả", data.label)
-            await load(silent: true)
-        } else {
-            alertMessage = ("Chưa mở được", res.message ?? "Có lỗi xảy ra, thử lại nhé.")
-        }
-    }
 }
