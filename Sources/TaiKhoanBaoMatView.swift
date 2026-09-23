@@ -25,7 +25,7 @@ struct TaiKhoanBaoMatView: View {
                     NavigationLink { ThietBiDangNhapView() } label: {
                         Label("Thiết bị đăng nhập", systemImage: "iphone")
                     }
-                    Link(destination: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) {
+                    NavigationLink { ChinhSachBaoMatView() } label: {
                         Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
                     }
                     NavigationLink { XoaTaiKhoanView(isLoggedIn: $isLoggedIn) } label: {
