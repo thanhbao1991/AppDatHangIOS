@@ -230,7 +230,7 @@ struct DatMonRequest: Encodable {
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 
-struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double; let tongTienDon: Double }
+struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double; let tongTienDon: Double; let soLuong: Int }
 struct TuyenDuongPoint: Decodable { let lat: Double; let long: Double }
 struct UocTinhShip: Decodable {
     // Backend LUÔN trả giá trị từ 2026-09-14 (không còn mốc "đơn đủ lớn thì miễn phí bất kể xa gần"

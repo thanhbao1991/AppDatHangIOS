@@ -290,8 +290,10 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
-    func uocTinhShip(lat: Double, long: Double, tongTienDon: Double) async -> ApiEnvelope<UocTinhShip> {
-        await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon)))
+    /// soLuong = tổng số ly (drinks, không tính topping) trong giỏ — bán kính miễn phí ship tính
+    /// theo số này từ 2026-09-23 (xem ShippingFeeHelper.TinhPhiShip), tongTienDon giờ chỉ để ghi log.
+    func uocTinhShip(lat: Double, long: Double, tongTienDon: Double, soLuong: Int) async -> ApiEnvelope<UocTinhShip> {
+        await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon, soLuong: soLuong)))
     }
 
     func getDonCuaToi() async -> [DonHangKhach] {

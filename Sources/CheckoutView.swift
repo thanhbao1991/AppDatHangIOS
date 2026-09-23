@@ -115,10 +115,14 @@ struct CheckoutView: View {
         return true
     }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
-    private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra) : 0 }
+    /// Trần 50% đơn thêm 2026-09-23 — khớp DatHangService.DatMonAsync bên backend (chặn lỗ hổng dùng
+    /// Xu trả 100% để farm thưởng "đơn thành công +1 lượt quay" mà không cần tiền thật). Luôn còn ít
+    /// nhất 50% phải trả bằng COD/chuyển khoản, nên xuTraDu bên dưới không bao giờ còn true nữa.
+    private var soTienDungXu: Double { dungXu ? min(soDu, tongCanTra * 0.5) : 0 }
     private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
     /// Xu trả đủ 100% đơn — ẩn hẳn card Hình thức thanh toán (không còn gì phải chọn COD/QR nữa) và
     /// điều hướng sau khi đặt giống COD (không có QR để quét vì không còn tiền phải chuyển khoản).
+    /// Giữ nguyên logic (không xoá) dù giờ luôn false với trần 50% — phòng khi trần đổi lại sau này.
     private var xuTraDu: Bool { dungXu && tongCanTra > 0 && soTienDungXu >= tongCanTra }
 
     var body: some View {
@@ -641,7 +645,7 @@ struct CheckoutView: View {
         locError = ""
         estimatingShip = true
         defer { estimatingShip = false }
-        let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude, tongTienDon: cart.totalPrice)
+        let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude, tongTienDon: cart.totalPrice, soLuong: cart.totalCount)
         if result.isSuccess {
             ship = result.data
         } else {
