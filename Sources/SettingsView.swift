@@ -139,8 +139,12 @@ struct SettingsView: View {
         .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
     }
 
+    // Dùng diaChiHienThi (đã lọc coTheXoa=true), KHÔNG dùng diaChiList thẳng — nếu không, khách chỉ
+    // có địa chỉ nhân viên nhập (coTheXoa=false, đã ẩn khỏi card "Địa chỉ giao hàng" bên dưới) sẽ
+    // thấy header trên cùng "lộ" đúng địa chỉ đó trong khi card dưới lại báo "Chưa có địa chỉ nào" —
+    // mâu thuẫn 2 chỗ cùng 1 màn hình (phát hiện 2026-09-23 qua ảnh chụp thật).
     private var diaChiMacDinhText: String {
-        (diaChiList.first(where: { $0.isDefault }) ?? diaChiList.first)?.diaChi ?? "Chưa có địa chỉ mặc định"
+        (diaChiHienThi.first(where: { $0.isDefault }) ?? diaChiHienThi.first)?.diaChi ?? "Chưa có địa chỉ mặc định"
     }
 
     // ID số của app trên App Store — CHƯA CÓ THẬT vì app hiện chỉ phân phối qua Sideloadly (xem
