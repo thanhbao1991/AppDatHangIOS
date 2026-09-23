@@ -43,12 +43,17 @@ struct LichSuViView: View {
         .task { await load() }
     }
 
-    /// Backend trả DateTime "yyyy-MM-ddTHH:mm:ss.fffffff" (Kind=Unspecified nhưng thực chất UTC) —
-    /// ép hậu tố "Z" trước khi parse để không bị hiểu nhầm thành giờ máy.
+    /// FIX 2026-09-23 (lệch giờ +7 phát hiện qua ảnh chụp thật): ViGiaoDich.ThoiGian là
+    /// VietnamTime.Now (đã LÀ giờ VN, Kind=Unspecified, KHÔNG PHẢI UTC thật — xem
+    /// KhachHangViService/KhachHangCrudService) — bản cũ ép "Z" rồi quy đổi Asia/Ho_Chi_Minh làm
+    /// CỘNG THÊM +7 giờ nữa (double-shift). Đổi sang parse THẲNG bằng chính giờ VN, không quy đổi gì
+    /// — cùng cách formatThongBaoTime (ThongBaoView.swift) đã làm đúng cho NgayTao thông báo.
     private func formatUtcShort(_ iso: String) -> String {
-        let trimmed = String(iso.prefix(19)) + "Z"
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: trimmed) else { return iso }
+        let inF = DateFormatter()
+        inF.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        inF.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        inF.locale = Locale(identifier: "en_US_POSIX")
+        guard let date = inF.date(from: String(iso.prefix(19))) else { return iso }
         let out = DateFormatter()
         out.dateFormat = "HH:mm dd/MM/yyyy"
         out.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
