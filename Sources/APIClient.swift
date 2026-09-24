@@ -8,6 +8,13 @@ actor APIClient {
 
     private let catalogTTL: TimeInterval = 5 * 60
     private var catalogCache: [String: (at: Date, envelope: Any)] = [:]
+    // Gộp các lần gọi TRÙNG endpoint bắn gần như cùng lúc (vd tab Thực đơn và tab Giỏ hàng cùng load
+    // menu/san-pham lúc mới mở app, cache 5 phút ở trên chưa kịp có gì) thành 1 network call — cùng ý
+    // tưởng với refreshTask bên dưới. Trước đây không có gộp: 2 request trùng cùng bắn đi, cạnh tranh
+    // luôn với nhau + với các request khác của cùng tab kia trong giới hạn kết nối đồng thời/host của
+    // URLSession, khiến request "tới sau" (thường là tab vừa mở) phải XẾP HÀNG chờ request kia xong
+    // mới thực sự chạy — nhìn như tab Giỏ hàng "mờ mãi" tới khi tab Thực đơn tải menu xong.
+    private var inFlightCatalog: [String: Task<Any, Never>] = [:]
 
     private func jsonBody<T: Encodable>(_ obj: T) -> Data {
         try! JSONEncoder().encode(obj)
@@ -220,7 +227,19 @@ actor APIClient {
            let env = hit.envelope as? ApiEnvelope<T> {
             return env
         }
-        let env: ApiEnvelope<T> = await decode(path)
+        // Đã có request TRÙNG path đang bay tới server (do 1 lần gọi khác trước đó) — chờ chung kết
+        // quả đó thay vì bắn thêm 1 request nữa. await task.value KHÔNG chặn actor (actor được nhả ra
+        // ở điểm suspend), nên các path KHÁC vẫn xử lý bình thường song song.
+        if let existing = inFlightCatalog[path], let env = await existing.value as? ApiEnvelope<T> {
+            return env
+        }
+        let task = Task<Any, Never> { () -> Any in
+            let env: ApiEnvelope<T> = await self.decode(path)
+            return env
+        }
+        inFlightCatalog[path] = task
+        let env = await task.value as! ApiEnvelope<T>
+        inFlightCatalog[path] = nil
         if env.isSuccess {
             catalogCache[path] = (Date(), env)
         }
