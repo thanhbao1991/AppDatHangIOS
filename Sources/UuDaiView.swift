@@ -147,6 +147,7 @@ struct UuDaiView: View {
                 if dangQuay { ProgressView().tint(.white) } else { Text("Quay ngay 🎲").fontWeight(.bold) }
             }
             .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
+            .disabled(dangQuay || soLuotConLai == 0)
             // -1 = chưa tải xong (ẩn hẳn dòng chữ, tránh nháy "0 lượt" sai trước khi API trả về).
             if soLuotConLai >= 0 {
                 Text("Còn \(soLuotConLai) lượt")
