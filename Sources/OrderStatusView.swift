@@ -67,19 +67,19 @@ struct OrderStatusView: View {
     /// hành động (actionRow) bên dưới có vùng chạm riêng, không bị .onTapGesture của cha nuốt mất
     /// (cùng bài học nút X trong GioHangView.itemRow — Button con cần .buttonStyle(.plain) mới thắng).
     /// Layout theo phong cách Shopee (ảnh mẫu 2026-09-24): ảnh món đầu tiên bên trái, tên các món
-    /// viết liền 1 dòng (tenMonSummary server đã join sẵn bằng ", "), badge trạng thái góc trên phải,
-    /// tổng tiền + số sản phẩm căn phải phía dưới.
+    /// viết liền 1 dòng (tenMonSummary server đã join sẵn bằng ", "), tổng tiền + số sản phẩm căn phải
+    /// phía dưới. Dòng đầu bỏ mã hoá đơn (vô nghĩa với khách, cùng lý do đã bỏ ở LichSuCongNoView
+    /// feedback 2026-09-22) — thay bằng phân loại (kèm địa chỉ nếu là đơn Ship). Trạng thái chỉ còn
+    /// text màu, không nền, đỡ rối mắt cạnh phân loại (2026-09-24).
     private func orderCardContent(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(item.maHoaDon).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted)
+            HStack(alignment: .top) {
+                Text(phanLoaiLine(item)).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted).lineLimit(2)
                 Spacer()
                 Text(item.trangThai.nhan)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10).padding(.vertical, 4)
-                    .background(item.trangThai.mau)
-                    .clipShape(Capsule())
+                    .foregroundColor(item.trangThai.mau)
+                    .lineLimit(1)
             }
             HStack(alignment: .top, spacing: 12) {
                 firstItemImage(item)
@@ -120,6 +120,19 @@ struct OrderStatusView: View {
 
     private func tongSoLuong(_ item: DonHangKhach) -> Int {
         item.items.reduce(0) { $0 + $1.soLuong }
+    }
+
+    /// Cùng cách map PhanLoai ("Ship"/"Mv"/khác) với OrderDetailView/LichSuCongNoView — đơn Ship có
+    /// địa chỉ thì gộp luôn "Giao hàng tại: ..." thay vì tách riêng nhãn + dòng địa chỉ, đỡ dư dòng.
+    private func phanLoaiLine(_ item: DonHangKhach) -> String {
+        if item.phanLoai == "Ship", let diaChi = item.diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
+            return "Giao hàng tại: \(diaChi)"
+        }
+        switch item.phanLoai {
+        case "Ship": return "Giao hàng"
+        case "Mv": return "Mang về"
+        default: return item.tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
+        }
     }
 
     /// Banner gợi ý đánh giá kiểu Shopee ("Đánh giá sản phẩm trước ... để nhận Xu") — chỉ hiện khi
@@ -194,17 +207,23 @@ struct OrderStatusView: View {
         .cardBoxStyle()
     }
 
-    /// Nút hành động góc dưới bên phải mỗi card — hiện tuỳ trạng thái đơn: "Thanh toán" chỉ hiện khi
-    /// còn nợ; "Đánh giá" chỉ hiện khi đơn hoàn tất và chưa đánh giá; "Đặt lại" luôn hiện.
+    /// Hàng dưới cùng mỗi card — góc trái hiện KẾT QUẢ đánh giá (đơn đã đánh giá rồi, không cần nút
+    /// nữa), góc phải là nút hành động. Đổi thứ tự 2 nút 2026-09-24: "Đánh giá"/"Thanh toán" đứng
+    /// TRƯỚC "Đặt lại" (trước đây "Đặt lại" luôn đứng đầu bên trái, nay nhường vị trí ngoài cùng —
+    /// dễ bấm nhất bằng ngón cái — cho nút cần hành động gấp hơn).
     private func actionRow(_ item: DonHangKhach) -> some View {
         HStack(spacing: 8) {
+            if item.daDanhGia {
+                Text(String(repeating: "⭐", count: item.soSaoDaDanh ?? 0))
+                    .font(.system(size: 13))
+            }
             Spacer()
-            actionButton("Đặt lại", filled: true) { datLai(item) }
             if item.trangThai == .hoanTat && !item.daDanhGia {
                 actionButton("⭐ Đánh giá", filled: true) { path.append(.detail(item)) }
             } else if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
+            actionButton("Đặt lại", filled: true) { datLai(item) }
         }
     }
 
