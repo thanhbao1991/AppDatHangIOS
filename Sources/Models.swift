@@ -478,4 +478,13 @@ struct VongQuayResult: Decodable { let label: String; let soTienThuong: Double; 
 /// GET /dat-hang/vong-quay/thong-tin
 struct VongQuayInfo: Decodable { let soLuotConLai: Int }
 
+/// GET /dat-hang/vong-quay/lich-su
+struct VongQuayLichSuItem: Decodable, Identifiable {
+    let thoiGian: String
+    let label: String
+    let thuong: Double
+    let trung: Bool
+    var id: String { thoiGian }
+}
+
 struct PushTokenRequest: Encodable { let expoPushToken: String? }

@@ -392,4 +392,10 @@ actor APIClient {
         let env: ApiEnvelope<VongQuayInfo> = await decode("/dat-hang/vong-quay/thong-tin")
         return env.isSuccess ? env.data : nil
     }
+
+    /// 20 lần quay gần nhất (kể cả không trúng) — hiển thị minh bạch trong tab Ưu đãi.
+    func getVongQuayLichSu() async -> [VongQuayLichSuItem]? {
+        let env: ApiEnvelope<[VongQuayLichSuItem]> = await decode("/dat-hang/vong-quay/lich-su")
+        return env.isSuccess ? env.data : nil
+    }
 }

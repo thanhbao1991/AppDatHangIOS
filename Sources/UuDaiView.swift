@@ -15,6 +15,7 @@ struct UuDaiView: View {
     // từ VongQuayResult.soLuotConLai (server trả kèm), không cần gọi thêm request.
     @State private var soLuotConLai = -1
     @State private var alertMessage: (title: String, message: String)?
+    @State private var lichSu: [VongQuayLichSuItem] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +28,7 @@ struct UuDaiView: View {
                     ScrollView {
                         VStack(spacing: 0) {
                             vongQuayCard
+                            lichSuCard
                         }
                         .padding(.top, 6)
                     }
@@ -83,9 +85,56 @@ struct UuDaiView: View {
         }
     }
 
+    /// Lịch sử minh bạch — khách hay nghi ngờ vòng quay "giả", liệt kê CẢ lần không trúng mới chứng
+    /// minh được random thật, không chỉ khoe các lần trúng.
+    private var lichSuCard: some View {
+        Group {
+            if !lichSu.isEmpty {
+                cardBox {
+                    cardHeader("📜", "Lịch sử quay")
+                    VStack(spacing: 0) {
+                        ForEach(Array(lichSu.enumerated()), id: \.element.id) { index, item in
+                            if index > 0 {
+                                Divider()
+                            }
+                            HStack(spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.label).font(.system(size: 13, weight: .medium))
+                                    Text(formatVNTime(item.thoiGian)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                                }
+                                Spacer()
+                                if item.trung {
+                                    Text("+" + formatXu(item.thuong))
+                                        .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.success)
+                                }
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Cùng cách parse với LichSuViView.formatUtcShort — ThoiGian là VietnamTime.Now (đã là giờ VN,
+    /// Kind=Unspecified), parse thẳng không quy đổi timezone thêm lần nữa.
+    private func formatVNTime(_ iso: String) -> String {
+        let inF = DateFormatter()
+        inF.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        inF.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        inF.locale = Locale(identifier: "en_US_POSIX")
+        guard let date = inF.date(from: String(iso.prefix(19))) else { return iso }
+        let out = DateFormatter()
+        out.dateFormat = "HH:mm dd/MM/yyyy"
+        out.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        return out.string(from: date)
+    }
+
     private func load() async {
-        let quay = await APIClient.shared.getVongQuayInfo()
-        soLuotConLai = quay?.soLuotConLai ?? -1
+        async let quay = APIClient.shared.getVongQuayInfo()
+        async let lichSuKq = APIClient.shared.getVongQuayLichSu()
+        soLuotConLai = await quay?.soLuotConLai ?? -1
+        lichSu = await lichSuKq ?? []
         loading = false
     }
 
@@ -97,6 +146,7 @@ struct UuDaiView: View {
         if res.isSuccess, let data = res.data {
             ketQuaQuay = data.label
             soLuotConLai = data.soLuotConLai
+            lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
         } else {
             alertMessage = ("Chưa quay được", res.message ?? "")
         }
