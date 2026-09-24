@@ -384,6 +384,7 @@ struct ThongBao: Decodable, Identifiable {
 
 // ---- Ví / gamification ----
 
+struct FavoriteItem: Decodable, Hashable { let tenSanPham: String; let tenBienThe: String }
 /// Voucher thưởng lên hạng (LenHangBac/Vang/KimCuong bên Backend) gắn với 1 mốc hạng cụ thể — xem
 /// KhachHangViDto.VoucherHangHienTai/VoucherHangTiepTheo.
 struct HangVoucherThuong: Decodable {
@@ -428,8 +429,10 @@ struct KhachHangVi: Decodable {
     let voucherHangHienTai: HangVoucherThuong?
     // Voucher khớp hangTiepTheo — dùng cho câu mời "còn Xđ để nhận voucher Y".
     let voucherHangTiepTheo: HangVoucherThuong?
+    let monHayMua: [FavoriteItem]
     // SanPhamId khách TỰ CHỌN yêu thích (nút tim ở MenuView) — thay cho cách cũ tính động theo món
-    // mua nhiều nhất.
+    // mua nhiều nhất. Field mới thêm song song monHayMua (chưa xoá — 1 session khác đang refactor
+    // MenuView/APIClient sang dùng field này, xem incident_appdathang_ci_wip_entangled_2026_09_24).
     var yeuThichSanPhamIds: [String] = []
 }
 
