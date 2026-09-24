@@ -487,4 +487,15 @@ struct VongQuayLichSuItem: Decodable, Identifiable {
     var id: String { thoiGian }
 }
 
+/// GET /dat-hang/diem-danh
+struct DiemDanhInfo: Decodable {
+    let ngayTiepTheo: Int
+    let daDiemDanhHomNay: Bool
+    let thuongThuong: Double
+    let thuongNgay7: Double
+}
+
+/// POST /dat-hang/diem-danh
+struct DiemDanhResult: Decodable { let ngay: Int; let thuong: Double }
+
 struct PushTokenRequest: Encodable { let expoPushToken: String? }

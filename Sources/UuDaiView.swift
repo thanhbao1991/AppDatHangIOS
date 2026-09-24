@@ -17,6 +17,9 @@ struct UuDaiView: View {
     @State private var alertMessage: (title: String, message: String)?
     @State private var lichSu: [VongQuayLichSuItem] = []
 
+    @State private var diemDanh: DiemDanhInfo?
+    @State private var dangDiemDanh = false
+
     var body: some View {
         VStack(spacing: 0) {
             TitleBar(title: "Ưu đãi", icon: "gift", centerTitle: true, trailing: notificationBell)
@@ -27,6 +30,7 @@ struct UuDaiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
+                            diemDanhCard
                             vongQuayCard
                             lichSuCard
                         }
@@ -57,6 +61,73 @@ struct UuDaiView: View {
             Text(title).font(.system(size: 16, weight: .bold))
             Spacer()
         }
+    }
+
+    /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
+    /// Bỏ lỡ 1 ngày là chuỗi reset về ngày 1 (khác vòng quay không quan tâm hôm qua) — xem
+    /// GamificationService.DiemDanhNhanXuAsync ở backend.
+    private var diemDanhCard: some View {
+        Group {
+            if let dd = diemDanh {
+                cardBox {
+                    cardHeader("🗓️", "Điểm danh nhận Xu")
+                    Text("Điểm danh liên tiếp 7 ngày — bỏ lỡ 1 ngày là tính lại từ đầu.")
+                        .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+
+                    HStack(spacing: 6) {
+                        ForEach(1...7, id: \.self) { day in
+                            diemDanhDayBox(day: day, info: dd)
+                        }
+                    }
+
+                    Button {
+                        Task { await lamDiemDanh() }
+                    } label: {
+                        if dangDiemDanh {
+                            ProgressView().tint(.white)
+                        } else if dd.daDiemDanhHomNay {
+                            Text("Đã điểm danh hôm nay ✓").fontWeight(.bold)
+                        } else {
+                            Text("Điểm danh nhận \(formatXu(thuongChoDay(dd.ngayTiepTheo, dd)))").fontWeight(.bold)
+                        }
+                    }
+                    .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
+                    .disabled(dd.daDiemDanhHomNay || dangDiemDanh)
+                }
+            }
+        }
+    }
+
+    private func thuongChoDay(_ day: Int, _ info: DiemDanhInfo) -> Double {
+        day >= 7 ? info.thuongNgay7 : info.thuongThuong
+    }
+
+    @ViewBuilder
+    private func diemDanhDayBox(day: Int, info: DiemDanhInfo) -> some View {
+        // Số ngày đã điểm danh XONG trong chu kỳ hiện tại — nếu hôm nay đã điểm danh thì ngayTiepTheo
+        // CHÍNH là ngày vừa nhận; chưa điểm danh thì ngày trước đó (ngayTiepTheo-1) mới là đã xong.
+        let daXong = info.daDiemDanhHomNay ? info.ngayTiepTheo : max(0, info.ngayTiepTheo - 1)
+        let laHomNay = !info.daDiemDanhHomNay && day == info.ngayTiepTheo
+        let daXongNgayNay = day <= daXong
+
+        VStack(spacing: 4) {
+            Text(day == 7 ? "🏆" : (daXongNgayNay ? "✅" : "🪙"))
+                .font(.system(size: day == 7 ? 20 : 16))
+            Text("+\(formatXu(thuongChoDay(day, info)))")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(daXongNgayNay ? Theme.textFaint : Theme.textMuted)
+            Text(day == 7 ? "Ngày 7" : "N.\(day)")
+                .font(.system(size: 9)).foregroundColor(Theme.textFaint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(day == 7 ? Theme.primaryTint : Theme.bg)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(laHomNay ? Theme.primary : Color.clear, lineWidth: 2)
+        )
+        .opacity(daXongNgayNay ? 0.55 : 1)
     }
 
     private var vongQuayCard: some View {
@@ -133,8 +204,10 @@ struct UuDaiView: View {
     private func load() async {
         async let quay = APIClient.shared.getVongQuayInfo()
         async let lichSuKq = APIClient.shared.getVongQuayLichSu()
+        async let diemDanhKq = APIClient.shared.getDiemDanhInfo()
         soLuotConLai = await quay?.soLuotConLai ?? -1
         lichSu = await lichSuKq ?? []
+        diemDanh = await diemDanhKq
         loading = false
     }
 
@@ -149,6 +222,17 @@ struct UuDaiView: View {
             lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
         } else {
             alertMessage = ("Chưa quay được", res.message ?? "")
+        }
+    }
+
+    private func lamDiemDanh() async {
+        dangDiemDanh = true
+        defer { dangDiemDanh = false }
+        let res = await APIClient.shared.diemDanh()
+        if res.isSuccess {
+            diemDanh = await APIClient.shared.getDiemDanhInfo() ?? diemDanh
+        } else {
+            alertMessage = ("Chưa điểm danh được", res.message ?? "")
         }
     }
 }

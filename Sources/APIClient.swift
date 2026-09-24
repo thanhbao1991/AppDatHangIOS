@@ -398,4 +398,13 @@ actor APIClient {
         let env: ApiEnvelope<[VongQuayLichSuItem]> = await decode("/dat-hang/vong-quay/lich-su")
         return env.isSuccess ? env.data : nil
     }
+
+    func getDiemDanhInfo() async -> DiemDanhInfo? {
+        let env: ApiEnvelope<DiemDanhInfo> = await decode("/dat-hang/diem-danh")
+        return env.isSuccess ? env.data : nil
+    }
+
+    func diemDanh() async -> ApiEnvelope<DiemDanhResult> {
+        await decode("/dat-hang/diem-danh", method: "POST")
+    }
 }
