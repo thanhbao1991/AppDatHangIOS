@@ -70,9 +70,13 @@ struct UuDaiView: View {
         Group {
             if let dd = diemDanh {
                 cardBox {
-                    cardHeader("🗓️", "Điểm danh nhận Xu")
+                    Text("🗓️ Điểm danh nhận Xu")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(maxWidth: .infinity, alignment: .center)
                     Text("Điểm danh liên tiếp 7 ngày — bỏ lỡ 1 ngày là tính lại từ đầu.")
                         .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
 
                     HStack(spacing: 6) {
                         ForEach(1...7, id: \.self) { day in
@@ -102,32 +106,56 @@ struct UuDaiView: View {
         day >= 7 ? info.thuongNgay7 : info.thuongThuong
     }
 
+    /// Số Xu ngắn gọn cho ô ngày (không kèm chữ "Xu" — 7 ô chen chúc trên 1 hàng, đã có icon đồng
+    /// xu bên dưới làm rõ đơn vị rồi).
+    private func soNgan(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = "."
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
+
+    // Style port từ card "Điểm Danh Nhận Xu" kiểu Shopee: số thưởng NẰM TRÊN icon (không phải dưới),
+    // nhãn ngày nằm NGOÀI/DƯỚI khung màu (không phải trong) — ô "hôm nay" viền màu nhấn nổi bật.
     @ViewBuilder
     private func diemDanhDayBox(day: Int, info: DiemDanhInfo) -> some View {
-        // Số ngày đã điểm danh XONG trong chu kỳ hiện tại — nếu hôm nay đã điểm danh thì ngayTiepTheo
-        // CHÍNH là ngày vừa nhận; chưa điểm danh thì ngày trước đó (ngayTiepTheo-1) mới là đã xong.
+        // Ô đại diện "hôm nay" LUÔN là ngayTiepTheo — dù đã điểm danh (ngayTiepTheo = ngày vừa nhận)
+        // hay chưa (ngayTiepTheo = ngày mục tiêu sắp nhận).
+        let isToday = day == info.ngayTiepTheo
         let daXong = info.daDiemDanhHomNay ? info.ngayTiepTheo : max(0, info.ngayTiepTheo - 1)
-        let laHomNay = !info.daDiemDanhHomNay && day == info.ngayTiepTheo
         let daXongNgayNay = day <= daXong
+        let isDay7 = day == 7
+        let daNhanHomNay = isToday && info.daDiemDanhHomNay
 
-        VStack(spacing: 4) {
-            Text(day == 7 ? "🏆" : (daXongNgayNay ? "✅" : "🪙"))
-                .font(.system(size: day == 7 ? 20 : 16))
-            Text("+\(formatXu(thuongChoDay(day, info)))")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(daXongNgayNay ? Theme.textFaint : Theme.textMuted)
-            Text(day == 7 ? "Ngày 7" : "N.\(day)")
-                .font(.system(size: 9)).foregroundColor(Theme.textFaint)
+        VStack(spacing: 6) {
+            VStack(spacing: 4) {
+                if daNhanHomNay {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: isDay7 ? 22 : 18))
+                        .foregroundColor(Theme.primary)
+                } else {
+                    Text("+\(soNgan(thuongChoDay(day, info)))")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
+                    Text(isDay7 ? "🏆" : "🪙")
+                        .font(.system(size: isDay7 ? 22 : 18))
+                        .opacity(daXongNgayNay ? 0.5 : 1)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(isDay7 ? Theme.primary : Theme.bg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isToday ? Theme.primary : Color.clear, lineWidth: 2)
+            )
+
+            Text(isToday ? "Hôm nay" : (isDay7 ? "Ngày 7" : "N.\(day)"))
+                .font(.system(size: 10, weight: isToday ? .bold : .regular))
+                .foregroundColor(isToday ? Theme.primary : Theme.textFaint)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(day == 7 ? Theme.primaryTint : Theme.bg)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(laHomNay ? Theme.primary : Color.clear, lineWidth: 2)
-        )
-        .opacity(daXongNgayNay ? 0.55 : 1)
     }
 
     private var vongQuayCard: some View {
