@@ -128,10 +128,6 @@ struct UuDaiView: View {
                     Text("🗓️ Điểm danh nhận Xu")
                         .font(.system(size: 16, weight: .bold))
                         .frame(maxWidth: .infinity, alignment: .center)
-                    Text("Điểm danh liên tiếp 7 ngày — bỏ lỡ 1 ngày là tính lại từ đầu.")
-                        .font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .multilineTextAlignment(.center)
 
                     HStack(spacing: 6) {
                         ForEach(1...7, id: \.self) { day in
