@@ -337,7 +337,10 @@ struct SettingsView: View {
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiHienThi) { item in
-                    HStack(alignment: .top, spacing: 8) {
+                    // minHeight cố định — hàng CÓ nút sửa/xoá (padding 10 quanh icon) cao hơn hẳn
+                    // hàng KHÔNG có (chỉ sao + chữ), khiến VStack spacing nhìn "không đều" giữa các
+                    // dòng dù spacing thật ra vẫn cố định (chỉ là bounding box mỗi hàng khác nhau).
+                    HStack(alignment: .center, spacing: 8) {
                         // Icon sao rỗng/đầy thay cho ký tự "★ " chỉ có ở địa chỉ mặc định trước đây —
                         // giờ MỌI địa chỉ đều có chỗ cho icon (đầy = mặc định, rỗng = chưa). Bỏ hẳn
                         // dòng chữ "Đặt làm mặc định" cho gọn — bấm THẲNG vào icon sao rỗng để đặt
@@ -351,7 +354,6 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(item.isDefault)
-                        .padding(.top, 2)
                         Text(item.diaChi)
                         Spacer()
                         if item.coTheXoa {
@@ -378,6 +380,7 @@ struct SettingsView: View {
                             .padding(.trailing, -10)
                         }
                     }
+                    .frame(minHeight: 36)
                 }
             }
         }
