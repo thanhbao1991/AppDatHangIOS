@@ -390,6 +390,11 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    /// Đổi 2026-09-23: không còn thưởng Xu trực tiếp — quà sinh nhật giờ tặng +1 lượt quay may mắn.
+    func nhanQuaSinhNhat() async -> ApiEnvelope<Bool> {
+        await decode("/dat-hang/sinh-nhat/nhan-qua", method: "POST")
+    }
+
     func quayVongQuay() async -> ApiEnvelope<VongQuayResult> {
         await decode("/dat-hang/vong-quay", method: "POST")
     }
