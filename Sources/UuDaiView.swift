@@ -292,55 +292,43 @@ struct UuDaiView: View {
 
     // ===== Hộp quà may mắn (thay bánh xe — yêu cầu 2026-09-24 "làm hộp quà cho đơn giản") =====
 
-    private let goldGradient = LinearGradient(
-        colors: [Color(red: 1, green: 0.85, blue: 0.4), Color(red: 0.93, green: 0.63, blue: 0.08)],
-        startPoint: .top, endPoint: .bottom)
-    private let boxGradient = LinearGradient(
-        colors: [Color(red: 0.30, green: 0.55, blue: 0.95), Color(red: 0.16, green: 0.34, blue: 0.72)],
-        startPoint: .topLeading, endPoint: .bottomTrailing)
-
-    /// Hộp quà vẽ tay bằng shape (đồng bộ phong cách với xuIcon) — thân xanh gradient + ruy băng
-    /// vàng chữ thập + nơ tròn trên nắp, thay vì emoji 🎁 phẳng.
-    private var giftBoxShape: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(boxGradient)
-                .frame(width: 128, height: 104)
-            Rectangle().fill(goldGradient).frame(width: 128, height: 18)
-            Rectangle().fill(goldGradient).frame(width: 18, height: 104)
-            HStack(spacing: -6) {
-                Circle().fill(goldGradient).frame(width: 30, height: 22)
-                Circle().fill(goldGradient).frame(width: 30, height: 22)
-            }
-            .offset(y: -62)
-            Circle().fill(goldGradient).frame(width: 16, height: 16).offset(y: -52)
-        }
-        .shadow(color: .black.opacity(0.15), radius: 6, y: 4)
-    }
-
     @ViewBuilder
     private var giftBoxView: some View {
-        VStack(spacing: 10) {
-            giftBoxShape
+        ZStack {
+            // Nền phát sáng phía sau — chỉ 1 icon emoji trơ trên nền trắng nhìn "chìm", vòng sáng
+            // tạo điểm nhấn giống banner ưu đãi thật.
+            Circle()
+                .fill(RadialGradient(
+                    colors: [Theme.primaryTint, Theme.primaryTint.opacity(0)],
+                    center: .center, startRadius: 4, endRadius: 95))
+                .frame(width: 190, height: 190)
+
+            Text("🎁")
+                .font(.system(size: 92))
                 .scaleEffect(boxScale)
                 .rotationEffect(.degrees(boxRotation))
-                .opacity(dangQuay || soLuotConLai == 0 ? 0.55 : 1)
-                .onTapGesture { onBoxTap() }
         }
+        .opacity(dangQuay || soLuotConLai == 0 ? 0.55 : 1)
+        .contentShape(Circle())
+        .onTapGesture { onBoxTap() }
     }
 
     private func onBoxTap() {
         guard !dangQuay, soLuotConLai != 0 else { return }
-        withAnimation(.easeInOut(duration: 0.08).repeatCount(5, autoreverses: true)) {
-            boxRotation = 8
+        // Rung lắc mạnh + phồng nhẹ trong lúc chờ server trả kết quả, cho cảm giác "đang mở quà".
+        withAnimation(.easeInOut(duration: 0.06).repeatCount(10, autoreverses: true)) {
+            boxRotation = 14
+        }
+        withAnimation(.easeInOut(duration: 0.15).repeatCount(4, autoreverses: true)) {
+            boxScale = 1.08
         }
         Task {
             await spin()
             withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
                 boxRotation = 0
-                boxScale = 1.15
+                boxScale = 1.25
             }
-            try? await Task.sleep(nanoseconds: 200_000_000)
+            try? await Task.sleep(nanoseconds: 220_000_000)
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 boxScale = 1
             }
