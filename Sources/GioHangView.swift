@@ -16,9 +16,6 @@ struct GioHangView: View {
     @State private var nhoms: [NhomSanPham] = []
     @State private var toppings: [Topping] = []
     @State private var editingItem: CartItem?
-    /// true cho tới khi loadCatalog() nạp xong — chặn bấm sửa cho tới khi chắc chắn có catalog, xem
-    /// openEdit() và ghi chú gốc ở CheckoutView.swift bản cũ (bài học race lúc mới mở tab).
-    @State private var loadingCatalog = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,17 +32,7 @@ struct GioHangView: View {
                 bottomBar
             }
         }
-        .task {
-            // Ép trần thời gian chờ (8s) — lần mở app ĐẦU TIÊN (chưa cache gì) request có thể treo
-            // lâu hơn bình thường, không để dòng món mờ (loadingCatalog=true) "mãi không hết".
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await loadCatalog() }
-                group.addTask { try? await Task.sleep(nanoseconds: 8_000_000_000) }
-                await group.next()
-                group.cancelAll()
-            }
-            loadingCatalog = false
-        }
+        .task { await loadCatalog() }
         .sheet(item: $editingItem) { item in
             let realSp = sanPham(for: item)
             let sp = realSp ?? fallbackSanPham(for: item)
@@ -170,7 +157,11 @@ struct GioHangView: View {
     }
 
     private func openEdit(_ item: CartItem) {
-        guard !loadingCatalog else { return }
+        // KHÔNG chặn theo loadingCatalog nữa — .sheet bên trên đã tự rơi về fallbackSanPham(for:) khi
+        // catalog thật chưa có/chưa kịp tải (sanPham(for:) trả nil), đủ để sửa số lượng/ghi chú/topping
+        // đã chọn ngay lập tức. Trước đây chặn cứng ở đây khiến bấm "sửa" không phản hồi gì (không mờ,
+        // không lỗi, không gì cả) nếu loadCatalog() của CHÍNH tab Giỏ hàng chậm/kẹt — mà theo quan sát
+        // thực tế, nó có thể kẹt rất lâu, không chỉ tới khi tab Thực đơn tải menu xong mới tự thông.
         editingItem = item
     }
 
