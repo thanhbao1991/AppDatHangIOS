@@ -25,14 +25,6 @@ struct VoucherCuaToiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            // THỬ TẠM: banner AI (GPT) cho voucher trao thưởng hạng — so sánh với
-                            // card native bên dưới, chưa gắn logic thật, gỡ nếu không dùng.
-                            Image("BannerHangVang")
-                                .resizable().aspectRatio(contentMode: .fit)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                            Image("BannerKimCuong")
-                                .resizable().aspectRatio(contentMode: .fit)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
                             ForEach(vouchers) { v in
                                 VoucherTicketCard(
                                     ten: v.ten, moTa: v.moTa, ma: v.ma,
