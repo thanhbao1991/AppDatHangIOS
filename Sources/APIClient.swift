@@ -323,6 +323,18 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    // ===== Yêu thích (khách tự chọn qua nút tim ở MenuView) =====
+
+    func themYeuThich(_ sanPhamId: String) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/dat-hang/yeu-thich/\(sanPhamId)", method: "POST")
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
+    func xoaYeuThich(_ sanPhamId: String) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/dat-hang/yeu-thich/\(sanPhamId)", method: "DELETE")
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     // ===== Thông báo =====
 
     func getThongBao() async -> [ThongBao] {
@@ -376,11 +388,6 @@ actor APIClient {
     func capNhatNgaySinh(_ ngaySinh: String) async -> ActionResult {
         let env: ApiEnvelope<Bool> = await decode("/dat-hang/sinh-nhat", method: "PUT", body: jsonBody(CapNhatNgaySinhRequest(ngaySinh: ngaySinh)))
         return ActionResult(success: env.isSuccess, message: env.message)
-    }
-
-    /// Đổi 2026-09-23: không còn thưởng Xu trực tiếp — quà sinh nhật giờ tặng +1 lượt quay may mắn.
-    func nhanQuaSinhNhat() async -> ApiEnvelope<Bool> {
-        await decode("/dat-hang/sinh-nhat/nhan-qua", method: "POST")
     }
 
     func quayVongQuay() async -> ApiEnvelope<VongQuayResult> {

@@ -38,7 +38,12 @@ struct MenuView: View {
     /// cuộn về) — String đơn thuần sẽ không đổi giá trị nên .onChange không fire lại được.
     private struct ScrollRequest: Equatable { let id: String; let tick: Int }
     @State private var scrollRequest: ScrollRequest?
-    @State private var monHayMua: [FavoriteItem] = []
+    /// SanPhamId khách TỰ CHỌN yêu thích (nút tim ở productRow) — nguồn cho mục "Yêu thích" ở
+    /// sidebar, thay cho cách cũ tính động theo món mua nhiều nhất.
+    @State private var yeuThichIds: Set<String> = []
+    /// SanPhamId đang gọi API thêm/xoá yêu thích — disable nút tim tương ứng để tránh bấm dồn dập
+    /// trong lúc chờ phản hồi.
+    @State private var togglingYeuThichIds: Set<String> = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
 
@@ -70,19 +75,26 @@ struct MenuView: View {
     /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
     private static let nhomShortLabels: [String: String] = [:]
 
-    /// Món khớp monHayMua (3 món khách mua nhiều nhất, từ /dat-hang/vi) — chỉ khớp theo TÊN sản
-    /// phẩm vì backend không trả kèm id, khớp cả
-    /// khi không tìm thấy biến thể tương ứng (mở picker vẫn chọn được size khác). Giữ thứ tự theo
-    /// monHayMua, loại trùng nếu 1 sản phẩm xuất hiện ở nhiều biến thể trong danh sách yêu thích.
+    /// Món khách đã bấm tim yêu thích — giữ nguyên thứ tự trong sanPhams (theo nhóm/tên), không
+    /// theo thứ tự bấm.
     private var favoriteSanPhams: [SanPham] {
-        var seen = Set<String>()
-        var result: [SanPham] = []
-        for fav in monHayMua {
-            guard let sp = sanPhams.first(where: { $0.ten == fav.tenSanPham }), !seen.contains(sp.id) else { continue }
-            seen.insert(sp.id)
-            result.append(sp)
+        sanPhams.filter { yeuThichIds.contains($0.id) }
+    }
+
+    /// Bấm tim ở productRow — cập nhật lạc quan (optimistic) trước, gọi API sau; lỗi thì tự hoàn tác.
+    private func toggleYeuThich(_ item: SanPham) {
+        let dangYeuThich = yeuThichIds.contains(item.id)
+        if dangYeuThich { yeuThichIds.remove(item.id) } else { yeuThichIds.insert(item.id) }
+        togglingYeuThichIds.insert(item.id)
+        Task {
+            let result = dangYeuThich
+                ? await APIClient.shared.xoaYeuThich(item.id)
+                : await APIClient.shared.themYeuThich(item.id)
+            if !result.success {
+                if dangYeuThich { yeuThichIds.insert(item.id) } else { yeuThichIds.remove(item.id) }
+            }
+            togglingYeuThichIds.remove(item.id)
         }
-        return result
     }
 
     /// SanPhamId → hạng bán chạy (0 = bán chạy nhất) — món không có trong banChayIds rơi về cuối.
@@ -266,14 +278,14 @@ struct MenuView: View {
         }
     }
 
-    /// Hiện khi khách chưa có món hay mua nào (monHayMua rỗng) — thay vì để trống trơn, giải thích
-    /// vì sao mục "Yêu thích" chưa có gì và món sẽ tự xuất hiện sau khi khách đặt hàng.
+    /// Hiện khi khách chưa bấm tim món nào — giải thích cách thêm món vào mục "Yêu thích" thay vì
+    /// để trống trơn.
     private var yeuThichEmptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary)
-            Text("Món hay gọi sẽ hiện ở đây!")
+            Text("Chạm biểu tượng ♡ ở món bạn thích để lưu vào đây!")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -411,32 +423,47 @@ struct MenuView: View {
     private func productRow(_ item: SanPham) -> some View {
         let prices = item.bienThe.map(\.giaBan)
         let minPrice = prices.min()
-        Button { picking = item } label: {
-            HStack(spacing: 12) {
-                if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-                } else {
-                    // Icon nhóm món (emoji, khớp nhomIcons dùng ở sidebar) thay vì chữ cái đầu tên
-                    // món — chữ cái đầu nhìn khô khan, icon nhóm gợi hình đồ uống hơn hẳn.
-                    RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
-                        .overlay(Text(nhomIcon(for: item)).font(.system(size: 26)))
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.ten)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
-                    if let minPrice {
-                        Text(prices.count > 1 ? "Từ \(formatTien(minPrice))" : formatTien(minPrice))
-                            .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+        let isFavorite = yeuThichIds.contains(item.id)
+        HStack(spacing: 12) {
+            Button { picking = item } label: {
+                HStack(spacing: 12) {
+                    if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
+                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                    } else {
+                        // Icon nhóm món (emoji, khớp nhomIcons dùng ở sidebar) thay vì chữ cái đầu tên
+                        // món — chữ cái đầu nhìn khô khan, icon nhóm gợi hình đồ uống hơn hẳn.
+                        RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
+                            .overlay(Text(nhomIcon(for: item)).font(.system(size: 26)))
                     }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.ten)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                        if let minPrice {
+                            Text(prices.count > 1 ? "Từ \(formatTien(minPrice))" : formatTien(minPrice))
+                                .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                        }
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer()
             }
-            .padding(.horizontal, 16).padding(.vertical, 8)
+            .foregroundColor(.primary)
+            // Nút tim tách riêng khỏi Button mở picker — bấm tim không được kích hoạt luôn modal chọn
+            // size/topping phía trên.
+            Button {
+                toggleYeuThich(item)
+            } label: {
+                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    .font(.system(size: 18))
+                    .foregroundColor(isFavorite ? Theme.primary : .secondary)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
+            .disabled(togglingYeuThichIds.contains(item.id))
         }
-        .foregroundColor(.primary)
+        .padding(.horizontal, 16).padding(.vertical, 8)
     }
 
     private func load(silent: Bool = false) async {
@@ -456,7 +483,7 @@ struct MenuView: View {
         sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
         nhoms = nhom
         toppings = top.filter { !$0.ngungBan }
-        monHayMua = vi?.monHayMua ?? []
+        yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         banChayIds = banChay
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
