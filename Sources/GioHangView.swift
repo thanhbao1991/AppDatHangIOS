@@ -213,7 +213,10 @@ struct GioHangView: View {
                 }
             }
         }
-        .opacity(loadingCatalog ? 0.6 : 1)
+        // KHÔNG làm mờ cả dòng theo loadingCatalog nữa — tên/số lượng/giá của dòng giỏ lấy thẳng từ
+        // CartItem (đã có sẵn, không phụ thuộc catalog), chỉ riêng thao tác SỬA (openEdit) mới cần
+        // đợi catalog xong. Trước đây mờ cả dòng dù dữ liệu hiển thị đã đủ, gây cảm giác "giỏ hàng bị
+        // lỗi/chưa tải" mỗi khi vừa chuyển từ tab Thực đơn sang lúc mạng chậm.
         .contentShape(Rectangle())
         .onTapGesture { openEdit(item) }
     }
