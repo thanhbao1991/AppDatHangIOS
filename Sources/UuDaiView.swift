@@ -105,19 +105,6 @@ struct UuDaiView: View {
         .padding(.vertical, 6)
     }
 
-    /// Header thống nhất cho mọi card — icon trong khung tròn màu nhấn + tiêu đề, thay vì emoji nằm
-    /// trơn cạnh chữ (trước đây 3 card trông đều na ná nhau, khó phân biệt loại ưu đãi khi lướt nhanh).
-    private func cardHeader(_ icon: String, _ title: String) -> some View {
-        HStack(spacing: 10) {
-            Text(icon).font(.system(size: 20))
-                .frame(width: 36, height: 36)
-                .background(Theme.primaryTint)
-                .clipShape(Circle())
-            Text(title).font(.system(size: 16, weight: .bold))
-            Spacer()
-        }
-    }
-
     /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
     /// Bỏ lỡ 1 ngày là chuỗi reset về ngày 1 (khác vòng quay không quan tâm hôm qua) — xem
     /// GamificationService.DiemDanhNhanXuAsync ở backend.
@@ -125,7 +112,7 @@ struct UuDaiView: View {
         Group {
             if let dd = diemDanh {
                 cardBox {
-                    Text("🗓️ Điểm danh nhận Xu")
+                    Text("Điểm danh nhận Xu")
                         .font(.system(size: 16, weight: .bold))
                         .frame(maxWidth: .infinity, alignment: .center)
 
@@ -213,7 +200,9 @@ struct UuDaiView: View {
 
     private var vongQuayCard: some View {
         cardBox {
-            cardHeader("🎡", "Vòng quay may mắn")
+            Text("Vòng quay may mắn")
+                .font(.system(size: 16, weight: .bold))
+                .frame(maxWidth: .infinity, alignment: .center)
             Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng Xu!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
