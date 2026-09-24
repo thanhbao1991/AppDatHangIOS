@@ -180,7 +180,9 @@ struct OrderDetailView: View {
 
     @ViewBuilder
     private var danhGiaSection: some View {
-        Text("Đánh giá").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+        // "+100 Xu" khớp DanhGiaDonThuong (DatHangService.cs) — đổi số ở backend thì nhớ sửa cả đây.
+        Text(daDanhGia ? "Đánh giá" : "Đánh giá — nhận 100 Xu")
+            .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
         if daDanhGia {
             Text("Bạn đã đánh giá \(String(repeating: "⭐", count: soSaoDaDanh)) — Cảm ơn bạn!")
         } else {
