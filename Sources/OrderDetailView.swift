@@ -99,6 +99,11 @@ struct OrderDetailView: View {
                         Text(formatTien(order.conLai)).font(.system(size: 20, weight: .bold))
                             .foregroundColor(order.conLai > 0 ? Theme.danger : Theme.success)
                     }
+                    // "Đặt lại" gộp vào card tổng tiền thay vì đứng riêng bên dưới (feedback 2026-09-24)
+                    // — nằm cạnh số tiền của CHÍNH đơn này, đỡ trôi nổi xa nội dung liên quan.
+                    Button("Đặt lại") { datLai() }
+                        .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
+                        .padding(.top, 4)
                 }
 
                 if order.trangThai != .hoanTat && order.trangThai != .huy {
@@ -112,9 +117,6 @@ struct OrderDetailView: View {
                     }
                     .buttonStyle(.bordered).disabled(dangHuy)
                 }
-
-                Button("Đặt lại") { datLai() }
-                    .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
 
                 if order.trangThai == .hoanTat {
                     card { danhGiaSection }
