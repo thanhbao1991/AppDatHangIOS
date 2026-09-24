@@ -348,6 +348,11 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     let ghiChu: String?
     let items: [DonHangKhachItem]
     let trangThai: TrangThaiDon
+    // Mốc thời gian từng bước timeline (OrderDetailView) — nil nghĩa là đơn chưa tới bước đó. Cùng
+    // dạng ISO thô như ngayGio, format bằng formatThongBaoTime khi hiện.
+    let ngayXacNhanOnline: String?
+    let ngayShip: String?
+    let ngayHoanTat: String?
     let daDanhGia: Bool
     let soSaoDaDanh: Int?
 }
@@ -379,7 +384,6 @@ struct ThongBao: Decodable, Identifiable {
 
 // ---- Ví / gamification ----
 
-struct FavoriteItem: Decodable, Hashable { let tenSanPham: String; let tenBienThe: String }
 /// Voucher thưởng lên hạng (LenHangBac/Vang/KimCuong bên Backend) gắn với 1 mốc hạng cụ thể — xem
 /// KhachHangViDto.VoucherHangHienTai/VoucherHangTiepTheo.
 struct HangVoucherThuong: Decodable {
@@ -424,7 +428,9 @@ struct KhachHangVi: Decodable {
     let voucherHangHienTai: HangVoucherThuong?
     // Voucher khớp hangTiepTheo — dùng cho câu mời "còn Xđ để nhận voucher Y".
     let voucherHangTiepTheo: HangVoucherThuong?
-    let monHayMua: [FavoriteItem]
+    // SanPhamId khách TỰ CHỌN yêu thích (nút tim ở MenuView) — thay cho cách cũ tính động theo món
+    // mua nhiều nhất.
+    var yeuThichSanPhamIds: [String] = []
 }
 
 struct ViGiaoDich: Decodable, Identifiable {

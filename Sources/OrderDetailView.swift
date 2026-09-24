@@ -159,6 +159,18 @@ struct OrderDetailView: View {
         }
     }
 
+    /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
+    /// xảy ra, xem NgayXacNhanOnline/NgayShip/NgayHoanTat trong DatHangService.GetDonCuaToiAsync).
+    private func stepTime(_ i: Int) -> String? {
+        switch i {
+        case 0: return order.ngayGio
+        case 1: return order.ngayXacNhanOnline
+        case 2: return order.ngayShip
+        case 3: return order.ngayHoanTat
+        default: return nil
+        }
+    }
+
     private var timeline: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
@@ -166,12 +178,19 @@ struct OrderDetailView: View {
                     VStack(spacing: 0) {
                         Circle().fill(i <= currentStep ? Theme.primary : Theme.divider).frame(width: 12, height: 12)
                         if i < steps.count - 1 {
-                            Rectangle().fill(i < currentStep ? Theme.primary : Theme.divider).frame(width: 2, height: 28)
+                            // Cao hơn bản cũ (28→36) để chứa đủ 2 dòng (nhãn bước + giờ) không bị hụt
+                            // đường nối trước khi tới chấm tiếp theo.
+                            Rectangle().fill(i < currentStep ? Theme.primary : Theme.divider).frame(width: 2, height: 36)
                         }
                     }
-                    Text(step.nhan)
-                        .font(.system(size: 13, weight: i <= currentStep ? .semibold : .regular))
-                        .foregroundColor(i <= currentStep ? .primary : Theme.textFaint)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(step.nhan)
+                            .font(.system(size: 13, weight: i <= currentStep ? .semibold : .regular))
+                            .foregroundColor(i <= currentStep ? .primary : Theme.textFaint)
+                        if let raw = stepTime(i) {
+                            Text(formatThongBaoTime(raw)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                        }
+                    }
                     Spacer()
                 }
             }
@@ -189,7 +208,11 @@ struct OrderDetailView: View {
             HStack {
                 ForEach(1...5, id: \.self) { n in
                     Button { pickSao = n } label: {
-                        Text(n <= pickSao ? "⭐" : "☆").font(.system(size: 28))
+                        // Glyph "☆" mặc định quá mờ trên nền card xám (feedback 2026-09-24) — ép màu
+                        // rõ hơn thay vì để hệ thống tự chọn (foregroundColor mặc định nhạt gần trắng).
+                        Text(n <= pickSao ? "⭐" : "☆")
+                            .font(.system(size: 28))
+                            .foregroundColor(n <= pickSao ? nil : Theme.textMuted)
                     }
                 }
             }
