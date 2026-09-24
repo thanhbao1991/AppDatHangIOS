@@ -16,6 +16,7 @@ struct UuDaiView: View {
     @State private var soLuotConLai = -1
     @State private var alertMessage: (title: String, message: String)?
     @State private var lichSu: [VongQuayLichSuItem] = []
+    @State private var hienLichSu = false
 
     @State private var diemDanh: DiemDanhInfo?
     @State private var dangDiemDanh = false
@@ -32,7 +33,6 @@ struct UuDaiView: View {
                         VStack(spacing: 0) {
                             diemDanhCard
                             vongQuayCard
-                            lichSuCard
                         }
                         .padding(.top, 6)
                     }
@@ -153,16 +153,24 @@ struct UuDaiView: View {
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-        }
-    }
 
-    /// Lịch sử minh bạch — khách hay nghi ngờ vòng quay "giả", liệt kê CẢ lần không trúng mới chứng
-    /// minh được random thật, không chỉ khoe các lần trúng.
-    private var lichSuCard: some View {
-        Group {
             if !lichSu.isEmpty {
-                cardBox {
-                    cardHeader("📜", "Lịch sử quay")
+                Divider().padding(.top, 4)
+                Button {
+                    withAnimation { hienLichSu.toggle() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Lịch sử quay").font(.system(size: 13, weight: .medium))
+                        Image(systemName: hienLichSu ? "chevron.up" : "chevron.down").font(.system(size: 11))
+                    }
+                    .foregroundColor(Theme.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .padding(.top, 4)
+
+                // Minh bạch — khách hay nghi ngờ vòng quay "giả", liệt kê CẢ lần không trúng mới
+                // chứng minh được random thật, không chỉ khoe các lần trúng.
+                if hienLichSu {
                     VStack(spacing: 0) {
                         ForEach(Array(lichSu.enumerated()), id: \.element.id) { index, item in
                             if index > 0 {
