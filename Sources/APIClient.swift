@@ -313,6 +313,18 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    struct DiaChiBody: Encodable { let diaChi: String }
+
+    func themDiaChi(_ diaChi: String) async -> ActionResult {
+        let env: ApiEnvelope<DiaChiKhachHang> = await decode("/dat-hang/dia-chi", method: "POST", body: jsonBody(DiaChiBody(diaChi: diaChi)))
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
+    func suaDiaChi(_ id: String, diaChi: String) async -> ActionResult {
+        let env: ApiEnvelope<Bool> = await decode("/dat-hang/dia-chi/\(id)", method: "PUT", body: jsonBody(DiaChiBody(diaChi: diaChi)))
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     func xoaDiaChi(_ id: String) async -> ActionResult {
         let env: ApiEnvelope<Bool> = await decode("/dat-hang/dia-chi/\(id)", method: "DELETE")
         return ActionResult(success: env.isSuccess, message: env.message)

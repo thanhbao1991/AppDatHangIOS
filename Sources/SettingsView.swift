@@ -17,13 +17,13 @@ struct SettingsView: View {
     @State private var vi: KhachHangVi?
     @State private var loading = true
 
-    @State private var sinhNhat: SinhNhatInfo?
-    @State private var dobDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
-    @State private var dobChosen = false
-    @State private var dangLuuSinhNhat = false
-    @State private var dangNhanQua = false
     @State private var alertMessage: (title: String, message: String)?
     @State private var diaChiChoXoa: DiaChiKhachHang?
+    // nil = đang thêm mới, non-nil = đang sửa đúng id đó — dùng chung 1 alert TextField cho cả 2 thao
+    // tác (giống pattern showEditTen bên dưới), tránh 2 sheet/alert gần như giống hệt nhau.
+    @State private var showDiaChiForm = false
+    @State private var diaChiEditingId: String?
+    @State private var diaChiFormText: String = ""
 
     @State private var tenHienThi: String = Prefs.tenKhachHang ?? ""
     @State private var dangLuuTen = false
@@ -79,6 +79,19 @@ struct SettingsView: View {
             Button("Huỷ", role: .cancel) { tenHienThi = Prefs.tenKhachHang ?? "" }
         } message: {
             Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
+        }
+        .alert(diaChiEditingId == nil ? "Thêm địa chỉ" : "Sửa địa chỉ", isPresented: $showDiaChiForm) {
+            TextField("Địa chỉ giao hàng", text: $diaChiFormText)
+            Button("Lưu") {
+                let text = diaChiFormText.trimmingCharacters(in: .whitespaces)
+                guard !text.isEmpty else { return }
+                if let id = diaChiEditingId {
+                    Task { await suaDiaChi(id, diaChi: text) }
+                } else {
+                    Task { await themDiaChi(text) }
+                }
+            }
+            Button("Huỷ", role: .cancel) {}
         }
     }
 
@@ -298,15 +311,27 @@ struct SettingsView: View {
     /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
     private var thongTinCaNhanCard: some View {
         cardBox {
-            Text("Địa chỉ giao hàng").font(.system(size: 16, weight: .bold))
+            HStack {
+                Text("Địa chỉ giao hàng").font(.system(size: 16, weight: .bold))
+                Spacer()
+                Button {
+                    diaChiEditingId = nil
+                    diaChiFormText = ""
+                    showDiaChiForm = true
+                } label: {
+                    Image(systemName: "plus.circle.fill").foregroundColor(Theme.primary)
+                }
+                .buttonStyle(.plain)
+            }
             Divider()
 
-            // sinhNhatRow tạm ẩn (yêu cầu 2026-09-23) — chỉ còn giữ lại địa chỉ trong card này. Hàm
-            // sinhNhatRow/nhanQua/luuSinhNhat vẫn giữ nguyên bên dưới, chưa xoá, để bật lại dễ dàng.
-            // CHỈ ẨN địa chỉ nhân viên nhập (coTheXoa=false) ở ĐÚNG card này — CheckoutView (chọn địa
-            // chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo yêu cầu.
+            // "Nhận quà sinh nhật" (+1 lượt quay) đã bỏ hẳn 2026-09-24 (trùng thưởng với voucher sinh
+            // nhật) — card này giờ chỉ còn địa chỉ. Khai ngày sinh (cho xác minh tuổi 18+ thuốc lá)
+            // nằm riêng ở MenuView. CHỈ ẨN địa chỉ nhân viên nhập (coTheXoa=false) ở ĐÚNG card này —
+            // CheckoutView (chọn địa chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo
+            // yêu cầu.
             if diaChiHienThi.isEmpty {
-                Text("Chưa có địa chỉ nào — nhập ở bước đặt hàng sẽ tự lưu lại.")
+                Text("Chưa có địa chỉ nào — bấm + để thêm, hoặc nhập ở bước đặt hàng sẽ tự lưu lại.")
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiHienThi) { item in
@@ -328,6 +353,14 @@ struct SettingsView: View {
                         Text(item.diaChi)
                         Spacer()
                         if item.coTheXoa {
+                            Button {
+                                diaChiEditingId = item.id
+                                diaChiFormText = item.diaChi
+                                showDiaChiForm = true
+                            } label: {
+                                Image(systemName: "pencil").foregroundColor(Theme.textFaint)
+                            }
+                            .buttonStyle(.plain)
                             Button { diaChiChoXoa = item } label: {
                                 Image(systemName: "xmark").foregroundColor(Theme.danger)
                             }
@@ -339,43 +372,6 @@ struct SettingsView: View {
         }
     }
 
-    @ViewBuilder
-    private var sinhNhatRow: some View {
-        if let sinhNhat {
-            VStack(alignment: .leading, spacing: 6) {
-                if let ngaySinh = sinhNhat.ngaySinh {
-                    Text("🎂 Ngày sinh: \(formatDateVN(ngaySinh))").font(.system(size: 14))
-                    if sinhNhat.dangTrongThangSinhNhat && !sinhNhat.daNhanQuaNamNay {
-                        Button {
-                            Task { await nhanQua() }
-                        } label: {
-                            if dangNhanQua { ProgressView() } else { Text("🎁 Nhận quà sinh nhật") }
-                        }
-                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                    } else if sinhNhat.daNhanQuaNamNay {
-                        Text("Đã nhận quà năm nay rồi, hẹn năm sau nhé!").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                    }
-                } else {
-                    Text("🎂 Chưa khai ngày sinh").font(.system(size: 14))
-                    Text("Nhập để nhận quà mừng sinh nhật mỗi năm.").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                    HStack {
-                        DatePicker("", selection: $dobDate, in: ...Date(), displayedComponents: .date)
-                            .labelsHidden()
-                            .environment(\.locale, Locale(identifier: "vi_VN"))
-                            .onChange(of: dobDate) { _ in dobChosen = true }
-                        Button {
-                            Task { await luuSinhNhat() }
-                        } label: {
-                            if dangLuuSinhNhat { ProgressView() } else { Text("Lưu") }
-                        }
-                        .buttonStyle(.bordered).tint(Theme.primary).disabled(dangLuuSinhNhat || !dobChosen)
-                        Spacer()
-                    }
-                }
-            }
-            .padding(.vertical, 4)
-        }
-    }
 
     private func statBox(_ value: String, _ label: String) -> some View {
         VStack {
@@ -408,20 +404,11 @@ struct SettingsView: View {
     private func load() async {
         async let diaChiTask = APIClient.shared.getDiaChiList()
         async let viTask = APIClient.shared.getVi()
-        async let snTask = APIClient.shared.getSinhNhat()
-        (diaChiList, vi, sinhNhat) = await (diaChiTask, viTask, snTask)
+        (diaChiList, vi) = await (diaChiTask, viTask)
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         loading = false
     }
 
-    private func formatDateVN(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: iso) ?? DateFormatter.iso8601NoTZ.date(from: iso) else { return iso }
-        let out = DateFormatter()
-        out.dateFormat = "dd/MM/yyyy"
-        out.locale = Locale(identifier: "vi_VN")
-        return out.string(from: date)
-    }
 
     private func uploadAvatar(_ data: Data) async {
         dangUploadAvatar = true
@@ -452,29 +439,22 @@ struct SettingsView: View {
         }
     }
 
-    private func luuSinhNhat() async {
-        guard dobChosen else {
-            alertMessage = ("Chưa chọn ngày", "Chọn ngày sinh trước khi lưu.")
-            return
-        }
-        dangLuuSinhNhat = true
-        defer { dangLuuSinhNhat = false }
-        let iso = ISO8601DateFormatter().string(from: dobDate)
-        let res = await APIClient.shared.capNhatNgaySinh(iso)
-        if res.success {
-            dobChosen = false
-            sinhNhat = await APIClient.shared.getSinhNhat()
+    private func themDiaChi(_ diaChi: String) async {
+        let result = await APIClient.shared.themDiaChi(diaChi)
+        if result.success {
+            diaChiList = await APIClient.shared.getDiaChiList()
         } else {
-            alertMessage = ("Lỗi", res.message ?? "")
+            alertMessage = ("Lỗi", result.message ?? "")
         }
     }
 
-    private func nhanQua() async {
-        dangNhanQua = true
-        defer { dangNhanQua = false }
-        let res = await APIClient.shared.nhanQuaSinhNhat()
-        alertMessage = (res.isSuccess ? "🎂 Chúc mừng!" : "Chưa nhận được", res.message ?? "")
-        if res.isSuccess { sinhNhat = await APIClient.shared.getSinhNhat() }
+    private func suaDiaChi(_ id: String, diaChi: String) async {
+        let result = await APIClient.shared.suaDiaChi(id, diaChi: diaChi)
+        if result.success {
+            diaChiList = await APIClient.shared.getDiaChiList()
+        } else {
+            alertMessage = ("Lỗi", result.message ?? "")
+        }
     }
 
     private func xoaDiaChi(_ id: String) async {
@@ -488,13 +468,4 @@ struct SettingsView: View {
             diaChiList = diaChiList.map { DiaChiKhachHang(id: $0.id, diaChi: $0.diaChi, isDefault: $0.id == id, lat: $0.lat, long: $0.long, coTheXoa: $0.coTheXoa) }
         }
     }
-}
-
-private extension DateFormatter {
-    static let iso8601NoTZ: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }
