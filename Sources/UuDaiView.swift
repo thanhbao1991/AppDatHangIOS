@@ -79,33 +79,29 @@ struct UuDaiView: View {
     /// Tổng Xu hiện có + lối vào Lịch sử ví — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
     /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
     private var xuBanner: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    xuIcon(28)
-                    Text(soNgan(soDuXu ?? 0)).font(.system(size: 30, weight: .bold)).foregroundColor(.white)
+        cardBox {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        xuIcon(28)
+                        Text(soNgan(soDuXu ?? 0)).font(.system(size: 30, weight: .bold)).foregroundColor(.primary)
+                    }
+                    Text("Số dư Xu hiện tại").font(.system(size: 12)).foregroundColor(Theme.textMuted)
                 }
-                Text("Số dư Xu hiện tại").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
-            }
-            Spacer()
-            Button {
-                showLichSuVi = true
-            } label: {
-                HStack(spacing: 4) {
-                    Text("Lịch sử").font(.system(size: 13, weight: .semibold))
-                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                Spacer()
+                Button {
+                    showLichSuVi = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Lịch sử").font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Theme.primaryGradient).clipShape(Capsule())
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 14).padding(.vertical, 8)
-                .background(Color.white.opacity(0.22)).clipShape(Capsule())
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.primaryGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
-        .padding(.vertical, 6)
     }
 
     /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
