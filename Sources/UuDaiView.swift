@@ -203,7 +203,6 @@ struct UuDaiView: View {
             Text("Vòng quay may mắn")
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("Mỗi ngày 1 lượt quay miễn phí — thử vận may nhận thưởng Xu!").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
