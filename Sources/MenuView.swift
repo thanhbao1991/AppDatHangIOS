@@ -137,9 +137,11 @@ struct MenuView: View {
             result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: sortedByBanChay(gomChung)))
         }
 
-        // Luôn hiện mục "Yêu thích" đầu sidebar kể cả khi chưa có món nào — rỗng thì cột phải tự
-        // hiện dòng thông báo (xem productList) thay vì ẩn hẳn mục đi.
-        result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favoriteSanPhams), at: 0)
+        // Chỉ hiện mục "Yêu thích" khi đã có ít nhất 1 món — rỗng thì ẩn hẳn, đỡ chiếm 1 mục sidebar
+        // vô nghĩa với khách chưa bấm tim món nào (feedback 2026-09-24).
+        if !favoriteSanPhams.isEmpty {
+            result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favoriteSanPhams), at: 0)
+        }
         return result
     }
 
@@ -203,16 +205,13 @@ struct MenuView: View {
                             List {
                                 ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
                                     Section {
-                                        if section.nhom.id == Self.yeuThichNhomId && section.items.isEmpty {
-                                            yeuThichEmptyState
+                                        // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
+                                        // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
+                                        // không cần nhánh rỗng riêng nữa.
+                                        ForEach(section.items) { sp in
+                                            productRow(sp)
                                                 .listRowInsets(EdgeInsets())
                                                 .listRowBackground(sectionBackground(index))
-                                        } else {
-                                            ForEach(section.items) { sp in
-                                                productRow(sp)
-                                                    .listRowInsets(EdgeInsets())
-                                                    .listRowBackground(sectionBackground(index))
-                                            }
                                         }
                                     } header: {
                                         sectionHeader(section.nhom, items: section.items)
@@ -276,22 +275,6 @@ struct MenuView: View {
                 }
             ) { picking = nil }
         }
-    }
-
-    /// Hiện khi khách chưa bấm tim món nào — giải thích cách thêm món vào mục "Yêu thích" thay vì
-    /// để trống trơn.
-    private var yeuThichEmptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "heart.text.square")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary)
-            Text("Chạm biểu tượng ♡ ở món bạn thích để lưu vào đây!")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
     }
 
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
@@ -492,8 +475,9 @@ struct MenuView: View {
         if !spResult.isSuccess && sanPhams.isEmpty {
             error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
         }
-        // Mục đầu tiên khi mở app luôn là "Yêu thích" (id cố định, luôn có mặt trong sections dù
-        // rỗng) — không nhớ nhóm khách chọn lần trước nữa.
+        // Mục đầu tiên khi mở app ưu tiên "Yêu thích" nếu có món — không nhớ nhóm khách chọn lần
+        // trước nữa. Yêu thích rỗng thì không có mặt trong sections (xem sections), dòng if ngay dưới
+        // tự rơi về section thật đầu tiên.
         if selectedNhomId.isEmpty {
             selectedNhomId = Self.yeuThichNhomId
         }
