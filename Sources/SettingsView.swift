@@ -11,9 +11,12 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
 
     @State private var diaChiList: [DiaChiKhachHang] = []
-    // Chỉ địa chỉ khách TỰ TẠO (coTheXoa=true) — ẩn địa chỉ nhân viên nhập qua Desktop khỏi card này
-    // theo yêu cầu 2026-09-23 (CheckoutView lúc đặt hàng vẫn dùng đầy đủ, không lọc).
-    private var diaChiHienThi: [DiaChiKhachHang] { diaChiList.filter(\.coTheXoa) }
+    // Hiện ĐẦY ĐỦ cả địa chỉ nhân viên nhập qua Desktop lẫn khách tự thêm (đổi lại 2026-09-24 — trước
+    // đó từng ẩn hẳn địa chỉ nhân viên ở card này, nhưng khách mới cài app lần đầu nhìn thấy trống dù
+    // quán đã có sẵn địa chỉ từ lịch sử đặt hàng, gây cảm giác thiếu sót). Nút sửa/xoá vẫn tự ẩn với
+    // địa chỉ nhân viên nhập qua `item.coTheXoa` bên dưới — khách chỉ được XEM/CHỌN mặc định, không
+    // sửa/xoá được địa chỉ không phải do mình tạo.
+    private var diaChiHienThi: [DiaChiKhachHang] { diaChiList }
     @State private var vi: KhachHangVi?
     @State private var loading = true
 
@@ -152,10 +155,9 @@ struct SettingsView: View {
         .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
     }
 
-    // Dùng diaChiHienThi (đã lọc coTheXoa=true), KHÔNG dùng diaChiList thẳng — nếu không, khách chỉ
-    // có địa chỉ nhân viên nhập (coTheXoa=false, đã ẩn khỏi card "Địa chỉ giao hàng" bên dưới) sẽ
-    // thấy header trên cùng "lộ" đúng địa chỉ đó trong khi card dưới lại báo "Chưa có địa chỉ nào" —
-    // mâu thuẫn 2 chỗ cùng 1 màn hình (phát hiện 2026-09-23 qua ảnh chụp thật).
+    // Dùng diaChiHienThi thay vì diaChiList thẳng để header trên cùng luôn khớp đúng danh sách card
+    // "Địa chỉ giao hàng" bên dưới đang hiện gì (từ 2026-09-24 cả 2 nơi đều hiện đầy đủ, không lọc
+    // riêng nữa) — tránh lặp lại mâu thuẫn 2 chỗ hiện khác nhau như trước (phát hiện 2026-09-23).
     private var diaChiMacDinhText: String {
         (diaChiHienThi.first(where: { $0.isDefault }) ?? diaChiHienThi.first)?.diaChi ?? "Chưa có địa chỉ mặc định"
     }
