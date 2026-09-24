@@ -487,6 +487,9 @@ struct VongQuayLichSuItem: Decodable, Identifiable {
     var id: String { thoiGian }
 }
 
+/// GET /dat-hang/vong-quay/mo-ta — danh sách ô thưởng (label + trọng số thật) để vẽ bánh xe quay.
+struct VongQuayMoTaItem: Decodable { let label: String; let trongSo: Int }
+
 /// GET /dat-hang/diem-danh
 struct DiemDanhInfo: Decodable {
     let ngayTiepTheo: Int

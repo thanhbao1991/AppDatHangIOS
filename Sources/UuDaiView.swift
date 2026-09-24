@@ -24,6 +24,9 @@ struct UuDaiView: View {
     @State private var soDuXu: Double?
     @State private var showLichSuVi = false
 
+    @State private var wheelItems: [VongQuayMoTaItem] = []
+    @State private var wheelRotation: Double = 0
+
     var body: some View {
         VStack(spacing: 0) {
             TitleBar(title: "Ưu đãi", icon: "gift", centerTitle: true, trailing: notificationBell)
@@ -229,17 +232,20 @@ struct UuDaiView: View {
                     .padding(.vertical, 10)
                     .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            Button {
-                Task { await quay() }
-            } label: {
-                if dangQuay { ProgressView().tint(.white) } else { Text("Quay ngay 🎲").fontWeight(.bold) }
-            }
-            .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-            .disabled(dangQuay || soLuotConLai == 0)
-            // -1 = chưa tải xong (ẩn hẳn dòng chữ, tránh nháy "0 lượt" sai trước khi API trả về).
-            if soLuotConLai >= 0 {
-                Text("Còn \(soLuotConLai) lượt")
+
+            wheelView.frame(maxWidth: .infinity, alignment: .center)
+
+            if dangQuay {
+                Text("Đang quay...")
+                    .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else if soLuotConLai == 0 {
+                Text("Còn 0 lượt — quay lại vào ngày mai nhé")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else if soLuotConLai > 0 {
+                Text("👆 Vuốt vào bánh xe để quay — còn \(soLuotConLai) lượt")
+                    .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
@@ -284,6 +290,128 @@ struct UuDaiView: View {
         }
     }
 
+    // ===== Bánh xe quay thật (thay nút bấm bằng vuốt, theo yêu cầu 2026-09-24) =====
+
+    private let wheelSize: CGFloat = 200
+
+    private let wheelPalette: [Color] = [
+        Color(red: 0.98, green: 0.62, blue: 0.15),
+        Color(red: 0.20, green: 0.60, blue: 0.86),
+        Color(red: 0.92, green: 0.35, blue: 0.45),
+        Color(red: 0.36, green: 0.72, blue: 0.44),
+        Color(red: 0.62, green: 0.44, blue: 0.86),
+        Color(red: 0.95, green: 0.78, blue: 0.20),
+    ]
+    private func wheelColor(_ idx: Int) -> Color { wheelPalette[idx % wheelPalette.count] }
+
+    /// Rút gọn Label đầy đủ (vd "+10.000đ vào ví 🏆") xuống phần "+10.000đ" để vừa trong 1 lát cắt.
+    private func wheelShortLabel(_ label: String) -> String {
+        label.split(separator: " ").first.map(String.init) ?? label
+    }
+
+    @ViewBuilder
+    private var wheelView: some View {
+        if wheelItems.isEmpty {
+            ProgressView().frame(width: wheelSize, height: wheelSize)
+        } else {
+            ZStack {
+                Canvas { context, size in
+                    let total = wheelItems.reduce(0) { $0 + $1.trongSo }
+                    guard total > 0 else { return }
+                    let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                    let radius = min(size.width, size.height) / 2 - 2
+                    var startDeg = 0.0
+                    for (idx, item) in wheelItems.enumerated() {
+                        let sweep = Double(item.trongSo) / Double(total) * 360
+                        let endDeg = startDeg + sweep
+                        var path = Path()
+                        path.move(to: center)
+                        let steps = max(2, Int(sweep / 6))
+                        for s in 0...steps {
+                            let t = startDeg + sweep * Double(s) / Double(steps)
+                            let rad = t * .pi / 180
+                            path.addLine(to: CGPoint(x: center.x + radius * sin(rad), y: center.y - radius * cos(rad)))
+                        }
+                        path.closeSubpath()
+                        context.fill(path, with: .color(wheelColor(idx)))
+                        context.stroke(path, with: .color(.white), lineWidth: 1.5)
+
+                        let mid = startDeg + sweep / 2
+                        let labelRadius = radius * 0.62
+                        let rad = mid * .pi / 180
+                        let pt = CGPoint(x: center.x + labelRadius * sin(rad), y: center.y - labelRadius * cos(rad))
+                        let resolved = context.resolve(
+                            Text(wheelShortLabel(item.label))
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                        context.draw(resolved, at: pt)
+                        startDeg = endDeg
+                    }
+                    let hubR = radius * 0.16
+                    let hubRect = CGRect(x: center.x - hubR, y: center.y - hubR, width: hubR * 2, height: hubR * 2)
+                    context.fill(Path(ellipseIn: hubRect), with: .color(.white))
+                    context.stroke(Path(ellipseIn: hubRect), with: .color(Theme.divider), lineWidth: 1)
+                }
+                .frame(width: wheelSize, height: wheelSize)
+                .rotationEffect(.degrees(wheelRotation))
+                .overlay(Circle().stroke(Theme.divider, lineWidth: 2))
+                .clipShape(Circle())
+
+                Image(systemName: "arrowtriangle.down.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(Theme.primary)
+                    .offset(y: -wheelSize / 2 - 8)
+            }
+            .frame(width: wheelSize, height: wheelSize + 16)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 24)
+                    .onEnded { value in
+                        guard !dangQuay, soLuotConLai != 0 else { return }
+                        let dist = (value.translation.width * value.translation.width
+                            + value.translation.height * value.translation.height).squareRoot()
+                        guard dist > 24 else { return }
+                        let power = min(dist / 200, 1)
+                        Task { await spin(power: power) }
+                    }
+            )
+            .opacity(dangQuay || soLuotConLai == 0 ? 0.55 : 1)
+        }
+    }
+
+    /// Xoay bánh xe sao cho lát cắt trúng (khớp Label server trả) dừng đúng dưới mũi tên — power
+    /// (0-1, từ độ mạnh cú vuốt) quyết định số vòng xoay thêm (3-7 vòng) cho cảm giác "xoay thật".
+    private func animateWheel(toLabel label: String, power: Double, completion: @escaping () -> Void) {
+        let total = wheelItems.reduce(0) { $0 + $1.trongSo }
+        guard total > 0 else { completion(); return }
+
+        var cum = 0.0
+        var centerAngle = 0.0
+        for item in wheelItems {
+            let sweep = Double(item.trongSo) / Double(total) * 360
+            if item.label == label {
+                centerAngle = cum + sweep / 2
+                break
+            }
+            cum += sweep
+        }
+
+        let turns = 3 + min(max(power, 0), 1) * 4
+        let neededMod = (360 - centerAngle).truncatingRemainder(dividingBy: 360)
+        let minTarget = wheelRotation + turns * 360
+        let currentBase = minTarget.truncatingRemainder(dividingBy: 360)
+        var diff = neededMod - currentBase
+        if diff < 0 { diff += 360 }
+        let target = minTarget + diff
+        let duration = 2.2 + power * 0.6
+
+        withAnimation(.easeOut(duration: duration)) {
+            wheelRotation = target
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: completion)
+    }
+
     /// Cùng cách parse với LichSuViView.formatUtcShort — ThoiGian là VietnamTime.Now (đã là giờ VN,
     /// Kind=Unspecified), parse thẳng không quy đổi timezone thêm lần nữa.
     private func formatVNTime(_ iso: String) -> String {
@@ -303,27 +431,35 @@ struct UuDaiView: View {
         async let lichSuKq = APIClient.shared.getVongQuayLichSu()
         async let diemDanhKq = APIClient.shared.getDiemDanhInfo()
         async let viKq = APIClient.shared.getVi()
+        async let moTaKq = APIClient.shared.getVongQuayMoTa()
         soLuotConLai = await quay?.soLuotConLai ?? -1
         lichSu = await lichSuKq ?? []
         diemDanh = await diemDanhKq
         soDuXu = await viKq?.soDu
+        wheelItems = await moTaKq ?? []
         loading = false
     }
 
-    private func quay() async {
+    /// power (0-1) = độ mạnh cú vuốt kích hoạt quay — chỉ quyết định TỐC ĐỘ/số vòng xoay hiển thị,
+    /// KHÔNG ảnh hưởng kết quả (server quyết định trước, animateWheel chỉ xoay tới đúng ô đó).
+    private func spin(power: Double) async {
+        guard !dangQuay, soLuotConLai != 0 else { return }
         dangQuay = true
         ketQuaQuay = nil
-        defer { dangQuay = false }
         let res = await APIClient.shared.quayVongQuay()
-        if res.isSuccess, let data = res.data {
-            ketQuaQuay = data.label
-            soLuotConLai = data.soLuotConLai
-            lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
-            if data.soTienThuong > 0 {
-                soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
-            }
-        } else {
+        guard res.isSuccess, let data = res.data else {
+            dangQuay = false
             alertMessage = ("Chưa quay được", res.message ?? "")
+            return
+        }
+        soLuotConLai = data.soLuotConLai
+        lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
+        if data.soTienThuong > 0 {
+            soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
+        }
+        animateWheel(toLabel: data.label, power: power) {
+            ketQuaQuay = data.label
+            dangQuay = false
         }
     }
 

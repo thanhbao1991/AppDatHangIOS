@@ -399,6 +399,12 @@ actor APIClient {
         return env.isSuccess ? env.data : nil
     }
 
+    /// Danh sách ô thưởng để vẽ bánh xe quay thật — gọi 1 lần lúc load tab, không đổi giữa các lần.
+    func getVongQuayMoTa() async -> [VongQuayMoTaItem]? {
+        let env: ApiEnvelope<[VongQuayMoTaItem]> = await decode("/dat-hang/vong-quay/mo-ta")
+        return env.isSuccess ? env.data : nil
+    }
+
     func getDiemDanhInfo() async -> DiemDanhInfo? {
         let env: ApiEnvelope<DiemDanhInfo> = await decode("/dat-hang/diem-danh")
         return env.isSuccess ? env.data : nil
