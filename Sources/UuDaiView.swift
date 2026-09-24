@@ -21,6 +21,9 @@ struct UuDaiView: View {
     @State private var diemDanh: DiemDanhInfo?
     @State private var dangDiemDanh = false
 
+    @State private var soDuXu: Double?
+    @State private var showLichSuVi = false
+
     var body: some View {
         VStack(spacing: 0) {
             TitleBar(title: "Ưu đãi", icon: "gift", centerTitle: true, trailing: notificationBell)
@@ -31,6 +34,7 @@ struct UuDaiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
+                            xuBanner
                             diemDanhCard
                             vongQuayCard
                         }
@@ -43,11 +47,62 @@ struct UuDaiView: View {
             .background(Theme.bg)
         }
         .task { await load() }
+        .navigationDestination(isPresented: $showLichSuVi) { LichSuViView() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
         } message: {
             Text(alertMessage?.message ?? "")
         }
+    }
+
+    /// Icon Xu vẽ tay bằng shape (thay vì emoji 🪙 — bị chê "xấu", render phẳng/xỉn màu tuỳ font hệ
+    /// thống) — đồng xu vàng gradient + viền đậm + chữ "Xu", giống style badge "S" của Shopee.
+    @ViewBuilder
+    private func xuIcon(_ size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(
+                    colors: [Color(red: 1, green: 0.85, blue: 0.4), Color(red: 0.93, green: 0.63, blue: 0.08)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+            Circle()
+                .strokeBorder(Color(red: 0.75, green: 0.46, blue: 0.02), lineWidth: max(1, size * 0.07))
+            Text("Xu")
+                .font(.system(size: size * 0.36, weight: .heavy))
+                .foregroundColor(Color(red: 0.5, green: 0.29, blue: 0.02))
+        }
+        .frame(width: size, height: size)
+    }
+
+    /// Tổng Xu hiện có + lối vào Lịch sử ví — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
+    /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
+    private var xuBanner: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    xuIcon(28)
+                    Text(soNgan(soDuXu ?? 0)).font(.system(size: 30, weight: .bold)).foregroundColor(.white)
+                }
+                Text("Số dư Xu hiện tại").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
+            }
+            Spacer()
+            Button {
+                showLichSuVi = true
+            } label: {
+                HStack(spacing: 4) {
+                    Text("Lịch sử").font(.system(size: 13, weight: .semibold))
+                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(Color.white.opacity(0.22)).clipShape(Capsule())
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(Theme.primaryGradient)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+        .padding(.vertical, 6)
     }
 
     /// Header thống nhất cho mọi card — icon trong khung tròn màu nhấn + tiêu đề, thay vì emoji nằm
@@ -138,9 +193,11 @@ struct UuDaiView: View {
                     Text("+\(soNgan(thuongChoDay(day, info)))")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
-                    Text(isDay7 ? "🏆" : "🪙")
-                        .font(.system(size: isDay7 ? 22 : 18))
-                        .opacity(daXongNgayNay ? 0.5 : 1)
+                    if isDay7 {
+                        Text("🏆").font(.system(size: 22))
+                    } else {
+                        xuIcon(18).opacity(daXongNgayNay ? 0.5 : 1)
+                    }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -242,9 +299,11 @@ struct UuDaiView: View {
         async let quay = APIClient.shared.getVongQuayInfo()
         async let lichSuKq = APIClient.shared.getVongQuayLichSu()
         async let diemDanhKq = APIClient.shared.getDiemDanhInfo()
+        async let viKq = APIClient.shared.getVi()
         soLuotConLai = await quay?.soLuotConLai ?? -1
         lichSu = await lichSuKq ?? []
         diemDanh = await diemDanhKq
+        soDuXu = await viKq?.soDu
         loading = false
     }
 
@@ -257,6 +316,9 @@ struct UuDaiView: View {
             ketQuaQuay = data.label
             soLuotConLai = data.soLuotConLai
             lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
+            if data.soTienThuong > 0 {
+                soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
+            }
         } else {
             alertMessage = ("Chưa quay được", res.message ?? "")
         }
@@ -268,6 +330,7 @@ struct UuDaiView: View {
         let res = await APIClient.shared.diemDanh()
         if res.isSuccess {
             diemDanh = await APIClient.shared.getDiemDanhInfo() ?? diemDanh
+            soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
         }
