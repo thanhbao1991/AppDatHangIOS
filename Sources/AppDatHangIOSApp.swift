@@ -19,6 +19,12 @@ struct AppDatHangIOSApp: App {
         // Đọc Prefs.hang (cache từ phiên trước) để lên đúng màu hạng ngay từ khung hình đầu tiên,
         // không đợi getVi() trả về mới đổi màu (xem KhachHangSession.swift).
         Theme.applyNavBarAppearance()
+
+        // .preferredColorScheme(.light) bên dưới chỉ ép SwiftUI view, KHÔNG ép được UIAlertController
+        // (.alert()) — trên máy đang bật Dark Mode hệ thống, alert vẫn tự vẽ theo dark (nền xám tối,
+        // chữ nút trắng) trong khi mọi thứ khác trong app đã sáng, tạo cảm giác "chữ nút mờ/nhạt" do
+        // lệch tông. Ép luôn ở tầng UIWindow để alert/action sheet cũng theo light, đồng bộ toàn app.
+        UIWindow.appearance().overrideUserInterfaceStyle = .light
     }
 
     var body: some Scene {
