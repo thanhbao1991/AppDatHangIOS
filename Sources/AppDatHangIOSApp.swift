@@ -25,6 +25,12 @@ struct AppDatHangIOSApp: App {
         // chữ nút trắng) trong khi mọi thứ khác trong app đã sáng, tạo cảm giác "chữ nút mờ/nhạt" do
         // lệch tông. Ép luôn ở tầng UIWindow để alert/action sheet cũng theo light, đồng bộ toàn app.
         UIWindow.appearance().overrideUserInterfaceStyle = .light
+
+        // Chữ nút "Huỷ"/"Lưu" trong .alert() vẫn mờ/nhạt dù đã ép light ở trên — UIAlertController kế
+        // thừa tintColor hệ thống (theo rank hiện tại, có màu rất tối như Kim Cương gần đen nhưng vẫn
+        // không đủ tương phản rõ như đen thuần) thay vì màu chữ mặc định của alert. Ép riêng tintColor
+        // CHỈ trong phạm vi UIAlertController về đen thuần, không ảnh hưởng tint theo hạng ở nơi khác.
+        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = .black
     }
 
     var body: some Scene {
