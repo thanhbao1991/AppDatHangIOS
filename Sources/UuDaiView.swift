@@ -122,19 +122,32 @@ struct UuDaiView: View {
                         }
                     }
 
-                    Button {
-                        Task { await lamDiemDanh() }
-                    } label: {
-                        if dangDiemDanh {
-                            ProgressView().tint(.white)
-                        } else if dd.daDiemDanhHomNay {
-                            Text("Đã điểm danh hôm nay ✓").fontWeight(.bold)
-                        } else {
-                            Text("Điểm danh nhận \(formatXu(thuongChoDay(dd.ngayTiepTheo, dd)))").fontWeight(.bold)
+                    // "Đã điểm danh" là trạng thái HOÀN THÀNH (tích cực), không phải "không dùng
+                    // được" — nếu dùng chung nút disable mờ xám như "hết lượt quay" thì trông như 2
+                    // trạng thái giống hệt nhau (bị khoá) trong khi ý nghĩa ngược nhau hẳn.
+                    if dd.daDiemDanhHomNay {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Đã điểm danh hôm nay").fontWeight(.bold)
                         }
+                        .foregroundColor(Theme.success)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Theme.success.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    } else {
+                        Button {
+                            Task { await lamDiemDanh() }
+                        } label: {
+                            if dangDiemDanh {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("Điểm danh nhận \(formatXu(thuongChoDay(dd.ngayTiepTheo, dd)))").fontWeight(.bold)
+                            }
+                        }
+                        .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
+                        .disabled(dangDiemDanh)
                     }
-                    .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-                    .disabled(dd.daDiemDanhHomNay || dangDiemDanh)
                 }
             }
         }
@@ -156,6 +169,9 @@ struct UuDaiView: View {
 
     // Style port từ card "Điểm Danh Nhận Xu" kiểu Shopee: số thưởng NẰM TRÊN icon (không phải dưới),
     // nhãn ngày nằm NGOÀI/DƯỚI khung màu (không phải trong) — ô "hôm nay" viền màu nhấn nổi bật.
+    // 7 ô LUÔN cùng 1 bố cục (số + icon) — ô đã điểm danh chỉ khác bằng badge tick nhỏ đè góc + làm
+    // mờ nội dung, tránh trước đây ô "Hôm nay đã xong" thay hẳn bằng 1 icon to trơ trọi, nhìn như 2
+    // bộ giao diện khác nhau ghép chung 1 hàng.
     @ViewBuilder
     private func diemDanhDayBox(day: Int, info: DiemDanhInfo) -> some View {
         // Ô đại diện "hôm nay" LUÔN là ngayTiepTheo — dù đã điểm danh (ngayTiepTheo = ngày vừa nhận)
@@ -164,33 +180,36 @@ struct UuDaiView: View {
         let daXong = info.daDiemDanhHomNay ? info.ngayTiepTheo : max(0, info.ngayTiepTheo - 1)
         let daXongNgayNay = day <= daXong
         let isDay7 = day == 7
-        let daNhanHomNay = isToday && info.daDiemDanhHomNay
 
         VStack(spacing: 6) {
             VStack(spacing: 4) {
-                if daNhanHomNay {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: isDay7 ? 22 : 18))
-                        .foregroundColor(Theme.primary)
+                Text("+\(soNgan(thuongChoDay(day, info)))")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
+                if isDay7 {
+                    Text("🏆").font(.system(size: 22))
                 } else {
-                    Text("+\(soNgan(thuongChoDay(day, info)))")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
-                    if isDay7 {
-                        Text("🏆").font(.system(size: 22))
-                    } else {
-                        xuIcon(18).opacity(daXongNgayNay ? 0.5 : 1)
-                    }
+                    xuIcon(18)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
+            .opacity(daXongNgayNay ? 0.45 : 1)
             .background(isDay7 ? Theme.primary : Theme.bg)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(isToday ? Theme.primary : Color.clear, lineWidth: 2)
             )
+            .overlay(alignment: .topTrailing) {
+                if daXongNgayNay {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.success)
+                        .background(Circle().fill(.white).padding(1))
+                        .offset(x: 5, y: -5)
+                }
+            }
 
             Text(isToday ? "Hôm nay" : (isDay7 ? "Ngày 7" : "N.\(day)"))
                 .font(.system(size: 10, weight: isToday ? .bold : .regular))
