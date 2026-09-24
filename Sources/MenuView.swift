@@ -450,7 +450,20 @@ struct MenuView: View {
     }
 
     private func load(silent: Bool = false) async {
-        if !silent { loading = true }
+        // Cache RAM (APIClient.catalogCache, 5 phút) mất sạch mỗi lần app bị kill — khách tắt mở lại
+        // app là coi như rỗng, phải chờ network thật xong mới hiện được gì. Lần tải đầu (sanPhams
+        // rỗng) thử hiện tạm bản cache ĐĨA cuối cùng (không hạn) ngay lập tức, tắt loading toàn màn
+        // hình luôn — network thật vẫn chạy tiếp bên dưới và ghi đè bằng dữ liệu mới khi xong.
+        if sanPhams.isEmpty, let snapshot = await APIClient.shared.getMenuDiskSnapshot() {
+            sanPhams = snapshot.sanPhams.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
+            nhoms = snapshot.nhoms
+            toppings = snapshot.toppings.filter { !$0.ngungBan }
+            banChayIds = snapshot.banChayIds
+            if selectedNhomId.isEmpty { selectedNhomId = Self.yeuThichNhomId }
+            loading = false
+        } else if !silent {
+            loading = true
+        }
         error = ""
         // getSanPhamListResult() (khác getSanPhamList() ở CheckoutView) để phân biệt được "thực đơn
         // thật sự trống" với "mất mạng/server lỗi" — trước đây getSanPhamList() nuốt hẳn lỗi thành []
@@ -462,17 +475,18 @@ struct MenuView: View {
         async let viTask = APIClient.shared.getVi()
         async let banChayTask = APIClient.shared.getBanChayIds()
         let (spResult, nhom, top, vi, banChay) = await (spTask, nhomTask, topTask, viTask, banChayTask)
-        let sp = spResult.data ?? []
-        sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
-        nhoms = nhom
-        toppings = top.filter { !$0.ngungBan }
         yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
-        banChayIds = banChay
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
-        // thất bại khi menu đã có sẵn dữ liệu cũ thì giữ nguyên danh sách đang hiện, không xoá sạch
-        // màn hình chỉ vì 1 lần mất mạng thoáng qua.
-        if !spResult.isSuccess && sanPhams.isEmpty {
+        // hoặc network thật thất bại sau khi đã hiện snapshot đĩa thì giữ NGUYÊN danh sách đang hiện,
+        // không ghi đè bằng mảng rỗng chỉ vì 1 lần mất mạng thoáng qua.
+        if spResult.isSuccess {
+            let sp = spResult.data ?? []
+            sanPhams = sp.filter { !$0.ngungBan && $0.storeFoodId != nil && !$0.khongLenStore }
+            nhoms = nhom
+            toppings = top.filter { !$0.ngungBan }
+            banChayIds = banChay
+        } else if sanPhams.isEmpty {
             error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
         }
         // Mục đầu tiên khi mở app ưu tiên "Yêu thích" nếu có món — không nhớ nhóm khách chọn lần

@@ -90,7 +90,7 @@ actor APIClient {
 
     /// Envelope chuẩn — mọi lỗi mạng/HTTP đều gói lại thành cùng shape để UI chỉ cần đọc 1 chỗ,
     /// khớp hành vi request() bên bản RN cũ (không throw ra ngoài).
-    private func decode<T: Decodable>(_ path: String, method: String = "GET", body: Data? = nil, authorized: Bool = true) async -> ApiEnvelope<T> {
+    private func decode<T: Decodable>(_ path: String, method: String = "GET", body: Data? = nil, authorized: Bool = true, onRawData: ((Data) -> Void)? = nil) async -> ApiEnvelope<T> {
         let req = makeRequest(path, method: method, body: body, authorized: authorized)
         let (data, status) = await send(req)
 
@@ -98,6 +98,7 @@ actor APIClient {
             return ApiEnvelope(isSuccess: false, message: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.", data: nil, warnings: nil)
         }
         if let data, let env = try? JSONDecoder().decode(ApiEnvelope<T>.self, from: data) {
+            onRawData?(data)
             return env
         }
         if status >= 500 {
@@ -220,7 +221,32 @@ actor APIClient {
         return (env.data, env.isSuccess ? nil : (env.message ?? "Cập nhật ảnh thất bại."))
     }
 
-    // ===== Catalog (cache 5 phút) =====
+    // ===== Catalog (cache 5 phút RAM + cache đĩa không hạn) =====
+    //
+    // Cache RAM (catalogCache, 5 phút) mất sạch mỗi lần app bị kill — khách tắt mở lại app trong
+    // ngày là coi như cache rỗng, MenuView phải chờ network xong mới hiện được gì (thấy "hơi chậm").
+    // Ghi thêm 1 bản xuống đĩa (không hết hạn, chỉ ghi đè khi có bản mới) để lúc cold-start có ngay
+    // dữ liệu CŨ hiện tạm trong lúc network thật chạy nền — xem MenuView.load().
+
+    private lazy var diskCacheDir: URL = {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("MenuCache", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
+    private func diskCacheURL(for path: String) -> URL {
+        diskCacheDir.appendingPathComponent(path.replacingOccurrences(of: "/", with: "_") + ".json")
+    }
+
+    private func loadDiskCache<T: Decodable>(_ path: String) -> ApiEnvelope<T>? {
+        guard let data = try? Data(contentsOf: diskCacheURL(for: path)) else { return nil }
+        return try? JSONDecoder().decode(ApiEnvelope<T>.self, from: data)
+    }
+
+    private func saveDiskCache(_ path: String, data: Data) {
+        try? data.write(to: diskCacheURL(for: path), options: .atomic)
+    }
 
     private func cachedDecode<T: Decodable>(_ path: String) async -> ApiEnvelope<T> {
         if let hit = catalogCache[path], Date().timeIntervalSince(hit.at) < catalogTTL,
@@ -234,7 +260,7 @@ actor APIClient {
             return env
         }
         let task = Task<Any, Never> { () -> Any in
-            let env: ApiEnvelope<T> = await self.decode(path)
+            let env: ApiEnvelope<T> = await self.decode(path, onRawData: { raw in self.saveDiskCache(path, data: raw) })
             return env
         }
         inFlightCatalog[path] = task
@@ -247,6 +273,29 @@ actor APIClient {
     }
 
     func xoaCacheCatalog() { catalogCache.removeAll() }
+
+    /// Bản cache đĩa cuối cùng (không quan tâm mới/cũ) — đọc thẳng, không gọi mạng. Dùng để hiện
+    /// menu ngay lúc app vừa mở lại (cache RAM rỗng) trong lúc network thật chạy nền, xem MenuView.load().
+    struct MenuSnapshot {
+        let sanPhams: [SanPham]
+        let nhoms: [NhomSanPham]
+        let toppings: [Topping]
+        let banChayIds: [String]
+    }
+
+    func getMenuDiskSnapshot() -> MenuSnapshot? {
+        guard let spEnv: ApiEnvelope<[SanPham]> = loadDiskCache("/dat-hang/menu/san-pham"),
+              let sp = spEnv.data, !sp.isEmpty else { return nil }
+        let nhomEnv: ApiEnvelope<[NhomSanPham]>? = loadDiskCache("/dat-hang/menu/nhom")
+        let topEnv: ApiEnvelope<[Topping]>? = loadDiskCache("/dat-hang/menu/topping")
+        let banChayEnv: ApiEnvelope<[String]>? = loadDiskCache("/dat-hang/menu/ban-chay")
+        return MenuSnapshot(
+            sanPhams: sp,
+            nhoms: nhomEnv?.data ?? [],
+            toppings: topEnv?.data ?? [],
+            banChayIds: banChayEnv?.data ?? []
+        )
+    }
 
     func getSanPhamList() async -> [SanPham] {
         let env: ApiEnvelope<[SanPham]> = await cachedDecode("/dat-hang/menu/san-pham")
