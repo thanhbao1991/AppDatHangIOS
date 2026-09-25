@@ -1,18 +1,5 @@
 import SwiftUI
 
-/// contentMargins(.top, 0, for: .scrollContent) chỉ có từ iOS 17 — bọc qua modifier riêng để gọi
-/// có điều kiện (#available) mà không phải rải if/else khắp nơi gọi nó.
-private struct ZeroTopContentMargin: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 17.0, *) {
-            content.contentMargins(.top, 0, for: .scrollContent)
-        } else {
-            content
-        }
-    }
-}
-
-
 /// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
 /// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
 /// hợp hơn Section cuộn dọc hay chip ngang khi có ~17 nhóm. Modal chọn size/topping/ghi chú →
@@ -201,15 +188,16 @@ struct MenuView: View {
                     List(searchResults) { sp in productRow(sp) }
                         .listStyle(.plain)
                 } else {
-                    // List (UITableView) .plain tự ghim (pin) header của Section khi cuộn — không
-                    // cần hack GeometryReader/preference như lần thử trước (đo minY thủ công mới là
-                    // phần KHÔNG ổn định, không phải do dùng Section). Theo dõi "đang xem nhóm nào"
-                    // vẫn qua .onAppear trên header (vòng đời thật của List, đáng tin cậy).
-                    //
-                    // QUAN TRỌNG: ScrollViewReader chỉ bọc riêng List — KHÔNG bọc chung với sidebar
-                    // (sidebar có ScrollView riêng của nó). Từng thử bọc chung 1 ScrollViewReader
-                    // quanh cả HStack (2 vùng cuộn cùng lúc trong 1 reader) và bấm sidebar không
-                    // cuộn được List — tách hẳn ra để proxy.scrollTo không còn mơ hồ vùng cuộn nào.
+                    // 2026-09-25: đổi từ List(Section) sang ScrollView+LazyVStack(pinnedViews:) —
+                    // GIỐNG HỆT cách sidebar bên trái đã làm (ScrollView thường), thay vì List
+                    // (UITableView/UICollectionView). Lý do đổi: List luôn có 1 khoảng trống lạ phía
+                    // trên header đầu tiên lúc mới mở tab (chỉ tự hết sau khi khách vuốt tay 1 cái),
+                    // gây LỆCH với sidebar (ScrollView thường, luôn bám sát đỉnh ngay từ đầu) — đã thử
+                    // rất nhiều cách vá (nhử scrollTo nhiều biến thể, can thiệp thẳng
+                    // UIScrollView.contentInset qua UIViewRepresentable) đều không ăn, có lần còn làm
+                    // tệ hơn. LazyVStack(pinnedViews: [.sectionHeaders]) cho pin header y hệt List
+                    // nhưng dựng trên ScrollView thường (không qua UITableView/UICollectionView) nên
+                    // né hẳn cả lớp bug này — cùng cơ chế sidebar đang dùng ổn định bấy lâu.
                     HStack(spacing: 0) {
                         nhomSidebar(onTap: { id in
                             isJumpingToSection = true
@@ -218,67 +206,41 @@ struct MenuView: View {
                         })
                         Divider()
                         ScrollViewReader { proxy in
-                            List {
-                                ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
-                                    Section {
-                                        // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
-                                        // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
-                                        // không cần nhánh rỗng riêng nữa.
-                                        ForEach(section.items) { sp in
-                                            productRow(sp)
-                                                .listRowInsets(EdgeInsets())
-                                                .listRowBackground(sectionBackground(index))
-                                        }
-                                    } header: {
-                                        sectionHeader(section.nhom, items: section.items)
-                                            .id(section.nhom.id)
-                                            .onAppear {
-                                                guard !isJumpingToSection else { return }
-                                                selectedNhomId = section.nhom.id
+                            ScrollView {
+                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                    ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
+                                        Section {
+                                            // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
+                                            // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
+                                            // không cần nhánh rỗng riêng nữa.
+                                            ForEach(Array(section.items.enumerated()), id: \.element.id) { itemIndex, sp in
+                                                productRow(sp)
+                                                    .background(sectionBackground(index))
+                                                // Divider tự tay — List trước đây tự vẽ đường kẻ giữa
+                                                // các hàng, ScrollView thường thì không, phải vẽ tay.
+                                                if itemIndex < section.items.count - 1 {
+                                                    Divider().padding(.leading, 16)
+                                                }
                                             }
+                                        } header: {
+                                            sectionHeader(section.nhom, items: section.items)
+                                                .id(section.nhom.id)
+                                                .onAppear {
+                                                    guard !isJumpingToSection else { return }
+                                                    selectedNhomId = section.nhom.id
+                                                }
+                                        }
                                     }
-                                    .listRowInsets(EdgeInsets())
                                 }
-                            }
-                            .listStyle(.plain)
-                            // sectionHeaderTopPadding (AppDatHangIOSApp.init) chỉ chắc ăn khi List
-                            // còn backing bằng UITableView (iOS 16) — từ iOS 17 SwiftUI có thể đổi
-                            // sang UICollectionView khiến property đó vô tác dụng, khoảng trống vẫn
-                            // còn. Thêm contentMargins(top: 0) cho iOS 17+ để phủ luôn trường hợp đó.
-                            .modifier(ZeroTopContentMargin())
-                            // contentMargins(top: 0) chỉ có hiệu lực thật sự sau khi List đã chạy
-                            // qua 1 lần layout/cuộn — lúc mới mở tab (chưa cuộn tay lần nào) khoảng
-                            // trống cũ vẫn còn thấy thoáng qua. "Nhử" 1 lần scrollTo về đúng section
-                            // đầu ngay khi có dữ liệu — không animate, khách không thấy gì nhảy —
-                            // để ép layout tính lại đúng từ đầu.
-                            //
-                            // (2026-09-25: đã thử nhiều cách khác — asyncAfter cố định, lặp lại nhiều
-                            // mốc, can thiệp thẳng UIScrollView.contentInset qua UIViewRepresentable —
-                            // đều KHÔNG cải thiện, có lần còn làm tệ hơn (lệch ngay lúc mở app thay vì
-                            // chỉ thoáng qua). Quay lại đúng bản gốc này, chấp nhận đây là quirk nhỏ
-                            // chưa giải được dứt điểm khi có thêm noiBatCarousel phía trên.
-                            .onAppear {
-                                guard let firstId = sections.first?.nhom.id else { return }
-                                DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
                             }
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
                             }
-                            // Kéo-thả refresh cũng làm List layout lại từ đầu → khoảng trống cũ tái
-                            // xuất hiện y hệt lúc mới mở tab — nhử lại đúng cách như .onAppear ở trên.
                             .refreshable {
                                 await load(silent: true)
-                                if let firstId = sections.first?.nhom.id {
-                                    DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
-                                }
                             }
-                            // (Đã thử bắt thêm DragGesture(minimumDistance: 0) để vá nốt trường hợp
-                            // kéo nhẹ chưa đủ trigger refresh — nhưng dù dùng simultaneousGesture,
-                            // nó vẫn đè mất tap vào Button từng hàng món trong List. Bỏ hẳn: ưu
-                            // tiên chức năng thêm món hoạt động đúng hơn khoảng trắng cosmetic hiếm
-                            // gặp lúc kéo dở dang.)
                         }
                     }
                 }
