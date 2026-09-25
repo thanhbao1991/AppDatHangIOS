@@ -80,6 +80,8 @@ struct SanPham: Decodable, Identifiable {
     let timKiem: String?
     let storeFoodId: Int?
     let khongLenStore: Bool
+    /// Nhân viên đánh dấu thủ công qua Desktop — hiện trong dải "Món quán đề xuất" đầu tab Thực đơn.
+    let noiBat: Bool
 }
 
 struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }

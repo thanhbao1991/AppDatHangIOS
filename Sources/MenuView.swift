@@ -81,6 +81,13 @@ struct MenuView: View {
         sanPhams.filter { yeuThichIds.contains($0.id) }
     }
 
+    /// Món nhân viên đánh dấu "Nổi bật" qua Desktop — dải quảng bá riêng NGAY ĐẦU tab Thực đơn (trên
+    /// cả sidebar nhóm/Yêu thích), khác favoriteSanPhams ở chỗ đây là quán CHỦ Ý chọn hiện, không phải
+    /// khách tự chọn.
+    private var noiBatSanPhams: [SanPham] {
+        sanPhams.filter(\.noiBat)
+    }
+
     /// Bấm tim ở productRow — cập nhật lạc quan (optimistic) trước, gọi API sau; lỗi thì tự hoàn tác.
     private func toggleYeuThich(_ item: SanPham) {
         let dangYeuThich = yeuThichIds.contains(item.id)
@@ -170,6 +177,13 @@ struct MenuView: View {
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
             // dưới navigationTitle).
             SearchBar(text: $query, placeholder: "Tìm món...", trailing: notificationBell)
+
+            // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
+            // khách mở ra đầu tiên và thấy 100% lượt vào app. Ẩn lúc đang tìm kiếm (kết quả tìm nên
+            // chiếm trọn màn, không cạnh tranh chỗ với dải quảng bá không liên quan tới từ khoá gõ).
+            if !loading && error.isEmpty && !isSearching && !noiBatSanPhams.isEmpty {
+                noiBatCarousel
+            }
 
             Group {
                 if loading {
@@ -447,6 +461,48 @@ struct MenuView: View {
             .disabled(togglingYeuThichIds.contains(item.id))
         }
         .padding(.horizontal, 16).padding(.vertical, 8)
+    }
+
+    /// Dải card cuộn ngang cho món "Nổi bật" (SanPham.noiBat, nhân viên tự bật qua Desktop) — xem
+    /// noiBatSanPhams. Card gọn hơn productRow (dọc, ảnh lớn hơn) để tách biệt rõ với List món bên
+    /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
+    private var noiBatCarousel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("🔥 Món quán đề xuất")
+                .font(.system(size: 15, weight: .bold))
+                .padding(.horizontal, 16)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(noiBatSanPhams) { item in
+                        Button { picking = item } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
+                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                        .frame(width: 120, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 120, height: 90)
+                                        .overlay(Text(nhomIcon(for: item)).font(.system(size: 32)))
+                                }
+                                Text(item.ten)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                                if let minPrice = item.bienThe.map(\.giaBan).min() {
+                                    Text(formatTien(minPrice))
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(Theme.primary)
+                                }
+                            }
+                            .frame(width: 120, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 10)
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
     }
 
     private func load(silent: Bool = false) async {
