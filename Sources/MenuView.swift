@@ -81,12 +81,13 @@ struct MenuView: View {
         sanPhams.filter { yeuThichIds.contains($0.id) }
     }
 
-    /// Món nhân viên đánh dấu "Nổi bật" qua Desktop — dải quảng bá riêng NGAY ĐẦU tab Thực đơn (trên
-    /// cả sidebar nhóm/Yêu thích), khác favoriteSanPhams ở chỗ đây là quán CHỦ Ý chọn hiện, không phải
-    /// khách tự chọn.
-    private var noiBatSanPhams: [SanPham] {
-        sanPhams.filter(\.noiBat)
-    }
+    /// Món nhân viên đánh dấu "Nổi bật" qua AppQuanLyIOS — dải quảng bá riêng NGAY ĐẦU tab Thực đơn
+    /// (trên cả sidebar nhóm/Yêu thích), khác favoriteSanPhams ở chỗ đây là quán CHỦ Ý chọn hiện,
+    /// không phải khách tự chọn. Thứ tự RANDOM mỗi lần tải (xem load()) — không giới hạn số lượng,
+    /// xáo trộn để món nào cũng có cơ hội lên đầu thay vì luôn cùng 1 thứ tự cố định (theo Ten/ThuTu).
+    /// Lưu vào @State (không phải computed property) để KHÔNG xáo lại giữa các lần render trong cùng
+    /// 1 phiên xem (vd gõ tìm kiếm, bấm tim) — chỉ xáo lại khi thật sự có dữ liệu mới từ load().
+    @State private var noiBatSanPhams: [SanPham] = []
 
     /// Bấm tim ở productRow — cập nhật lạc quan (optimistic) trước, gọi API sau; lỗi thì tự hoàn tác.
     private func toggleYeuThich(_ item: SanPham) {
@@ -515,6 +516,7 @@ struct MenuView: View {
             nhoms = snapshot.nhoms
             toppings = snapshot.toppings.filter { !$0.ngungBan }
             banChayIds = snapshot.banChayIds
+            noiBatSanPhams = sanPhams.filter(\.noiBat).shuffled()
             if selectedNhomId.isEmpty { selectedNhomId = Self.yeuThichNhomId }
             loading = false
         } else if !silent {
@@ -542,6 +544,7 @@ struct MenuView: View {
             nhoms = nhom
             toppings = top.filter { !$0.ngungBan }
             banChayIds = banChay
+            noiBatSanPhams = sanPhams.filter(\.noiBat).shuffled()
         } else if sanPhams.isEmpty {
             error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
         }
