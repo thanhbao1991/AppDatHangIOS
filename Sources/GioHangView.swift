@@ -142,7 +142,7 @@ struct GioHangView: View {
             id: item.sanPhamBienTheId, ten: item.tenSanPham, ngungBan: false, nhomSanPhamId: nil,
             hinhAnh: item.hinhAnh,
             bienThe: [SanPhamBienThe(id: item.sanPhamBienTheId, tenBienThe: item.tenBienThe, giaBan: item.giaBan, macDinh: true)],
-            timKiem: nil, storeFoodId: nil, khongLenStore: false
+            timKiem: nil, storeFoodId: nil, khongLenStore: false, noiBat: false
         )
     }
 
