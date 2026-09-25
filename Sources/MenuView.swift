@@ -290,7 +290,7 @@ struct MenuView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight)
+                .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
                 .background(.bar)
             } else {
                 Button {
@@ -326,7 +326,7 @@ struct MenuView: View {
                     .padding(.horizontal, 16)
                     // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn được
                     // tự ép full-width theo hàng như List, phải tự khai để nền phủ hết chiều ngang.
-                    .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight)
+                    .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
                     // Nền tint fill sát mép luôn (không còn card nổi thụt lề/bo góc/shadow như
                     // trước) — tint khác hẳn nền trắng của list món phía dưới là đủ để phân biệt,
                     // không cần thêm lớp viền.
