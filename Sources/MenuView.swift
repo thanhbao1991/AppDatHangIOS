@@ -188,16 +188,21 @@ struct MenuView: View {
                     List(searchResults) { sp in productRow(sp) }
                         .listStyle(.plain)
                 } else {
-                    // 2026-09-25: đổi từ List(Section) sang ScrollView+LazyVStack(pinnedViews:) —
-                    // GIỐNG HỆT cách sidebar bên trái đã làm (ScrollView thường), thay vì List
-                    // (UITableView/UICollectionView). Lý do đổi: List luôn có 1 khoảng trống lạ phía
-                    // trên header đầu tiên lúc mới mở tab (chỉ tự hết sau khi khách vuốt tay 1 cái),
-                    // gây LỆCH với sidebar (ScrollView thường, luôn bám sát đỉnh ngay từ đầu) — đã thử
-                    // rất nhiều cách vá (nhử scrollTo nhiều biến thể, can thiệp thẳng
-                    // UIScrollView.contentInset qua UIViewRepresentable) đều không ăn, có lần còn làm
-                    // tệ hơn. LazyVStack(pinnedViews: [.sectionHeaders]) cho pin header y hệt List
-                    // nhưng dựng trên ScrollView thường (không qua UITableView/UICollectionView) nên
-                    // né hẳn cả lớp bug này — cùng cơ chế sidebar đang dùng ổn định bấy lâu.
+                    // 2026-09-25: đổi từ List(Section) sang ScrollView+LazyVStack — GIỐNG HỆT cách
+                    // sidebar bên trái đã làm (ScrollView thường), thay vì List (UITableView/
+                    // UICollectionView). Lý do đổi: List luôn có 1 khoảng trống lạ phía trên header
+                    // đầu tiên lúc mới mở tab (chỉ tự hết sau khi khách vuốt tay 1 cái), gây LỆCH với
+                    // sidebar (ScrollView thường, luôn bám sát đỉnh ngay từ đầu) — đã thử rất nhiều
+                    // cách vá (nhử scrollTo nhiều biến thể, can thiệp thẳng UIScrollView.contentInset
+                    // qua UIViewRepresentable) đều không ăn, có lần còn làm tệ hơn.
+                    //
+                    // Ban đầu thử pinnedViews: [.sectionHeaders] để ghim header y hệt List, nhưng
+                    // header ghim (nổi đè lên nội dung đã cuộn qua) lộ ra thêm 1 lớp bug khác: nền
+                    // header (Theme.primaryTint chỉ đục 12%) để lộ nội dung bên dưới xuyên qua, chồng
+                    // lấn/nhoè khi header snap vào vị trí ghim — sau khi thử vá (nền đục hơn, ép chiều
+                    // cao cố định) vẫn còn thấy lỗi, BỎ HẲN ghim theo yêu cầu: header giờ cuộn bình
+                    // thường như mọi nội dung khác, không còn "dính" ở đỉnh khi cuộn qua — né toàn bộ
+                    // lớp bug này, đơn giản và ổn định hơn hẳn.
                     HStack(spacing: 0) {
                         nhomSidebar(onTap: { id in
                             isJumpingToSection = true
@@ -207,7 +212,7 @@ struct MenuView: View {
                         Divider()
                         ScrollViewReader { proxy in
                             ScrollView {
-                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                LazyVStack(spacing: 0) {
                                     ForEach(Array(sections.enumerated()), id: \.element.nhom.id) { index, section in
                                         Section {
                                             // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
@@ -291,7 +296,10 @@ struct MenuView: View {
                 }
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
-                .background(.bar)
+                // Color đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi
+                // đè lên nội dung đã cuộn qua bên dưới; nền mờ/trong suốt để lộ nội dung đó xuyên
+                // qua, gây chồng lấn/nhoè (đã thấy qua ảnh chụp thật).
+                .background(Color(.secondarySystemGroupedBackground))
             } else {
                 Button {
                     picking = items.randomElement()
