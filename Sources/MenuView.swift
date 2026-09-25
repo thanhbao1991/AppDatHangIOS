@@ -455,6 +455,12 @@ struct MenuView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Số món hiện trọn vẹn trong dải đề xuất — 3 + hé 1 phần món thứ 4 để khách biết còn cuộn được
+    /// tiếp, tránh tưởng đã hết chỉ vì vừa khít đúng 3 món tràn viền phải.
+    private static let noiBatCarouselVisibleCount: CGFloat = 3.4
+    private static let noiBatCarouselSpacing: CGFloat = 12
+    private static let noiBatCarouselPadding: CGFloat = 16
+
     /// Dải card cuộn ngang cho món "Nổi bật" (SanPham.noiBat, nhân viên tự bật qua Desktop) — xem
     /// noiBatSanPhams. Card gọn hơn productRow (dọc, ảnh lớn hơn) để tách biệt rõ với List món bên
     /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
@@ -463,35 +469,46 @@ struct MenuView: View {
             Text("🔥 Món quán đề xuất")
                 .font(.system(size: 15, weight: .bold))
                 .padding(.horizontal, 16)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(noiBatSanPhams) { item in
-                        Button { picking = item } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-                                    CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                        .frame(width: 120, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
-                                } else {
-                                    RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 120, height: 90)
-                                        .overlay(Text(nhomIcon(for: item)).font(.system(size: 32)))
+            GeometryReader { geo in
+                // 3 món trọn vẹn = 3 chiều rộng card + 2 khoảng cách giữa chúng (khoảng cách thứ 3,
+                // trước món thứ 4, KHÔNG tính vào vì món thứ 4 chỉ hé 1 phần, không cần đủ khoảng
+                // cách chuẩn trước nó để vẫn nhìn "còn tiếp").
+                let cardWidth = (geo.size.width - Self.noiBatCarouselPadding * 2 - Self.noiBatCarouselSpacing * 2)
+                    / floor(Self.noiBatCarouselVisibleCount)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Self.noiBatCarouselSpacing) {
+                        ForEach(noiBatSanPhams) { item in
+                            Button { picking = item } label: {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
+                                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                                            .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: cardWidth, height: 90)
+                                            .overlay(Text(nhomIcon(for: item)).font(.system(size: 32)))
+                                    }
+                                    Text(item.ten)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                    if let minPrice = item.bienThe.map(\.giaBan).min() {
+                                        Text(formatTien(minPrice))
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundColor(Theme.primary)
+                                    }
                                 }
-                                Text(item.ten)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                if let minPrice = item.bienThe.map(\.giaBan).min() {
-                                    Text(formatTien(minPrice))
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(Theme.primary)
-                                }
+                                .frame(width: cardWidth, alignment: .leading)
                             }
-                            .frame(width: 120, alignment: .leading)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, Self.noiBatCarouselPadding)
                 }
-                .padding(.horizontal, 16)
             }
+            // Chiều cao cố định cho GeometryReader — nó tự thân không có kích thước "tự nhiên" như
+            // VStack thường, phải khai rõ để không chiếm hết phần còn lại của màn hình (GeometryReader
+            // mặc định tham lam .frame(maxHeight: .infinity)). Khớp ảnh 90 + spacing 6 + 2 dòng chữ.
+            .frame(height: 90 + 6 + 16 + 4 + 15)
         }
         .padding(.vertical, 10)
         .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
