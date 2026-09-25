@@ -213,8 +213,16 @@ struct MenuView: View {
                                             // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
                                             // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
                                             // không cần nhánh rỗng riêng nữa.
-                                            ForEach(Array(section.items.enumerated()), id: \.element.id) { itemIndex, sp in
+                                            ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
                                                 productRow(sp)
+                                                    // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở
+                                                    // CẢ mục "Yêu thích" lẫn mục "Bạc Xỉu" thật (cùng
+                                                    // 1 sp.id). List trước đây cô lập nhận diện theo
+                                                    // Section nên không sao, LazyVStack thì gộp chung
+                                                    // 1 không gian nhận diện toàn cây — trùng id giữa
+                                                    // 2 section gây lẫn/tráo render (dòng trống). Ghép
+                                                    // thêm nhom.id để đảm bảo không trùng nhau nữa.
+                                                    .id("\(section.nhom.id)|\(sp.id)")
                                                     .background(sectionBackground(index))
                                                 // Divider tự tay — List trước đây tự vẽ đường kẻ giữa
                                                 // các hàng, ScrollView thường thì không, phải vẽ tay.
@@ -282,7 +290,7 @@ struct MenuView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 16)
-                .frame(height: Self.categoryHeaderHeight)
+                .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight)
                 .background(.bar)
             } else {
                 Button {
@@ -316,7 +324,9 @@ struct MenuView: View {
                             .clipShape(Capsule())
                     }
                     .padding(.horizontal, 16)
-                    .frame(height: Self.categoryHeaderHeight)
+                    // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn được
+                    // tự ép full-width theo hàng như List, phải tự khai để nền phủ hết chiều ngang.
+                    .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight)
                     // Nền tint fill sát mép luôn (không còn card nổi thụt lề/bo góc/shadow như
                     // trước) — tint khác hẳn nền trắng của list món phía dưới là đủ để phân biệt,
                     // không cần thêm lớp viền.
@@ -431,6 +441,9 @@ struct MenuView: View {
             .disabled(togglingYeuThichIds.contains(item.id))
         }
         .padding(.horizontal, 16).padding(.vertical, 8)
+        // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
+        // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Dải card cuộn ngang cho món "Nổi bật" (SanPham.noiBat, nhân viên tự bật qua Desktop) — xem
