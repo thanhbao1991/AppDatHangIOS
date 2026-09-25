@@ -250,9 +250,18 @@ struct MenuView: View {
                             // trống cũ vẫn còn thấy thoáng qua. "Nhử" 1 lần scrollTo về đúng section
                             // đầu ngay khi có dữ liệu — không animate, khách không thấy gì nhảy —
                             // để ép layout tính lại đúng từ đầu.
+                            //
+                            // Từ lúc thêm noiBatCarousel phía trên (đổi chiều cao VStack cha ngay lúc
+                            // List xuất hiện), 1 lần nhử duy nhất ở .async không còn đủ — UITableView
+                            // tính content inset trước khi layout carousel kịp ổn định, vẫn còn thấy
+                            // khoảng trống thoáng qua tới khi khách tự vuốt 1 cái. Nhử THÊM 1 lần nữa
+                            // sau 1 khung hình (asyncAfter ngắn) để chắc ăn layout đã ổn định.
                             .onAppear {
                                 guard let firstId = sections.first?.nhom.id else { return }
                                 DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                    proxy.scrollTo(firstId, anchor: .top)
+                                }
                             }
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
