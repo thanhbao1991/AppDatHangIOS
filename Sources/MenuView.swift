@@ -252,14 +252,18 @@ struct MenuView: View {
                             // để ép layout tính lại đúng từ đầu.
                             //
                             // Từ lúc thêm noiBatCarousel phía trên (đổi chiều cao VStack cha ngay lúc
-                            // List xuất hiện), 1 lần nhử duy nhất ở .async không còn đủ — UITableView
-                            // tính content inset trước khi layout carousel kịp ổn định, vẫn còn thấy
-                            // khoảng trống thoáng qua tới khi khách tự vuốt 1 cái. Nhử THÊM 1 lần nữa
-                            // sau 1 khung hình (asyncAfter ngắn) để chắc ăn layout đã ổn định.
-                            .onAppear {
+                            // List xuất hiện), 1 lần nhử duy nhất (kể cả thêm 1 mốc asyncAfter cố định
+                            // 0.15s — đã thử, vẫn còn thấy khoảng trống) không còn đủ — UITableView
+                            // tính content inset trước khi layout carousel kịp ổn định, không đoán
+                            // trước được chính xác cần đợi bao lâu. Nhử LẶP LẠI nhiều mốc trong ~0.6s
+                            // đầu thay vì 1 mốc cố định — scrollTo tới đúng vị trí đã ở đó là no-op vô
+                            // hại, gọi thừa vài lần không gây nhấp nháy vì không bọc withAnimation.
+                            .task {
                                 guard let firstId = sections.first?.nhom.id else { return }
-                                DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                for delayMs in [0, 50, 100, 200, 350, 550] {
+                                    if delayMs > 0 {
+                                        try? await Task.sleep(nanoseconds: UInt64(delayMs) * 1_000_000)
+                                    }
                                     proxy.scrollTo(firstId, anchor: .top)
                                 }
                             }
