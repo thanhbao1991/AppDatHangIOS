@@ -354,29 +354,29 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(item.isDefault)
-                        Text(item.diaChi)
-                        Spacer()
-                        if item.coTheXoa {
-                            // 2 nút icon nhỏ đứng sát nhau dễ bấm nhầm — nới padding quanh mỗi icon
-                            // (vùng chạm thật lớn hơn hẳn kích thước glyph, gần chuẩn 44pt của Apple
-                            // HIG mà không đội hẳn chiều cao dòng lên 44) và giãn spacing riêng giữa
-                            // 2 nút xa hơn spacing chung của HStack ngoài.
-                            HStack(spacing: 12) {
+                        // Bấm thẳng vào chữ địa chỉ để sửa (thay cho icon bút riêng) — chỉ khi khách
+                        // tự tạo được (coTheXoa), địa chỉ nhân viên nhập chỉ xem/chọn mặc định.
+                        Group {
+                            if item.coTheXoa {
                                 Button {
                                     diaChiEditingId = item.id
                                     diaChiFormText = item.diaChi
                                     showDiaChiForm = true
                                 } label: {
-                                    Image(systemName: "pencil").foregroundColor(Theme.textFaint)
-                                        .padding(10).contentShape(Rectangle())
+                                    Text(item.diaChi).foregroundColor(.primary)
                                 }
                                 .buttonStyle(.plain)
-                                Button { diaChiChoXoa = item } label: {
-                                    Image(systemName: "xmark").foregroundColor(Theme.danger)
-                                        .padding(10).contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
+                            } else {
+                                Text(item.diaChi)
                             }
+                        }
+                        Spacer()
+                        if item.coTheXoa {
+                            Button { diaChiChoXoa = item } label: {
+                                Image(systemName: "xmark").foregroundColor(Theme.danger)
+                                    .padding(10).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                             .padding(.trailing, -10)
                         }
                     }
