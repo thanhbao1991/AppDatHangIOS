@@ -172,6 +172,7 @@ struct MenuView: View {
             // chiếm trọn màn, không cạnh tranh chỗ với dải quảng bá không liên quan tới từ khoá gõ).
             if !loading && error.isEmpty && !isSearching && !noiBatSanPhams.isEmpty {
                 noiBatCarousel
+                Divider()
             }
 
             Group {
