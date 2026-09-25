@@ -12,63 +12,6 @@ private struct ZeroTopContentMargin: ViewModifier {
     }
 }
 
-/// View trong suốt, kích thước 0 — chèn qua `.background()` của List. QUAN TRỌNG: `.background()`
-/// đặt view này làm ANH EM (sibling) của nội dung List trong cùng 1 cha chung, KHÔNG phải con của
-/// List — nên phải đi LÊN 1 cấp lấy cha chung đó rồi quét XUỐNG toàn bộ cây con mới chạm được đúng
-/// UIScrollView (UITableView/UICollectionView) thật bên dưới List (đi ngược lên `superview` từ chính
-/// view này sẽ không bao giờ gặp nó — đã thử sai kiểu này 1 lần, xem git blame). Ép
-/// contentInset.top = 0 bằng tay vì contentMargins(top:0)/sectionHeaderTopPadding=0 (khai ở
-/// AppDatHangIOSApp.init) chỉ có hiệu lực SAU khi UIScrollView đã tính contentInset ít nhất 1 lần —
-/// lúc List vừa xuất hiện (đặc biệt từ khi có noiBatCarousel đổi chiều cao view cha ngay lúc đó) vẫn
-/// còn 1 khoảng trống phía trên do contentInset.top tính SAI ngay từ đầu, và "nhử" bằng
-/// ScrollViewReader.scrollTo() không ép được UIKit tính lại (chỉ cuộn theo đúng inset sai đó, đã thử
-/// nhiều biến thể — không ăn).
-private struct ScrollInsetFixer: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: .zero)
-        view.isHidden = true
-        view.isUserInteractionEnabled = false
-        // Thử lại vài lần trong ~0.5s đầu — lúc makeUIView chạy, view có thể CHƯA kịp gắn vào cha
-        // chung thật (superview toàn nil), hoặc UITableView bên trong chưa kịp layout xong.
-        for delayMs in [0, 16, 50, 120, 250, 500] {
-            DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delayMs)) { [weak view] in
-                guard let view else { return }
-                Self.fixInset(near: view)
-            }
-        }
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {
-        DispatchQueue.main.async { Self.fixInset(near: uiView) }
-    }
-
-    private static func fixInset(near view: UIView) {
-        // Leo dần lên tổ tiên (không chỉ đúng 1 cấp) — số lớp bọc trung gian của `.background()` có
-        // thể khác nhau giữa các phiên bản SwiftUI/iOS, cứ leo tới khi tìm ra hoặc hết tổ tiên.
-        var ancestor: UIView? = view.superview
-        while let container = ancestor {
-            if let scrollView = findScrollView(in: container) {
-                if scrollView.contentInset.top != 0 {
-                    scrollView.contentInset.top = 0
-                }
-                if scrollView.contentOffset.y < 0 {
-                    scrollView.contentOffset.y = 0
-                }
-                return
-            }
-            ancestor = container.superview
-        }
-    }
-
-    private static func findScrollView(in view: UIView) -> UIScrollView? {
-        if let scrollView = view as? UIScrollView { return scrollView }
-        for sub in view.subviews {
-            if let found = findScrollView(in: sub) { return found }
-        }
-        return nil
-    }
-}
 
 /// Port từ MenuScreen.tsx (bản RN cũ), sau đó đổi sang layout sidebar 2 cột (cột trái = nhóm,
 /// cột phải = món) theo chuẩn app trà sữa/cà phê Việt Nam (Phúc Long, ToCoToco, Gong Cha...) —
@@ -303,16 +246,21 @@ struct MenuView: View {
                             // sang UICollectionView khiến property đó vô tác dụng, khoảng trống vẫn
                             // còn. Thêm contentMargins(top: 0) cho iOS 17+ để phủ luôn trường hợp đó.
                             .modifier(ZeroTopContentMargin())
-                            // contentMargins(top: 0) chỉ có hiệu lực thật sự sau khi List đã chạy qua
-                            // 1 lần layout/cuộn — lúc mới mở tab (chưa cuộn tay lần nào) khoảng trống
-                            // cũ vẫn còn thấy thoáng qua. Đã thử "nhử" bằng scrollTo (1 lần, rồi thêm
-                            // asyncAfter cố định, rồi lặp lại nhiều mốc trong .task) — KHÔNG ăn: nghi
-                            // ngờ contentInset.top của UIScrollView bên dưới bị tính sai NGAY TỪ ĐẦU
-                            // (trước khi có gì để "cuộn tới"), nên scrollTo dù gọi bao nhiêu lần cũng
-                            // chỉ cuộn đúng theo inset SAI đó, không ép được UIKit tính lại. Sửa thẳng
-                            // bằng ScrollInsetFixer (UIViewRepresentable, xem cuối file) — chủ động dò
-                            // UIScrollView tổ tiên và ép contentInset.top = 0 mỗi lần view cập nhật.
-                            .background(ScrollInsetFixer())
+                            // contentMargins(top: 0) chỉ có hiệu lực thật sự sau khi List đã chạy
+                            // qua 1 lần layout/cuộn — lúc mới mở tab (chưa cuộn tay lần nào) khoảng
+                            // trống cũ vẫn còn thấy thoáng qua. "Nhử" 1 lần scrollTo về đúng section
+                            // đầu ngay khi có dữ liệu — không animate, khách không thấy gì nhảy —
+                            // để ép layout tính lại đúng từ đầu.
+                            //
+                            // (2026-09-25: đã thử nhiều cách khác — asyncAfter cố định, lặp lại nhiều
+                            // mốc, can thiệp thẳng UIScrollView.contentInset qua UIViewRepresentable —
+                            // đều KHÔNG cải thiện, có lần còn làm tệ hơn (lệch ngay lúc mở app thay vì
+                            // chỉ thoáng qua). Quay lại đúng bản gốc này, chấp nhận đây là quirk nhỏ
+                            // chưa giải được dứt điểm khi có thêm noiBatCarousel phía trên.
+                            .onAppear {
+                                guard let firstId = sections.first?.nhom.id else { return }
+                                DispatchQueue.main.async { proxy.scrollTo(firstId, anchor: .top) }
+                            }
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
