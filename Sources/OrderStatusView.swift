@@ -210,7 +210,10 @@ struct OrderStatusView: View {
             }
             actionRow(item)
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        // KHÔNG thêm .padding(.horizontal) riêng — List đã tự có inset ngang mặc định, cộng thêm nữa
+        // sẽ bị double padding khiến hàng đơn hẹp hơn hẳn Lịch sử Xu (LichSuViView không thêm padding
+        // ngang cho hàng, chỉ dựa đúng 1 lớp inset mặc định của List).
+        .padding(.vertical, 10)
     }
 
     /// Hàng dưới cùng mỗi card — góc trái hiện KẾT QUẢ đánh giá (đơn đã đánh giá rồi, không cần nút
