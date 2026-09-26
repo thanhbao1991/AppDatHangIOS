@@ -161,9 +161,9 @@ struct OrderStatusView: View {
         .buttonStyle(.plain)
     }
 
-    /// Card "Đơn của tôi" 4 icon kiểu Long Châu (ảnh mẫu người dùng gửi 2026-09-23) — mục 4 đổi thành
-    /// "Đã huỷ" thay vì "Đổi/Trả" (app không có tính năng đổi/trả). Badge đỏ số lượng chỉ hiện ở
-    /// "Đang xử lý" (đơn cần khách theo dõi/hành động), giống cách Long Châu chỉ badge mục đầu tiên.
+    /// 2026-09-26: đổi từ 4 icon kiểu Long Châu sang tab chữ + gạch chân — khớp đúng cấu trúc tabBar
+    /// của LichSuViView (Lịch sử Xu), theo phản hồi "filter chưa giống lịch sử xu, bỏ icon chuyển
+    /// sang flat". Badge đỏ số lượng "Đang xử lý" giữ nguyên, chuyển thành hình tròn nhỏ cạnh chữ.
     private var nhomFilterCard: some View {
         HStack(spacing: 0) {
             ForEach(NhomDonHang.allCases) { nhom in
@@ -171,7 +171,7 @@ struct OrderStatusView: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(Color(.systemBackground))
     }
 
     private func nhomButton(_ nhom: NhomDonHang) -> some View {
@@ -180,24 +180,22 @@ struct OrderStatusView: View {
         return Button {
             filter = selected ? nil : nhom
         } label: {
-            VStack(spacing: 6) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: nhom.icon)
-                        .font(.system(size: 22))
+            VStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    Text(nhom.nhan)
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(selected ? Theme.primary : Theme.textMuted)
-                        .frame(width: 32, height: 32)
                     if nhom == .dangXuLy && count > 0 {
                         Text("\(count)")
                             .font(.system(size: 10, weight: .bold)).foregroundColor(.white)
                             .padding(4).background(Theme.danger).clipShape(Circle())
-                            .offset(x: 8, y: -6)
                     }
                 }
-                Text(nhom.nhan)
-                    .font(.system(size: 12, weight: selected ? .bold : .regular))
-                    .foregroundColor(selected ? Theme.primary : Theme.textMuted)
-                    .multilineTextAlignment(.center)
+                Rectangle()
+                    .fill(selected ? Theme.primary : Color.clear)
+                    .frame(height: 2)
             }
+            .padding(.top, 12)
         }
         .buttonStyle(.plain)
     }

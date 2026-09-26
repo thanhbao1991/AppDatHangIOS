@@ -322,15 +322,6 @@ enum NhomDonHang: String, CaseIterable, Identifiable {
         case .daHuy: return "Đã huỷ"
         }
     }
-
-    var icon: String {
-        switch self {
-        case .dangXuLy: return "tray.full.fill"
-        case .dangGiao: return "shippingbox.fill"
-        case .daGiao: return "checkmark.seal.fill"
-        case .daHuy: return "xmark.bin.fill"
-        }
-    }
 }
 
 struct DonHangKhach: Decodable, Identifiable, Hashable {
