@@ -43,9 +43,6 @@ struct OrderStatusView: View {
                         nhomFilterCard
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
-                        Divider()
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
                         if filteredOrders.isEmpty {
                             Text("Không có đơn nào ở mục này.")
                                 .font(.system(size: 13)).foregroundColor(Theme.textFaint)
@@ -169,11 +166,18 @@ struct OrderStatusView: View {
     /// của LichSuViView (Lịch sử Xu), theo phản hồi "filter chưa giống lịch sử xu, bỏ icon chuyển
     /// sang flat". Badge đỏ số lượng "Đang xử lý" giữ nguyên, chuyển thành hình tròn nhỏ cạnh chữ.
     private var nhomFilterCard: some View {
-        HStack(spacing: 0) {
-            ForEach(NhomDonHang.allCases) { nhom in
-                nhomButton(nhom)
-                    .frame(maxWidth: .infinity)
+        // Divider gắn NGAY TRONG view này (không tách thành 1 row riêng của List) — List tự thêm
+        // khoảng đệm quanh mỗi row kể cả đã .listRowInsets(EdgeInsets()), tách riêng Divider ra thành
+        // row khác sẽ bị đệm khoảng trống rời hẳn khỏi gạch chân tab, nhìn như 2 đường kẻ tách biệt
+        // thay vì 1 khối liền (đã thấy qua ảnh chụp thật).
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(NhomDonHang.allCases) { nhom in
+                    nhomButton(nhom)
+                        .frame(maxWidth: .infinity)
+                }
             }
+            Divider()
         }
         .background(Color(.systemBackground))
     }
