@@ -82,7 +82,10 @@ struct OrderStatusView: View {
     private func orderCardContent(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                Text(phanLoaiLine(item)).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted).lineLimit(2)
+                // ngayGio là ISO thô server trả (vd "2026-09-17T19:12:03.8821513") — dùng lại
+                // formatThongBaoTime (ThongBaoView.swift) cho gọn kiểu "Hôm nay, HH:mm" thay vì
+                // lộ hẳn timestamp kỹ thuật ra UI khách hàng.
+                Text(formatThongBaoTime(item.ngayGio)).font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
                 Spacer()
                 Text(item.trangThai.nhan)
                     .font(.system(size: 12, weight: .semibold))
@@ -96,10 +99,7 @@ struct OrderStatusView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.primary)
                         .lineLimit(2)
-                    // ngayGio là ISO thô server trả (vd "2026-09-17T19:12:03.8821513") — dùng lại
-                    // formatThongBaoTime (ThongBaoView.swift) cho gọn kiểu "Hôm nay, HH:mm" thay vì
-                    // lộ hẳn timestamp kỹ thuật ra UI khách hàng.
-                    Text(formatThongBaoTime(item.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Text(phanLoaiLine(item)).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
                 }
                 Spacer(minLength: 0)
             }
