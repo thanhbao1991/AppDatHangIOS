@@ -220,13 +220,19 @@ struct OrderStatusView: View {
         }
     }
 
+    /// minWidth cố định — "Đặt lại" (ngắn) và "⭐ Đánh giá"/"💳 Thanh toán" (dài hơn) trước đây mỗi
+    /// nút tự co theo chữ, rộng khác hẳn nhau nhìn lệch cân; ép cùng 1 chiều rộng tối thiểu cho đều.
+    private static let actionButtonMinWidth: CGFloat = 96
+
     private func actionButton(_ label: String, filled: Bool = false, loading: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             if loading {
                 ProgressView().scaleEffect(0.7).frame(height: 14)
+                    .frame(minWidth: Self.actionButtonMinWidth)
                     .padding(.horizontal, 14).padding(.vertical, 6)
             } else {
                 Text(label).font(.system(size: 12, weight: .semibold))
+                    .frame(minWidth: Self.actionButtonMinWidth)
                     .padding(.horizontal, 10).padding(.vertical, 6)
             }
         }
