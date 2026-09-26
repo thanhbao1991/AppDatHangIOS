@@ -519,11 +519,18 @@ struct MenuView: View {
     /// được chọn tay vừa đang là top bán chạy (lấy tiếp món bán chạy kế tiếp cho đủ 10). Nhân viên có
     /// thể đã đánh dấu NHIỀU hơn 5 món "Nổi bật" (không giới hạn số lượng ở AppQuanLyIOS) — CHỈ hiện
     /// tối đa 5 trong dải này, không phải giới hạn số món được phép đánh dấu.
+    ///
+    /// Phần TỰ ĐỘNG lọc thêm giá tối thiểu 25.000đ (2026-09-26, phát hiện qua ảnh chụp thật: Bò Húc/
+    /// Cà Phê Đen Đá 20k lọt top vì bán số lượng lớn nhưng giá trị thấp — không đáng "đề xuất" quảng
+    /// bá). Phần chọn tay KHÔNG áp ngưỡng này — nhân viên chủ ý chọn thì tôn trọng, dù giá thấp.
+    private static let deXuatTuDongGiaToiThieu: Double = 25_000
+
     private static func tinhDeXuat(sanPhams: [SanPham], banChayIds: [String]) -> [SanPham] {
         let chonTay = Array(sanPhams.filter(\.noiBat).prefix(5))
         let idsChonTay = Set(chonTay.map(\.id))
         let banChay = banChayIds
             .compactMap { id in sanPhams.first { $0.id == id && !idsChonTay.contains($0.id) } }
+            .filter { ($0.bienThe.map(\.giaBan).min() ?? 0) >= deXuatTuDongGiaToiThieu }
             .prefix(max(0, 10 - chonTay.count))
         return (chonTay + banChay).shuffled()
     }
