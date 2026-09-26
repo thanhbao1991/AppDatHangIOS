@@ -25,10 +25,21 @@ struct GioHangView: View {
                 Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
+                // 2026-09-26: đổi sang dạng PHẲNG (List(.plain) + đường kẻ mặc định) giống Đơn hàng/
+                // Lịch sử Xu/Voucher — bỏ cardBox/cardRow/cardListBackground (Theme.swift) riêng cho
+                // màn này, các tab khác vẫn dùng nguyên style card chung đó.
                 List {
-                    cardRow(topExtra: 6) { cardBox { cartCardContent } }
+                    HStack {
+                        Text("Hoá đơn").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                        Spacer()
+                        qtyCountBadge
+                    }
+                    .listRowSeparator(.hidden)
+                    ForEach(cart.items) { item in
+                        itemRow(item)
+                    }
                 }
-                .cardListBackground()
+                .listStyle(.plain)
                 bottomBar
             }
         }
@@ -52,21 +63,6 @@ struct GioHangView: View {
                     }
                 }
             ) { editingItem = nil }
-        }
-    }
-
-    private var cartCardContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Hoá đơn").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                Spacer()
-                qtyCountBadge
-            }
-            Divider()
-            ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { Divider() }
-                itemRow(item)
-            }
         }
     }
 
@@ -210,5 +206,6 @@ struct GioHangView: View {
         // lỗi/chưa tải" mỗi khi vừa chuyển từ tab Thực đơn sang lúc mạng chậm.
         .contentShape(Rectangle())
         .onTapGesture { openEdit(item) }
+        .padding(.vertical, 6)
     }
 }
