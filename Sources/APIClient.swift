@@ -485,12 +485,6 @@ actor APIClient {
         return env.isSuccess ? env.data : nil
     }
 
-    /// 20 lần quay gần nhất (kể cả không trúng) — hiển thị minh bạch trong tab Ưu đãi.
-    func getVongQuayLichSu() async -> [VongQuayLichSuItem]? {
-        let env: ApiEnvelope<[VongQuayLichSuItem]> = await decode("/dat-hang/vong-quay/lich-su")
-        return env.isSuccess ? env.data : nil
-    }
-
     /// Danh sách ô thưởng để vẽ bánh xe quay thật — gọi 1 lần lúc load tab, không đổi giữa các lần.
     func getVongQuayMoTa() async -> [VongQuayMoTaItem]? {
         let env: ApiEnvelope<[VongQuayMoTaItem]> = await decode("/dat-hang/vong-quay/mo-ta")

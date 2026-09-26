@@ -15,8 +15,6 @@ struct UuDaiView: View {
     // từ VongQuayResult.soLuotConLai (server trả kèm), không cần gọi thêm request.
     @State private var soLuotConLai = -1
     @State private var alertMessage: (title: String, message: String)?
-    @State private var lichSu: [VongQuayLichSuItem] = []
-    @State private var hienLichSu = false
 
     @State private var diemDanh: DiemDanhInfo?
     @State private var dangDiemDanh = false
@@ -245,44 +243,6 @@ struct UuDaiView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
-            if !lichSu.isEmpty {
-                Divider().padding(.top, 4)
-                Button {
-                    withAnimation { hienLichSu.toggle() }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("Lịch sử mở quà").font(.system(size: 13, weight: .medium))
-                        Image(systemName: hienLichSu ? "chevron.up" : "chevron.down").font(.system(size: 11))
-                    }
-                    .foregroundColor(Theme.textMuted)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                }
-                .padding(.top, 4)
-
-                // Minh bạch — khách hay nghi ngờ vòng quay "giả", liệt kê CẢ lần không trúng mới
-                // chứng minh được random thật, không chỉ khoe các lần trúng.
-                if hienLichSu {
-                    VStack(spacing: 0) {
-                        ForEach(Array(lichSu.enumerated()), id: \.element.id) { index, item in
-                            if index > 0 {
-                                Divider()
-                            }
-                            HStack(spacing: 10) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.label).font(.system(size: 13, weight: .medium))
-                                    Text(formatVNTime(item.thoiGian)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                                }
-                                Spacer()
-                                if item.trung {
-                                    Text("+" + formatXu(item.thuong))
-                                        .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.success)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -331,27 +291,11 @@ struct UuDaiView: View {
         }
     }
 
-    /// Cùng cách parse với LichSuViView.formatUtcShort — ThoiGian là VietnamTime.Now (đã là giờ VN,
-    /// Kind=Unspecified), parse thẳng không quy đổi timezone thêm lần nữa.
-    private func formatVNTime(_ iso: String) -> String {
-        let inF = DateFormatter()
-        inF.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        inF.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
-        inF.locale = Locale(identifier: "en_US_POSIX")
-        guard let date = inF.date(from: String(iso.prefix(19))) else { return iso }
-        let out = DateFormatter()
-        out.dateFormat = "HH:mm dd/MM/yyyy"
-        out.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
-        return out.string(from: date)
-    }
-
     private func load() async {
         async let quay = APIClient.shared.getVongQuayInfo()
-        async let lichSuKq = APIClient.shared.getVongQuayLichSu()
         async let diemDanhKq = APIClient.shared.getDiemDanhInfo()
         async let viKq = APIClient.shared.getVi()
         soLuotConLai = await quay?.soLuotConLai ?? -1
-        lichSu = await lichSuKq ?? []
         diemDanh = await diemDanhKq
         soDuXu = await viKq?.soDu
         loading = false
@@ -368,7 +312,6 @@ struct UuDaiView: View {
             return
         }
         soLuotConLai = data.soLuotConLai
-        lichSu = await APIClient.shared.getVongQuayLichSu() ?? lichSu
         if data.soTienThuong > 0 {
             soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
         }

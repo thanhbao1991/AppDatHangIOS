@@ -14,26 +14,31 @@ struct LichSuViView: View {
             } else if items.isEmpty {
                 Text("Chưa có giao dịch nào.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
+                // Layout theo mẫu "Lịch sử Xu" Shopee — icon tròn lớn bên trái, tiêu đề/mô tả/giờ xếp
+                // dọc, số tiền màu bên phải (không kèm số dư phụ, giống bản gốc).
                 List(items) { item in
                     HStack(spacing: 12) {
-                        Image(systemName: item.soTienThayDoi >= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
-                            .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
-                            .font(.system(size: 22))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.tenLoai).font(.system(size: 14, weight: .bold))
+                        ZStack {
+                            Circle()
+                                .fill((item.soTienThayDoi >= 0 ? Theme.success : Theme.danger).opacity(0.12))
+                            Image(systemName: item.soTienThayDoi >= 0 ? "arrow.down" : "arrow.up")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
+                        }
+                        .frame(width: 44, height: 44)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.tenLoai).font(.system(size: 15, weight: .semibold))
                             if let ghiChu = item.ghiChu, !ghiChu.isEmpty {
-                                Text(ghiChu).font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                                Text(ghiChu).font(.system(size: 13)).foregroundColor(Theme.textMuted)
                             }
-                            Text(formatUtcShort(item.thoiGian)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                            Text(formatUtcShort(item.thoiGian)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
                         }
                         Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text((item.soTienThayDoi >= 0 ? "+" : "") + formatXu(item.soTienThayDoi))
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
-                            Text("Số dư: \(formatXu(item.soDuSau))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                        }
+                        Text((item.soTienThayDoi >= 0 ? "+" : "") + formatXu(item.soTienThayDoi))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
                     }
+                    .padding(.vertical, 4)
                 }
                 .refreshable { await load() }
             }
