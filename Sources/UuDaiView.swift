@@ -56,22 +56,15 @@ struct UuDaiView: View {
         }
     }
 
-    /// Icon Xu vẽ tay bằng shape (thay vì emoji 🪙 — bị chê "xấu", render phẳng/xỉn màu tuỳ font hệ
-    /// thống) — đồng xu vàng gradient + viền đậm + chữ "Xu", giống style badge "S" của Shopee.
+    /// Icon Xu — ảnh đồng xu vàng thật (Assets.xcassets/XuIcon, khách cung cấp 2026-09-26), thay cho
+    /// bản vẽ tay bằng shape trước đó (emoji 🪙 gốc trước nữa từng bị chê "xấu", render phẳng/xỉn
+    /// màu tuỳ font hệ thống).
     @ViewBuilder
     private func xuIcon(_ size: CGFloat) -> some View {
-        ZStack {
-            Circle()
-                .fill(LinearGradient(
-                    colors: [Color(red: 1, green: 0.85, blue: 0.4), Color(red: 0.93, green: 0.63, blue: 0.08)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing))
-            Circle()
-                .strokeBorder(Color(red: 0.75, green: 0.46, blue: 0.02), lineWidth: max(1, size * 0.07))
-            Text("Xu")
-                .font(.system(size: size * 0.36, weight: .heavy))
-                .foregroundColor(Color(red: 0.5, green: 0.29, blue: 0.02))
-        }
-        .frame(width: size, height: size)
+        Image("XuIcon")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
     }
 
     /// Tổng Xu hiện có + lối vào Lịch sử ví — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
