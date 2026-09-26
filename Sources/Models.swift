@@ -175,6 +175,9 @@ struct VoucherCuaToi: Decodable, Identifiable {
     // mà hỏng 1 field là hỏng CẢ struct -> mất sạch danh sách voucher. Mọi field ngày khác trong file
     // này cũng là String vì lý do đó.
     var ngayBatDau: String?
+    /// Giải thích ngắn cần làm gì để mở khoá — chỉ có giá trị ở danh sách "Sắp có"
+    /// (APIClient.getVoucherSapCo), nil với voucher đã liên quan tới khách (getVoucherCuaToi).
+    var lyDoChuaKhaDung: String?
 
     /// "Từ 23/09" — nhãn cho voucher chưa tới ngày, nil với voucher dùng được ngay.
     var nhanSapDienRa: String? {

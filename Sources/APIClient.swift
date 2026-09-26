@@ -351,6 +351,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Voucher hệ thống khách CHƯA đủ điều kiện dùng — tab "Sắp có" ở VoucherCuaToiView.
+    func getVoucherSapCo() async -> [VoucherCuaToi] {
+        let env: ApiEnvelope<[VoucherCuaToi]> = await decode("/dat-hang/voucher/sap-co")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     /// SanPhamId khách ĐÃ TỪNG đặt (mọi kênh bán) — CheckoutView dùng để tự kiểm tra voucher
     /// MonMoiTraiNghiem (Voucher.chiApDungKhiCoMonMoi) trước khi cho chọn.
     func getSanPhamDaTungDat() async -> [String] {
