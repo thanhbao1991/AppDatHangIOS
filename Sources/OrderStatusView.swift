@@ -14,13 +14,14 @@ struct OrderStatusView: View {
     @State private var loading = true
     @State private var pollTask: Task<Void, Never>?
     @State private var alertMessage: (title: String, message: String)?
-    // Lọc nhanh theo nhóm kiểu Long Châu (2026-09-23) — nil = xem tất cả. Bấm lại đúng icon đang chọn
-    // để bỏ lọc, giống hành vi toggle chip lọc quen thuộc ở CatalogView.
-    @State private var filter: NhomDonHang?
+    // Đổi sang dạng TAB thật (2026-09-26, khớp LichSuViView) — LUÔN có đúng 1 mục đang chọn, mặc
+    // định mục đầu tiên (Đang xử lý), không còn trạng thái "bỏ lọc xem tất cả" như bản Long Châu cũ
+    // (bấm lại mục đang chọn không còn tác dụng, vì 4 nhóm đã phủ hết mọi đơn nên "tất cả" = phải
+    // xem lần lượt từng tab, không cần thêm 1 view rời).
+    @State private var filter: NhomDonHang = .dangXuLy
 
     private var filteredOrders: [DonHangKhach] {
-        guard let filter else { return orders }
-        return orders.filter { $0.trangThai.nhom == filter }
+        orders.filter { $0.trangThai.nhom == filter }
     }
 
     var body: some View {
@@ -40,6 +41,9 @@ struct OrderStatusView: View {
                     // vì các tab khác (Giỏ hàng/Ưu đãi/Tài khoản) vẫn đang dùng style card chung đó.
                     List {
                         nhomFilterCard
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                        Divider()
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                         if filteredOrders.isEmpty {
@@ -178,7 +182,7 @@ struct OrderStatusView: View {
         let count = orders.filter { $0.trangThai.nhom == nhom }.count
         let selected = filter == nhom
         return Button {
-            filter = selected ? nil : nhom
+            filter = nhom
         } label: {
             VStack(spacing: 8) {
                 HStack(spacing: 4) {
