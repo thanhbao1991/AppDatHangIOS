@@ -38,14 +38,7 @@ struct LichSuViView: View {
                     // xếp dọc, số tiền màu bên phải (không kèm số dư phụ, giống bản gốc).
                     List(filteredItems) { item in
                         HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill((item.soTienThayDoi >= 0 ? Theme.success : Theme.danger).opacity(0.12))
-                                Image(systemName: item.soTienThayDoi >= 0 ? "arrow.down" : "arrow.up")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
-                            }
-                            .frame(width: 44, height: 44)
+                            rowIcon(item)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(item.tenLoai).font(.system(size: 15, weight: .semibold))
                                 if let ghiChu = item.ghiChu, !ghiChu.isEmpty {
@@ -60,6 +53,7 @@ struct LichSuViView: View {
                         }
                         .padding(.vertical, 4)
                     }
+                    .listStyle(.plain)
                     .refreshable { await load() }
                 }
             }
@@ -67,6 +61,28 @@ struct LichSuViView: View {
         .navigationTitle("Lịch sử Xu")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
+    }
+
+    /// Icon từng dòng — icon Xu khi CỘNG (thưởng/điểm danh...), ảnh món đầu tiên của hoá đơn khi TRỪ
+    /// (thanh toán đơn, giống Shopee hiện ảnh sản phẩm đã mua); trừ mà không có ảnh (hoaDonId null,
+    /// vd điều chỉnh thủ công hiếm gặp) thì rơi về mũi tên như cũ.
+    @ViewBuilder
+    private func rowIcon(_ item: ViGiaoDich) -> some View {
+        if item.soTienThayDoi >= 0 {
+            Theme.xuIcon(44)
+        } else if let hinhAnh = item.hinhAnhSanPhamDauTien, let url = URL(string: hinhAnh) {
+            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        } else {
+            ZStack {
+                Circle().fill(Theme.danger.opacity(0.12))
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Theme.danger)
+            }
+            .frame(width: 44, height: 44)
+        }
     }
 
     private var tabBar: some View {

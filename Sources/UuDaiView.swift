@@ -56,16 +56,8 @@ struct UuDaiView: View {
         }
     }
 
-    /// Icon Xu — ảnh đồng xu vàng thật (Assets.xcassets/XuIcon, khách cung cấp 2026-09-26), thay cho
-    /// bản vẽ tay bằng shape trước đó (emoji 🪙 gốc trước nữa từng bị chê "xấu", render phẳng/xỉn
-    /// màu tuỳ font hệ thống).
-    @ViewBuilder
-    private func xuIcon(_ size: CGFloat) -> some View {
-        Image("XuIcon")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: size, height: size)
-    }
+    /// Icon Xu dùng chung — xem xuIcon(_:) trong Theme.swift.
+    private func xuIcon(_ size: CGFloat) -> some View { Theme.xuIcon(size) }
 
     /// Tổng Xu hiện có + lối vào Lịch sử ví — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
     /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
@@ -74,7 +66,7 @@ struct UuDaiView: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        xuIcon(28)
+                        xuIcon(36)
                         Text(soNgan(soDuXu ?? 0)).font(.system(size: 30, weight: .bold)).foregroundColor(.primary)
                     }
                     Text("Số dư Xu hiện tại").font(.system(size: 12)).foregroundColor(Theme.textMuted)
@@ -180,7 +172,7 @@ struct UuDaiView: View {
                 if isDay7 {
                     Text("🏆").font(.system(size: 22))
                 } else {
-                    xuIcon(18)
+                    xuIcon(24)
                 }
             }
             .frame(maxWidth: .infinity)

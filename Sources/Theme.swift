@@ -86,6 +86,18 @@ enum Theme {
     ]
     static let defaultNhomIcon = "🥤"
 
+    /// Icon Xu dùng chung — ảnh đồng xu vàng thật (Assets.xcassets/XuIcon, khách cung cấp 2026-09-26,
+    /// nền trắng gốc đã xoá thành trong suốt), thay cho bản vẽ tay bằng shape trước đó (emoji 🪙 gốc
+    /// trước nữa từng bị chê "xấu", render phẳng/xỉn màu tuỳ font hệ thống). Dùng ở cả UuDaiView
+    /// (banner tổng Xu, card Điểm danh) và LichSuViView (icon từng dòng giao dịch cộng Xu).
+    @ViewBuilder
+    static func xuIcon(_ size: CGFloat) -> some View {
+        Image("XuIcon")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
+    }
+
     /// Set UINavigationBar.appearance() theo Theme.primary hiện tại — tách khỏi AppDatHangIOSApp.init()
     /// để gọi lại được mỗi khi KhachHangSession đổi hạng (không chỉ lúc khởi động app). Proxy UIAppearance
     /// chỉ ăn cho bar tạo MỚI nên còn phải tự tay áp lại cho các UINavigationController ĐANG hiển thị.

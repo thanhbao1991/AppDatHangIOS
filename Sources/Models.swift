@@ -444,6 +444,9 @@ struct ViGiaoDich: Decodable, Identifiable {
     let hoaDonId: String?
     let thoiGian: String
     let ghiChu: String?
+    /// Ảnh món đầu tiên của hoá đơn liên quan — chỉ có khi hoaDonId khác nil (giao dịch trừ Xu thanh
+    /// toán đơn). Dùng thay icon mũi tên trong LichSuViView, giống pattern Shopee.
+    let hinhAnhSanPhamDauTien: String?
 }
 
 struct CongNoLichSu: Decodable, Identifiable {
