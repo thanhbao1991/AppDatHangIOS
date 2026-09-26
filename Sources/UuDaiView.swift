@@ -112,6 +112,7 @@ struct UuDaiView: View {
                     Text("Điểm danh nhận Xu")
                         .font(.system(size: 16, weight: .bold))
                         .frame(maxWidth: .infinity, alignment: .center)
+                    Divider()
 
                     HStack(spacing: 6) {
                         ForEach(1...7, id: \.self) { day in
@@ -219,6 +220,7 @@ struct UuDaiView: View {
             Text("Hộp quà may mắn")
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
+            Divider()
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
