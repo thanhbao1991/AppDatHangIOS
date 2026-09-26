@@ -514,6 +514,20 @@ struct MenuView: View {
         .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
     }
 
+    /// Gộp món "Nổi bật" (chọn tay qua AppQuanLyIOS) VÀ top bán chạy 30 ngày (tự động, banChayIds) —
+    /// tối đa 5 món chọn tay + lấp đầy phần còn lại tới 10 bằng top bán chạy, bỏ trùng nếu 1 món vừa
+    /// được chọn tay vừa đang là top bán chạy (lấy tiếp món bán chạy kế tiếp cho đủ 10). Nhân viên có
+    /// thể đã đánh dấu NHIỀU hơn 5 món "Nổi bật" (không giới hạn số lượng ở AppQuanLyIOS) — CHỈ hiện
+    /// tối đa 5 trong dải này, không phải giới hạn số món được phép đánh dấu.
+    private static func tinhDeXuat(sanPhams: [SanPham], banChayIds: [String]) -> [SanPham] {
+        let chonTay = Array(sanPhams.filter(\.noiBat).prefix(5))
+        let idsChonTay = Set(chonTay.map(\.id))
+        let banChay = banChayIds
+            .compactMap { id in sanPhams.first { $0.id == id && !idsChonTay.contains($0.id) } }
+            .prefix(max(0, 10 - chonTay.count))
+        return (chonTay + banChay).shuffled()
+    }
+
     private func load(silent: Bool = false) async {
         // Cache RAM (APIClient.catalogCache, 5 phút) mất sạch mỗi lần app bị kill — khách tắt mở lại
         // app là coi như rỗng, phải chờ network thật xong mới hiện được gì. Lần tải đầu (sanPhams
@@ -524,7 +538,7 @@ struct MenuView: View {
             nhoms = snapshot.nhoms
             toppings = snapshot.toppings.filter { !$0.ngungBan }
             banChayIds = snapshot.banChayIds
-            noiBatSanPhams = sanPhams.filter(\.noiBat).shuffled()
+            noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
             if selectedNhomId.isEmpty { selectedNhomId = Self.yeuThichNhomId }
             loading = false
         } else if !silent {
@@ -552,7 +566,7 @@ struct MenuView: View {
             nhoms = nhom
             toppings = top.filter { !$0.ngungBan }
             banChayIds = banChay
-            noiBatSanPhams = sanPhams.filter(\.noiBat).shuffled()
+            noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
         } else if sanPhams.isEmpty {
             error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
         }
