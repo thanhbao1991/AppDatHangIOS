@@ -183,8 +183,8 @@ struct MainTabView: View {
             tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
-            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
             tabButton(.voucher, label: "Voucher", icon: "ticket")
+            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
         .padding(.top, 6)
