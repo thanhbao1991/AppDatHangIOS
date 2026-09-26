@@ -27,9 +27,16 @@ struct VoucherCuaToiView: View {
         vouchers.filter { !$0.chuaBatDau && !$0.daSuDung }
     }
 
+    /// ID các voucher "Sắp có" — dùng để làm MỜ đúng những dòng này khi chúng xuất hiện gộp chung
+    /// trong tab TẤT CẢ (voucherSapCo tự thân không mang cờ daSuDung/chuaBatDau nào để VoucherTicketCard
+    /// tự mờ, phải đánh dấu từ bên ngoài).
+    private var sapCoIds: Set<String> { Set(voucherSapCo.map(\.id)) }
+
     private var hienThi: [VoucherCuaToi] {
         switch tab {
-        case .tatCa: return vouchers
+        // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có) làm 1 — theo yêu cầu, thay vì chỉ hiện
+        // vouchers (đã liên quan tới khách) như trước.
+        case .tatCa: return vouchers + voucherSapCo
         case .dangCo: return dangCo
         case .sapCo: return voucherSapCo
         }
@@ -58,6 +65,10 @@ struct VoucherCuaToiView: View {
                                     donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
                                     nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa
                                 )
+                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa — cả 2 đều false
+                                // với voucher "Sắp có" (chưa liên quan gì tới khách nên không có 2 cờ
+                                // đó), phải tự mờ thêm từ bên ngoài khi nó lọt vào tab TẤT CẢ.
+                                .opacity(tab == .tatCa && sapCoIds.contains(v.id) ? 0.55 : 1)
                             }
                         }
                         .padding(.horizontal)

@@ -29,12 +29,6 @@ struct GioHangView: View {
                 // Lịch sử Xu/Voucher — bỏ cardBox/cardRow/cardListBackground (Theme.swift) riêng cho
                 // màn này, các tab khác vẫn dùng nguyên style card chung đó.
                 List {
-                    HStack {
-                        Text("Hoá đơn").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                        Spacer()
-                        qtyCountBadge
-                    }
-                    .listRowSeparator(.hidden)
                     ForEach(cart.items) { item in
                         itemRow(item)
                     }
@@ -69,7 +63,10 @@ struct GioHangView: View {
     private var bottomBar: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                HStack(spacing: 6) {
+                    Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    qtyCountBadge
+                }
                 Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
             }
             Spacer()

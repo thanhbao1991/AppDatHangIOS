@@ -105,7 +105,6 @@ struct OrderStatusView: View {
             }
             HStack(spacing: 4) {
                 Spacer()
-                Text("Tổng số tiền (\(tongSoLuong(item)) sản phẩm):").font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
             }
         }
@@ -124,10 +123,6 @@ struct OrderStatusView: View {
             RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
                 .overlay(Image(systemName: "cup.and.saucer.fill").foregroundColor(Theme.primary))
         }
-    }
-
-    private func tongSoLuong(_ item: DonHangKhach) -> Int {
-        item.items.reduce(0) { $0 + $1.soLuong }
     }
 
     /// Cùng cách map PhanLoai ("Ship"/"Mv"/khác) với OrderDetailView/LichSuCongNoView — đơn Ship có
