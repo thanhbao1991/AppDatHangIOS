@@ -34,19 +34,26 @@ struct OrderStatusView: View {
                     Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
+                    // 2026-09-26: thử đổi sang dạng PHẲNG (không card trắng bo góc) giống Lịch sử Xu
+                    // — List(.plain) mặc định, đường kẻ ngang giữa các đơn thay cho card riêng biệt.
+                    // Chỉ đổi RIÊNG màn này, không đụng cardBox/cardRow/cardListBackground (Theme.swift)
+                    // vì các tab khác (Giỏ hàng/Ưu đãi/Tài khoản) vẫn đang dùng style card chung đó.
                     List {
-                        cardRow(topExtra: 6) { nhomFilterCard }
+                        nhomFilterCard
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
                         if filteredOrders.isEmpty {
                             Text("Không có đơn nào ở mục này.")
                                 .font(.system(size: 13)).foregroundColor(Theme.textFaint)
                                 .frame(maxWidth: .infinity).padding(.vertical, 24)
+                                .listRowSeparator(.hidden)
                         } else {
                             ForEach(filteredOrders, id: \.id) { order in
-                                cardRow { orderCard(order) }
+                                orderCard(order)
                             }
                         }
                     }
-                    .cardListBackground()
+                    .listStyle(.plain)
                     .refreshable { await load(silent: true) }
                 }
             }
@@ -158,14 +165,13 @@ struct OrderStatusView: View {
     /// "Đã huỷ" thay vì "Đổi/Trả" (app không có tính năng đổi/trả). Badge đỏ số lượng chỉ hiện ở
     /// "Đang xử lý" (đơn cần khách theo dõi/hành động), giống cách Long Châu chỉ badge mục đầu tiên.
     private var nhomFilterCard: some View {
-        cardBox {
-            HStack(spacing: 0) {
-                ForEach(NhomDonHang.allCases) { nhom in
-                    nhomButton(nhom)
-                        .frame(maxWidth: .infinity)
-                }
+        HStack(spacing: 0) {
+            ForEach(NhomDonHang.allCases) { nhom in
+                nhomButton(nhom)
+                    .frame(maxWidth: .infinity)
             }
         }
+        .padding(.horizontal, 16).padding(.vertical, 10)
     }
 
     private func nhomButton(_ nhom: NhomDonHang) -> some View {
@@ -204,7 +210,7 @@ struct OrderStatusView: View {
             }
             actionRow(item)
         }
-        .cardBoxStyle()
+        .padding(.horizontal, 16).padding(.vertical, 10)
     }
 
     /// Hàng dưới cùng mỗi card — góc trái hiện KẾT QUẢ đánh giá (đơn đã đánh giá rồi, không cần nút
