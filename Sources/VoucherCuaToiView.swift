@@ -84,40 +84,60 @@ struct VoucherCuaToiView: View {
         .background(Color(.systemBackground))
     }
 
+    /// Mượn lại vài chi tiết đẹp của VoucherTicketCard cũ (badge trạng thái dạng capsule, icon mã
+    /// voucher, số giảm to nổi bật) nhưng KHÔNG dựng lại khối "vé" bo góc/dashed divider — theo phản
+    /// hồi "trình bày lại như cũ cho đẹp nhưng vẫn là flat".
     private func voucherRow(_ v: VoucherCuaToi) -> some View {
         // Chỉ mờ ở tab TẤT CẢ — ĐANG CÓ/SẮP CÓ mỗi tab đã tự thân đồng nhất 1 trạng thái (toàn dùng
         // được / toàn chưa mở khoá), mờ thêm không có ý nghĩa phân biệt gì.
         let mo = tab == .tatCa && (v.chuaBatDau || v.daSuDung)
         return HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(v.ten).font(.system(size: 15, weight: .semibold))
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text(v.ten).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                    Spacer(minLength: 4)
+                    trangThaiBadge(v)
+                }
                 if let moTa = v.moTa, !moTa.isEmpty {
-                    Text(moTa).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    Text(moTa).font(.system(size: 12)).foregroundColor(Theme.textMuted).lineLimit(2)
                 }
                 if let lyDo = v.lyDoChuaKhaDung {
-                    Text("Cần: \(lyDo)").font(.system(size: 12)).foregroundColor(Theme.warning)
-                } else if let donToiThieu = v.donToiThieu, donToiThieu > 0 {
-                    Text("Đơn từ \(formatTien(donToiThieu))").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Text("Cần: \(lyDo)").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.warning)
                 }
                 if let nhanSoLan = v.nhanSoLan {
-                    Text(nhanSoLan).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Text("🔁 \(nhanSoLan)").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                 }
-                if let nhanSapDienRa = v.nhanSapDienRa {
-                    Text(nhanSapDienRa).font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
-                } else if v.daSuDung {
-                    Text("Đã dùng").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
+                HStack(spacing: 6) {
+                    Image(systemName: "tag.fill").font(.system(size: 10)).foregroundColor(Theme.primary)
+                    Text(v.ma).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundColor(Theme.primary)
+                    if let donToiThieu = v.donToiThieu, donToiThieu > 0 {
+                        Text("· Đơn từ \(formatTien(donToiThieu))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    }
                 }
             }
             Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 3) {
-                Text(v.nhanGiamGia).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(v.nhanGiamGia).font(.system(size: 20, weight: .heavy)).foregroundColor(Theme.primary)
                 if let nhanGiamToiDa = v.nhanGiamToiDa {
-                    Text(nhanGiamToiDa).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    Text(nhanGiamToiDa).font(.system(size: 10)).foregroundColor(Theme.textFaint)
                 }
             }
         }
-        .padding(.vertical, 8)
-        .opacity(mo ? 0.45 : 1)
+        .padding(.vertical, 10)
+        .opacity(mo ? 0.5 : 1)
+    }
+
+    @ViewBuilder
+    private func trangThaiBadge(_ v: VoucherCuaToi) -> some View {
+        if v.daSuDung {
+            Text("Đã dùng").font(.system(size: 10, weight: .semibold)).foregroundColor(Theme.textFaint)
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(Capsule().fill(Theme.divider))
+        } else if let nhanSapDienRa = v.nhanSapDienRa {
+            Text(nhanSapDienRa).font(.system(size: 10, weight: .semibold)).foregroundColor(.white)
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(Capsule().fill(Theme.primary))
+        }
     }
 
     private var emptyState: some View {

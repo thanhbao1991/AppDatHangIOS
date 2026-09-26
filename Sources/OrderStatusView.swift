@@ -143,25 +143,6 @@ struct OrderStatusView: View {
         }
     }
 
-    /// Banner gợi ý đánh giá kiểu Shopee ("Đánh giá sản phẩm trước ... để nhận Xu") — chỉ hiện khi
-    /// đơn đã hoàn tất và khách chưa đánh giá. 100 Xu khớp DanhGiaDonThuong (DatHangService.cs) —
-    /// đổi số ở backend thì nhớ sửa cả đây (chưa có endpoint trả cấu hình này về app).
-    private func danhGiaBanner(_ item: DonHangKhach) -> some View {
-        Button { path.append(.detail(item)) } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "star.circle.fill").font(.system(size: 18)).foregroundColor(Theme.warning)
-                Text("Đánh giá sản phẩm để nhận **100 Xu**")
-                    .font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
-            }
-            .padding(10)
-            .background(Theme.bg)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-    }
-
     /// 2026-09-26: đổi từ 4 icon kiểu Long Châu sang tab chữ + gạch chân — khớp đúng cấu trúc tabBar
     /// của LichSuViView (Lịch sử Xu), theo phản hồi "filter chưa giống lịch sử xu, bỏ icon chuyển
     /// sang flat". Badge đỏ số lượng "Đang xử lý" giữ nguyên, chuyển thành hình tròn nhỏ cạnh chữ.
@@ -211,9 +192,6 @@ struct OrderStatusView: View {
     private func orderCard(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             orderCardContent(item)
-            if item.trangThai == .hoanTat && !item.daDanhGia {
-                danhGiaBanner(item)
-            }
             actionRow(item)
         }
         // KHÔNG thêm .padding(.horizontal) riêng — List đã tự có inset ngang mặc định, cộng thêm nữa
