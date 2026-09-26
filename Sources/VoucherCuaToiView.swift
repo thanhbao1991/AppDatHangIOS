@@ -84,14 +84,33 @@ struct VoucherCuaToiView: View {
         .background(Color(.systemBackground))
     }
 
-    /// Mượn lại vài chi tiết đẹp của VoucherTicketCard cũ (badge trạng thái dạng capsule, icon mã
-    /// voucher, số giảm to nổi bật) nhưng KHÔNG dựng lại khối "vé" bo góc/dashed divider — theo phản
-    /// hồi "trình bày lại như cũ cho đẹp nhưng vẫn là flat".
+    /// Mượn lại chi tiết đẹp NHẤT của VoucherTicketCard cũ — khối MÀU bên trái chứa số giảm to/đậm —
+    /// nhưng chỉ làm 1 chip màu bo góc (không phải khối bo góc cả card + dashed divider + viền/bóng
+    /// đổ quanh cả dòng). Thiếu khối này số giảm chìm nghỉm thành chữ nhỏ bên phải, không giống bản
+    /// cũ (phản hồi thực tế 2026-09-26 kèm ảnh so sánh).
     private func voucherRow(_ v: VoucherCuaToi) -> some View {
         // Chỉ mờ ở tab TẤT CẢ — ĐANG CÓ/SẮP CÓ mỗi tab đã tự thân đồng nhất 1 trạng thái (toàn dùng
         // được / toàn chưa mở khoá), mờ thêm không có ý nghĩa phân biệt gì.
         let mo = tab == .tatCa && (v.chuaBatDau || v.daSuDung)
         return HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 2) {
+                Text(v.nhanGiamGia)
+                    .font(.system(size: 18, weight: .heavy))
+                    .foregroundColor(.white)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
+                if let nhanGiamToiDa = v.nhanGiamToiDa {
+                    Text(nhanGiamToiDa)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(width: 76)
+            .padding(.vertical, 10)
+            .background(mo ? AnyShapeStyle(Theme.textFaint) : AnyShapeStyle(Theme.primaryGradient))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
             VStack(alignment: .leading, spacing: 5) {
                 HStack(alignment: .top, spacing: 8) {
                     Text(v.ten).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
@@ -115,16 +134,10 @@ struct VoucherCuaToiView: View {
                     }
                 }
             }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(v.nhanGiamGia).font(.system(size: 20, weight: .heavy)).foregroundColor(Theme.primary)
-                if let nhanGiamToiDa = v.nhanGiamToiDa {
-                    Text(nhanGiamToiDa).font(.system(size: 10)).foregroundColor(Theme.textFaint)
-                }
-            }
+            Spacer(minLength: 0)
         }
         .padding(.vertical, 10)
-        .opacity(mo ? 0.5 : 1)
+        .opacity(mo ? 0.6 : 1)
     }
 
     @ViewBuilder
