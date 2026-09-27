@@ -325,11 +325,10 @@ struct MenuView: View {
                         Button {
                             onTap(section.nhom.id)
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 6) {
                                 Rectangle()
                                     .fill(isSelected ? Theme.primary : Color.clear)
                                     .frame(width: 3)
-                                nhomAvatar(section.nhom, size: 20)
                                 // "#" ghép liền chữ đầu bằng Text concatenation (+) thay vì Text
                                 // riêng có .frame(width:) — frame cố định tạo khoảng trắng 2 bên "#"
                                 // làm mất cảm giác hashtag dính liền kiểu "#BạcXỉu".
