@@ -412,18 +412,25 @@ struct SettingsView: View {
             } else if let ns = ngaySinhInfo?.ngaySinh {
                 Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                     .font(.system(size: 13)).foregroundColor(Theme.success)
-                Text("Đã lưu, không tự sửa lại được. Nếu nhập sai, liên hệ quán để nhân viên chỉnh giúp.")
+                Text("Liên hệ quán nếu cần thay đổi ngày sinh")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
             } else {
+                // .labelsHidden() + Spacer đẩy nút "Lưu" ra sát mép phải — trước đây DatePicker giữ
+                // label "Ngày sinh của bạn" nên tự giãn chiếm hết chỗ trong HStack, đẩy Button ra khỏi
+                // vùng nhìn thấy được của card (feedback: "ko thấy nút Lưu, bấm tùm bậy thì nó lưu" —
+                // thực ra là bấm trúng đúng nút nhưng nút bị đẩy lệch/che nên không NHÌN THẤY nút).
                 HStack {
-                    DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                    DatePicker("", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                        .labelsHidden()
                         .environment(\.locale, Locale(identifier: "vi_VN"))
+                    Spacer()
                     Button {
                         Task { await xacNhanNgaySinh() }
                     } label: {
                         if savingDob { ProgressView() } else { Text("Lưu") }
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.primary)
                     .disabled(savingDob)
                 }
                 if let dobError {
