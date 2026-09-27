@@ -479,7 +479,7 @@ struct DatLyBiMatRequest: Encodable { let diaChiText: String; let ghiChu: String
 struct DanhGiaDonRequest: Encodable { let hoaDonId: String; let soSao: Int; let nhanXet: String? }
 
 
-struct SinhNhatInfo: Decodable { let ngaySinh: String?; let dangTrongThangSinhNhat: Bool }
+struct SinhNhatInfo: Decodable { let ngaySinh: String?; let dangTrongThangSinhNhat: Bool; let coTheSua: Bool }
 struct CapNhatNgaySinhRequest: Encodable { let ngaySinh: String }
 
 struct DoiMatKhauRequest: Encodable { let matKhauCu: String; let matKhauMoi: String }

@@ -400,8 +400,10 @@ struct SettingsView: View {
 
     /// Card khai ngày sinh — cùng dữ liệu/API với MenuView (xác minh tuổi thuốc lá), thêm ở đây để
     /// khách khai được ngay từ tab Tài khoản thay vì phải chờ mua sản phẩm thuốc lá mới thấy form.
-    /// Một khi đã có NgaySinh thì chỉ hiện lại, không cho sửa (xem comment ở khai báo @State phía
-    /// trên) — tránh đổi ngày sinh liên tục để lúc nào cũng trúng tháng nhận voucher sinh nhật.
+    /// Cho tự SỬA lại (không chỉ khai lần đầu) miễn CHƯA nhận voucher sinh nhật trong năm nay
+    /// (ngaySinhInfo.coTheSua, xem GamificationService.CapNhatNgaySinhAsync) — chặn đúng lúc đã ăn
+    /// quà năm nay mới là ăn gian đổi ngày sinh để canh trúng tháng, còn lại (nhập sai lúc đầu, hoặc
+    /// chưa tới lượt nhận quà năm nay) không cần làm khó khách phải nhờ nhân viên.
     private var ngaySinhCard: some View {
         cardBox {
             Text("Ngày sinh").font(.system(size: 16, weight: .bold))
@@ -409,12 +411,16 @@ struct SettingsView: View {
 
             if loadingNgaySinh {
                 ProgressView()
-            } else if let ns = ngaySinhInfo?.ngaySinh {
+            } else if let ns = ngaySinhInfo?.ngaySinh, ngaySinhInfo?.coTheSua == false {
                 Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                     .font(.system(size: 13)).foregroundColor(Theme.success)
-                Text("Liên hệ quán nếu cần thay đổi ngày sinh")
+                Text("Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
             } else {
+                if let ns = ngaySinhInfo?.ngaySinh {
+                    Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                        .font(.system(size: 13)).foregroundColor(Theme.success)
+                }
                 // .labelsHidden() + Spacer đẩy nút "Lưu" ra sát mép phải — trước đây DatePicker giữ
                 // label "Ngày sinh của bạn" nên tự giãn chiếm hết chỗ trong HStack, đẩy Button ra khỏi
                 // vùng nhìn thấy được của card (feedback: "ko thấy nút Lưu, bấm tùm bậy thì nó lưu" —
@@ -500,6 +506,14 @@ struct SettingsView: View {
         async let ngaySinhTask = APIClient.shared.getSinhNhat()
         (diaChiList, vi, ngaySinhInfo) = await (diaChiTask, viTask, ngaySinhTask)
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        // Nạp sẵn DatePicker theo đúng ngày sinh đã khai (nếu có) — để lúc mở form sửa (coTheSua=true)
+        // khách thấy đúng ngày cũ thay vì luôn nhảy về mặc định "18 năm trước".
+        if let ns = ngaySinhInfo?.ngaySinh {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+            if let parsed = formatter.date(from: String(ns.prefix(10))) { dobPicked = parsed }
+        }
         loadingNgaySinh = false
         loading = false
     }
