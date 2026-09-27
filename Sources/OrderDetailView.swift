@@ -48,22 +48,25 @@ struct OrderDetailView: View {
                 Divider()
 
                 section {
-                    Text(order.phanLoai == "Ship" ? "Giao đến" : "Hình thức").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
+                    Text("Thông tin nhận hàng").font(.system(size: 15, weight: .bold))
                     if order.phanLoai == "Ship" {
-                        Text(order.diaChiText ?? "—")
-                        if let sdt = order.soDienThoaiText { Text("SĐT: \(sdt)").foregroundColor(Theme.textMuted).font(.system(size: 13)) }
+                        iconRow("mappin.and.ellipse", "Nhận hàng tại", order.diaChiText ?? "—")
+                        if let sdt = order.soDienThoaiText { iconRow("phone.fill", "Số điện thoại", sdt) }
                     } else {
-                        Text(order.phanLoai == "Mv" ? "Mang về" : "Tại quán\(order.tenBan.map { " — Bàn \($0)" } ?? "")")
+                        iconRow("storefront.fill", "Hình thức", order.phanLoai == "Mv" ? "Mang về" : "Tại quán\(order.tenBan.map { " — Bàn \($0)" } ?? "")")
                     }
-                    if let ghiChu = order.ghiChu, !ghiChu.isEmpty {
-                        Text("Ghi chú: \(ghiChu)").foregroundColor(Theme.textMuted).font(.system(size: 13))
+                    if let httt = hinhThucThanhToanText {
+                        iconRow("creditcard.fill", "Hình thức thanh toán", httt)
+                    }
+                    if let ghiChuRieng, !ghiChuRieng.isEmpty {
+                        iconRow("note.text", "Ghi chú", ghiChuRieng)
                     }
                 }
                 Divider()
 
                 section {
                     HStack {
-                        Label("Món", systemImage: "cup.and.saucer.fill")
+                        Text("Danh sách sản phẩm").font(.system(size: 15, weight: .bold))
                         Spacer()
                         Text("\(order.items.reduce(0) { $0 + $1.soLuong }) ly")
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
@@ -91,6 +94,7 @@ struct OrderDetailView: View {
                 Divider()
 
                 section {
+                    Text("Thông tin thanh toán").font(.system(size: 15, weight: .bold))
                     infoRow("Tổng tiền", order.tongTien)
                     if order.giamGia > 0 { infoRow("Giảm giá", order.giamGia) }
                     infoRow("Thành tiền", order.thanhTien)
@@ -179,6 +183,41 @@ struct OrderDetailView: View {
             Spacer()
             Text(formatTien(value))
         }
+    }
+
+    /// Hàng thông tin có icon dẫn đầu — tham khảo style "Thông tin nhận hàng" (icon người/ghim/đồng
+    /// hồ) trong ảnh mẫu Long Châu, dùng chung cho cả địa chỉ/SĐT/hình thức thanh toán/ghi chú thay vì
+    /// mỗi loại 1 kiểu Text rời rạc như trước (feedback 2026-09-28: "các thông tin dưới cần style lại").
+    private func iconRow(_ icon: String, _ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon).font(.system(size: 13)).foregroundColor(Theme.textFaint).frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                Text(value).font(.system(size: 14, weight: .medium)).foregroundColor(.primary)
+            }
+        }
+    }
+
+    /// GhiChu backend chỉ có 1 field free-text — hình thức thanh toán được gắn làm TIỀN TỐ lúc đặt
+    /// đơn (xem CheckoutView.datHang: "🟡 Đã thanh toán bằng Xu" / "💵 Thanh toán khi nhận hàng" /
+    /// "📱 Chuyển khoản QR", nối " — {ghi chú thật}" nếu khách có nhập). Tách lại đúng 3 tiền tố này để
+    /// hiện riêng "Hình thức thanh toán" thay vì gộp chung 1 dòng "Ghi chú: ..." khó đọc. Đơn tạo qua
+    /// Desktop (Tại Chỗ/Mv) không đi qua quy ước này nên không có tiền tố — hinhThucThanhToanText trả
+    /// nil, phần "Hình thức thanh toán" tự ẩn, chỉ hiện ghiChu thô như cũ.
+    private static let hinhThucThanhToanPrefixes = ["🟡 Đã thanh toán bằng Xu", "💵 Thanh toán khi nhận hàng", "📱 Chuyển khoản QR"]
+
+    private var hinhThucThanhToanText: String? {
+        guard let ghiChu = order.ghiChu else { return nil }
+        return Self.hinhThucThanhToanPrefixes.first { ghiChu.hasPrefix($0) }
+    }
+
+    private var ghiChuRieng: String? {
+        guard let ghiChu = order.ghiChu, !ghiChu.isEmpty else { return nil }
+        guard let prefix = hinhThucThanhToanText else { return ghiChu }
+        var rest = String(ghiChu.dropFirst(prefix.count))
+        let sep = " — "
+        if rest.hasPrefix(sep) { rest.removeFirst(sep.count) }
+        return rest.isEmpty ? nil : rest
     }
 
     /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
