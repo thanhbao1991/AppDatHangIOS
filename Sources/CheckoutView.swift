@@ -48,21 +48,19 @@ struct CheckoutView: View {
     /// đúng lựa chọn lần đặt gần nhất (Prefs.hinhThucThanhToan).
     @State private var hinhThucThanhToan: HinhThucThanhToan = HinhThucThanhToan(rawValue: Prefs.hinhThucThanhToan ?? "") ?? .codTraKhiNhanHang
 
-    @State private var showVoucherSheet = false
     @State private var gioMoBan: GioMoBanDto?
 
     @State private var tenDuongs: [TenDuong] = []
     @FocusState private var diaChiFocused: Bool
 
-    // Voucher + Xu: 2026-09-27 chuyển lựa chọn lên CartStore (chọn NGAY tại tab Giỏ hàng, tham khảo
-    // Long Châu) — trang này chỉ ĐỌC lại state đó (cart.selectedVoucher/cart.dungXu/cart.vouchers/
-    // cart.soDuXu), vẫn cho sửa lại ở đây qua uuDaiCardContent/voucherSheet để khách đổi ý phút chót
-    // mà không cần quay lại tab Giỏ hàng.
+    // Voucher + Xu: 2026-09-27 chuyển lựa chọn hẳn LÊN CartStore, chọn NGAY tại tab Giỏ hàng (tham
+    // khảo Long Châu) — trang Thanh toán KHÔNG còn cho sửa nữa, chỉ đọc lại state đó để tính tổng tiền
+    // và hiện dòng tóm tắt "Giảm giá voucher"/"Dùng Xu" trong chiTietThanhToanCardContent (muốn đổi
+    // voucher/Xu phải quay lại tab Giỏ hàng).
     private var soDu: Double { cart.soDuXu }
     private var tongTienHang: Double { cart.totalPrice }
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
-    private var vouchersHienThi: [Voucher] { cart.vouchersHienThi }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
     /// Trần 50% đơn thêm 2026-09-23 — khớp DatHangService.DatMonAsync bên backend (chặn lỗ hổng dùng
     /// Xu trả 100% để farm thưởng "đơn thành công +1 lượt quay" mà không cần tiền thật). Luôn còn ít
@@ -80,9 +78,6 @@ struct CheckoutView: View {
             List {
                 cardRow(topExtra: 6) { diaChiSection }
                 cardRow { cardBox { donHangCardContent } }
-                if soDu > 0 || !vouchersHienThi.isEmpty {
-                    cardRow { cardBox { uuDaiCardContent } }
-                }
                 if !xuTraDu {
                     cardRow { cardBox { thanhToanCardContent } }
                 }
@@ -93,9 +88,6 @@ struct CheckoutView: View {
             bottomBar
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showVoucherSheet) {
-            VoucherPickerSheet(vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien, selected: $cart.selectedVoucher) { showVoucherSheet = false }
-        }
         .alert("Lưu ý về voucher", isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
             Button("Đã hiểu") {
                 voucherWarning = nil
@@ -323,49 +315,6 @@ struct CheckoutView: View {
                     Spacer()
                     Text(formatTien(item.thanhTien)).font(.system(size: 13, weight: .semibold))
                 }
-            }
-        }
-    }
-
-    // MARK: - Card: Voucher (trên) + Dùng Xu (dưới) — chung 1 card theo yêu cầu, khớp bố cục Shopee.
-    // Lựa chọn đã có sẵn từ tab Giỏ hàng (GioHangView) qua CartStore — card này chỉ để khách xem lại/
-    // đổi ý phút chót mà không cần quay lại tab Giỏ hàng, dùng lại NGUYÊN state (cart.selectedVoucher/
-    // cart.dungXu) nên đổi ở đâu cũng khớp ở đó ngay.
-
-    private var uuDaiCardContent: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if !vouchersHienThi.isEmpty {
-                Button {
-                    showVoucherSheet = true
-                } label: {
-                    HStack {
-                        Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 24)
-                        if let selectedVoucher = cart.selectedVoucher {
-                            Text(selectedVoucher.ten).foregroundColor(.primary)
-                        } else {
-                            Text("Chọn voucher").foregroundColor(.primary)
-                        }
-                        Spacer()
-                        if voucherGiam > 0 {
-                            Text("-\(formatTien(voucherGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
-                        }
-                        Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                    }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                if soDu > 0 { Divider() }
-            }
-            if soDu > 0 {
-                Toggle(isOn: $cart.dungXu) {
-                    HStack(spacing: 8) {
-                        Text("🟡").font(.system(size: 16))
-                        Text("Dùng Xu (số dư \(formatTien(soDu)))").font(.system(size: 14)).foregroundColor(.primary)
-                    }
-                }
-                .tint(Theme.primary)
-                .padding(.vertical, vouchersHienThi.isEmpty ? 0 : 6)
             }
         }
     }
