@@ -282,15 +282,30 @@ struct MenuView: View {
     }
 
     /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
-    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Trơn, không bấm được —
-    /// đã BỎ nút "Chọn ngẫu nhiên" nổi bật (feedback 2026-09-27: không cần làm nổi bật nữa) từng gộp
-    /// vào đây, `items` giờ chỉ còn dùng để giữ chữ ký hàm khớp nơi gọi, không còn ảnh hưởng hiển thị.
+    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Nút "Chọn ngẫu nhiên"
+    /// GIỮ LẠI (feedback 2026-09-27: bỏ hẳn là quá tay, chỉ cần bớt nổi bật) nhưng đổi hẳn sang dạng
+    /// FLAT — icon shuffle + chữ nhỏ màu primary trên nền trong suốt, không còn pill nền đậm
+    /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 6) {
             Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
                 .font(.system(size: 14))
             Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
             Spacer()
+            if !items.isEmpty {
+                Button {
+                    picking = items.randomElement()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "shuffle").font(.system(size: 11, weight: .semibold))
+                        Text("Ngẫu nhiên").font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(Theme.primary)
+                    .padding(.vertical, 6).padding(.leading, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
