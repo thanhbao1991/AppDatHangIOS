@@ -23,16 +23,34 @@ struct VoucherCuaToiView: View {
     @State private var loading = true
     @State private var tab: LocTab = .tatCa
 
+    /// Khả dụng: giá trị giảm cao nhất lên đầu (feedback 2026-09-27) — trước đó giữ nguyên thứ tự
+    /// NgayTao server trả, không phản ánh voucher nào "đáng dùng" hơn.
     private var dangCo: [VoucherCuaToi] {
         vouchers.filter { !$0.chuaBatDau && !$0.daSuDung }
+            .sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
     }
 
-    /// Voucher "chưa tới ngày" (vd lễ tết còn xa) — server đã trả sẵn trong getVoucherCuaToi qua cờ
-    /// chuaBatDau (dùng chung 1 cửa sổ SoNgayHienTruoc/voucher, gom về 1 nguồn 2026-09-27, xem
-    /// DatHangService.GetVoucherSapCoAsync). Thuộc "Sắp có" y hệt voucherSapCo (chưa đủ điều kiện),
-    /// chỉ khác lý do chưa dùng được.
+    /// Voucher "chưa tới ngày" (lễ tết còn xa) — server trả sẵn qua cờ chuaBatDau (dùng chung 1 cửa sổ
+    /// SoNgayHienTruoc/voucher, gom về 1 nguồn 2026-09-27, xem DatHangService.GetVoucherSapCoAsync).
+    /// Sắp theo NGÀY GẦN NHẤT lên trước (feedback 2026-09-27) — khác các voucher "không khả dụng"
+    /// khác: lễ tết cần biết dịp nào TỚI TRƯỚC để canh quay lại, không phải giảm nhiều hay ít.
     private var chuaToiNgay: [VoucherCuaToi] {
         vouchers.filter { $0.chuaBatDau }
+            .sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") }
+    }
+
+    /// Đã dùng (KHÔNG tính voucher lễ tết chuaBatDau=true trùng lặp — vd voucher lặp hằng năm vừa
+    /// dùng xong năm nay vừa chờ năm sau, đã thuộc chuaToiNgay ở trên, tránh hiện 2 lần). Sắp theo
+    /// giá trị giảm cao nhất trước, giống mọi voucher "không khả dụng" khác trừ lễ tết.
+    private var daDungKhongLeTet: [VoucherCuaToi] {
+        vouchers.filter { $0.daSuDung && !$0.chuaBatDau }
+            .sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
+    }
+
+    /// Chưa đủ điều kiện dù đã tới ngày — sắp theo giá trị giảm cao nhất trước, cùng tiêu chí với
+    /// nhóm "không khả dụng" khác (khác lễ tết ở trên).
+    private var voucherSapCoSapXep: [VoucherCuaToi] {
+        voucherSapCo.sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
     }
 
     /// ID các voucher "Sắp có" (gộp cả 2 lý do: chưa tới ngày + chưa đủ điều kiện) — dùng để làm MỜ
@@ -44,12 +62,13 @@ struct VoucherCuaToiView: View {
     private var hienThi: [VoucherCuaToi] {
         switch tab {
         // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có), khả dụng lên đầu — chưa khả dụng (đã dùng/
-        // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, theo yêu cầu 27/9.
-        case .tatCa: return dangCo + (vouchers.filter { $0.daSuDung || $0.chuaBatDau } + voucherSapCo)
+        // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, mỗi khối tự sắp theo tiêu chí riêng.
+        case .tatCa: return dangCo + daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep
         case .dangCo: return dangCo
-        // SẮP CÓ = chưa tới ngày (chuaToiNgay) + chưa đủ điều kiện dù đã tới ngày (voucherSapCo) —
-        // 2 nguồn NHƯNG cùng 1 cửa sổ hiện-trước ở server, chỉ khác lý do hiển thị.
-        case .sapCo: return chuaToiNgay + voucherSapCo
+        // SẮP CÓ = chưa tới ngày (chuaToiNgay, sắp theo ngày) + chưa đủ điều kiện dù đã tới ngày
+        // (voucherSapCoSapXep, sắp theo giá trị giảm) — 2 nguồn cùng 1 cửa sổ hiện-trước ở server,
+        // chỉ khác lý do hiển thị VÀ tiêu chí sắp xếp.
+        case .sapCo: return chuaToiNgay + voucherSapCoSapXep
         }
     }
 

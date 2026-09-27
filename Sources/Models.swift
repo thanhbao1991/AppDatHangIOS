@@ -179,6 +179,14 @@ struct VoucherCuaToi: Decodable, Identifiable {
     /// (APIClient.getVoucherSapCo), nil với voucher đã liên quan tới khách (getVoucherCuaToi).
     var lyDoChuaKhaDung: String?
 
+    /// Giá trị giảm THAM KHẢO để sắp xếp (không phải số tiền giảm thực tế cho 1 đơn cụ thể — tab
+    /// Voucher không có ngữ cảnh giỏ hàng như VoucherPickerSheet) — PhanTram dùng trần giamToiDa (số
+    /// tiền tối đa khách có thể được giảm, đã hiện sẵn ở nhãn "Tối đa Xđ" trên card), SoTien dùng thẳng
+    /// soTienGiam.
+    var giaTriGiamThamKhao: Double {
+        loaiGiam == "PhanTram" ? (giamToiDa ?? 0) : soTienGiam
+    }
+
     /// "Từ 23/09" — nhãn cho voucher chưa tới ngày, nil với voucher dùng được ngay.
     var nhanSapDienRa: String? {
         guard chuaBatDau, let ngayBatDau else { return nil }
