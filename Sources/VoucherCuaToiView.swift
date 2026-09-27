@@ -65,10 +65,11 @@ struct VoucherCuaToiView: View {
                                     donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
                                     nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa
                                 )
-                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa — cả 2 đều false
-                                // với voucher "Sắp có" (chưa liên quan gì tới khách nên không có 2 cờ
-                                // đó), phải tự mờ thêm từ bên ngoài khi nó lọt vào tab TẤT CẢ.
-                                .opacity(tab == .tatCa && sapCoIds.contains(v.id) ? 0.55 : 1)
+                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa. Với voucher "chưa
+                                // tới ngày" (nhanSapDienRa != nil) card đã tự mờ sẵn — chỉ voucher "sắp
+                                // có" loại "chưa đủ điều kiện" (không có nhanSapDienRa) mới cần mờ thêm
+                                // từ bên ngoài, tránh cộng dồn 2 lớp opacity làm nhạt gấp đôi.
+                                .opacity(tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil ? 0.55 : 1)
                             }
                         }
                         .padding(.horizontal)
