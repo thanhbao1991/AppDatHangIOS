@@ -38,6 +38,16 @@ struct SettingsView: View {
     @State private var showLichSuXu = false
     @State private var showCongNoHienTai = false
 
+    // Ngày sinh — tái dùng đúng field/API đã có cho xác minh tuổi 18+ (MenuView), chỉ thêm chỗ khai
+    // ở tab Tài khoản cho khách nào chưa mua sản phẩm thuốc lá cũng khai được (để hưởng voucher sinh
+    // nhật). Chống lạm dụng nằm ở BACKEND (GamificationService.CapNhatNgaySinhAsync): chỉ cho khai
+    // 1 LẦN DUY NHẤT, sửa lại phải nhờ nhân viên qua Desktop — UI ở đây chỉ ẩn form sau khi đã có.
+    @State private var ngaySinhInfo: SinhNhatInfo?
+    @State private var loadingNgaySinh = false
+    @State private var dobPicked = Calendar.current.date(byAdding: .year, value: -18, to: Date()) ?? Date()
+    @State private var savingDob = false
+    @State private var dobError: String?
+
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
     // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
     // Theme.hangColors (2026-09-16) — cùng 1 nguồn màu với Theme.primary/primaryDark toàn app, tránh
@@ -114,6 +124,7 @@ struct SettingsView: View {
                 }
 
                 cardRow { thongTinCaNhanCard }
+                cardRow { ngaySinhCard }
                 cardRow { danhGiaCard }
             }
             .cardListBackground()
@@ -387,6 +398,66 @@ struct SettingsView: View {
     }
 
 
+    /// Card khai ngày sinh — cùng dữ liệu/API với MenuView (xác minh tuổi thuốc lá), thêm ở đây để
+    /// khách khai được ngay từ tab Tài khoản thay vì phải chờ mua sản phẩm thuốc lá mới thấy form.
+    /// Một khi đã có NgaySinh thì chỉ hiện lại, không cho sửa (xem comment ở khai báo @State phía
+    /// trên) — tránh đổi ngày sinh liên tục để lúc nào cũng trúng tháng nhận voucher sinh nhật.
+    private var ngaySinhCard: some View {
+        cardBox {
+            Text("Ngày sinh").font(.system(size: 16, weight: .bold))
+            Divider()
+
+            if loadingNgaySinh {
+                ProgressView()
+            } else if let ns = ngaySinhInfo?.ngaySinh {
+                Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                    .font(.system(size: 13)).foregroundColor(Theme.success)
+                Text("Đã lưu, không tự sửa lại được. Nếu nhập sai, liên hệ quán để nhân viên chỉnh giúp.")
+                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+            } else {
+                Text("Khai ngày sinh để nhận voucher sinh nhật mỗi năm 🎂")
+                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                    .environment(\.locale, Locale(identifier: "vi_VN"))
+                if let dobError {
+                    Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
+                }
+                Button {
+                    Task { await xacNhanNgaySinh() }
+                } label: {
+                    if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                }
+                .buttonStyle(.bordered)
+                .disabled(savingDob)
+            }
+        }
+    }
+
+    private func formatNgaySinh(_ iso: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        guard let date = formatter.date(from: String(iso.prefix(10))) else { return iso }
+        let out = DateFormatter()
+        out.dateFormat = "dd/MM/yyyy"
+        return out.string(from: date)
+    }
+
+    private func xacNhanNgaySinh() async {
+        dobError = nil
+        savingDob = true
+        defer { savingDob = false }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let iso = formatter.string(from: dobPicked)
+        let result = await APIClient.shared.capNhatNgaySinh(iso)
+        if result.success {
+            ngaySinhInfo = await APIClient.shared.getSinhNhat()
+        } else {
+            dobError = result.message ?? "Lưu ngày sinh thất bại, thử lại."
+        }
+    }
+
     private func statBox(_ value: String, _ label: String) -> some View {
         VStack {
             Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(Theme.primary)
@@ -416,10 +487,13 @@ struct SettingsView: View {
     }
 
     private func load() async {
+        loadingNgaySinh = true
         async let diaChiTask = APIClient.shared.getDiaChiList()
         async let viTask = APIClient.shared.getVi()
-        (diaChiList, vi) = await (diaChiTask, viTask)
+        async let ngaySinhTask = APIClient.shared.getSinhNhat()
+        (diaChiList, vi, ngaySinhInfo) = await (diaChiTask, viTask, ngaySinhTask)
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        loadingNgaySinh = false
         loading = false
     }
 
