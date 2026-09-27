@@ -25,13 +25,18 @@ struct OrderDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                card {
+            // Chuyển toàn trang sang FLAT (feedback 2026-09-28) — bỏ hẳn nền xám bo góc `card` cũ,
+            // mỗi mục giờ chỉ còn padding dọc + Divider phân cách, khớp phong cách các màn đã đổi
+            // flat khác trong app (OrderStatusView/GioHangView/LichSuViView).
+            VStack(alignment: .leading, spacing: 0) {
+                section {
                     HStack {
-                        Text(order.maHoaDon).fontWeight(.bold)
-                        Spacer()
-                        // Cùng bug ISO thô như OrderStatusView (danh sách đơn) — format lại cho khớp.
+                        // Giờ đổi ra TRƯỚC, mã hoá đơn ra SAU (feedback 2026-09-28: "thời gian và mã
+                        // hoá đơn cần đổi chỗ cho nhau") — cùng bug ISO thô như OrderStatusView, format
+                        // lại cho khớp.
                         Text(formatThongBaoTime(order.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                        Spacer()
+                        Text(order.maHoaDon).fontWeight(.bold)
                     }
                     // Đơn huỷ không đi qua timeline 4 bước (steps.firstIndex trả nil, sẽ hiện sai
                     // thành "bước 0" như chưa huỷ gì) — thay bằng 1 dòng trạng thái đơn giản.
@@ -44,8 +49,9 @@ struct OrderDetailView: View {
                         timeline
                     }
                 }
+                Divider()
 
-                card {
+                section {
                     Text(order.phanLoai == "Ship" ? "Giao đến" : "Hình thức").font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
                     if order.phanLoai == "Ship" {
                         Text(order.diaChiText ?? "—")
@@ -57,8 +63,9 @@ struct OrderDetailView: View {
                         Text("Ghi chú: \(ghiChu)").foregroundColor(Theme.textMuted).font(.system(size: 13))
                     }
                 }
+                Divider()
 
-                card {
+                section {
                     HStack {
                         Label("Món", systemImage: "cup.and.saucer.fill")
                         Spacer()
@@ -85,8 +92,9 @@ struct OrderDetailView: View {
                         .padding(.vertical, 6)
                     }
                 }
+                Divider()
 
-                card {
+                section {
                     infoRow("Tổng tiền", order.tongTien)
                     if order.giamGia > 0 { infoRow("Giảm giá", order.giamGia) }
                     infoRow("Thành tiền", order.thanhTien)
@@ -98,30 +106,35 @@ struct OrderDetailView: View {
                         Text(formatTien(order.conLai)).font(.system(size: 20, weight: .bold))
                             .foregroundColor(order.conLai > 0 ? Theme.danger : Theme.success)
                     }
-                    // "Đặt lại" gộp vào card tổng tiền thay vì đứng riêng bên dưới (feedback 2026-09-24)
+                    // "Đặt lại" gộp vào mục tổng tiền thay vì đứng riêng bên dưới (feedback 2026-09-24)
                     // — nằm cạnh số tiền của CHÍNH đơn này, đỡ trôi nổi xa nội dung liên quan.
                     Button("Đặt lại") { datLai() }
                         .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                         .padding(.top, 4)
                 }
 
-                if order.trangThai != .hoanTat && order.trangThai != .huy {
-                    Button("💳 Thanh toán") { donHangPath.append(.thanhToan(hoaDonId: order.id)) }
-                        .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-                }
-
-                if order.trangThai == .choXacNhan {
-                    Button(role: .destructive) { showHuyConfirm = true } label: {
-                        if dangHuy { ProgressView() } else { Text("Huỷ đơn").frame(maxWidth: .infinity) }
+                VStack(spacing: 10) {
+                    if order.trangThai != .hoanTat && order.trangThai != .huy {
+                        Button("💳 Thanh toán") { donHangPath.append(.thanhToan(hoaDonId: order.id)) }
+                            .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered).disabled(dangHuy)
+
+                    if order.trangThai == .choXacNhan {
+                        Button(role: .destructive) { showHuyConfirm = true } label: {
+                            if dangHuy { ProgressView() } else { Text("Huỷ đơn").frame(maxWidth: .infinity) }
+                        }
+                        .buttonStyle(.bordered).disabled(dangHuy)
+                    }
                 }
+                .padding(.top, 14)
 
                 if order.trangThai == .hoanTat {
-                    card { danhGiaSection }
+                    Divider().padding(.top, 14)
+                    section { danhGiaSection }
                 }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
         .navigationTitle("Chi tiết đơn hàng")
         .navigationBarTitleDisplayMode(.inline)
@@ -144,12 +157,10 @@ struct OrderDetailView: View {
     }
 
     @ViewBuilder
-    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8, content: content)
-            .padding(14)
+            .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.bg)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     /// Ảnh món (tham khảo layout Long Châu — ảnh thumbnail bên trái mỗi dòng sản phẩm, 2026-09-28)
@@ -191,11 +202,22 @@ struct OrderDetailView: View {
     /// dưới, mỗi cột chia đều 1/4 chiều ngang. Tách 2 hàng (không lồng nhãn ngay dưới từng chấm trong
     /// cùng 1 VStack) vì chiều cao nhãn 1-2 dòng khác nhau giữa các bước sẽ kéo lệch đường nối ngang
     /// nếu gộp chung.
+    ///
+    /// Mỗi cột (cả hàng chấm lẫn hàng nhãn) đều `.frame(maxWidth: .infinity)` NHƯ NHAU nên 2 hàng
+    /// chia đúng cùng 1 lưới cột — nhưng riêng hàng chấm còn phải tự canh chấm vào ĐÚNG GIỮA cột đó:
+    /// bọc chấm giữa 2 đoạn Rectangle `.frame(maxWidth: .infinity)` bằng nhau (đoạn đầu/cuối trong
+    /// suốt) để chấm luôn nằm chính giữa bất kể đoạn nối 2 bên dài ngắn khác nhau (fix feedback
+    /// 2026-09-28: "chữ chưa canh giữa với check" — trước chấm+đường nối gộp chung 1 Group không có
+    /// frame riêng nên trôi lệch khỏi tâm cột nhãn bên dưới).
     private var timeline: some View {
         VStack(spacing: 6) {
             HStack(spacing: 0) {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, _ in
-                    Group {
+                    HStack(spacing: 0) {
+                        Rectangle()
+                            .fill(i == 0 ? Color.clear : (i - 1 < currentStep ? Theme.primary : Theme.divider))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 2)
                         ZStack {
                             Circle()
                                 .fill(i <= currentStep ? Theme.primary : Color.clear)
@@ -205,10 +227,12 @@ struct OrderDetailView: View {
                             }
                         }
                         .frame(width: 22, height: 22)
-                        if i < steps.count - 1 {
-                            Rectangle().fill(i < currentStep ? Theme.primary : Theme.divider).frame(height: 2)
-                        }
+                        Rectangle()
+                            .fill(i == steps.count - 1 ? Color.clear : (i < currentStep ? Theme.primary : Theme.divider))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 2)
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
             HStack(alignment: .top, spacing: 0) {
