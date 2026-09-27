@@ -430,10 +430,10 @@ struct SettingsView: View {
                         Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                             .font(.system(size: 13)).foregroundColor(Theme.success)
                     } else {
-                        Text("Chưa khai ngày sinh").font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                        Text("Chưa có ngày sinh").font(.system(size: 13)).foregroundColor(Theme.textFaint)
                     }
                     Spacer()
-                    Button(ngaySinhInfo?.ngaySinh == nil ? "Khai ngay" : "Sửa") { showDobPicker = true }
+                    Button(ngaySinhInfo?.ngaySinh == nil ? "Nhập ngay" : "Sửa") { showDobPicker = true }
                         .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
                 }
             } else {
