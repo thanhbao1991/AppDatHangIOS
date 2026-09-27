@@ -420,14 +420,18 @@ struct SettingsView: View {
                 // DatePicker tự hiện đúng ngày đã khai (prefill ở load()) nên KHÔNG cần thêm dòng
                 // "Đã khai: ..." riêng nữa — trước đây hiện cả 2 (Label tĩnh + DatePicker) trông trùng
                 // lặp/thừa (feedback: "kết hợp làm 1").
-                // .labelsHidden() + Spacer đẩy nút "Lưu" ra sát mép phải — trước đây DatePicker giữ
-                // label "Ngày sinh của bạn" nên tự giãn chiếm hết chỗ trong HStack, đẩy Button ra khỏi
-                // vùng nhìn thấy được của card (feedback: "ko thấy nút Lưu, bấm tùm bậy thì nó lưu" —
-                // thực ra là bấm trúng đúng nút nhưng nút bị đẩy lệch/che nên không NHÌN THẤY nút).
+                // .wheel thay cho style mặc định (.compact) — trước đây bấm vào mở lịch dạng LƯỚI
+                // NGÀY-TRONG-THÁNG (graphical), phải bấm header "tháng 9 năm 1991" thêm 1 lần mới ra
+                // được bộ chọn nhanh, rất khó chọn năm sinh xa (feedback kèm ảnh chụp 2026-09-27:
+                // "cho calendar hiển thị ngày tháng năm, bỏ qua calendar lịch trong tháng"). Wheel hiện
+                // sẵn 3 cột ngày/tháng/năm cuộn thẳng, không qua bước lịch lưới nào cả.
+                DatePicker("", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                    .labelsHidden()
+                    .datePickerStyle(.wheel)
+                    .frame(maxHeight: 140)
+                    .clipped()
+                    .environment(\.locale, Locale(identifier: "vi_VN"))
                 HStack {
-                    DatePicker("", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
-                        .labelsHidden()
-                        .environment(\.locale, Locale(identifier: "vi_VN"))
                     Spacer()
                     Button {
                         Task { await xacNhanNgaySinh() }
