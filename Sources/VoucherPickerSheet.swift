@@ -14,6 +14,14 @@ struct VoucherPickerSheet: View {
     /// xuống không làm mất lựa chọn đã áp dụng trước đó.
     @State private var pending: Voucher?
 
+    /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện (mờ) xuống dưới — feedback
+    /// 2026-09-27: trước đây giữ nguyên thứ tự server trả (mới tạo lên đầu) khiến voucher khả dụng
+    /// bị chôn dưới hàng loạt voucher mờ. `sorted` ổn định (stable) nên thứ tự BÊN TRONG mỗi nhóm vẫn
+    /// giữ nguyên như server trả về.
+    private var sortedVouchers: [Voucher] {
+        vouchers.sorted { duDieuKien($0) && !duDieuKien($1) }
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -21,7 +29,7 @@ struct VoucherPickerSheet: View {
                 // bấm "Áp dụng" để xác nhận. Hiện TẤT CẢ voucher (kể cả chưa đủ điều kiện Size L/
                 // topping) — mờ đi thay vì ẩn hẳn để khách biết có voucher đang chờ, tạo động lực thêm
                 // món vào giỏ cho đủ điều kiện.
-                ForEach(vouchers) { v in
+                ForEach(sortedVouchers) { v in
                     let ok = duDieuKien(v)
                     cardRow {
                         Button {
