@@ -78,14 +78,14 @@ struct GioHangView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                    if coGiamGia {
-                        HStack(spacing: 6) {
-                            Text(formatTien(cart.totalPrice)).font(.system(size: 12)).foregroundColor(Theme.textFaint).strikethrough()
-                            Text(formatTien(tongSauGiam)).font(.system(size: 18, weight: .bold))
-                        }
-                    } else {
-                        Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
-                    }
+                    // Hiệu ứng số tiền tự đếm giảm dần khi áp voucher/đổi Xu (contentTransition
+                    // .numericText, iOS 16+) đã tự nói lên "có giảm giá" qua animation, nên KHÔNG
+                    // cần hiện thêm giá gốc gạch ngang bên cạnh nữa (feedback 2026-09-27) — chỉ còn
+                    // đúng 1 số duy nhất.
+                    Text(formatTien(tongSauGiam))
+                        .font(.system(size: 18, weight: .bold))
+                        .contentTransition(.numericText(countsDown: true))
+                        .animation(.default, value: tongSauGiam)
                 }
                 Spacer()
                 Button {
@@ -113,8 +113,6 @@ struct GioHangView: View {
     /// cùng — nhưng đủ để khách THẤY rõ bật Xu có trừ tiền, đúng phản hồi "bật xu chưa thấy trừ tiền".
     private var xuGiam: Double { cart.dungXu ? min(cart.soDuXu, tongSauVoucher) : 0 }
     private var tongSauGiam: Double { max(tongSauVoucher - xuGiam, 0) }
-    private var coGiamGia: Bool { voucherGiam > 0 || xuGiam > 0 }
-
     /// Bố cục tham khảo ShopeeFood (2026-09-27): 1 dòng bo góc riêng "Đã áp dụng voucher" mở sheet
     /// chọn voucher, tách hẳn khỏi dòng "Dùng Xu" bên dưới thay vì gộp chung 1 card như bản cũ — Xu
     /// luôn hiện, không phụ thuộc đã chọn voucher hay chưa. Toggle Xu disable khi số dư = 0.
