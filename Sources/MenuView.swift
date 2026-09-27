@@ -49,9 +49,9 @@ struct MenuView: View {
     /// chiếm chỗ cột trái.
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
-    /// Emoji dự phòng cho từng nhóm — dùng khi nhóm không có món nào có ảnh thật (xem
-    /// nhomImageUrls/nhomAvatar bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Gom về
-    /// Theme.nhomIcons/defaultNhomIcon (dùng chung với CheckoutView.itemThumbnail).
+    /// Emoji đại diện từng nhóm — thử đổi sang ảnh món thật (2026-09-27) nhưng revert lại ngay vì
+    /// không ổn (feedback), giữ nguyên emoji tĩnh. Gom về Theme.nhomIcons/defaultNhomIcon (dùng chung
+    /// với CheckoutView.itemThumbnail).
     private static let yeuThichNhomId = "yeu-thich"
 
     /// Chiều cao CỐ ĐỊNH dùng chung cho hàng nhóm bên sidebar (nhomSidebar) VÀ header nhóm bên cột
@@ -288,7 +288,8 @@ struct MenuView: View {
     /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 6) {
-            nhomAvatar(nhom, size: 24)
+            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
+                .font(.system(size: 14))
             Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
             Spacer()
             if !items.isEmpty {
@@ -370,37 +371,6 @@ struct MenuView: View {
             return Theme.defaultNhomIcon
         }
         return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
-    }
-
-    /// nhomId → URL ảnh món có ảnh thật trong nhóm đó, quét từ CUỐI danh sách lên (theo yêu cầu:
-    /// "hình món đầu tiên dưới lên") — dùng làm "ảnh đại diện" của nhóm ở sectionHeader, ưu tiên hơn
-    /// emoji (Theme.nhomIcons chỉ còn dùng khi nhóm không có món nào có ảnh). Tính 1 lần cho toàn bộ
-    /// `sections` thay vì lặp lại vòng lặp tìm ảnh mỗi lần render từng row.
-    private var nhomImageUrls: [String: URL] {
-        var result: [String: URL] = [:]
-        for section in sections {
-            for item in section.items.reversed() {
-                if let hinhAnh = item.hinhAnh, !hinhAnh.isEmpty, let url = URL(string: hinhAnh) {
-                    result[section.nhom.id] = url
-                    break
-                }
-            }
-        }
-        return result
-    }
-
-    /// Avatar tròn của 1 nhóm — ảnh món thật nếu nhóm có, không thì rơi về emoji (Theme.nhomIcons).
-    @ViewBuilder
-    private func nhomAvatar(_ nhom: NhomSanPham, size: CGFloat) -> some View {
-        if let url = nhomImageUrls[nhom.id] {
-            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                .frame(width: size, height: size)
-                .clipShape(Circle())
-        } else {
-            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                .font(.system(size: size * 0.62))
-                .frame(width: size, height: size)
-        }
     }
 
     @ViewBuilder
