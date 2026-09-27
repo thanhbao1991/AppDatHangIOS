@@ -415,20 +415,20 @@ struct SettingsView: View {
                 Text("Đã lưu, không tự sửa lại được. Nếu nhập sai, liên hệ quán để nhân viên chỉnh giúp.")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
             } else {
-                Text("Khai ngày sinh để nhận voucher sinh nhật mỗi năm 🎂")
-                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
-                    .environment(\.locale, Locale(identifier: "vi_VN"))
+                HStack {
+                    DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "vi_VN"))
+                    Button {
+                        Task { await xacNhanNgaySinh() }
+                    } label: {
+                        if savingDob { ProgressView() } else { Text("Lưu") }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(savingDob)
+                }
                 if let dobError {
                     Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)
                 }
-                Button {
-                    Task { await xacNhanNgaySinh() }
-                } label: {
-                    if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
-                }
-                .buttonStyle(.bordered)
-                .disabled(savingDob)
             }
         }
     }
