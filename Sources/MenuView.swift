@@ -50,7 +50,7 @@ struct MenuView: View {
     private static let nhomGomChung: Set<String> = ["Ăn Vặt", "Khác", "Nước Lon", "Thuốc lá"]
 
     /// Emoji dự phòng cho từng nhóm — dùng khi nhóm không có món nào có ảnh thật (xem
-    /// nhomImageUrl/pickNhomImages bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Gom về
+    /// nhomImageUrls/nhomAvatar bên dưới, ưu tiên hiện ảnh món thật hơn emoji). Gom về
     /// Theme.nhomIcons/defaultNhomIcon (dùng chung với CheckoutView.itemThumbnail).
     private static let yeuThichNhomId = "yeu-thich"
 
@@ -288,8 +288,7 @@ struct MenuView: View {
     /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 6) {
-            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                .font(.system(size: 14))
+            nhomAvatar(nhom, size: 24)
             Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
             Spacer()
             if !items.isEmpty {
@@ -326,10 +325,11 @@ struct MenuView: View {
                         Button {
                             onTap(section.nhom.id)
                         } label: {
-                            HStack(spacing: 6) {
+                            HStack(spacing: 4) {
                                 Rectangle()
                                     .fill(isSelected ? Theme.primary : Color.clear)
                                     .frame(width: 3)
+                                nhomAvatar(section.nhom, size: 20)
                                 // "#" ghép liền chữ đầu bằng Text concatenation (+) thay vì Text
                                 // riêng có .frame(width:) — frame cố định tạo khoảng trắng 2 bên "#"
                                 // làm mất cảm giác hashtag dính liền kiểu "#BạcXỉu".
@@ -371,6 +371,37 @@ struct MenuView: View {
             return Theme.defaultNhomIcon
         }
         return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
+    }
+
+    /// nhomId → URL ảnh món ĐẦU TIÊN có ảnh thật trong nhóm đó — dùng làm "ảnh đại diện" của nhóm ở
+    /// sidebar/sectionHeader, ưu tiên hơn emoji (Theme.nhomIcons chỉ còn dùng khi nhóm không có món
+    /// nào có ảnh). Tính 1 lần cho toàn bộ `sections` thay vì lặp lại vòng lặp tìm ảnh mỗi lần render
+    /// từng row.
+    private var nhomImageUrls: [String: URL] {
+        var result: [String: URL] = [:]
+        for section in sections {
+            for item in section.items {
+                if let hinhAnh = item.hinhAnh, !hinhAnh.isEmpty, let url = URL(string: hinhAnh) {
+                    result[section.nhom.id] = url
+                    break
+                }
+            }
+        }
+        return result
+    }
+
+    /// Avatar tròn của 1 nhóm — ảnh món thật nếu nhóm có, không thì rơi về emoji (Theme.nhomIcons).
+    @ViewBuilder
+    private func nhomAvatar(_ nhom: NhomSanPham, size: CGFloat) -> some View {
+        if let url = nhomImageUrls[nhom.id] {
+            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+        } else {
+            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
+                .font(.system(size: size * 0.62))
+                .frame(width: size, height: size)
+        }
     }
 
     @ViewBuilder
