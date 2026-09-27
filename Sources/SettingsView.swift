@@ -111,7 +111,6 @@ struct SettingsView: View {
                 },
                 onCancel: { showDiaChiForm = false }
             )
-            .presentationDetents([.medium])
         }
     }
 
