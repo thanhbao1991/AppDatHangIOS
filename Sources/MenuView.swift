@@ -282,69 +282,22 @@ struct MenuView: View {
     }
 
     /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
-    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Gộp luôn "bốc ngẫu
-    /// nhiên" vào chung header (thay vì 1 row riêng bên dưới như trước) — cùng icon nhóm, bấm
-    /// thẳng vào cả header là bốc random 1 món trong nhóm. Rỗng (mục Yêu thích lúc chưa có món
-    /// hay mua) thì hiện tên nhóm trơn, không bấm được.
+    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Trơn, không bấm được —
+    /// đã BỎ nút "Chọn ngẫu nhiên" nổi bật (feedback 2026-09-27: không cần làm nổi bật nữa) từng gộp
+    /// vào đây, `items` giờ chỉ còn dùng để giữ chữ ký hàm khớp nơi gọi, không còn ảnh hưởng hiển thị.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
-        Group {
-            if items.isEmpty {
-                HStack(spacing: 6) {
-                    Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                        .font(.system(size: 14))
-                    Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
-                // Color đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi
-                // đè lên nội dung đã cuộn qua bên dưới; nền mờ/trong suốt để lộ nội dung đó xuyên
-                // qua, gây chồng lấn/nhoè (đã thấy qua ảnh chụp thật).
-                .background(Color(.secondarySystemGroupedBackground))
-            } else {
-                Button {
-                    picking = items.randomElement()
-                } label: {
-                    // Card full-width, KHÔNG ôm sát nội dung nữa — pill phải nằm cố định 1 vị trí
-                    // (mép phải) xuyên suốt mọi nhóm khi cuộn, quan trọng hơn việc tránh khoảng
-                    // trống co giãn giữa tên nhóm ngắn/dài và pill (chấp nhận đánh đổi).
-                    HStack(spacing: 10) {
-                        Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                            .font(.system(size: 16))
-                            .frame(width: 30, height: 30)
-                            .background(Theme.primaryTint)
-                            .clipShape(Circle())
-                        // Tên nhóm làm nhãn card, không .uppercased() — chữ hoa toàn bộ đọc như
-                        // tên danh mục hơn là lời mời bấm. Hành động thật dồn vào pill bên phải.
-                        Text(nhom.ten)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Theme.primary)
-                            .lineLimit(1)
-                        Spacer(minLength: 8)
-                        // Pill nêu đúng hành động — thay icon shuffle đơn thuần trước đây, để
-                        // nhìn là ra ngay 1 nút bấm thật.
-                        Text("Chọn ngẫu nhiên")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                            .fixedSize()
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .background(Theme.primaryGradient)
-                            .clipShape(Capsule())
-                    }
-                    .padding(.horizontal, 16)
-                    // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn được
-                    // tự ép full-width theo hàng như List, phải tự khai để nền phủ hết chiều ngang.
-                    .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
-                    // Nền tint fill sát mép luôn (không còn card nổi thụt lề/bo góc/shadow như
-                    // trước) — tint khác hẳn nền trắng của list món phía dưới là đủ để phân biệt,
-                    // không cần thêm lớp viền.
-                    .background(Theme.primaryTint)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
+        HStack(spacing: 6) {
+            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
+                .font(.system(size: 14))
+            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+            Spacer()
         }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
+        // Color đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi đè lên
+        // nội dung đã cuộn qua bên dưới; nền mờ/trong suốt để lộ nội dung đó xuyên qua, gây chồng
+        // lấn/nhoè (đã thấy qua ảnh chụp thật).
+        .background(Color(.secondarySystemGroupedBackground))
     }
 
     /// Cột trái: danh sách nhóm cố định — bấm thì báo `onTap` để cột phải tự cuộn tới đúng section

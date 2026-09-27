@@ -62,14 +62,13 @@ struct CheckoutView: View {
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
-    /// Trần 50% đơn thêm 2026-09-23 — khớp DatHangService.DatMonAsync bên backend (chặn lỗ hổng dùng
-    /// Xu trả 100% để farm thưởng "đơn thành công +1 lượt quay" mà không cần tiền thật). Luôn còn ít
-    /// nhất 50% phải trả bằng COD/chuyển khoản, nên xuTraDu bên dưới không bao giờ còn true nữa.
-    private var soTienDungXu: Double { cart.dungXu ? min(soDu, tongCanTra * 0.5) : 0 }
+    /// Trần 50% (thêm 2026-09-23, chặn farm "đơn thành công +1 lượt quay" bằng Xu trả đủ 100%) đã BỎ
+    /// theo yêu cầu 2026-09-27 — khớp DatHangService.DatMonAsync bên backend, Xu giờ trả được tối đa
+    /// 100% đơn.
+    private var soTienDungXu: Double { cart.dungXu ? min(soDu, tongCanTra) : 0 }
     private var conLaiPhaiTra: Double { tongCanTra - soTienDungXu }
     /// Xu trả đủ 100% đơn — ẩn hẳn card Hình thức thanh toán (không còn gì phải chọn COD/QR nữa) và
     /// điều hướng sau khi đặt giống COD (không có QR để quét vì không còn tiền phải chuyển khoản).
-    /// Giữ nguyên logic (không xoá) dù giờ luôn false với trần 50% — phòng khi trần đổi lại sau này.
     private var xuTraDu: Bool { cart.dungXu && tongCanTra > 0 && soTienDungXu >= tongCanTra }
 
     var body: some View {
@@ -128,12 +127,14 @@ struct CheckoutView: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(Theme.primary)
-                        .frame(width: 44, height: 44, alignment: .leading)
+                        .frame(width: 44, height: 44, alignment: .center)
                 }
                 Spacer()
             }
         }
-        .padding(.horizontal, 4)
+        // Icon căn .center trong ô 44x44 (trước .leading khiến icon dính sát mép trái, cộng padding
+        // ngang 4 quá mỏng — feedback 2026-09-27 "nút back lệch sát mép") + tăng padding ngang lên 8.
+        .padding(.horizontal, 8)
         .frame(height: 44)
         .background(Color.white)
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .bottom)

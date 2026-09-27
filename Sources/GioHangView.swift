@@ -107,11 +107,11 @@ struct GioHangView: View {
     /// này không biết ship vì địa chỉ chọn ở bước Thanh toán).
     private var tongSauVoucher: Double { max(cart.totalPrice - voucherGiam, 0) }
 
-    /// Số Xu THỰC SỰ trừ được nếu bật "Dùng Xu" — trần 50% khớp DatHangService.DatMonAsync/
-    /// CheckoutView.soTienDungXu bên backend (chặn farm thưởng bằng Xu trả đủ 100%). Thiếu phí ship
-    /// (chưa có ở bước Giỏ hàng) nên đây là số ước lượng, Thanh toán mới là số cuối cùng — nhưng đủ để
-    /// khách THẤY rõ bật Xu có trừ tiền, đúng phản hồi "bật xu chưa thấy trừ tiền".
-    private var xuGiam: Double { cart.dungXu ? min(cart.soDuXu, tongSauVoucher * 0.5) : 0 }
+    /// Số Xu THỰC SỰ trừ được nếu bật "Dùng Xu" — khớp DatHangService.DatMonAsync/
+    /// CheckoutView.soTienDungXu bên backend (trần 50% đã bỏ 2026-09-27, Xu trả tối đa 100% đơn).
+    /// Thiếu phí ship (chưa có ở bước Giỏ hàng) nên đây là số ước lượng, Thanh toán mới là số cuối
+    /// cùng — nhưng đủ để khách THẤY rõ bật Xu có trừ tiền, đúng phản hồi "bật xu chưa thấy trừ tiền".
+    private var xuGiam: Double { cart.dungXu ? min(cart.soDuXu, tongSauVoucher) : 0 }
     private var tongSauGiam: Double { max(tongSauVoucher - xuGiam, 0) }
     private var coGiamGia: Bool { voucherGiam > 0 || xuGiam > 0 }
 

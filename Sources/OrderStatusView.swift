@@ -98,10 +98,15 @@ struct OrderStatusView: View {
             HStack(alignment: .top, spacing: 12) {
                 firstItemImage(item)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.tenMonSummary)
-                        .font(.system(size: 14))
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
+                    // Mỗi món 1 dòng riêng (feedback 2026-09-27) thay vì gộp chung 1 dòng theo
+                    // tenMonSummary server join sẵn bằng ", " — dễ đọc hơn khi đơn có nhiều món/size
+                    // khác nhau, khỏi phải soi dấu phẩy để tách từng món.
+                    ForEach(item.items) { it in
+                        Text("\(it.soLuong)x \(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                    }
                     HStack(spacing: 4) {
                         Text(phanLoaiLine(item)).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
                         Spacer(minLength: 8)
