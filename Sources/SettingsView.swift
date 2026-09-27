@@ -93,18 +93,20 @@ struct SettingsView: View {
         } message: {
             Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
         }
-        .alert(diaChiEditingId == nil ? "Thêm địa chỉ" : "Sửa địa chỉ", isPresented: $showDiaChiForm) {
-            TextField("Địa chỉ giao hàng", text: $diaChiFormText)
-            Button("Lưu") {
-                let text = diaChiFormText.trimmingCharacters(in: .whitespaces)
-                guard !text.isEmpty else { return }
-                if let id = diaChiEditingId {
-                    Task { await suaDiaChi(id, diaChi: text) }
-                } else {
-                    Task { await themDiaChi(text) }
-                }
-            }
-            Button("Huỷ", role: .cancel) {}
+        .sheet(isPresented: $showDiaChiForm) {
+            DiaChiFormSheet(
+                initialText: diaChiFormText,
+                isEditing: diaChiEditingId != nil,
+                onSave: { text in
+                    showDiaChiForm = false
+                    if let id = diaChiEditingId {
+                        Task { await suaDiaChi(id, diaChi: text) }
+                    } else {
+                        Task { await themDiaChi(text) }
+                    }
+                },
+                onCancel: { showDiaChiForm = false }
+            )
         }
     }
 

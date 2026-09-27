@@ -439,38 +439,15 @@ struct CheckoutView: View {
         tenDuongs = await APIClient.shared.getTenDuongList()
     }
 
-    /// Khớp TenDuongBox bên Desktop: số nhà + ký tự phụ (vd "12A", "12/3B") + dấu ngăn cách phía sau
-    /// — phần CÒN LẠI sau prefix này mới là fragment để so khớp/thay thế tên đường.
-    private static let houseNumberPrefixRegex = try! NSRegularExpression(pattern: "^\\d+[A-Za-z]{0,2}(/\\d+[A-Za-z]{0,2})?[\\s.,-]*")
-
-    private static func houseNumberPrefixRange(in text: String) -> Range<String.Index>? {
-        let range = NSRange(text.startIndex..., in: text)
-        guard let m = houseNumberPrefixRegex.firstMatch(in: text, range: range) else { return nil }
-        return Range(m.range, in: text)
-    }
-
-    private func streetFragment(_ text: String) -> String {
-        guard let r = Self.houseNumberPrefixRange(in: text) else { return text }
-        return String(text[r.upperBound...])
-    }
-
-    private func housePrefix(_ text: String) -> String {
-        guard let r = Self.houseNumberPrefixRange(in: text) else { return "" }
-        return String(text[..<r.upperBound])
-    }
-
+    // Logic gợi ý tên đường (tách số nhà, so khớp fragment) dùng chung qua DiaChiSuggestion.swift —
+    // SettingsView (Thêm/Sửa địa chỉ tab Tài khoản) cũng dùng lại đúng hàm này.
     private var diaChiSuggestions: [String] {
         guard diaChiFocused else { return [] }
-        let fragment = streetFragment(diaChi).trimmingCharacters(in: .whitespaces)
-        guard !fragment.isEmpty else { return [] }
-        let norm = normalizeVN(fragment)
-        let matches = tenDuongs.map(\.ten).filter { normalizeVN($0).contains(norm) }
-        if matches.count == 1 && normalizeVN(matches[0]) == norm { return [] }
-        return Array(matches.prefix(8))
+        return DiaChiSuggestion.matches(for: diaChi, in: tenDuongs)
     }
 
     private func selectTenDuong(_ ten: String) {
-        diaChi = housePrefix(diaChi) + ten
+        diaChi = DiaChiSuggestion.apply(ten, to: diaChi)
     }
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
