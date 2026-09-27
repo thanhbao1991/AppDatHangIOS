@@ -19,6 +19,9 @@ struct OrderStatusView: View {
     // (bấm lại mục đang chọn không còn tác dụng, vì 4 nhóm đã phủ hết mọi đơn nên "tất cả" = phải
     // xem lần lượt từng tab, không cần thêm 1 view rời).
     @State private var filter: NhomDonHang = .dangXuLy
+    /// Chỉ tự chọn tab mặc định 1 LẦN ở lần load đầu — poll/refresh sau đó không được tự nhảy tab
+    /// trong lúc khách đang xem, dù đơn ở tab hiện tại vừa rỗng đi.
+    @State private var filterInitialized = false
 
     private var filteredOrders: [DonHangKhach] {
         orders.filter { $0.trangThai.nhom == filter }
@@ -250,6 +253,15 @@ struct OrderStatusView: View {
         if !silent { loading = true }
         let result = await APIClient.shared.getDonCuaToi()
         orders = result
+        // Mặc định mở tab CÓ DỮ LIỆU đầu tiên tính từ trái qua (theo thứ tự NhomDonHang.allCases:
+        // Đang xử lý/Đang giao/Đã giao/Đã huỷ) thay vì luôn cứng "Đang xử lý" dù tab đó rỗng, khách
+        // khỏi phải tự bấm qua tab khác mới thấy đơn (feedback 2026-09-27).
+        if !filterInitialized {
+            filterInitialized = true
+            if let firstWithData = NhomDonHang.allCases.first(where: { nhom in orders.contains { $0.trangThai.nhom == nhom } }) {
+                filter = firstWithData
+            }
+        }
         loading = false
     }
 

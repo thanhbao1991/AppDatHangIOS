@@ -228,24 +228,27 @@ struct GioHangView: View {
         editingItem = item
     }
 
-    /// Sửa size/topping/ghi chú: chạm vào phần TÊN món (mở sheet sửa). Sửa NHANH số lượng: dùng luôn
-    /// bộ +/- ở góc phải (tham khảo Long Châu, 2026-09-27) — không cần mở sheet chỉ để đổi số lượng
-    /// nữa. Nút +/- cần .contentShape(Rectangle())+.buttonStyle(.plain) để thắng .onTapGesture của
-    /// view cha (cùng bài học nút X bản cũ, đã xác nhận qua test thật).
+    /// Sửa size/topping/ghi chú: chạm vào ẢNH hoặc phần TÊN món (mở sheet sửa) — trước đây chỉ vùng
+    /// tên bắt được chạm, bấm trúng ảnh không phản hồi gì (feedback 2026-09-27). Sửa NHANH số lượng:
+    /// dùng luôn bộ +/- ở góc phải (tham khảo Long Châu) — không cần mở sheet chỉ để đổi số lượng nữa.
+    /// Nút +/- cần .contentShape(Rectangle())+.buttonStyle(.plain) để thắng .onTapGesture của view cha
+    /// (cùng bài học nút X bản cũ, đã xác nhận qua test thật).
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            itemThumbnail(item)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                if !item.toppings.isEmpty {
-                    Text(item.toppings.map { t in
-                        let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
-                        return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
-                    }.joined(separator: ", "))
-                        .font(.system(size: 12)).foregroundColor(Theme.primary)
-                }
-                if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+            HStack(alignment: .top, spacing: 10) {
+                itemThumbnail(item)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    if !item.toppings.isEmpty {
+                        Text(item.toppings.map { t in
+                            let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
+                            return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
+                        }.joined(separator: ", "))
+                            .font(.system(size: 12)).foregroundColor(Theme.primary)
+                    }
+                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                    }
                 }
             }
             // KHÔNG làm mờ cả dòng theo loadingCatalog nữa — tên/số lượng/giá của dòng giỏ lấy thẳng
