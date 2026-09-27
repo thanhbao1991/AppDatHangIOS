@@ -22,6 +22,9 @@ struct OrderStatusView: View {
     /// Chỉ tự chọn tab mặc định 1 LẦN ở lần load đầu — poll/refresh sau đó không được tự nhảy tab
     /// trong lúc khách đang xem, dù đơn ở tab hiện tại vừa rỗng đi.
     @State private var filterInitialized = false
+    /// Đơn đang mở sheet đánh giá — mở NGAY từ card, không bắt vào Chi tiết đơn hàng mới đánh giá
+    /// được (feedback 2026-09-28), xem DanhGiaSheet.swift.
+    @State private var danhGiaTarget: DonHangKhach?
 
     private var filteredOrders: [DonHangKhach] {
         orders.filter { $0.trangThai.nhom == filter }
@@ -71,6 +74,16 @@ struct OrderStatusView: View {
             Button("OK") {}
         } message: {
             Text(alertMessage?.message ?? "")
+        }
+        .sheet(item: $danhGiaTarget) { item in
+            DanhGiaSheet(
+                hoaDonId: item.id,
+                onDone: { _ in
+                    danhGiaTarget = nil
+                    Task { await load(silent: true) }
+                },
+                onCancel: { danhGiaTarget = nil }
+            )
         }
     }
 
@@ -215,7 +228,7 @@ struct OrderStatusView: View {
             }
             Spacer()
             if item.trangThai == .hoanTat && !item.daDanhGia && isLastOrder(item) {
-                actionButton("⭐ Đánh giá", filled: true) { path.append(.detail(item)) }
+                actionButton("⭐ Đánh giá", filled: true) { danhGiaTarget = item }
             } else if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }

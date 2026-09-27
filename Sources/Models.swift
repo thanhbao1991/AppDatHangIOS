@@ -373,6 +373,9 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     let ngayHoanTat: String?
     let daDanhGia: Bool
     let soSaoDaDanh: Int?
+    // Thực tế đã thu bằng chuyển khoản hay không (nil = chưa thu đồng nào) — KHÁC "hình thức thanh
+    // toán" khách tự khai lúc đặt đơn (gắn tiền tố vào ghiChu, có thể lệch thực tế lúc thu tiền).
+    let daThuBangChuyenKhoan: Bool?
 }
 
 // ---- Địa chỉ ----

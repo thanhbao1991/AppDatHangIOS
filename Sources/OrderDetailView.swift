@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Port từ OrderDetailScreen.tsx — timeline trạng thái, danh sách món, tổng kết tiền, huỷ/đặt lại/
-/// đánh giá đơn.
+/// Port từ OrderDetailScreen.tsx — timeline trạng thái, danh sách món, tổng kết tiền, huỷ/đặt lại.
+/// Đánh giá đơn đã chuyển hẳn sang DanhGiaSheet mở thẳng từ card OrderStatusView (feedback
+/// 2026-09-28: "ko cần thiết phải vào chi tiết hoá đơn để đánh giá") — trang này không còn phần đó.
 struct OrderDetailView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var donHangPath: [DonHangRoute]
@@ -11,11 +12,6 @@ struct OrderDetailView: View {
 
     @State var order: DonHangKhach
 
-    @State private var daDanhGia = false
-    @State private var soSaoDaDanh = 0
-    @State private var pickSao = 0
-    @State private var nhanXet = ""
-    @State private var dangGui = false
     @State private var dangHuy = false
     @State private var showHuyConfirm = false
     @State private var alertMessage: (title: String, message: String)?
@@ -73,16 +69,20 @@ struct OrderDetailView: View {
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(Theme.primaryTint).clipShape(Capsule())
                     }
+                    // Sắp lại hàng món (feedback 2026-09-28): số lượng đi NGAY SAU tên món (cùng 1
+                    // dòng, kiểu "Cà Phê Muối x2") thay vì tách riêng góc phải; số tiền chuyển LÊN
+                    // GÓC TRÊN PHẢI thay đúng chỗ số lượng cũ, bỏ hẳn dòng giá riêng bên dưới.
                     VStack(spacing: 0) {
                         ForEach(Array(order.items.enumerated()), id: \.element.id) { index, it in
                             HStack(alignment: .top, spacing: 10) {
                                 itemThumbnail(it)
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(alignment: .top, spacing: 6) {
-                                        Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))")
+                                        Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe)) x\(it.soLuong)")
                                             .font(.system(size: 15, weight: .bold))
                                         Spacer(minLength: 6)
-                                        Text("x\(it.soLuong)").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                                        Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) })))
+                                            .font(.system(size: 15, weight: .bold))
                                     }
                                     if !it.toppings.isEmpty {
                                         Text("+ " + it.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
@@ -90,7 +90,6 @@ struct OrderDetailView: View {
                                     if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
                                         Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
                                     }
-                                    Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
                                 }
                             }
                             .padding(.vertical, 10)
@@ -104,13 +103,19 @@ struct OrderDetailView: View {
                     Text("Thông tin thanh toán").font(.system(size: 15, weight: .bold))
                     // Hình thức thanh toán chuyển vào ĐÂY (feedback 2026-09-28: "chưa thể hiện khách
                     // thanh toán tiền mặt hay chuyển khoản") — hợp lý hơn khi đứng cạnh Tổng tiền/Đã
-                    // thu/CÒN LẠI thay vì ở mục "Thông tin nhận hàng" như bản trước.
-                    if let httt = hinhThucThanhToanText {
+                    // thu/CÒN LẠI thay vì ở mục "Thông tin nhận hàng" như bản trước. Ưu tiên sự thật đã
+                    // thu (hinhThucThanhToanHienThi) hơn dự định ban đầu của khách.
+                    if let httt = hinhThucThanhToanHienThi {
                         iconRow("creditcard.fill", "Hình thức thanh toán", httt)
                     }
                     infoRow("Tổng tiền", order.tongTien)
-                    if order.giamGia > 0 { infoRow("Giảm giá", order.giamGia) }
-                    infoRow("Thành tiền", order.thanhTien)
+                    // Giảm giá = 0 thì Tổng tiền và Thành tiền LUÔN bằng nhau — bớt hẳn dòng "Thành
+                    // tiền" trùng lặp trong trường hợp đó (feedback 2026-09-28: "nếu tổng tiền và
+                    // thành tiền bằng nhau thì nên bớt đi 1 dòng").
+                    if order.giamGia > 0 {
+                        infoRow("Giảm giá", order.giamGia)
+                        infoRow("Thành tiền", order.thanhTien)
+                    }
                     infoRow("Đã thu", order.daThu)
                     Divider()
                     HStack {
@@ -136,10 +141,6 @@ struct OrderDetailView: View {
                 }
                 .padding(.top, 14)
 
-                if order.trangThai == .hoanTat {
-                    Divider().padding(.top, 14)
-                    section { danhGiaSection }
-                }
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
@@ -153,10 +154,6 @@ struct OrderDetailView: View {
                 Button("Đặt lại") { datLai() }
                     .font(.system(size: 15, weight: .semibold))
             }
-        }
-        .onAppear {
-            daDanhGia = order.daDanhGia
-            soSaoDaDanh = order.soSaoDaDanh ?? 0
         }
         .task { await reload() }
         .confirmationDialog("Huỷ đơn \(order.maHoaDon)?", isPresented: $showHuyConfirm, titleVisibility: .visible) {
@@ -234,6 +231,19 @@ struct OrderDetailView: View {
         let sep = " — "
         if rest.hasPrefix(sep) { rest.removeFirst(sep.count) }
         return rest.isEmpty ? nil : rest
+    }
+
+    /// Ưu tiên SỰ THẬT đã thu (order.daThuBangChuyenKhoan — tính từ ChiTietHoaDonThanhToans thật,
+    /// xem DatHangService) hơn hẳn "hình thức thanh toán" khách tự khai lúc đặt đơn (hinhThucThanhToanText)
+    /// — feedback 2026-09-28: "Thông tin thanh toán chưa thể hiện tiền mặt hay chuyển khoản". Khách có
+    /// thể đổi ý lúc thu tiền thật (chọn QR nhưng trả tiền mặt tại quầy) nên 2 nguồn có thể lệch nhau,
+    /// đã thu thì lấy đúng cái đã xảy ra; CHƯA thu (daThuBangChuyenKhoan == nil) thì mới rơi về hiển thị
+    /// dự định ban đầu của khách.
+    private var hinhThucThanhToanHienThi: String? {
+        if let daCK = order.daThuBangChuyenKhoan {
+            return daCK ? "Chuyển khoản" : "Tiền mặt"
+        }
+        return hinhThucThanhToanText
     }
 
     /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
@@ -336,45 +346,10 @@ struct OrderDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private var danhGiaSection: some View {
-        // Bỏ hẳn "nhận 100 Xu" khỏi tiêu đề (feedback 2026-09-28: "Đánh giá thôi, ko hiển thị Nhận
-        // ngay 100 xu") — quà Xu vẫn cộng ở backend (DanhGiaDonThuong, DatHangService.cs) như cũ, chỉ
-        // không quảng cáo trước nữa.
-        Text("Đánh giá")
-            .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
-        if daDanhGia {
-            Text("Bạn đã đánh giá \(String(repeating: "⭐", count: soSaoDaDanh)) — Cảm ơn bạn!")
-        } else {
-            HStack {
-                ForEach(1...5, id: \.self) { n in
-                    Button { pickSao = n } label: {
-                        // Glyph "☆" mặc định quá mờ trên nền card xám (feedback 2026-09-24) — ép màu
-                        // rõ hơn thay vì để hệ thống tự chọn (foregroundColor mặc định nhạt gần trắng).
-                        Text(n <= pickSao ? "⭐" : "☆")
-                            .font(.system(size: 28))
-                            .foregroundColor(n <= pickSao ? nil : Theme.textMuted)
-                    }
-                }
-            }
-            TextField("Nhận xét (không bắt buộc)", text: $nhanXet).textFieldStyle(.roundedBorder).tint(Theme.primary)
-            Button {
-                Task { await guiDanhGia() }
-            } label: {
-                if dangGui { ProgressView().tint(.white) } else { Text("Gửi đánh giá").frame(maxWidth: .infinity) }
-            }
-            .buttonStyle(.gradientProminent).disabled(pickSao == 0 || dangGui)
-        }
-    }
-
     private func reload() async {
         let list = await APIClient.shared.getDonCuaToi()
         guard let moi = list.first(where: { $0.id == order.id }) else { return }
         order = moi
-        if moi.daDanhGia {
-            daDanhGia = true
-            soSaoDaDanh = moi.soSaoDaDanh ?? 0
-        }
     }
 
     private func huyDon() async {
@@ -392,16 +367,5 @@ struct OrderDetailView: View {
         cart.markDatLai()
         cartPath = []
         selectedTab = .cart
-    }
-
-    private func guiDanhGia() async {
-        guard pickSao > 0 else { return }
-        dangGui = true
-        defer { dangGui = false }
-        let result = await APIClient.shared.danhGiaDon(hoaDonId: order.id, soSao: pickSao, nhanXet: nhanXet.isEmpty ? nil : nhanXet)
-        if result.success {
-            daDanhGia = true
-            soSaoDaDanh = pickSao
-        }
     }
 }
