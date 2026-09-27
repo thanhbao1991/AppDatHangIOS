@@ -284,6 +284,23 @@ func normalizeVN(_ s: String) -> String {
         .trimmingCharacters(in: .whitespaces)
 }
 
+/// Text tiền tự "đếm chạy" qua từng số trung gian khi value đổi (vd 50.000đ → 49.999đ → 49.998đ →
+/// ... → 45.000đ) thay vì nhảy thẳng 1 phát — animatableData cho SwiftUI nội suy Double mượt qua
+/// nhiều khung hình, formatTien() làm tròn mỗi khung thành 1 số nguyên nên trông y hệt bộ đếm chạy
+/// số thật (feedback 2026-09-27: "làm theo kiểu số giảm dần á, 50000 49999 49998"). Dùng kèm
+/// `.animation(_:value:)` ở call site để kích hoạt nội suy mỗi khi value thay đổi.
+struct AnimatableTienText: View, Animatable {
+    var value: Double
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text(formatTien(value))
+    }
+}
+
 func formatTien(_ value: Double) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .decimal

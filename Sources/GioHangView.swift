@@ -78,14 +78,13 @@ struct GioHangView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                    // Hiệu ứng số tiền tự đếm giảm dần khi áp voucher/đổi Xu (contentTransition
-                    // .numericText, iOS 16+) đã tự nói lên "có giảm giá" qua animation, nên KHÔNG
-                    // cần hiện thêm giá gốc gạch ngang bên cạnh nữa (feedback 2026-09-27) — chỉ còn
-                    // đúng 1 số duy nhất.
-                    Text(formatTien(tongSauGiam))
+                    // Số tiền tự "đếm chạy" qua từng số trung gian khi áp voucher/đổi Xu (xem
+                    // AnimatableTienText — Theme.swift) đã tự nói lên "có giảm giá" qua animation, nên
+                    // KHÔNG cần hiện thêm giá gốc gạch ngang bên cạnh nữa (feedback 2026-09-27) — chỉ
+                    // còn đúng 1 số duy nhất.
+                    AnimatableTienText(value: tongSauGiam)
                         .font(.system(size: 18, weight: .bold))
-                        .contentTransition(.numericText(countsDown: true))
-                        .animation(.default, value: tongSauGiam)
+                        .animation(.easeOut(duration: 0.6), value: tongSauGiam)
                 }
                 Spacer()
                 Button {
