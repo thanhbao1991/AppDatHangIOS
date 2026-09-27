@@ -78,10 +78,10 @@ struct GioHangView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                    if voucherGiam > 0 {
+                    if coGiamGia {
                         HStack(spacing: 6) {
                             Text(formatTien(cart.totalPrice)).font(.system(size: 12)).foregroundColor(Theme.textFaint).strikethrough()
-                            Text(formatTien(cart.totalPrice - voucherGiam)).font(.system(size: 18, weight: .bold))
+                            Text(formatTien(tongSauGiam)).font(.system(size: 18, weight: .bold))
                         }
                     } else {
                         Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
@@ -103,15 +103,19 @@ struct GioHangView: View {
 
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: cart.totalPrice) }
 
-    /// Chọn voucher + dùng Xu NGAY tại Giỏ hàng (2026-09-27, tham khảo Long Châu) thay vì phải sang
-    /// CheckoutView mới thấy — state dùng chung qua CartStore nên CheckoutView tự khớp theo, không
-    /// cần đồng bộ lại lúc chuyển trang. Ẩn hẳn khối này nếu không có voucher nào đủ điều kiện VÀ
-    /// không có Xu để dùng, đỡ chiếm chỗ vô ích.
-    /// Voucher đã chọn được tính là 1 ưu đãi — app chỉ cho chọn TỐI ĐA 1 voucher/đơn (khác app tham
-    /// khảo có thể cộng dồn nhiều ưu đãi cùng lúc) nên luôn là 0 hoặc 1.
-    private var soUuDaiDaApDung: Int { cart.selectedVoucher != nil ? 1 : 0 }
+    /// Tổng tiền hàng sau khi trừ voucher — nền cho bước tính trừ Xu bên dưới (chưa gồm phí ship, màn
+    /// này không biết ship vì địa chỉ chọn ở bước Thanh toán).
+    private var tongSauVoucher: Double { max(cart.totalPrice - voucherGiam, 0) }
 
-    /// Bố cục tham khảo ShopeeFood (2026-09-27): 1 dòng bo góc riêng "Đã áp dụng N ưu đãi" mở sheet
+    /// Số Xu THỰC SỰ trừ được nếu bật "Dùng Xu" — trần 50% khớp DatHangService.DatMonAsync/
+    /// CheckoutView.soTienDungXu bên backend (chặn farm thưởng bằng Xu trả đủ 100%). Thiếu phí ship
+    /// (chưa có ở bước Giỏ hàng) nên đây là số ước lượng, Thanh toán mới là số cuối cùng — nhưng đủ để
+    /// khách THẤY rõ bật Xu có trừ tiền, đúng phản hồi "bật xu chưa thấy trừ tiền".
+    private var xuGiam: Double { cart.dungXu ? min(cart.soDuXu, tongSauVoucher * 0.5) : 0 }
+    private var tongSauGiam: Double { max(tongSauVoucher - xuGiam, 0) }
+    private var coGiamGia: Bool { voucherGiam > 0 || xuGiam > 0 }
+
+    /// Bố cục tham khảo ShopeeFood (2026-09-27): 1 dòng bo góc riêng "Đã áp dụng voucher" mở sheet
     /// chọn voucher, tách hẳn khỏi dòng "Dùng Xu" bên dưới thay vì gộp chung 1 card như bản cũ — Xu
     /// luôn hiện, không phụ thuộc đã chọn voucher hay chưa. Toggle Xu disable khi số dư = 0.
     @ViewBuilder
@@ -119,11 +123,18 @@ struct GioHangView: View {
         VStack(spacing: 10) {
             Button { showVoucherSheet = true } label: {
                 HStack {
-                    Text(soUuDaiDaApDung > 0 ? "Đã áp dụng \(soUuDaiDaApDung) ưu đãi" : "Chưa áp dụng ưu đãi")
-                        .font(.system(size: 14)).foregroundColor(Theme.textMuted)
+                    // Ghi rõ giá trị giảm ngay sau khi chọn (feedback 2026-09-27) thay vì chỉ đếm số
+                    // lượng ưu đãi trần trụi như bản trước.
+                    if voucherGiam > 0 {
+                        Text("Đã áp dụng voucher (-\(formatTien(voucherGiam)))")
+                            .font(.system(size: 14)).foregroundColor(Theme.textMuted)
+                    } else {
+                        Text("Chưa áp dụng voucher")
+                            .font(.system(size: 14)).foregroundColor(Theme.textMuted)
+                    }
                     Spacer()
                     HStack(spacing: 2) {
-                        Text("Thêm ưu đãi").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
+                        Text("Chọn voucher").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
                         Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                     }
                 }
@@ -138,8 +149,9 @@ struct GioHangView: View {
                 HStack(spacing: 8) {
                     Theme.xuIcon(22)
                     // 1 Xu = 1đ (quy đổi thẳng) — hiện cả 2 đơn vị để khách thấy rõ Xu quy ra tiền thật
-                    // bao nhiêu, khớp yêu cầu "xu ~ đ" thay vì chỉ hiện số dư trần trụi như bản cũ.
-                    Text("Đổi \(formatXu(cart.soDuXu)) (~\(formatTien(cart.soDuXu).replacingOccurrences(of: "đ", with: " đ")))")
+                    // bao nhiêu, khớp yêu cầu "xu ~ đ". Không chèn khoảng trắng trước "đ" (feedback
+                    // 2026-09-27) — formatTien đã tự ghép liền số+đ.
+                    Text("Đổi \(formatXu(cart.soDuXu)) (~\(formatTien(cart.soDuXu)))")
                         .font(.system(size: 14)).foregroundColor(.primary)
                 }
             }

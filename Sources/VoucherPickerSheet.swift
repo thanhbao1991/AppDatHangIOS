@@ -13,10 +13,6 @@ struct VoucherPickerSheet: View {
     @Binding var selected: Voucher?
     var onClose: () -> Void
 
-    /// Lựa chọn TẠM trong sheet — chỉ ghi thật vào `selected` khi bấm "Áp dụng", để bấm "Đóng"/vuốt
-    /// xuống không làm mất lựa chọn đã áp dụng trước đó.
-    @State private var pending: Voucher?
-
     /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện xuống dưới (feedback 2026-09-27) —
     /// trong MỖI nhóm, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên (feedback tiếp
     /// theo cùng ngày) thay vì giữ nguyên thứ tự server trả.
@@ -31,16 +27,18 @@ struct VoucherPickerSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                // Không có dòng "Không dùng voucher" riêng — bấm lại voucher đang chọn để bỏ chọn, rồi
-                // bấm "Áp dụng" để xác nhận. Hiện TẤT CẢ voucher (kể cả chưa đủ điều kiện Size L/
-                // topping) — mờ đi thay vì ẩn hẳn để khách biết có voucher đang chờ, tạo động lực thêm
-                // món vào giỏ cho đủ điều kiện.
+                // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
+                // — bỏ hẳn bước "Áp dụng" riêng + state pending tạm (feedback 2026-09-27: chọn hay bỏ
+                // voucher đều phải ăn liền, không bắt bấm thêm 1 nút mới có hiệu lực). Hiện TẤT CẢ
+                // voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn để khách biết
+                // có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
                 ForEach(sortedVouchers) { v in
                     let ok = duDieuKien(v)
                     cardRow {
                         Button {
                             guard ok else { return }
-                            pending = (pending?.id == v.id) ? nil : v
+                            selected = (selected?.id == v.id) ? nil : v
+                            onClose()
                         } label: {
                             // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
                             // tiền quy đổi riêng cho đơn hiện tại, tránh cùng 1 voucher trông như 2
@@ -50,7 +48,7 @@ struct VoucherPickerSheet: View {
                                 nhanGiam: v.nhanGiamGia,
                                 nhanGiamToiDa: v.nhanGiamToiDa,
                                 donToiThieu: v.donToiThieu,
-                                daChon: pending?.id == v.id
+                                daChon: selected?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)
                             .opacity(ok ? 1 : 0.4)
@@ -68,24 +66,6 @@ struct VoucherPickerSheet: View {
                     Button("Đóng") { onClose() }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    selected = pending
-                    onClose()
-                } label: {
-                    Text("Áp dụng")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Theme.primaryGradient)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                }
-                .background(Color(.systemBackground).overlay(Divider(), alignment: .top))
-            }
         }
-        .onAppear { pending = selected }
     }
 }
