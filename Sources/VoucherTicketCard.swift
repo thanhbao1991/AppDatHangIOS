@@ -27,9 +27,16 @@ struct VoucherTicketCard: View {
     /// toàn chưa khả dụng), mờ lúc này chỉ dư thừa. Chỉ tab "TẤT CẢ" (trộn cả 2 loại) mới cần mờ để
     /// phân biệt, giữ mặc định true cho mọi nơi khác (sheet "Chọn voucher"...) không đổi hành vi cũ.
     var applyDim: Bool = true
+    /// Ép mờ dù daSuDung/nhanSapDienRa đều nil — dùng cho voucher "sắp có" loại "chưa đủ điều kiện"
+    /// (không có mốc ngày cụ thể để hiện nhãn). Đi qua CHUNG biến `mo` với 2 cờ trên (2026-09-27 fix)
+    /// thay vì overlay .opacity() riêng từ bên ngoài như trước — overlay riêng chỉ NHÂN thêm opacity
+    /// lên khối trái vẫn đang tô primaryGradient (màu đậm), mờ trông ĐẬM HƠN hẳn card mờ kiểu
+    /// textFaint (màu nhạt sẵn) dù cùng hệ số 0.55, gây cảm giác "2 độ mờ khác nhau" dù không phải bug
+    /// chồng opacity. Gộp vào `mo` để left block cũng đổi màu xám textFaint đồng bộ với các card mờ khác.
+    var forceMo: Bool = false
 
-    /// Card không bấm/dùng được lúc này — gộp 2 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
-    private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil) }
+    /// Card không bấm/dùng được lúc này — gộp 3 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
+    private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil || forceMo) }
 
     private let leftWidth: CGFloat = 96
     private let notchSize: CGFloat = 18

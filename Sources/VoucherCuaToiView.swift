@@ -67,16 +67,16 @@ struct VoucherCuaToiView: View {
                                     // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân
                                     // biệt — ĐANG CÓ (toàn khả dụng) và SẮP CÓ (toàn chưa khả dụng)
                                     // đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
-                                    applyDim: tab == .tatCa
+                                    applyDim: tab == .tatCa,
+                                    // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa)
+                                    // không tự mờ được từ card qua daSuDung/nhanSapDienRa — ép mờ qua
+                                    // forceMo, KHÔNG dùng .opacity() overlay riêng nữa (2026-09-27 fix:
+                                    // overlay riêng chỉ nhân mờ lên khối trái vẫn tô đậm primaryGradient,
+                                    // nhìn ĐẬM HƠN hẳn card mờ kiểu textFaint dù cùng hệ số — "2 độ mờ
+                                    // khác nhau"). forceMo đi qua chung `mo` nên khối trái cũng đổi màu
+                                    // xám textFaint đồng bộ.
+                                    forceMo: tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung
                                 )
-                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa (khi applyDim).
-                                // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa)
-                                // không tự mờ được từ card — cần mờ thêm từ bên ngoài, chỉ ở tab TẤT CẢ.
-                                // PHẢI loại trừ daSuDung ở đây (2026-09-27 fix) — nếu không, voucher vừa
-                                // daSuDung=true (đã tự mờ 0.55 từ card) VÀ trùng id với danh sách sapCo
-                                // sẽ bị NHÂN CHỒNG opacity (0.55*0.55≈0.30), tối hơn hẳn các card mờ
-                                // đơn khác dù cùng ý nghĩa "chưa dùng được" — 2 độ mờ khác nhau vô lý.
-                                .opacity(tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung ? 0.55 : 1)
                             }
                         }
                         .padding(.horizontal)
