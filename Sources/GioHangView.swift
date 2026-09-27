@@ -43,7 +43,11 @@ struct GioHangView: View {
             await cart.loadUuDaiIfNeeded()
         }
         .sheet(isPresented: $showVoucherSheet) {
-            VoucherPickerSheet(vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien, selected: $cart.selectedVoucher) { showVoucherSheet = false }
+            VoucherPickerSheet(
+                vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien,
+                giaTriGiam: { $0.soTienGiamThucTe(tongTienHang: cart.totalPrice, cartItems: cart.items) },
+                selected: $cart.selectedVoucher
+            ) { showVoucherSheet = false }
         }
         .sheet(item: $editingItem) { item in
             let realSp = sanPham(for: item)
@@ -105,40 +109,38 @@ struct GioHangView: View {
     /// không có Xu để dùng, đỡ chiếm chỗ vô ích.
     @ViewBuilder
     private var uuDaiSection: some View {
-        if !cart.vouchersHienThi.isEmpty || cart.soDuXu > 0 {
-            VStack(spacing: 0) {
-                if !cart.vouchersHienThi.isEmpty {
-                    Button { showVoucherSheet = true } label: {
-                        HStack {
-                            Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 22)
-                            if let v = cart.selectedVoucher {
-                                Text(v.ten).font(.system(size: 14)).foregroundColor(.primary).lineLimit(1)
-                            } else {
-                                Text("Chọn voucher").font(.system(size: 14)).foregroundColor(.primary)
-                            }
-                            Spacer()
-                            if voucherGiam > 0 {
-                                Text("-\(formatTien(voucherGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
-                            }
-                            Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                        }
-                        .padding(.horizontal).padding(.vertical, 10)
-                        .contentShape(Rectangle())
+        // Luôn hiện cả 2 dòng dù chưa có voucher đủ điều kiện/số dư Xu = 0 (2026-09-27) — khách vẫn
+        // thấy rõ có tính năng voucher/Xu, không phải chỉ ẩn hiện tuỳ trạng thái gây cảm giác thiếu
+        // tính năng. Toggle Xu disable khi số dư = 0, tránh bật "dùng Xu" không có gì để dùng.
+        VStack(spacing: 0) {
+            Button { showVoucherSheet = true } label: {
+                HStack {
+                    Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 22)
+                    if let v = cart.selectedVoucher {
+                        Text(v.ten).font(.system(size: 14)).foregroundColor(.primary).lineLimit(1)
+                    } else {
+                        Text("Chọn voucher").font(.system(size: 14)).foregroundColor(.primary)
                     }
-                    .buttonStyle(.plain)
+                    Spacer()
+                    if voucherGiam > 0 {
+                        Text("-\(formatTien(voucherGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                    }
+                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
-                if cart.soDuXu > 0 {
-                    if !cart.vouchersHienThi.isEmpty { Divider().padding(.leading) }
-                    Toggle(isOn: $cart.dungXu) {
-                        HStack(spacing: 8) {
-                            Text("🟡").font(.system(size: 16))
-                            Text("Dùng Xu (số dư \(formatTien(cart.soDuXu)))").font(.system(size: 14)).foregroundColor(.primary)
-                        }
-                    }
-                    .tint(Theme.primary)
-                    .padding(.horizontal).padding(.vertical, 10)
+                .padding(.horizontal).padding(.vertical, 10)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Divider().padding(.leading)
+            Toggle(isOn: $cart.dungXu) {
+                HStack(spacing: 8) {
+                    Text("🟡").font(.system(size: 16))
+                    Text("Dùng Xu (số dư \(formatTien(cart.soDuXu)))").font(.system(size: 14)).foregroundColor(.primary)
                 }
             }
+            .tint(Theme.primary)
+            .disabled(cart.soDuXu <= 0)
+            .padding(.horizontal).padding(.vertical, 10)
         }
     }
 
@@ -149,11 +151,11 @@ struct GioHangView: View {
         let sp = sanPham(for: item)
         if let hinhAnh = item.hinhAnh ?? sp?.hinhAnh, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                .frame(width: 36, height: 36).clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
         } else {
             let ten = sp.flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
-            RoundedRectangle(cornerRadius: 8).fill(Theme.primaryTint).frame(width: 36, height: 36)
-                .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 18)))
+            RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
+                .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 24)))
         }
     }
 

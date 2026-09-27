@@ -7,6 +7,9 @@ import SwiftUI
 struct VoucherPickerSheet: View {
     let vouchers: [Voucher]
     let duDieuKien: (Voucher) -> Bool
+    /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
+    /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
+    let giaTriGiam: (Voucher) -> Double
     @Binding var selected: Voucher?
     var onClose: () -> Void
 
@@ -14,12 +17,15 @@ struct VoucherPickerSheet: View {
     /// xuống không làm mất lựa chọn đã áp dụng trước đó.
     @State private var pending: Voucher?
 
-    /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện (mờ) xuống dưới — feedback
-    /// 2026-09-27: trước đây giữ nguyên thứ tự server trả (mới tạo lên đầu) khiến voucher khả dụng
-    /// bị chôn dưới hàng loạt voucher mờ. `sorted` ổn định (stable) nên thứ tự BÊN TRONG mỗi nhóm vẫn
-    /// giữ nguyên như server trả về.
+    /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện xuống dưới (feedback 2026-09-27) —
+    /// trong MỖI nhóm, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên (feedback tiếp
+    /// theo cùng ngày) thay vì giữ nguyên thứ tự server trả.
     private var sortedVouchers: [Voucher] {
-        vouchers.sorted { duDieuKien($0) && !duDieuKien($1) }
+        vouchers.sorted { a, b in
+            let okA = duDieuKien(a), okB = duDieuKien(b)
+            if okA != okB { return okA }
+            return giaTriGiam(a) > giaTriGiam(b)
+        }
     }
 
     var body: some View {

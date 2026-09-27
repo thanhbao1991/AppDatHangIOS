@@ -34,9 +34,9 @@ struct VoucherCuaToiView: View {
 
     private var hienThi: [VoucherCuaToi] {
         switch tab {
-        // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có) làm 1 — theo yêu cầu, thay vì chỉ hiện
-        // vouchers (đã liên quan tới khách) như trước.
-        case .tatCa: return vouchers + voucherSapCo
+        // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có), khả dụng lên đầu — chưa khả dụng (đã dùng/
+        // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, theo yêu cầu 27/9.
+        case .tatCa: return dangCo + (vouchers.filter { $0.daSuDung || $0.chuaBatDau } + voucherSapCo)
         case .dangCo: return dangCo
         case .sapCo: return voucherSapCo
         }
@@ -63,12 +63,15 @@ struct VoucherCuaToiView: View {
                                     ten: v.ten, moTa: moTaHienThi(v), ma: v.ma,
                                     nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
                                     donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
-                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa
+                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+                                    // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân
+                                    // biệt — ĐANG CÓ (toàn khả dụng) và SẮP CÓ (toàn chưa khả dụng)
+                                    // đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
+                                    applyDim: tab == .tatCa
                                 )
-                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa. Với voucher "chưa
-                                // tới ngày" (nhanSapDienRa != nil) card đã tự mờ sẵn — chỉ voucher "sắp
-                                // có" loại "chưa đủ điều kiện" (không có nhanSapDienRa) mới cần mờ thêm
-                                // từ bên ngoài, tránh cộng dồn 2 lớp opacity làm nhạt gấp đôi.
+                                // VoucherTicketCard tự mờ theo daSuDung/nhanSapDienRa (khi applyDim).
+                                // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa)
+                                // không tự mờ được từ card — cần mờ thêm từ bên ngoài, chỉ ở tab TẤT CẢ.
                                 .opacity(tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil ? 0.55 : 1)
                             }
                         }

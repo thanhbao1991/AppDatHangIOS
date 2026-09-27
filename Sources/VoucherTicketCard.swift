@@ -22,9 +22,14 @@ struct VoucherTicketCard: View {
     /// Chưa dùng được (server từ chối áp dụng) nên card làm mờ giống daSuDung, nhưng nhãn khác hẳn:
     /// "Đã dùng" là hết lượt, cái này là chưa tới lượt. Xem VoucherCuaToi.nhanSapDienRa.
     var nhanSapDienRa: String? = nil
+    /// Cho phép tắt hẳn hiệu ứng mờ dù daSuDung/nhanSapDienRa có giá trị — dùng ở tab "ĐANG CÓ"/"SẮP
+    /// CÓ" (VoucherCuaToiView) nơi CẢ danh sách đã đồng nhất 1 trạng thái sẵn (toàn khả dụng hoặc
+    /// toàn chưa khả dụng), mờ lúc này chỉ dư thừa. Chỉ tab "TẤT CẢ" (trộn cả 2 loại) mới cần mờ để
+    /// phân biệt, giữ mặc định true cho mọi nơi khác (sheet "Chọn voucher"...) không đổi hành vi cũ.
+    var applyDim: Bool = true
 
     /// Card không bấm/dùng được lúc này — gộp 2 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
-    private var mo: Bool { daSuDung || nhanSapDienRa != nil }
+    private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil) }
 
     private let leftWidth: CGFloat = 96
     private let notchSize: CGFloat = 18
