@@ -295,6 +295,20 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
         }
     }
 
+    /// Nhãn NGẮN 1-2 chữ riêng cho stepper NGANG kiểu Long Châu (OrderDetailView.timeline, tham khảo
+    /// ảnh chụp 2026-09-28) — `nhan` (đầy đủ) quá dài để nhét vừa 4 cột ngang trên màn hình điện
+    /// thoại, chỉ dùng nhanNgan ở đúng chỗ này, mọi nơi khác (badge trạng thái card đơn...) vẫn dùng
+    /// `nhan` như cũ.
+    var nhanNgan: String {
+        switch self {
+        case .choXacNhan: return "Đặt hàng"
+        case .daXacNhan: return "Đã xác nhận"
+        case .dangGiao: return "Đang giao"
+        case .hoanTat: return "Hoàn tất"
+        case .huy: return "Đã huỷ"
+        }
+    }
+
     var mau: Color {
         switch self {
         case .choXacNhan: return Theme.warning

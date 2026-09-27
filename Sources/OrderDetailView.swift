@@ -67,10 +67,8 @@ struct OrderDetailView: View {
                             .padding(.horizontal, 10).padding(.vertical, 4).background(Theme.primaryTint).clipShape(Capsule())
                     }
                     ForEach(order.items) { it in
-                        HStack(spacing: 10) {
-                            Text("\(it.soLuong)")
-                                .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-                                .frame(width: 22, height: 22).background(Theme.primary).clipShape(Circle())
+                        HStack(alignment: .top, spacing: 10) {
+                            itemThumbnail(it)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))").font(.system(size: 15, weight: .bold))
                                 if !it.toppings.isEmpty {
@@ -79,9 +77,10 @@ struct OrderDetailView: View {
                                 if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
                                     Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
                                 }
+                                Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
                             }
-                            Spacer()
-                            Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
+                            Spacer(minLength: 0)
+                            Text("x\(it.soLuong)").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
                         }
                         .padding(.vertical, 6)
                     }
@@ -153,6 +152,20 @@ struct OrderDetailView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
+    /// Ảnh món (tham khảo layout Long Châu — ảnh thumbnail bên trái mỗi dòng sản phẩm, 2026-09-28)
+    /// thay cho badge số tròn trước đây — fallback icon ly khi món chưa gắn hinhAnh, khớp
+    /// OrderStatusView.firstItemImage.
+    @ViewBuilder
+    private func itemThumbnail(_ it: DonHangKhachItem) -> some View {
+        if let hinhAnh = it.hinhAnh, let url = URL(string: hinhAnh) {
+            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+        } else {
+            RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
+                .overlay(Image(systemName: "cup.and.saucer.fill").foregroundColor(Theme.primary))
+        }
+    }
+
     private func infoRow(_ label: String, _ value: Double) -> some View {
         HStack {
             Text(label).foregroundColor(Theme.textMuted)
@@ -173,27 +186,47 @@ struct OrderDetailView: View {
         }
     }
 
+    /// Stepper NGANG kiểu Long Châu (tham khảo ảnh chụp 2026-09-28) thay cho timeline dọc trước đây —
+    /// hàng chấm tròn/dấu check + đường nối riêng ở trên, hàng nhãn ngắn (nhanNgan) + giờ riêng ở
+    /// dưới, mỗi cột chia đều 1/4 chiều ngang. Tách 2 hàng (không lồng nhãn ngay dưới từng chấm trong
+    /// cùng 1 VStack) vì chiều cao nhãn 1-2 dòng khác nhau giữa các bước sẽ kéo lệch đường nối ngang
+    /// nếu gộp chung.
     private var timeline: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
-                HStack(alignment: .top, spacing: 10) {
-                    VStack(spacing: 0) {
-                        Circle().fill(i <= currentStep ? Theme.primary : Theme.divider).frame(width: 12, height: 12)
+        VStack(spacing: 6) {
+            HStack(spacing: 0) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { i, _ in
+                    Group {
+                        ZStack {
+                            Circle()
+                                .fill(i <= currentStep ? Theme.primary : Color.clear)
+                                .overlay(Circle().stroke(i <= currentStep ? Theme.primary : Theme.divider, lineWidth: 1.5))
+                            if i <= currentStep {
+                                Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                            }
+                        }
+                        .frame(width: 22, height: 22)
                         if i < steps.count - 1 {
-                            // Cao hơn bản cũ (28→36) để chứa đủ 2 dòng (nhãn bước + giờ) không bị hụt
-                            // đường nối trước khi tới chấm tiếp theo.
-                            Rectangle().fill(i < currentStep ? Theme.primary : Theme.divider).frame(width: 2, height: 36)
+                            Rectangle().fill(i < currentStep ? Theme.primary : Theme.divider).frame(height: 2)
                         }
                     }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(step.nhan)
-                            .font(.system(size: 13, weight: i <= currentStep ? .semibold : .regular))
+                }
+            }
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
+                    VStack(spacing: 2) {
+                        Text(step.nhanNgan)
+                            .font(.system(size: 11, weight: i <= currentStep ? .semibold : .regular))
                             .foregroundColor(i <= currentStep ? .primary : Theme.textFaint)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                         if let raw = stepTime(i) {
-                            Text(formatThongBaoTime(raw)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                            Text(formatThongBaoTime(raw))
+                                .font(.system(size: 9)).foregroundColor(Theme.textFaint)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
                         }
                     }
-                    Spacer()
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
