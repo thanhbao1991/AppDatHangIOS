@@ -57,6 +57,32 @@ struct OrderDetailView: View {
                 }
                 Divider()
 
+                // Tách "Hình thức thanh toán" ra thành mục RIÊNG, đặt TRƯỚC "Danh sách sản phẩm"
+                // (feedback 2026-09-28, tham khảo layout ảnh mẫu) — trước đây gộp vào đầu mục "Thông
+                // tin thanh toán" ở cuối trang. Chỉ hiện mục này khi có dữ liệu (đơn tạo qua Desktop
+                // không có tiền tố GhiChu, có thể null nếu chưa thu đồng nào).
+                if let httt = hinhThucThanhToanHienThi {
+                    section {
+                        HStack {
+                            Text("Hình thức thanh toán").font(.system(size: 15, weight: .bold))
+                            Spacer()
+                            if order.conLai <= 0 {
+                                Label("Đã thanh toán", systemImage: "checkmark.circle.fill")
+                                    .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.success)
+                            }
+                        }
+                        HStack(spacing: 10) {
+                            Image(systemName: hinhThucThanhToanIcon)
+                                .font(.system(size: 18)).foregroundColor(Theme.primary)
+                                .frame(width: 40, height: 40)
+                                .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 10))
+                            Text(httt).font(.system(size: 14, weight: .medium))
+                            Spacer()
+                        }
+                    }
+                    Divider()
+                }
+
                 // Style lại danh sách sản phẩm (feedback 2026-09-28) — thêm Divider mảnh giữa các món
                 // (trước đây chỉ cách nhau bằng padding, khó phân biệt món liền kề khi cuộn nhanh),
                 // "x{n}" chuyển hẳn lên góc trên cùng bên phải NGANG HÀNG với tên món thay vì đứng lẻ
@@ -101,13 +127,6 @@ struct OrderDetailView: View {
 
                 section {
                     Text("Thông tin thanh toán").font(.system(size: 15, weight: .bold))
-                    // Hình thức thanh toán chuyển vào ĐÂY (feedback 2026-09-28: "chưa thể hiện khách
-                    // thanh toán tiền mặt hay chuyển khoản") — hợp lý hơn khi đứng cạnh Tổng tiền/Đã
-                    // thu/CÒN LẠI thay vì ở mục "Thông tin nhận hàng" như bản trước. Ưu tiên sự thật đã
-                    // thu (hinhThucThanhToanHienThi) hơn dự định ban đầu của khách.
-                    if let httt = hinhThucThanhToanHienThi {
-                        iconRow("creditcard.fill", "Hình thức thanh toán", httt)
-                    }
                     infoRow("Tổng tiền", order.tongTien)
                     // Giảm giá = 0 thì Tổng tiền và Thành tiền LUÔN bằng nhau — bớt hẳn dòng "Thành
                     // tiền" trùng lặp trong trường hợp đó (feedback 2026-09-28: "nếu tổng tiền và
@@ -244,6 +263,17 @@ struct OrderDetailView: View {
             return daCK ? "Chuyển khoản" : "Tiền mặt"
         }
         return hinhThucThanhToanText
+    }
+
+    /// Icon minh hoạ cho mục "Hình thức thanh toán" — ưu tiên đọc theo sự thật đã thu
+    /// (daThuBangChuyenKhoan), rơi về đoán theo chuỗi tự khai (chứa "QR"/"Xu") nếu chưa thu đồng nào.
+    private var hinhThucThanhToanIcon: String {
+        if let daCK = order.daThuBangChuyenKhoan { return daCK ? "qrcode" : "banknote.fill" }
+        if let text = hinhThucThanhToanText {
+            if text.contains("QR") { return "qrcode" }
+            if text.contains("Xu") { return "circle.fill" }
+        }
+        return "creditcard.fill"
     }
 
     /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
