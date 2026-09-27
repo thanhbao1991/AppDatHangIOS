@@ -63,10 +63,7 @@ struct GioHangView: View {
     private var bottomBar: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                    qtyCountBadge
-                }
+                Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
                 Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
             }
             Spacer()
@@ -80,15 +77,6 @@ struct GioHangView: View {
         .padding(.horizontal).padding(.vertical, 12)
         .background(Color.white)
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .top)
-    }
-
-    private var qtyCountBadge: some View {
-        Text("\(cart.totalCount) ly")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(Theme.primary)
-            .padding(.horizontal, 8).padding(.vertical, 3)
-            .background(Theme.primaryTint)
-            .clipShape(Capsule())
     }
 
     @ViewBuilder

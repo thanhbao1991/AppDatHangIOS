@@ -24,12 +24,14 @@ struct LichSuCongNoView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
+                // 2026-09-27: đổi sang dạng PHẲNG (List(.plain), không card/pastel/shadow) khớp
+                // Đơn hàng/Lịch sử Xu — bỏ hẳn thanh màu bên trái + nền pastel riêng của màn này.
                 List {
-                    ForEach(Array(conNo.enumerated()), id: \.element.id) { index, item in
-                        cardRow(topExtra: index == 0 ? 6 : 0) { hoaDonCard(item) }
+                    ForEach(conNo) { item in
+                        hoaDonRow(item)
                     }
                 }
-                .cardListBackground()
+                .listStyle(.plain)
                 .refreshable { await load() }
             }
         }
@@ -38,21 +40,18 @@ struct LichSuCongNoView: View {
         .task { await load() }
     }
 
-    /// Layout khớp CongNoRowView bên AppQuanLyIOS (tab Công nợ của nhân viên) — thanh màu bên trái +
-    /// nền pastel + shadow + tóm tắt món làm dòng chính. Khác staff ở nhãn phụ: staff hiện TÊN KHÁCH
-    /// (nhiều khách khác nhau); khách chỉ xem đơn của chính mình nên tên khách vô nghĩa (luôn là
-    /// chính họ) — thay bằng PHÂN LOẠI (Giao hàng/Mang về/Tại quán) cho có ích hơn. Bỏ hẳn mã hoá đơn
-    /// (vd "HD5e5146d7", vô nghĩa với khách — feedback 2026-09-22).
-    /// Nền/thanh màu bên trái đổi theo HẠNG khách (Theme.primary tự đổi theo KhachHangSession.shared.hang)
-    /// thay vì đỏ cố định — số tiền còn nợ vẫn giữ đỏ (Theme.danger) để dễ thấy là cảnh báo (feedback 2026-09-23).
-    private func hoaDonCard(_ item: CongNoLichSu) -> some View {
+    /// Khác staff (CongNoRowView bên AppQuanLyIOS) ở nhãn phụ: staff hiện TÊN KHÁCH (nhiều khách khác
+    /// nhau); khách chỉ xem đơn của chính mình nên tên khách vô nghĩa (luôn là chính họ) — thay bằng
+    /// PHÂN LOẠI (Giao hàng/Mang về/Tại quán) cho có ích hơn. Bỏ hẳn mã hoá đơn (vd "HD5e5146d7", vô
+    /// nghĩa với khách — feedback 2026-09-22). Số tiền còn nợ vẫn giữ đỏ (Theme.danger) để dễ thấy là
+    /// cảnh báo (feedback 2026-09-23).
+    private func hoaDonRow(_ item: CongNoLichSu) -> some View {
         // Đơn Ship có địa chỉ thì gộp luôn vào dòng đầu ("Giao hàng tại: ...") thay vì tách riêng
         // nhãn "Giao hàng" + 1 dòng địa chỉ bên dưới — đỡ dư dòng (feedback 2026-09-23).
         let diaChi = item.phanLoai == "Ship" ? item.diaChiText?.trimmingCharacters(in: .whitespaces) : nil
         let dongDau = (diaChi?.isEmpty == false) ? "Giao hàng tại: \(diaChi!)" : phanLoaiLabel(item.phanLoai)
 
-        return HStack(spacing: 10) {
-            Rectangle().fill(Theme.primary).frame(width: 4)
+        return HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(dongDau).font(.system(size: 13, weight: .bold)).foregroundColor(Theme.textMuted).lineLimit(2)
                 Text(item.tenMonSummary.isEmpty ? "Hoá đơn" : item.tenMonSummary)
@@ -70,12 +69,7 @@ struct LichSuCongNoView: View {
                 Text(formatTien(item.conLai)).font(.system(size: 16, weight: .bold)).foregroundColor(Theme.danger)
             }
         }
-        .padding(12)
-        .background(Theme.primary.pastelBackground())
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-        .padding(.horizontal)
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     /// Cùng cách map PhanLoai với OrderDetailView ("Ship"/"Mv"/khác) — gom về đây vì dùng lại ở đây.

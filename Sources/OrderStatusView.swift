@@ -99,13 +99,13 @@ struct OrderStatusView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.primary)
                         .lineLimit(2)
-                    Text(phanLoaiLine(item)).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
+                    HStack(spacing: 4) {
+                        Text(phanLoaiLine(item)).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
+                        Spacer(minLength: 8)
+                        Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
+                    }
                 }
                 Spacer(minLength: 0)
-            }
-            HStack(spacing: 4) {
-                Spacer()
-                Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
             }
         }
         .contentShape(Rectangle())
@@ -206,7 +206,7 @@ struct OrderStatusView: View {
                     .font(.system(size: 13))
             }
             Spacer()
-            if item.trangThai == .hoanTat && !item.daDanhGia {
+            if item.trangThai == .hoanTat && !item.daDanhGia && isLastOrder(item) {
                 actionButton("⭐ Đánh giá", filled: true) { path.append(.detail(item)) }
             } else if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
@@ -238,6 +238,12 @@ struct OrderStatusView: View {
         .background(filled ? AnyShapeStyle(Theme.primaryGradient) : AnyShapeStyle(Theme.primaryTint))
         .clipShape(Capsule())
         .disabled(loading)
+    }
+
+    /// Nút "⭐ Đánh giá" chỉ hiện với đơn MỚI NHẤT (orders đã sắp xếp mới nhất trước từ server) — tránh
+    /// mỗi đơn Hoàn tất chưa đánh giá cũ đều nổi nút, dồn khách phải đánh giá dồn cả loạt đơn cũ.
+    private func isLastOrder(_ item: DonHangKhach) -> Bool {
+        orders.first?.id == item.id
     }
 
     private func load(silent: Bool = false) async {
