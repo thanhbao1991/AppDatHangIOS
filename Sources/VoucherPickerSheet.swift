@@ -37,8 +37,17 @@ struct VoucherPickerSheet: View {
                     cardRow {
                         Button {
                             guard ok else { return }
-                            selected = (selected?.id == v.id) ? nil : v
+                            // Đóng sheet TRƯỚC, chỉ ghi `selected` SAU khi sheet đã đóng xong (~0.35s,
+                            // khớp thời gian dismiss mặc định của sheet) — nếu ghi ngay rồi đóng cùng
+                            // lúc, số tiền ở màn dưới đổi trong lúc sheet còn che nên hiệu ứng đếm giảm
+                            // (contentTransition numericText ở GioHangView/CheckoutView) chạy xong mà
+                            // khách không thấy được (feedback 2026-09-27: "chọn voucher chưa thấy hiệu
+                            // ứng, tại xảy ra nhanh quá").
+                            let newValue: Voucher? = (selected?.id == v.id) ? nil : v
                             onClose()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                selected = newValue
+                            }
                         } label: {
                             // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
                             // tiền quy đổi riêng cho đơn hiện tại, tránh cùng 1 voucher trông như 2
