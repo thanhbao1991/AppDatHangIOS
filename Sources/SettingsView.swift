@@ -47,6 +47,10 @@ struct SettingsView: View {
     @State private var dobPicked = Calendar.current.date(byAdding: .year, value: -18, to: Date()) ?? Date()
     @State private var savingDob = false
     @State private var dobError: String?
+    /// Bánh xe wheel chiếm rất nhiều chỗ dọc (feedback 2026-09-27: "bao giờ bấm mới hiện cái này
+    /// ra chứ" — trước hiện thẳng luôn, chiếm hết card) — giờ chỉ bung ra khi bấm "Sửa"/"Khai ngay",
+    /// mặc định thu gọn.
+    @State private var showDobPicker = false
 
     // Gradient tối + màu đặc trưng từng hạng — khớp phong cách thẻ hạng thành viên các app lớn
     // (Shopee/ShopBack: nền tối, chữ nổi bật) thay vì badge nhỏ trên nền trắng như trước. Lấy từ
@@ -418,10 +422,21 @@ struct SettingsView: View {
                     .font(.system(size: 13)).foregroundColor(Theme.success)
                 Text("Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+            } else if !showDobPicker {
+                // Thu gọn mặc định — wheel chiếm rất nhiều chỗ dọc, chỉ bung ra khi bấm (feedback
+                // 2026-09-27: "bao giờ bấm mới hiện cái này ra chứ", trước hiện thẳng luôn).
+                HStack {
+                    if let ns = ngaySinhInfo?.ngaySinh {
+                        Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                            .font(.system(size: 13)).foregroundColor(Theme.success)
+                    } else {
+                        Text("Chưa khai ngày sinh").font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                    }
+                    Spacer()
+                    Button(ngaySinhInfo?.ngaySinh == nil ? "Khai ngay" : "Sửa") { showDobPicker = true }
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                }
             } else {
-                // DatePicker tự hiện đúng ngày đã khai (prefill ở load()) nên KHÔNG cần thêm dòng
-                // "Đã khai: ..." riêng nữa — trước đây hiện cả 2 (Label tĩnh + DatePicker) trông trùng
-                // lặp/thừa (feedback: "kết hợp làm 1").
                 // .wheel thay cho style mặc định (.compact) — trước đây bấm vào mở lịch dạng LƯỚI
                 // NGÀY-TRONG-THÁNG (graphical), phải bấm header "tháng 9 năm 1991" thêm 1 lần mới ra
                 // được bộ chọn nhanh, rất khó chọn năm sinh xa (feedback kèm ảnh chụp 2026-09-27:
@@ -434,6 +449,9 @@ struct SettingsView: View {
                     .clipped()
                     .environment(\.locale, Locale(identifier: "vi_VN"))
                 HStack {
+                    Button("Huỷ") { showDobPicker = false; dobError = nil }
+                        .buttonStyle(.bordered)
+                        .disabled(savingDob)
                     Spacer()
                     Button {
                         Task { await xacNhanNgaySinh() }
@@ -471,6 +489,7 @@ struct SettingsView: View {
         let result = await APIClient.shared.capNhatNgaySinh(iso)
         if result.success {
             ngaySinhInfo = await APIClient.shared.getSinhNhat()
+            showDobPicker = false
         } else {
             dobError = result.message ?? "Lưu ngày sinh thất bại, thử lại."
         }
