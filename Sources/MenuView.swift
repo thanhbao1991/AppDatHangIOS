@@ -372,14 +372,14 @@ struct MenuView: View {
         return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
     }
 
-    /// nhomId → URL ảnh món ĐẦU TIÊN có ảnh thật trong nhóm đó — dùng làm "ảnh đại diện" của nhóm ở
-    /// sidebar/sectionHeader, ưu tiên hơn emoji (Theme.nhomIcons chỉ còn dùng khi nhóm không có món
-    /// nào có ảnh). Tính 1 lần cho toàn bộ `sections` thay vì lặp lại vòng lặp tìm ảnh mỗi lần render
-    /// từng row.
+    /// nhomId → URL ảnh món có ảnh thật trong nhóm đó, quét từ CUỐI danh sách lên (theo yêu cầu:
+    /// "hình món đầu tiên dưới lên") — dùng làm "ảnh đại diện" của nhóm ở sectionHeader, ưu tiên hơn
+    /// emoji (Theme.nhomIcons chỉ còn dùng khi nhóm không có món nào có ảnh). Tính 1 lần cho toàn bộ
+    /// `sections` thay vì lặp lại vòng lặp tìm ảnh mỗi lần render từng row.
     private var nhomImageUrls: [String: URL] {
         var result: [String: URL] = [:]
         for section in sections {
-            for item in section.items {
+            for item in section.items.reversed() {
                 if let hinhAnh = item.hinhAnh, !hinhAnh.isEmpty, let url = URL(string: hinhAnh) {
                     result[section.nhom.id] = url
                     break
