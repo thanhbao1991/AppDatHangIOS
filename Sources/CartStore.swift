@@ -26,7 +26,10 @@ struct CartItem: Identifiable, Hashable, Codable {
 @MainActor
 final class CartStore: ObservableObject {
     @Published private(set) var items: [CartItem] = [] {
-        didSet { persist() }
+        didSet {
+            persist()
+            validateSelectedVoucher()
+        }
     }
     /// true khi giỏ hàng HIỆN TẠI được tạo nguyên vẹn từ nút "Đặt lại" (tab Hoá đơn), chưa bị sửa tay
     /// gì thêm — dùng cho voucher DieuKien=DatLai (Voucher.chiApDungKhiDatLai). Mọi thao tác sửa giỏ
@@ -35,6 +38,18 @@ final class CartStore: ObservableObject {
     @Published private(set) var laDatLai = false {
         didSet { persist() }
     }
+
+    // MARK: - Ưu đãi (voucher + Xu) — 2026-09-27: chuyển lên CartStore để khách CHỌN NGAY tại tab Giỏ
+    // hàng (tham khảo Long Châu) thay vì phải sang CheckoutView mới thấy. CheckoutView dùng lại NGUYÊN
+    // state này (không giữ bản sao riêng) để 2 màn luôn khớp nhau, không cần đồng bộ lại lúc chuyển
+    // trang. KHÔNG persist (như items/laDatLai) — chọn lại mỗi phiên là chấp nhận được, tránh phải xử
+    // lý voucher hết hạn/hết lượt khi khôi phục từ UserDefaults sau nhiều ngày.
+    @Published var selectedVoucher: Voucher?
+    @Published var dungXu = false
+    @Published private(set) var vouchers: [Voucher] = []
+    @Published private(set) var vi: KhachHangVi?
+    private var sanPhamDaTungDat: [String] = []
+    private var uuDaiLoaded = false
 
     /// Giỏ hàng lưu qua UserDefaults (JSON) — trước đây thuần in-memory nên tắt app (không chỉ gỡ
     /// cài) là mất sạch giỏ, khách đang chọn dở món phải làm lại từ đầu.
@@ -91,5 +106,67 @@ final class CartStore: ObservableObject {
     func clear() {
         items.removeAll()
         laDatLai = false
+        selectedVoucher = nil
+        dungXu = false
+    }
+
+    var soDuXu: Double { vi?.soDu ?? 0 }
+
+    /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
+    /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
+    /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
+    /// (đối chiếu sanPhamDaTungDat), DatLai (chiApDungKhiDatLai) cần giỏ đến từ nút "Đặt lại"
+    /// (laDatLai), DonToiThieu/SoLuongToiThieu cần đạt ngưỡng tương ứng — nếu không đủ điều kiện thì
+    /// ẩn khỏi danh sách chọn thay vì hiện rồi báo lỗi/-0đ lúc đặt hàng.
+    var vouchersHienThi: [Voucher] { vouchers.filter { voucherDuDieuKien($0) } }
+
+    func voucherDuDieuKien(_ v: Voucher) -> Bool {
+        if v.chiApDungKhiCoSizeL {
+            return items.contains { isSizeLBienThe($0.tenBienThe) }
+        }
+        if v.chiApDungKhiCoTopping {
+            return items.contains { !$0.toppings.isEmpty }
+        }
+        if v.chiApDungKhiCoMonMoi {
+            return items.contains { item in
+                guard let sanPhamId = item.sanPhamId else { return false }
+                return !sanPhamDaTungDat.contains(sanPhamId)
+            }
+        }
+        if v.chiApDungKhiDatLai {
+            return laDatLai
+        }
+        if let donToiThieu = v.donToiThieu, donToiThieu > 0, totalPrice < donToiThieu {
+            return false
+        }
+        if let soLuongToiThieu = v.soLuongToiThieu, soLuongToiThieu > 0 {
+            return totalCount >= soLuongToiThieu
+        }
+        return true
+    }
+
+    /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
+    func voucherGiam(tongTienHang: Double) -> Double {
+        min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: items) ?? 0, tongTienHang)
+    }
+
+    private func validateSelectedVoucher() {
+        guard let selectedVoucher, !voucherDuDieuKien(selectedVoucher) else { return }
+        self.selectedVoucher = nil
+    }
+
+    /// Tải voucher khả dụng + ví Xu + lịch sử sản phẩm đã đặt — gọi TỪ GioHangView (nơi khách chọn
+    /// ưu đãi giờ đây) và CheckoutView (phòng khi khách vào thẳng bằng "Đặt lại" mà chưa ghé Giỏ hàng
+    /// lần nào từ lúc mở app). Chỉ tải 1 LẦN/phiên (uuDaiLoaded) — cả 2 màn cùng gọi không tải trùng.
+    func loadUuDaiIfNeeded() async {
+        guard !uuDaiLoaded else { return }
+        uuDaiLoaded = true
+        async let viTask: KhachHangVi? = APIClient.shared.getVi()
+        async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
+        async let spTask: [String] = APIClient.shared.getSanPhamDaTungDat()
+        vi = await viTask
+        if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        vouchers = await voucherTask
+        sanPhamDaTungDat = await spTask
     }
 }

@@ -16,6 +16,7 @@ struct GioHangView: View {
     @State private var nhoms: [NhomSanPham] = []
     @State private var toppings: [Topping] = []
     @State private var editingItem: CartItem?
+    @State private var showVoucherSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +38,13 @@ struct GioHangView: View {
                 bottomBar
             }
         }
-        .task { await loadCatalog() }
+        .task {
+            await loadCatalog()
+            await cart.loadUuDaiIfNeeded()
+        }
+        .sheet(isPresented: $showVoucherSheet) {
+            VoucherPickerSheet(vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien, selected: $cart.selectedVoucher) { showVoucherSheet = false }
+        }
         .sheet(item: $editingItem) { item in
             let realSp = sanPham(for: item)
             let sp = realSp ?? fallbackSanPham(for: item)
@@ -61,22 +68,78 @@ struct GioHangView: View {
     }
 
     private var bottomBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
+        VStack(spacing: 0) {
+            uuDaiSection
+            Divider()
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    if voucherGiam > 0 {
+                        HStack(spacing: 6) {
+                            Text(formatTien(cart.totalPrice)).font(.system(size: 12)).foregroundColor(Theme.textFaint).strikethrough()
+                            Text(formatTien(cart.totalPrice - voucherGiam)).font(.system(size: 18, weight: .bold))
+                        }
+                    } else {
+                        Text(formatTien(cart.totalPrice)).font(.system(size: 18, weight: .bold))
+                    }
+                }
+                Spacer()
+                Button {
+                    path.append(.checkout)
+                } label: {
+                    Text("Đặt hàng").fontWeight(.bold).frame(minWidth: 120)
+                }
+                .buttonStyle(.gradientProminent)
             }
-            Spacer()
-            Button {
-                path.append(.checkout)
-            } label: {
-                Text("Đặt hàng").fontWeight(.bold).frame(minWidth: 120)
-            }
-            .buttonStyle(.gradientProminent)
+            .padding(.horizontal).padding(.vertical, 12)
         }
-        .padding(.horizontal).padding(.vertical, 12)
         .background(Color.white)
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .top)
+    }
+
+    private var voucherGiam: Double { cart.voucherGiam(tongTienHang: cart.totalPrice) }
+
+    /// Chọn voucher + dùng Xu NGAY tại Giỏ hàng (2026-09-27, tham khảo Long Châu) thay vì phải sang
+    /// CheckoutView mới thấy — state dùng chung qua CartStore nên CheckoutView tự khớp theo, không
+    /// cần đồng bộ lại lúc chuyển trang. Ẩn hẳn khối này nếu không có voucher nào đủ điều kiện VÀ
+    /// không có Xu để dùng, đỡ chiếm chỗ vô ích.
+    @ViewBuilder
+    private var uuDaiSection: some View {
+        if !cart.vouchersHienThi.isEmpty || cart.soDuXu > 0 {
+            VStack(spacing: 0) {
+                if !cart.vouchersHienThi.isEmpty {
+                    Button { showVoucherSheet = true } label: {
+                        HStack {
+                            Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 22)
+                            if let v = cart.selectedVoucher {
+                                Text(v.ten).font(.system(size: 14)).foregroundColor(.primary).lineLimit(1)
+                            } else {
+                                Text("Chọn voucher").font(.system(size: 14)).foregroundColor(.primary)
+                            }
+                            Spacer()
+                            if voucherGiam > 0 {
+                                Text("-\(formatTien(voucherGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                            }
+                            Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                        }
+                        .padding(.horizontal).padding(.vertical, 10)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                if cart.soDuXu > 0 {
+                    if !cart.vouchersHienThi.isEmpty { Divider().padding(.leading) }
+                    Toggle(isOn: $cart.dungXu) {
+                        HStack(spacing: 8) {
+                            Text("🟡").font(.system(size: 16))
+                            Text("Dùng Xu (số dư \(formatTien(cart.soDuXu)))").font(.system(size: 14)).foregroundColor(.primary)
+                        }
+                    }
+                    .tint(Theme.primary)
+                    .padding(.horizontal).padding(.vertical, 10)
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -146,51 +209,71 @@ struct GioHangView: View {
         editingItem = item
     }
 
-    /// Xoá món: nút X ngay dưới số tiền, HOẶC kéo Stepper "Số lượng" về 0 trong sheet sửa. Phần còn
-    /// lại của dòng dùng .onTapGesture để mở sửa; nút X cần .contentShape(Rectangle())+.buttonStyle(.plain)
-    /// để thắng .onTapGesture của view cha (đã xác nhận qua test thật).
+    /// Sửa size/topping/ghi chú: chạm vào phần TÊN món (mở sheet sửa). Sửa NHANH số lượng: dùng luôn
+    /// bộ +/- ở góc phải (tham khảo Long Châu, 2026-09-27) — không cần mở sheet chỉ để đổi số lượng
+    /// nữa. Nút +/- cần .contentShape(Rectangle())+.buttonStyle(.plain) để thắng .onTapGesture của
+    /// view cha (cùng bài học nút X bản cũ, đã xác nhận qua test thật).
     private func itemRow(_ item: CartItem) -> some View {
         HStack(alignment: .top, spacing: 10) {
             itemThumbnail(item)
-            Text("\(item.soLuong)")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.primary)
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    if !item.toppings.isEmpty {
-                        Text(item.toppings.map { t in
-                            let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
-                            return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
-                        }.joined(separator: ", "))
-                            .font(.system(size: 12)).foregroundColor(Theme.primary)
-                    }
-                    if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
-                        Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
-                    }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                if !item.toppings.isEmpty {
+                    Text(item.toppings.map { t in
+                        let label = t.soLuong > 1 ? "\(t.ten) x\(t.soLuong)" : t.ten
+                        return "\(label) +\(formatTienShort(t.gia * Double(t.soLuong)))"
+                    }.joined(separator: ", "))
+                        .font(.system(size: 12)).foregroundColor(Theme.primary)
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
-                    Button {
-                        cart.removeItem(item.id)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.danger)
-                            .padding(.horizontal, 8).padding(.vertical, 4)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+                if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
                 }
             }
+            // KHÔNG làm mờ cả dòng theo loadingCatalog nữa — tên/số lượng/giá của dòng giỏ lấy thẳng
+            // từ CartItem (đã có sẵn, không phụ thuộc catalog), chỉ riêng thao tác SỬA (openEdit) mới
+            // cần đợi catalog xong. Trước đây mờ cả dòng dù dữ liệu hiển thị đã đủ, gây cảm giác "giỏ
+            // hàng bị lỗi/chưa tải" mỗi khi vừa chuyển từ tab Thực đơn sang lúc mạng chậm.
+            .contentShape(Rectangle())
+            .onTapGesture { openEdit(item) }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                quantityStepper(item)
+            }
         }
-        // KHÔNG làm mờ cả dòng theo loadingCatalog nữa — tên/số lượng/giá của dòng giỏ lấy thẳng từ
-        // CartItem (đã có sẵn, không phụ thuộc catalog), chỉ riêng thao tác SỬA (openEdit) mới cần
-        // đợi catalog xong. Trước đây mờ cả dòng dù dữ liệu hiển thị đã đủ, gây cảm giác "giỏ hàng bị
-        // lỗi/chưa tải" mỗi khi vừa chuyển từ tab Thực đơn sang lúc mạng chậm.
-        .contentShape(Rectangle())
-        .onTapGesture { openEdit(item) }
         .padding(.vertical, 6)
+    }
+
+    /// Bộ +/- gọn kiểu Long Châu — nút trái đổi hẳn sang icon thùng rác khi số lượng còn 1 (bấm sẽ
+    /// xoá cả dòng, khớp hành vi CartStore.setQuantity tự xoá khi về 0) thay vì vẫn hiện dấu "-" rồi
+    /// mới xoá ở lượt bấm kế tiếp — rõ ý hơn cho khách.
+    private func quantityStepper(_ item: CartItem) -> some View {
+        HStack(spacing: 0) {
+            Button {
+                cart.setQuantity(item.id, soLuong: item.soLuong - 1)
+            } label: {
+                Image(systemName: item.soLuong <= 1 ? "trash" : "minus")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(item.soLuong <= 1 ? Theme.danger : Theme.primary)
+                    .frame(width: 28, height: 26)
+                    .contentShape(Rectangle())
+            }
+            Text("\(item.soLuong)")
+                .font(.system(size: 13, weight: .bold))
+                .frame(minWidth: 22)
+            Button {
+                cart.setQuantity(item.id, soLuong: item.soLuong + 1)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.primary)
+                    .frame(width: 28, height: 26)
+                    .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+        .background(Theme.bg)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(Theme.divider))
     }
 }
