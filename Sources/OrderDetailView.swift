@@ -55,15 +55,16 @@ struct OrderDetailView: View {
                     } else {
                         iconRow("storefront.fill", "Hình thức", order.phanLoai == "Mv" ? "Mang về" : "Tại quán\(order.tenBan.map { " — Bàn \($0)" } ?? "")")
                     }
-                    if let httt = hinhThucThanhToanText {
-                        iconRow("creditcard.fill", "Hình thức thanh toán", httt)
-                    }
                     if let ghiChuRieng, !ghiChuRieng.isEmpty {
                         iconRow("note.text", "Ghi chú", ghiChuRieng)
                     }
                 }
                 Divider()
 
+                // Style lại danh sách sản phẩm (feedback 2026-09-28) — thêm Divider mảnh giữa các món
+                // (trước đây chỉ cách nhau bằng padding, khó phân biệt món liền kề khi cuộn nhanh),
+                // "x{n}" chuyển hẳn lên góc trên cùng bên phải NGANG HÀNG với tên món thay vì đứng lẻ
+                // loi giữa khoảng trống bên phải như bản trước, khớp cách bố trí ở ảnh mẫu tham khảo hơn.
                 section {
                     HStack {
                         Text("Danh sách sản phẩm").font(.system(size: 15, weight: .bold))
@@ -72,29 +73,41 @@ struct OrderDetailView: View {
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(Theme.primaryTint).clipShape(Capsule())
                     }
-                    ForEach(order.items) { it in
-                        HStack(alignment: .top, spacing: 10) {
-                            itemThumbnail(it)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))").font(.system(size: 15, weight: .bold))
-                                if !it.toppings.isEmpty {
-                                    Text("+ " + it.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
+                    VStack(spacing: 0) {
+                        ForEach(Array(order.items.enumerated()), id: \.element.id) { index, it in
+                            HStack(alignment: .top, spacing: 10) {
+                                itemThumbnail(it)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))")
+                                            .font(.system(size: 15, weight: .bold))
+                                        Spacer(minLength: 6)
+                                        Text("x\(it.soLuong)").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                                    }
+                                    if !it.toppings.isEmpty {
+                                        Text("+ " + it.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
+                                    }
+                                    if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
+                                        Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                                    }
+                                    Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
                                 }
-                                if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
-                                    Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                                }
-                                Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) }))).font(.system(size: 15, weight: .bold))
                             }
-                            Spacer(minLength: 0)
-                            Text("x\(it.soLuong)").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                            .padding(.vertical, 10)
+                            if index < order.items.count - 1 { Divider() }
                         }
-                        .padding(.vertical, 6)
                     }
                 }
                 Divider()
 
                 section {
                     Text("Thông tin thanh toán").font(.system(size: 15, weight: .bold))
+                    // Hình thức thanh toán chuyển vào ĐÂY (feedback 2026-09-28: "chưa thể hiện khách
+                    // thanh toán tiền mặt hay chuyển khoản") — hợp lý hơn khi đứng cạnh Tổng tiền/Đã
+                    // thu/CÒN LẠI thay vì ở mục "Thông tin nhận hàng" như bản trước.
+                    if let httt = hinhThucThanhToanText {
+                        iconRow("creditcard.fill", "Hình thức thanh toán", httt)
+                    }
                     infoRow("Tổng tiền", order.tongTien)
                     if order.giamGia > 0 { infoRow("Giảm giá", order.giamGia) }
                     infoRow("Thành tiền", order.thanhTien)
@@ -106,11 +119,6 @@ struct OrderDetailView: View {
                         Text(formatTien(order.conLai)).font(.system(size: 20, weight: .bold))
                             .foregroundColor(order.conLai > 0 ? Theme.danger : Theme.success)
                     }
-                    // "Đặt lại" gộp vào mục tổng tiền thay vì đứng riêng bên dưới (feedback 2026-09-24)
-                    // — nằm cạnh số tiền của CHÍNH đơn này, đỡ trôi nổi xa nội dung liên quan.
-                    Button("Đặt lại") { datLai() }
-                        .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-                        .padding(.top, 4)
                 }
 
                 VStack(spacing: 10) {
@@ -138,6 +146,14 @@ struct OrderDetailView: View {
         }
         .navigationTitle("Chi tiết đơn hàng")
         .navigationBarTitleDisplayMode(.inline)
+        // "Đặt lại" chuyển lên toolbar góc trên phải — LUÔN NỔI khi cuộn (feedback 2026-09-28), thay
+        // vì nằm cuối mục "Thông tin thanh toán" như trước (phải cuộn hết trang mới thấy).
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Đặt lại") { datLai() }
+                    .font(.system(size: 15, weight: .semibold))
+            }
+        }
         .onAppear {
             daDanhGia = order.daDanhGia
             soSaoDaDanh = order.soSaoDaDanh ?? 0
@@ -322,8 +338,10 @@ struct OrderDetailView: View {
 
     @ViewBuilder
     private var danhGiaSection: some View {
-        // "+100 Xu" khớp DanhGiaDonThuong (DatHangService.cs) — đổi số ở backend thì nhớ sửa cả đây.
-        Text(daDanhGia ? "Đánh giá" : "Đánh giá — nhận 100 Xu")
+        // Bỏ hẳn "nhận 100 Xu" khỏi tiêu đề (feedback 2026-09-28: "Đánh giá thôi, ko hiển thị Nhận
+        // ngay 100 xu") — quà Xu vẫn cộng ở backend (DanhGiaDonThuong, DatHangService.cs) như cũ, chỉ
+        // không quảng cáo trước nữa.
+        Text("Đánh giá")
             .font(.system(size: 13, weight: .bold)).foregroundColor(Theme.primary)
         if daDanhGia {
             Text("Bạn đã đánh giá \(String(repeating: "⭐", count: soSaoDaDanh)) — Cảm ơn bạn!")
