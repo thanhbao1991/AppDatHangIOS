@@ -114,14 +114,10 @@ struct VoucherCuaToiView: View {
         .background(Color(.systemBackground))
     }
 
-    /// Tab "Sắp có" không có moTa staff gõ sẵn cho lý do chưa mở khoá — ghép thêm "Cần: ..." vào
-    /// cuối moTa gốc (nếu có) để vẫn hiện gọn trong 1 dòng moTa có sẵn của VoucherTicketCard, không
-    /// phải sửa thêm field mới cho card dùng chung với sheet "Chọn voucher".
-    private func moTaHienThi(_ v: VoucherCuaToi) -> String? {
-        guard let lyDo = v.lyDoChuaKhaDung else { return v.moTa }
-        let goc = (v.moTa ?? "").trimmingCharacters(in: .whitespaces)
-        return goc.isEmpty ? "Cần: \(lyDo)" : "\(goc) — Cần: \(lyDo)"
-    }
+    /// 2026-09-27: BỎ hẳn phần ghép "— Cần: ..." theo phản hồi (dòng lý do chưa mở khoá làm rối card,
+    /// nhãn "SẮP CÓ"/mờ card đã đủ ngụ ý "chưa dùng được") — chỉ còn hiện moTa gốc staff gõ sẵn, không
+    /// đụng gì tới lyDoChuaKhaDung ở nơi khác (model vẫn giữ field này).
+    private func moTaHienThi(_ v: VoucherCuaToi) -> String? { v.moTa }
 
     private var emptyState: some View {
         VStack(spacing: 10) {
