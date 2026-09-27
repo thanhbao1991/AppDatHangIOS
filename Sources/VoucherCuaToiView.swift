@@ -27,9 +27,18 @@ struct VoucherCuaToiView: View {
         vouchers.filter { !$0.chuaBatDau && !$0.daSuDung }
     }
 
-    /// ID các voucher "Sắp có" — dùng để làm MỜ đúng những dòng này khi chúng xuất hiện gộp chung
-    /// trong tab TẤT CẢ (voucherSapCo tự thân không mang cờ daSuDung/chuaBatDau nào để VoucherTicketCard
-    /// tự mờ, phải đánh dấu từ bên ngoài).
+    /// Voucher "chưa tới ngày" (vd lễ tết còn xa) — server đã trả sẵn trong getVoucherCuaToi qua cờ
+    /// chuaBatDau (dùng chung 1 cửa sổ SoNgayHienTruoc/voucher, gom về 1 nguồn 2026-09-27, xem
+    /// DatHangService.GetVoucherSapCoAsync). Thuộc "Sắp có" y hệt voucherSapCo (chưa đủ điều kiện),
+    /// chỉ khác lý do chưa dùng được.
+    private var chuaToiNgay: [VoucherCuaToi] {
+        vouchers.filter { $0.chuaBatDau }
+    }
+
+    /// ID các voucher "Sắp có" (gộp cả 2 lý do: chưa tới ngày + chưa đủ điều kiện) — dùng để làm MỜ
+    /// đúng những dòng này khi chúng xuất hiện gộp chung trong tab TẤT CẢ (voucherSapCo tự thân không
+    /// mang cờ daSuDung/chuaBatDau nào để VoucherTicketCard tự mờ qua nhanSapDienRa, phải đánh dấu từ
+    /// bên ngoài qua forceMo — chuaToiNgay thì tự có nhanSapDienRa nên không cần trong set này).
     private var sapCoIds: Set<String> { Set(voucherSapCo.map(\.id)) }
 
     private var hienThi: [VoucherCuaToi] {
@@ -38,7 +47,9 @@ struct VoucherCuaToiView: View {
         // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, theo yêu cầu 27/9.
         case .tatCa: return dangCo + (vouchers.filter { $0.daSuDung || $0.chuaBatDau } + voucherSapCo)
         case .dangCo: return dangCo
-        case .sapCo: return voucherSapCo
+        // SẮP CÓ = chưa tới ngày (chuaToiNgay) + chưa đủ điều kiện dù đã tới ngày (voucherSapCo) —
+        // 2 nguồn NHƯNG cùng 1 cửa sổ hiện-trước ở server, chỉ khác lý do hiển thị.
+        case .sapCo: return chuaToiNgay + voucherSapCo
         }
     }
 
