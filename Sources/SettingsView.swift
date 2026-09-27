@@ -419,7 +419,7 @@ struct SettingsView: View {
             if loadingNgaySinh {
                 ProgressView()
             } else if let ns = ngaySinhInfo?.ngaySinh, ngaySinhInfo?.coTheSua == false {
-                Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                     .font(.system(size: 13)).foregroundColor(Theme.success)
                 Text("Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
@@ -428,7 +428,7 @@ struct SettingsView: View {
                 // 2026-09-27: "bao giờ bấm mới hiện cái này ra chứ", trước hiện thẳng luôn).
                 HStack {
                     if let ns = ngaySinhInfo?.ngaySinh {
-                        Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                        Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                             .font(.system(size: 13)).foregroundColor(Theme.success)
                     } else {
                         Text("Chưa khai ngày sinh").font(.system(size: 13)).foregroundColor(Theme.textFaint)
