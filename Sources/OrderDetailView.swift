@@ -30,14 +30,10 @@ struct OrderDetailView: View {
             // flat khác trong app (OrderStatusView/GioHangView/LichSuViView).
             VStack(alignment: .leading, spacing: 0) {
                 section {
-                    HStack {
-                        // Giờ đổi ra TRƯỚC, mã hoá đơn ra SAU (feedback 2026-09-28: "thời gian và mã
-                        // hoá đơn cần đổi chỗ cho nhau") — cùng bug ISO thô như OrderStatusView, format
-                        // lại cho khớp.
-                        Text(formatThongBaoTime(order.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                        Spacer()
-                        Text(order.maHoaDon).fontWeight(.bold)
-                    }
+                    // Bỏ hẳn mã hoá đơn khỏi đầu trang (feedback 2026-09-28) — vô nghĩa với khách,
+                    // cùng lý do đã bỏ ở OrderStatusView/LichSuCongNoView, chỉ còn giữ ở
+                    // confirmationDialog lúc huỷ đơn cho rõ đang thao tác đúng đơn nào.
+                    Text(formatThongBaoTime(order.ngayGio)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     // Đơn huỷ không đi qua timeline 4 bước (steps.firstIndex trả nil, sẽ hiện sai
                     // thành "bước 0" như chưa huỷ gì) — thay bằng 1 dòng trạng thái đơn giản.
                     if order.trangThai == .huy {
@@ -197,6 +193,35 @@ struct OrderDetailView: View {
         }
     }
 
+    private static let isoParser: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        f.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+    private static let hhmmFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        f.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
+        return f
+    }()
+
+    /// Giờ hiện dưới mỗi chấm stepper — CÙNG NGÀY với lúc tạo đơn thì chỉ cần HH:mm (đầu trang đã
+    /// hiện đủ ngày tháng rồi, lặp lại ở cả 4 bước là dư — feedback 2026-09-28: "nếu cùng ngày thì
+    /// chỉ cần hiển thị giờ ở dưới các chẹc"). Khác ngày (đơn/thanh toán kéo dài qua hôm sau) vẫn hiện
+    /// đủ HH:mm dd-MM-yyyy như formatThongBaoTime để khỏi hiểu lầm bước đó xảy ra ngày nào.
+    private func stepTimeDisplay(_ raw: String) -> String {
+        let truncated = String(raw.prefix(19))
+        guard let date = Self.isoParser.date(from: truncated),
+              let ngayTao = Self.isoParser.date(from: String(order.ngayGio.prefix(19))) else {
+            return formatThongBaoTime(raw)
+        }
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        return cal.isDate(date, inSameDayAs: ngayTao) ? Self.hhmmFormatter.string(from: date) : formatThongBaoTime(raw)
+    }
+
     /// Stepper NGANG kiểu Long Châu (tham khảo ảnh chụp 2026-09-28) thay cho timeline dọc trước đây —
     /// hàng chấm tròn/dấu check + đường nối riêng ở trên, hàng nhãn ngắn (nhanNgan) + giờ riêng ở
     /// dưới, mỗi cột chia đều 1/4 chiều ngang. Tách 2 hàng (không lồng nhãn ngay dưới từng chấm trong
@@ -244,7 +269,7 @@ struct OrderDetailView: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                         if let raw = stepTime(i) {
-                            Text(formatThongBaoTime(raw))
+                            Text(stepTimeDisplay(raw))
                                 .font(.system(size: 9)).foregroundColor(Theme.textFaint)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
