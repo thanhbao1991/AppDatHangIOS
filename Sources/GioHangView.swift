@@ -107,41 +107,46 @@ struct GioHangView: View {
     /// CheckoutView mới thấy — state dùng chung qua CartStore nên CheckoutView tự khớp theo, không
     /// cần đồng bộ lại lúc chuyển trang. Ẩn hẳn khối này nếu không có voucher nào đủ điều kiện VÀ
     /// không có Xu để dùng, đỡ chiếm chỗ vô ích.
+    /// Voucher đã chọn được tính là 1 ưu đãi — app chỉ cho chọn TỐI ĐA 1 voucher/đơn (khác app tham
+    /// khảo có thể cộng dồn nhiều ưu đãi cùng lúc) nên luôn là 0 hoặc 1.
+    private var soUuDaiDaApDung: Int { cart.selectedVoucher != nil ? 1 : 0 }
+
+    /// Bố cục tham khảo ShopeeFood (2026-09-27): 1 dòng bo góc riêng "Đã áp dụng N ưu đãi" mở sheet
+    /// chọn voucher, tách hẳn khỏi dòng "Dùng Xu" bên dưới thay vì gộp chung 1 card như bản cũ — Xu
+    /// luôn hiện, không phụ thuộc đã chọn voucher hay chưa. Toggle Xu disable khi số dư = 0.
     @ViewBuilder
     private var uuDaiSection: some View {
-        // Luôn hiện cả 2 dòng dù chưa có voucher đủ điều kiện/số dư Xu = 0 (2026-09-27) — khách vẫn
-        // thấy rõ có tính năng voucher/Xu, không phải chỉ ẩn hiện tuỳ trạng thái gây cảm giác thiếu
-        // tính năng. Toggle Xu disable khi số dư = 0, tránh bật "dùng Xu" không có gì để dùng.
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             Button { showVoucherSheet = true } label: {
                 HStack {
-                    Image(systemName: "ticket.fill").foregroundColor(Theme.primary).frame(width: 22)
-                    if let v = cart.selectedVoucher {
-                        Text(v.ten).font(.system(size: 14)).foregroundColor(.primary).lineLimit(1)
-                    } else {
-                        Text("Chọn voucher").font(.system(size: 14)).foregroundColor(.primary)
-                    }
+                    Text(soUuDaiDaApDung > 0 ? "Đã áp dụng \(soUuDaiDaApDung) ưu đãi" : "Chưa áp dụng ưu đãi")
+                        .font(.system(size: 14)).foregroundColor(Theme.textMuted)
                     Spacer()
-                    if voucherGiam > 0 {
-                        Text("-\(formatTien(voucherGiam))").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                    HStack(spacing: 2) {
+                        Text("Thêm ưu đãi").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
+                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                     }
-                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
-                .padding(.horizontal).padding(.vertical, 10)
+                .padding(.horizontal, 14).padding(.vertical, 12)
+                .background(Theme.bg)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            Divider().padding(.leading)
+
             Toggle(isOn: $cart.dungXu) {
                 HStack(spacing: 8) {
-                    Text("🟡").font(.system(size: 16))
-                    Text("Dùng Xu (số dư \(formatTien(cart.soDuXu)))").font(.system(size: 14)).foregroundColor(.primary)
+                    Theme.xuIcon(22)
+                    // 1 Xu = 1đ (quy đổi thẳng) — hiện cả 2 đơn vị để khách thấy rõ Xu quy ra tiền thật
+                    // bao nhiêu, khớp yêu cầu "xu ~ đ" thay vì chỉ hiện số dư trần trụi như bản cũ.
+                    Text("Đổi \(formatXu(cart.soDuXu)) (~\(formatTien(cart.soDuXu).replacingOccurrences(of: "đ", with: " đ")))")
+                        .font(.system(size: 14)).foregroundColor(.primary)
                 }
             }
             .tint(Theme.primary)
             .disabled(cart.soDuXu <= 0)
-            .padding(.horizontal).padding(.vertical, 10)
         }
+        .padding(.horizontal).padding(.vertical, 10)
     }
 
     @ViewBuilder
