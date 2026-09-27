@@ -11,7 +11,7 @@ struct VoucherTicketCard: View {
     let nhanGiam: String
     let nhanGiamToiDa: String?
     var donToiThieu: Double? = nil
-    /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã dùng".
+    /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã sử dụng".
     var daSuDung: Bool = false
     /// Đang được chọn (sheet "Chọn voucher") — dấu tick tròn góc phải.
     var daChon: Bool = false
@@ -101,7 +101,7 @@ struct VoucherTicketCard: View {
                     .foregroundColor(.primary)
                 Spacer()
                 if daSuDung {
-                    Text("Đã dùng")
+                    Text("Đã sử dụng")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 8).padding(.vertical, 3)
