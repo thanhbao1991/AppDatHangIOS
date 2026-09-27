@@ -417,10 +417,9 @@ struct SettingsView: View {
                 Text("Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
             } else {
-                if let ns = ngaySinhInfo?.ngaySinh {
-                    Label("Đã khai: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
-                        .font(.system(size: 13)).foregroundColor(Theme.success)
-                }
+                // DatePicker tự hiện đúng ngày đã khai (prefill ở load()) nên KHÔNG cần thêm dòng
+                // "Đã khai: ..." riêng nữa — trước đây hiện cả 2 (Label tĩnh + DatePicker) trông trùng
+                // lặp/thừa (feedback: "kết hợp làm 1").
                 // .labelsHidden() + Spacer đẩy nút "Lưu" ra sát mép phải — trước đây DatePicker giữ
                 // label "Ngày sinh của bạn" nên tự giãn chiếm hết chỗ trong HStack, đẩy Button ra khỏi
                 // vùng nhìn thấy được của card (feedback: "ko thấy nút Lưu, bấm tùm bậy thì nó lưu" —
