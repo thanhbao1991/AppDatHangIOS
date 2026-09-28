@@ -160,6 +160,12 @@ struct OrderDetailView: View {
                             Text("☎ Hỗ trợ").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
+                        // BẮT BUỘC .tint() riêng: MainTabView đặt .tint(.white) cho cả NavigationStack
+                        // (để mũi tên back hiện trắng trên header màu) — thiếu dòng này, nút .bordered
+                        // không tint riêng sẽ kế thừa trắng-trên-trắng, border + chữ "Hỗ trợ" vô hình,
+                        // chỉ còn icon ☎️ (emoji màu, không bị tint ảnh hưởng) nổi trơ trọi (phát hiện
+                        // 2026-09-28 qua ảnh chụp thật).
+                        .tint(Theme.primary)
                         .disabled(hotlineQuan?.isEmpty != false)
                     }
                 }
