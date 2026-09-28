@@ -61,6 +61,9 @@ struct ThongBaoView: View {
                 } else if items.isEmpty {
                     Text("Chưa có thông báo nào.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
+                    // Đổi sang dạng PHẲNG (2026-09-28, khớp OrderStatusView/LichSuViView) — bỏ
+                    // listStyle mặc định (bo góc/card kiểu insetGrouped), dùng .plain + đường kẻ
+                    // ngang mặc định giữa các dòng thay cho card riêng biệt.
                     List(items) { item in
                         Button {
                             if item.hoaDonId != nil {
@@ -81,7 +84,9 @@ struct ThongBaoView: View {
                             }
                         }
                         .foregroundColor(.primary)
+                        .padding(.vertical, 4)
                     }
+                    .listStyle(.plain)
                     .refreshable { await load(silent: true) }
                 }
             }

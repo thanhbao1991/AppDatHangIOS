@@ -204,7 +204,13 @@ struct MenuView: View {
                     // cao cố định) vẫn còn thấy lỗi, BỎ HẲN ghim theo yêu cầu: header giờ cuộn bình
                     // thường như mọi nội dung khác, không còn "dính" ở đỉnh khi cuộn qua — né toàn bộ
                     // lớp bug này, đơn giản và ổn định hơn hẳn.
-                    HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Title ngay trên menu — cùng style "🔥 Món quán đề xuất" (noiBatCarousel).
+                        Text("📜 Mời bạn chọn món")
+                            .font(.system(size: 15, weight: .bold))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        HStack(spacing: 0) {
                         nhomSidebar(onTap: { id in
                             isJumpingToSection = true
                             selectedNhomId = id
@@ -255,6 +261,7 @@ struct MenuView: View {
                             .refreshable {
                                 await load(silent: true)
                             }
+                        }
                         }
                     }
                 }
@@ -745,9 +752,18 @@ struct ProductPickerSheet: View {
                                         .foregroundColor(Theme.danger)
                                 }
                             } else {
-                                // Ép locale vi_VN — máy đặt hệ thống tiếng Anh sẽ hiện DatePicker
-                                // kiểu "January 2026"/mm-dd-yyyy giữa 1 màn toàn chữ Việt, lạc quẻ.
-                                DatePicker("Ngày sinh của bạn", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                // .wheel — khớp control ngày sinh bên tab Tài khoản (SettingsView.ngaySinhCard,
+                                // feedback 2026-09-28 "thay control này bằng control trong tab khách hàng").
+                                // Trước đây dùng style .compact mặc định (nút "ngày 28 thg 9, 2008" bấm ra
+                                // popup lịch lưới) — đổi sang wheel 3 cột ngày/tháng/năm cuộn thẳng cho đồng
+                                // bộ, dễ chọn năm sinh xa hơn. Ép locale vi_VN — máy đặt hệ thống tiếng Anh
+                                // sẽ hiện DatePicker kiểu "January 2026"/mm-dd-yyyy giữa 1 màn toàn chữ Việt,
+                                // lạc quẻ.
+                                DatePicker("", selection: $dobPicked, in: ...Date(), displayedComponents: .date)
+                                    .labelsHidden()
+                                    .datePickerStyle(.wheel)
+                                    .frame(maxHeight: 140)
+                                    .clipped()
                                     .environment(\.locale, Locale(identifier: "vi_VN"))
                                 if let dobError {
                                     Text(dobError).font(.system(size: 12)).foregroundColor(Theme.danger)

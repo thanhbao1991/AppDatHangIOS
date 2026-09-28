@@ -343,21 +343,23 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
         }
     }
 
-    /// Nhóm 4 icon kiểu Long Châu (mục 4 = "Đã huỷ" thay vì "Đổi/Trả" — app này không có đổi/trả).
+    /// Nhóm 3 tab: Đang xử lý/Đang giao/Đã giao. Đơn "Đã huỷ" KHÔNG còn tab riêng (bỏ 2026-09-28,
+    /// feedback "tab đơn hàng bỏ mục đã huỷ đi") — trả về nil để filteredOrders (OrderStatusView) tự
+    /// loại khỏi mọi tab, đơn huỷ chỉ còn xem được qua link trực tiếp (thông báo/chi tiết cũ) nếu có.
     /// "Đang xử lý" gộp choXacNhan+daXacNhan (chưa giao), vì khách không cần phân biệt kỹ 2 bước nội
     /// bộ đó ở tầng lọc nhanh — bấm vào card vẫn thấy đúng nhãn "Chờ quán xác nhận"/"đang chuẩn bị".
-    var nhom: NhomDonHang {
+    var nhom: NhomDonHang? {
         switch self {
         case .choXacNhan, .daXacNhan: return .dangXuLy
         case .dangGiao: return .dangGiao
         case .hoanTat: return .daGiao
-        case .huy: return .daHuy
+        case .huy: return nil
         }
     }
 }
 
 enum NhomDonHang: String, CaseIterable, Identifiable {
-    case dangXuLy, dangGiao, daGiao, daHuy
+    case dangXuLy, dangGiao, daGiao
     var id: String { rawValue }
 
     var nhan: String {
@@ -365,7 +367,6 @@ enum NhomDonHang: String, CaseIterable, Identifiable {
         case .dangXuLy: return "Đang xử lý"
         case .dangGiao: return "Đang giao"
         case .daGiao: return "Đã giao"
-        case .daHuy: return "Đã huỷ"
         }
     }
 }

@@ -289,8 +289,8 @@ struct OrderStatusView: View {
         let result = await APIClient.shared.getDonCuaToi()
         orders = result
         // Mặc định mở tab CÓ DỮ LIỆU đầu tiên tính từ trái qua (theo thứ tự NhomDonHang.allCases:
-        // Đang xử lý/Đang giao/Đã giao/Đã huỷ) thay vì luôn cứng "Đang xử lý" dù tab đó rỗng, khách
-        // khỏi phải tự bấm qua tab khác mới thấy đơn (feedback 2026-09-27).
+        // Đang xử lý/Đang giao/Đã giao) thay vì luôn cứng "Đang xử lý" dù tab đó rỗng, khách khỏi
+        // phải tự bấm qua tab khác mới thấy đơn (feedback 2026-09-27).
         if !filterInitialized {
             filterInitialized = true
             if let firstWithData = NhomDonHang.allCases.first(where: { nhom in orders.contains { $0.trangThai.nhom == nhom } }) {
