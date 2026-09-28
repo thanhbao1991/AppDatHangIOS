@@ -338,6 +338,22 @@ actor APIClient {
         return await decode("/dat-hang/dat-mon", method: "POST", body: jsonBody(body))
     }
 
+    /// Amount đã tính sẵn + info tài khoản nhận tiền cho ThanhToanView tự vẽ QR native — xem
+    /// ThanhToanInfoDto/DatHangService.GetThanhToanInfoAsync (thay hẳn WebView nhúng trang HTML cũ).
+    func getThanhToanInfo(hoaDonId: String) async -> ApiEnvelope<ThanhToanInfoDto> {
+        await decode("/dat-hang/thanh-toan-info/\(hoaDonId)")
+    }
+
+    /// Ảnh QR PNG do backend tự vẽ (BankQrConfig, cùng 1 nguồn với AppQuanLyIOS) — client không tự
+    /// build VietQR payload để tránh lệch định dạng nếu backend đổi sau này.
+    func getBillQrImage(amount: Double, addInfo: String) async -> Data? {
+        let vnd = Int(amount.rounded())
+        let query = "amount=\(vnd)&addInfo=\(addInfo.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        let req = makeRequest("/HoaDon/bill-qr?\(query)", authorized: false)
+        let (data, status) = await send(req)
+        return status == 200 ? data : nil
+    }
+
     /// Voucher khách hiện tại ĐANG đủ điều kiện dùng — không cache (điều kiện đổi ngay sau đơn đầu
     /// tiên, không muốn khách thấy voucher "còn dùng được" đã hết hạn vì cache cũ).
     func getVoucherKhaDung() async -> [Voucher] {

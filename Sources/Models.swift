@@ -243,6 +243,17 @@ struct DatMonRequest: Encodable {
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 
+/// Thay hẳn WebView nhúng trang HTML thanh toán — xem ThanhToanInfoDto (backend)/ThanhToanView.
+struct ThanhToanInfoDto: Decodable {
+    let amount: Double
+    let billAddInfo: String
+    let bankName: String
+    let bankAccountNo: String
+    let bankAccountName: String
+    let bankAppCode: String
+    let tenKhachHangText: String?
+}
+
 struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double; let tongTienDon: Double; let soLuong: Int }
 struct TuyenDuongPoint: Decodable { let lat: Double; let long: Double }
 struct UocTinhShip: Decodable {

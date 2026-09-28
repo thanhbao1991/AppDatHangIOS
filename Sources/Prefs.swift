@@ -131,10 +131,4 @@ enum Prefs {
         // mới, vì mốc cũ của tài khoản trước vẫn còn đó (phát hiện 2026-09-14 lúc test QuayLai).
         defaults.removeObject(forKey: keyThongBaoLastSeen)
     }
-
-    /// Trang QR chuyển khoản — [AllowAnonymous], HTML tự vẽ (không phải ảnh thuần), dùng lại nguyên
-    /// endpoint đã có sẵn cho SMS soạn sẵn (xem HoaDonController.GetBillQrByHoaDonId).
-    static func thanhToanQrUrl(hoaDonId: String) -> URL? {
-        URL(string: "\(apiBase)/HoaDon/\(hoaDonId)/qr")
-    }
 }
