@@ -399,11 +399,21 @@ struct MenuView: View {
     /// đúng logic server (DatHangService.DatMonAsync). Dùng ở MỌI nơi hiện giá trong tab Thực đơn.
     private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
 
+    /// Giá THẤP NHẤT của 1 món + có phải ĐÚNG size đó đang mang giá riêng hay không — bug đã sửa
+    /// 2026-09-29: trước tính "coGiaRieng" bằng contains{} trên MỌI size, trong khi giá hiện lại lấy
+    /// min() — 1 món 2 size (vd Findy Cà Phê: Chuẩn có giá riêng 40k, L catalog 35k) sẽ hiện "35.000
+    /// [Giá riêng]" — SAI cả số lẫn nhãn, vì size đang hiện giá (L) không hề có giá riêng, còn size
+    /// có giá riêng thật (Chuẩn, 40k) không phải là số đang hiện. Giờ tìm ĐÚNG size đạt mức giá thấp
+    /// nhất rồi mới hỏi size ĐÓ có giá riêng không.
+    private func giaThapNhatVaCoGiaRieng(_ item: SanPham) -> (gia: Double, coGiaRieng: Bool)? {
+        guard let minPrice = item.bienThe.map(giaHienThi).min() else { return nil }
+        let coGiaRieng = item.bienThe.first { giaHienThi($0) == minPrice }.map { giaRiengMap[$0.id] != nil } ?? false
+        return (minPrice, coGiaRieng)
+    }
+
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
-        let prices = item.bienThe.map(giaHienThi)
-        let minPrice = prices.min()
-        let coGiaRieng = item.bienThe.contains { giaRiengMap[$0.id] != nil }
+        let gia = giaThapNhatVaCoGiaRieng(item)
         let isFavorite = yeuThichIds.contains(item.id)
         HStack(spacing: 12) {
             Button { picking = item } label: {
@@ -422,11 +432,11 @@ struct MenuView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.primary)
                             .lineLimit(2)
-                        if let minPrice {
+                        if let gia {
                             HStack(spacing: 6) {
-                                Text(formatTien(minPrice))
+                                Text(formatTien(gia.gia))
                                     .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                                if coGiaRieng { giaRiengBadge() }
+                                if gia.coGiaRieng { giaRiengBadge() }
                             }
                         }
                     }
@@ -489,12 +499,12 @@ struct MenuView: View {
                                         .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)
-                                    if let minPrice = item.bienThe.map(giaHienThi).min() {
+                                    if let gia = giaThapNhatVaCoGiaRieng(item) {
                                         HStack(spacing: 4) {
-                                            Text(formatTien(minPrice))
+                                            Text(formatTien(gia.gia))
                                                 .font(.system(size: 12, weight: .semibold))
                                                 .foregroundColor(Theme.primary)
-                                            if item.bienThe.contains(where: { giaRiengMap[$0.id] != nil }) {
+                                            if gia.coGiaRieng {
                                                 giaRiengBadge()
                                             }
                                         }
