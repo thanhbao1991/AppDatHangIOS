@@ -293,19 +293,15 @@ struct MenuView: View {
     /// GIỮ LẠI (feedback 2026-09-27: bỏ hẳn là quá tay, chỉ cần bớt nổi bật) nhưng đổi hẳn sang dạng
     /// FLAT — icon shuffle + chữ nhỏ màu primary trên nền trong suốt, không còn pill nền đậm
     /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
-    /// Tên nhóm (icon+chữ) bọc pill Theme.primaryTint (feedback 2026-09-28 "thêm nền cho tên nhóm
-    /// bên phải") — tách hẳn khỏi nền chung cả thanh header, nổi bật hơn khớp cột nhóm sidebar bên
-    /// trái đã có nền tô đậm cho mục đang chọn.
+    /// Nền tên nhóm bên phải đổi từ pill ôm sát chữ sang PHỦ FULL cả thanh header (feedback
+    /// 2026-09-28 "nền tên nhóm bên phải menu full") — dùng thẳng Theme.primaryTint cho toàn bộ
+    /// header thay vì Color(.secondarySystemGroupedBackground) trung tính cũ, nổi bật hơn khớp cột
+    /// nhóm sidebar bên trái đã có nền tô đậm cho mục đang chọn.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 6) {
-            HStack(spacing: 6) {
-                Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                    .font(.system(size: 14))
-                Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
-            }
-            .padding(.horizontal, 10).padding(.vertical, 5)
-            .background(Theme.primaryTint)
-            .clipShape(Capsule())
+            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
+                .font(.system(size: 14))
+            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
             Spacer()
             if !items.isEmpty {
                 Button {
@@ -324,10 +320,16 @@ struct MenuView: View {
         }
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
-        // Color đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi đè lên
+        // Nền đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi đè lên
         // nội dung đã cuộn qua bên dưới; nền mờ/trong suốt để lộ nội dung đó xuyên qua, gây chồng
-        // lấn/nhoè (đã thấy qua ảnh chụp thật).
-        .background(Color(.secondarySystemGroupedBackground))
+        // lấn/nhoè (đã thấy qua ảnh chụp thật). Theme.primaryTint BẢN THÂN là opacity(0.12) nên
+        // KHÔNG được dùng trực tiếp làm background (vẫn xuyên thấu) — lót thêm 1 lớp systemBackground
+        // đục phía dưới để cả khối trở thành đục hoàn toàn, chỉ tự pha màu 1 LẦN ở đây, không lộ nội
+        // dung cuộn qua bên dưới.
+        .background {
+            Color(.systemBackground)
+            Theme.primaryTint
+        }
     }
 
     /// Cột trái: danh sách nhóm cố định — bấm thì báo `onTap` để cột phải tự cuộn tới đúng section
