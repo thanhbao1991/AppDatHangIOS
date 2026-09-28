@@ -694,18 +694,22 @@ struct ProductPickerSheet: View {
 
     private var toppingCount: Int { toppingQty.values.reduce(0, +) }
 
-    /// Chip biến thể — riêng Size L (khớp "Size L"/lỗi chính tả có thật "Soze L" trong menu, cùng
-    /// pattern LIKE '%ze L%' bên Backend VoucherDieuKien.UpsizeMonMoi) có giao diện SANG hơn hẳn các
-    /// size khác khi active — gradient vàng kim + viền sáng + icon 👑, để bấm vào tự thấy "lên đời"
-    /// thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác chọn Size L,
-    /// khớp voucher UpsizeMonMoi (tặng Size L miễn phí món mới) đang khuyến khích thói quen này.
+    /// Chip biến thể — Size L/XL (khớp "Size L"/lỗi chính tả có thật "Soze L", và riêng "Size XL",
+    /// xem isSizeLBienThe/isSizeXLBienThe ở Theme.swift) có giao diện SANG hơn hẳn các size khác khi
+    /// active — gradient vàng kim + viền sáng + icon 👑 (XL thì 👑👑, sang hơn 1 bậc), để bấm vào tự
+    /// thấy "lên đời" thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác
+    /// chọn size lớn, khớp voucher UpsizeMonMoi (tặng Size L miễn phí món mới, CHƯA áp dụng cho XL —
+    /// xem ghi chú ở isSizeXLBienThe) đang khuyến khích thói quen này.
     private func isSizeL(_ b: SanPhamBienThe) -> Bool { isSizeLBienThe(b.tenBienThe) }
+    private func isSizeXL(_ b: SanPhamBienThe) -> Bool { isSizeXLBienThe(b.tenBienThe) }
+    private func crownCount(_ b: SanPhamBienThe) -> Int { isSizeXL(b) ? 2 : (isSizeL(b) ? 1 : 0) }
 
     @ViewBuilder
     private func sizeChipLabel(_ b: SanPhamBienThe, active: Bool) -> some View {
-        let vip = isSizeL(b)
+        let crowns = crownCount(b)
+        let vip = crowns > 0
         HStack(spacing: 4) {
-            if vip { Text("👑").font(.system(size: 11)) }
+            if crowns > 0 { Text(String(repeating: "👑", count: crowns)).font(.system(size: 11)) }
             // "🏷️" thay cho giaRiengBadge() (Theme.swift) — chip này đổi nền theo trạng thái
             // active/VIP (gradient vàng/primary đặc/xám nhạt), 1 badge nền cố định sẽ lạc tông trên
             // vài nền; icon nhỏ theo màu chữ chip thì luôn hợp.

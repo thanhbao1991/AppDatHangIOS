@@ -289,6 +289,15 @@ func isSizeLBienThe(_ tenBienThe: String) -> Bool {
     tenBienThe.range(of: "ze L", options: [.caseInsensitive, .diacriticInsensitive]) != nil
 }
 
+/// Khớp "Size XL" — CHỈ dùng cho giao diện chip 👑👑 (MenuView), KHÔNG dùng cho điều kiện voucher
+/// UpsizeMonMoi: backend (VoucherDieuKien) chỉ match "%ze L%", không nhận Size XL, nên
+/// isSizeLBienThe (giữ nguyên riêng biệt) vẫn phải là nguồn duy nhất cho preview giảm giá ở
+/// CartStore/CheckoutView — trộn chung 2 hàm này sẽ làm preview báo có giảm giá nhưng đặt đơn
+/// thật lại bị backend từ chối.
+func isSizeXLBienThe(_ tenBienThe: String) -> Bool {
+    tenBienThe.range(of: "ze XL", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+}
+
 /// Chuẩn hoá chuỗi tiếng Việt để so khớp không dấu — dùng cho tìm kiếm món (MenuView) và gợi ý tên
 /// đường khi nhập địa chỉ (CheckoutView). Gom về 1 chỗ thay vì mỗi màn tự viết lại 1 bản.
 func normalizeVN(_ s: String) -> String {
