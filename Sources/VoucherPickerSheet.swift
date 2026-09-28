@@ -17,12 +17,14 @@ struct VoucherPickerSheet: View {
     /// trong nhóm ĐÃ đủ điều kiện, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên
     /// (feedback tiếp theo cùng ngày).
     ///
-    /// Nhóm CHƯA đủ điều kiện sắp theo NGƯỠNG ĐƠN TỐI THIỂU thấp nhất lên trước (đổi 2026-09-28,
-    /// feedback: "nhìn không có thứ tự gì") — voucher càng gần đạt ngưỡng càng đáng khuyến khích thêm
-    /// món hơn. KHÔNG dùng giaTriGiam(v) làm khoá cho nhóm này vì hàm đó tính như đơn ĐÃ đạt ngưỡng
-    /// (soTienGiamThucTe không tự kiểm donToiThieu), nên nhiều voucher bậc thang (DON300K/500K/1000K)
-    /// ra cùng 1 số tiền giảm tại đơn hiện tại — trông như KHÔNG sắp xếp gì. Voucher không có ngưỡng
-    /// (topping/upsize/đặt lại...) thì xếp theo giá trị tham khảo giamToiDa/soTienGiam.
+    /// Nhóm CHƯA đủ điều kiện: voucher KHÔNG có ngưỡng đơn tối thiểu (topping/upsize/đặt lại...) lên
+    /// trước — không phụ thuộc khách mua thêm bao nhiêu tiền, chỉ cần đúng hành động là dùng được, nên
+    /// "gần đạt" hơn nhóm có ngưỡng. Trong đó xếp theo giá trị tham khảo giamToiDa/soTienGiam. Nhóm CÓ
+    /// ngưỡng xuống dưới, sắp theo ngưỡng THẤP nhất lên trước (đổi 2026-09-28, feedback: "nhìn không
+    /// có thứ tự gì") — voucher càng gần đạt ngưỡng càng đáng khuyến khích thêm món hơn. KHÔNG dùng
+    /// giaTriGiam(v) làm khoá cho nhóm ngưỡng vì hàm đó tính như đơn ĐÃ đạt ngưỡng (soTienGiamThucTe
+    /// không tự kiểm donToiThieu), nên nhiều voucher bậc thang (DON300K/500K/1000K) ra cùng 1 số tiền
+    /// giảm tại đơn hiện tại — trông như KHÔNG sắp xếp gì.
     private var sortedVouchers: [Voucher] {
         vouchers.sorted { a, b in
             let okA = duDieuKien(a), okB = duDieuKien(b)
@@ -30,8 +32,8 @@ struct VoucherPickerSheet: View {
             if okA { return giaTriGiam(a) > giaTriGiam(b) }
             switch (a.donToiThieu, b.donToiThieu) {
             case let (da?, db?): return da < db
-            case (.some, nil): return true
-            case (nil, .some): return false
+            case (.some, nil): return false
+            case (nil, .some): return true
             case (nil, nil): return a.giaTriGiamThamKhao > b.giaTriGiamThamKhao
             }
         }
