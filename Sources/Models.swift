@@ -150,6 +150,13 @@ struct Voucher: Decodable, Identifiable, Equatable {
         guard loaiGiam == "PhanTram", let giamToiDa, giamToiDa > 0 else { return nil }
         return "Tối đa \(formatTien(giamToiDa))"
     }
+
+    /// Giá trị giảm THAM KHẢO (không phụ thuộc giỏ hàng hiện tại) — khớp công thức
+    /// VoucherCuaToi.giaTriGiamThamKhao, dùng làm khoá sắp xếp DỰ PHÒNG ở VoucherPickerSheet cho
+    /// voucher KHÔNG có donToiThieu (topping/upsize/đặt lại...) khi chưa đủ điều kiện.
+    var giaTriGiamThamKhao: Double {
+        loaiGiam == "PhanTram" ? (giamToiDa ?? 0) : soTienGiam
+    }
 }
 
 /// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở

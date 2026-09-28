@@ -14,13 +14,26 @@ struct VoucherPickerSheet: View {
     var onClose: () -> Void
 
     /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện xuống dưới (feedback 2026-09-27) —
-    /// trong MỖI nhóm, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên (feedback tiếp
-    /// theo cùng ngày) thay vì giữ nguyên thứ tự server trả.
+    /// trong nhóm ĐÃ đủ điều kiện, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên
+    /// (feedback tiếp theo cùng ngày).
+    ///
+    /// Nhóm CHƯA đủ điều kiện sắp theo NGƯỠNG ĐƠN TỐI THIỂU thấp nhất lên trước (đổi 2026-09-28,
+    /// feedback: "nhìn không có thứ tự gì") — voucher càng gần đạt ngưỡng càng đáng khuyến khích thêm
+    /// món hơn. KHÔNG dùng giaTriGiam(v) làm khoá cho nhóm này vì hàm đó tính như đơn ĐÃ đạt ngưỡng
+    /// (soTienGiamThucTe không tự kiểm donToiThieu), nên nhiều voucher bậc thang (DON300K/500K/1000K)
+    /// ra cùng 1 số tiền giảm tại đơn hiện tại — trông như KHÔNG sắp xếp gì. Voucher không có ngưỡng
+    /// (topping/upsize/đặt lại...) thì xếp theo giá trị tham khảo giamToiDa/soTienGiam.
     private var sortedVouchers: [Voucher] {
         vouchers.sorted { a, b in
             let okA = duDieuKien(a), okB = duDieuKien(b)
             if okA != okB { return okA }
-            return giaTriGiam(a) > giaTriGiam(b)
+            if okA { return giaTriGiam(a) > giaTriGiam(b) }
+            switch (a.donToiThieu, b.donToiThieu) {
+            case let (da?, db?): return da < db
+            case (.some, nil): return true
+            case (nil, .some): return false
+            case (nil, nil): return a.giaTriGiamThamKhao > b.giaTriGiamThamKhao
+            }
         }
     }
 
