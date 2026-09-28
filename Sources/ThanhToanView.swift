@@ -21,28 +21,33 @@ struct ThanhToanView: View {
     @State private var saveMessage: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 16) {
-                    if let info {
-                        content(for: info)
-                    } else if let errorMessage {
-                        VStack(spacing: 12) {
-                            Text(errorMessage)
-                                .foregroundColor(Theme.danger)
-                                .multilineTextAlignment(.center)
-                            Button("Thử lại") { Task { await load() } }
-                                .buttonStyle(.gradientProminent)
-                        }
-                        .padding(.top, 60)
-                    } else {
-                        ProgressView().padding(.top, 80)
+        ScrollView {
+            VStack(spacing: 16) {
+                if let info {
+                    content(for: info)
+                } else if let errorMessage {
+                    VStack(spacing: 12) {
+                        Text(errorMessage)
+                            .foregroundColor(Theme.danger)
+                            .multilineTextAlignment(.center)
+                        Button("Thử lại") { Task { await load() } }
+                            .buttonStyle(.gradientProminent)
                     }
+                    .padding(.top, 60)
+                } else {
+                    VStack(spacing: 12) {
+                        ProgressView().scaleEffect(1.3)
+                        Text("Đang tải thông tin thanh toán...")
+                            .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    }
+                    .padding(.top, 100)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
             }
+            .padding()
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.white)
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
