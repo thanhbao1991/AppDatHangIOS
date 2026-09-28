@@ -226,9 +226,10 @@ struct OrderStatusView: View {
     /// TRƯỚC "Đặt lại" (trước đây "Đặt lại" luôn đứng đầu bên trái, nay nhường vị trí ngoài cùng —
     /// dễ bấm nhất bằng ngón cái — cho nút cần hành động gấp hơn).
     ///
-    /// "☎ Hỗ trợ" thêm 2026-09-28 (chuyển từ trang Chi tiết đơn hàng ra đây) — đứng NGAY TRƯỚC "Đặt
-    /// lại", chỉ hiện với đơn CHƯA HOÀN THÀNH (khác Thanh toán chỉ hiện khi còn tiền — Hỗ trợ cần
-    /// thấy được cả lúc đã trả đủ tiền nhưng đơn còn đang xử lý/giao).
+    /// "☎ Hỗ trợ" thêm 2026-09-28 (chuyển từ trang Chi tiết đơn hàng ra đây) — đứng NGOÀI CÙNG BÊN
+    /// TRÁI trong cụm nút phải (TRƯỚC cả "Thanh toán"), chỉ hiện với đơn CHƯA HOÀN THÀNH (khác Thanh
+    /// toán chỉ hiện khi còn tiền — Hỗ trợ cần thấy được cả lúc đã trả đủ tiền nhưng đơn còn đang xử
+    /// lý/giao).
     private func actionRow(_ item: DonHangKhach) -> some View {
         HStack(spacing: 8) {
             if item.daDanhGia {
@@ -236,14 +237,14 @@ struct OrderStatusView: View {
                     .font(.system(size: 13))
             }
             Spacer()
+            if item.trangThai != .hoanTat && item.trangThai != .huy {
+                actionButton("☎ Hỗ trợ") { goiHotline() }
+                    .disabled(hotlineQuan?.isEmpty != false)
+            }
             if item.trangThai == .hoanTat && !item.daDanhGia && isLastOrder(item) {
                 actionButton("⭐ Đánh giá", filled: true) { danhGiaTarget = item }
             } else if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
-            }
-            if item.trangThai != .hoanTat && item.trangThai != .huy {
-                actionButton("☎ Hỗ trợ") { goiHotline() }
-                    .disabled(hotlineQuan?.isEmpty != false)
             }
             actionButton("Đặt lại", filled: true) { datLai(item) }
         }
