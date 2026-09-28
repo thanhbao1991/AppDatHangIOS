@@ -289,11 +289,11 @@ func isSizeLBienThe(_ tenBienThe: String) -> Bool {
     tenBienThe.range(of: "ze L", options: [.caseInsensitive, .diacriticInsensitive]) != nil
 }
 
-/// Khớp "Size XL" — CHỈ dùng cho giao diện chip 👑👑 (MenuView), KHÔNG dùng cho điều kiện voucher
-/// UpsizeMonMoi: backend (VoucherDieuKien) chỉ match "%ze L%", không nhận Size XL, nên
-/// isSizeLBienThe (giữ nguyên riêng biệt) vẫn phải là nguồn duy nhất cho preview giảm giá ở
-/// CartStore/CheckoutView — trộn chung 2 hàm này sẽ làm preview báo có giảm giá nhưng đặt đơn
-/// thật lại bị backend từ chối.
+/// Khớp "Size XL" — dùng cho giao diện chip 👑👑 (MenuView) VÀ điều kiện voucher UpsizeXL
+/// (CartStore.voucherDuDieuKien, khớp backend "%ze XL%"). KHÔNG dùng thay cho isSizeLBienThe trong
+/// điều kiện voucher UpsizeMonMoi — backend UpsizeMonMoi chỉ match "%ze L%", không nhận Size XL, 2
+/// voucher này ĐỘC LẬP nhau nên 2 hàm match phải giữ tách riêng, trộn chung sẽ làm preview báo có
+/// giảm giá nhưng đặt đơn thật lại bị backend từ chối (sai voucher).
 func isSizeXLBienThe(_ tenBienThe: String) -> Bool {
     tenBienThe.range(of: "ze XL", options: [.caseInsensitive, .diacriticInsensitive]) != nil
 }

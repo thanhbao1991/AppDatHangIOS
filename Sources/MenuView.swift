@@ -713,7 +713,7 @@ struct ProductPickerSheet: View {
             // "🏷️" thay cho giaRiengBadge() (Theme.swift) — chip này đổi nền theo trạng thái
             // active/VIP (gradient vàng/primary đặc/xám nhạt), 1 badge nền cố định sẽ lạc tông trên
             // vài nền; icon nhỏ theo màu chữ chip thì luôn hợp.
-            Text("\(b.tenBienThe) \(formatTien(giaHienThi(b)))\(giaRiengMap[b.id] != nil ? " 🏷️" : "")")
+            Text("\(b.tenBienThe) \(formatTienShort(giaHienThi(b)).uppercased())\(giaRiengMap[b.id] != nil ? " 🏷️" : "")")
                 .font(.system(size: 12, weight: .bold))
         }
         .padding(.horizontal, 10).padding(.vertical, 6)

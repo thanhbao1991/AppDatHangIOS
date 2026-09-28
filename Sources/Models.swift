@@ -113,6 +113,10 @@ struct Voucher: Decodable, Identifiable, Equatable {
     // KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường), chỉ để CheckoutView tự
     // ẩn voucher này khi giỏ hàng không có Size L. Xem VoucherKhaDungDto.ChiApDungKhiCoSizeL.
     var chiApDungKhiCoSizeL: Bool = false
+    // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng Size XL (DieuKien=UpsizeXL nội bộ) —
+    // cùng cách hoạt động chiApDungKhiCoSizeL, chỉ khác biến thể yêu cầu. Xem
+    // VoucherKhaDungDto.ChiApDungKhiCoSizeXL.
+    var chiApDungKhiCoSizeXL: Bool = false
     // true khi voucher CHỈ dùng được khi giỏ có ít nhất 1 dòng topping (DieuKien=ToppingMienPhi nội
     // bộ) — KHÔNG ảnh hưởng số tiền giảm (vẫn cố định soTienGiam như voucher thường, khớp
     // UpsizeMonMoi). Xem VoucherKhaDungDto.ChiApDungKhiCoTopping.

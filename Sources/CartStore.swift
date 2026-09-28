@@ -113,7 +113,8 @@ final class CartStore: ObservableObject {
     var soDuXu: Double { vi?.soDu ?? 0 }
 
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
-    /// dòng Size L, ToppingMienPhi (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
+    /// dòng Size L, UpsizeXL (chiApDungKhiCoSizeXL) cần ít nhất 1 dòng Size XL, ToppingMienPhi
+    /// (chiApDungKhiCoTopping) cần giỏ có ít nhất 1 dòng topping,
     /// MonMoiTraiNghiem (chiApDungKhiCoMonMoi) cần giỏ có ít nhất 1 dòng sản phẩm khách CHƯA TỪNG đặt
     /// (đối chiếu sanPhamDaTungDat), DatLai (chiApDungKhiDatLai) cần giỏ đến từ nút "Đặt lại"
     /// (laDatLai), DonToiThieu/SoLuongToiThieu cần đạt ngưỡng tương ứng — nếu không đủ điều kiện thì
@@ -123,6 +124,9 @@ final class CartStore: ObservableObject {
     func voucherDuDieuKien(_ v: Voucher) -> Bool {
         if v.chiApDungKhiCoSizeL {
             return items.contains { isSizeLBienThe($0.tenBienThe) }
+        }
+        if v.chiApDungKhiCoSizeXL {
+            return items.contains { isSizeXLBienThe($0.tenBienThe) }
         }
         if v.chiApDungKhiCoTopping {
             return items.contains { !$0.toppings.isEmpty }
