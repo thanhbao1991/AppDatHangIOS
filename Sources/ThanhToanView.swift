@@ -1,21 +1,15 @@
 import SwiftUI
 import UIKit
-
-// Danh sách rút gọn app ngân hàng phổ biến ở VN có trong VietQR — khớp CK_BANKS bên
-// HoaDonController.GetBillQrByHoaDonId (trang HTML cũ). Đây là bảng mã CHUẨN VietQR, không phải
-// cấu hình riêng của quán, nên hardcode ở đây không có rủi ro "đổi STK phải update app" — chỉ
-// STK/tên TK/mã ngân hàng NHẬN tiền (info.bank*) mới luôn lấy từ API.
-private let ckBanks: [(code: String, name: String)] = [
-    ("icb", "VietinBank"), ("vcb", "Vietcombank"), ("tcb", "Techcombank"),
-    ("mb", "MB Bank"), ("acb", "ACB"), ("bidv", "BIDV"), ("vpb", "VPBank"),
-    ("tpb", "TPBank"), ("vba", "Agribank"), ("vib", "VIB"), ("shb", "SHB"), ("hdb", "HDBank"),
-]
+import Photos
 
 /// Thay hẳn WebView nhúng trang HTML backend (lag, xem incident cũ) — tự vẽ QR native bằng
 /// SwiftUI, giống cách AppQuanLyIOS làm: chỉ xin ẢNH PNG đã vẽ sẵn qua /api/HoaDon/bill-qr (cùng
-/// BankQrConfig, không tự build VietQR payload ở Swift). Amount/addInfo/STK/tên TK/mã ngân hàng
-/// LUÔN lấy từ ThanhToanInfoDto mỗi lần mở màn hình — đổi STK ở backend là app tự cập nhật, không
-/// cần build lại/submit App Store lại.
+/// BankQrConfig, không tự build VietQR payload ở Swift). Amount/addInfo/STK/tên TK LUÔN lấy từ
+/// ThanhToanInfoDto mỗi lần mở màn hình — đổi STK ở backend là app tự cập nhật, không cần build
+/// lại app. Bỏ nút "Chuyển khoản qua X" (deep link dl.vietqr.io) — độ tin cậy phụ thuộc app ngân
+/// hàng có support hay không, ngoài tầm kiểm soát của mình (xem thảo luận session). Thay bằng nút
+/// tải ảnh QR về máy — khách tự mở app ngân hàng bất kỳ rồi quét từ Ảnh, luôn hoạt động vì QR tự
+/// chứa đủ thông tin (không phụ thuộc integration riêng như Zalo Pay).
 struct ThanhToanView: View {
     let hoaDonId: String
     let onDone: () -> Void
@@ -23,16 +17,7 @@ struct ThanhToanView: View {
     @State private var info: ThanhToanInfoDto?
     @State private var qrImage: UIImage?
     @State private var errorMessage: String?
-    @State private var showBankPicker = false
-    @AppStorage("thanhToan_lastBankApp") private var lastBankApp = ""
-
-    private var selectedBankCode: String {
-        lastBankApp.isEmpty ? (info?.bankAppCode ?? "icb") : lastBankApp
-    }
-
-    private var selectedBankName: String {
-        ckBanks.first { $0.code == selectedBankCode }?.name ?? (info?.bankName ?? "")
-    }
+    @State private var saveMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -58,7 +43,7 @@ struct ThanhToanView: View {
             }
 
             VStack(spacing: 12) {
-                Text("Quét mã hoặc bấm vào QR để mở app ngân hàng — chuyển khoản xong quán sẽ tự ghi nhận.")
+                Text("Quét mã bằng app ngân hàng bất kỳ — chuyển khoản xong quán sẽ tự ghi nhận.")
                     .font(.system(size: 12)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
                 Button("Xong, xem đơn của tôi", action: onDone)
                     .buttonStyle(.gradientProminent)
@@ -70,10 +55,10 @@ struct ThanhToanView: View {
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
-        .confirmationDialog("Chọn ứng dụng ngân hàng", isPresented: $showBankPicker, titleVisibility: .visible) {
-            ForEach(ckBanks, id: \.code) { bank in
-                Button(bank.name) { lastBankApp = bank.code; openBankApp() }
-            }
+        .alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
+            Button("OK") { saveMessage = nil }
+        } message: {
+            Text(saveMessage ?? "")
         }
     }
 
@@ -96,13 +81,10 @@ struct ThanhToanView: View {
             ProgressView().frame(width: 240, height: 240)
         }
 
-        Button("💳 Chuyển khoản qua \(selectedBankName)") { openBankApp() }
+        Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
-
-        Button("Đổi ứng dụng khác") { showBankPicker = true }
-            .font(.system(size: 13))
-            .foregroundColor(Theme.primary)
+            .disabled(qrImage == nil)
 
         VStack(spacing: 8) {
             infoRow("Ngân hàng", info.bankName)
@@ -145,19 +127,22 @@ struct ThanhToanView: View {
             .flatMap { UIImage(data: $0) }
     }
 
-    private func openBankApp() {
-        guard let info else { return }
-        let vnd = Int(info.amount.rounded())
-        var comps = URLComponents(string: "https://dl.vietqr.io/pay")!
-        comps.queryItems = [
-            URLQueryItem(name: "app", value: selectedBankCode),
-            URLQueryItem(name: "ba", value: "\(info.bankAccountNo)@\(info.bankAppCode)"),
-            URLQueryItem(name: "am", value: "\(vnd)"),
-            URLQueryItem(name: "tn", value: info.billAddInfo),
-            URLQueryItem(name: "bn", value: info.bankAccountName),
-        ]
-        if let url = comps.url {
-            UIApplication.shared.open(url)
+    private func saveQrToPhotos() {
+        guard let qrImage else { return }
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async {
+                    saveMessage = "Chưa có quyền lưu ảnh — vào Cài đặt > Đenn Coffee > Ảnh để cấp quyền."
+                }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: qrImage)
+            }) { success, _ in
+                DispatchQueue.main.async {
+                    saveMessage = success ? "Đã lưu mã QR vào Ảnh." : "Lưu ảnh thất bại, vui lòng thử lại."
+                }
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ targets:
           - UIInterfaceOrientationPortrait
         UIRequiresFullScreen: true
         NSLocationWhenInUseUsageDescription: Đenn Coffee cần vị trí của bạn để tính phí ship theo khoảng cách thật và hiển thị bản đồ giao hàng.
+        NSPhotoLibraryAddUsageDescription: Đenn Coffee cần lưu ảnh để tải mã QR chuyển khoản về máy bạn.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: uk.denncoffee.appdathangios
