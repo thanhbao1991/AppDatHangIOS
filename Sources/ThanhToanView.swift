@@ -64,9 +64,14 @@ struct ThanhToanView: View {
 
     @ViewBuilder
     private func content(for info: ThanhToanInfoDto) -> some View {
-        // Bỏ hiện tên khách (feedback 2026-09-28) — thay bằng câu cảm ơn chung chung, không cần đọc
+        // Bỏ hiện tên khách (feedback 2026-09-28) — thay bằng lời cảm ơn 2 dòng, không cần đọc
         // tenKhachHangText nữa.
-        Text("Cảm ơn bạn đã ủng hộ Đenn Coffee!").font(.system(size: 15)).foregroundColor(Theme.textMuted)
+        VStack(spacing: 2) {
+            Text("Quán nhỏ cảm ơn to").font(.system(size: 15, weight: .semibold))
+            Text("Cảm ơn bạn đã tin yêu quán!").font(.system(size: 13))
+        }
+        .foregroundColor(Theme.textMuted)
+        .multilineTextAlignment(.center)
         Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
         Group {
