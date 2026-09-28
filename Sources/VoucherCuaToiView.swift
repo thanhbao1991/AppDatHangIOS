@@ -23,11 +23,12 @@ struct VoucherCuaToiView: View {
     @State private var loading = true
     @State private var tab: LocTab = .tatCa
 
-    /// Khả dụng: giá trị giảm cao nhất lên đầu (feedback 2026-09-27) — trước đó giữ nguyên thứ tự
-    /// NgayTao server trả, không phản ánh voucher nào "đáng dùng" hơn.
+    /// Khả dụng: giá trị giảm THẤP nhất lên đầu (đổi 2026-09-28, feedback: bản 27/9 sắp cao->thấp bị
+    /// ngược) — trước đó giữ nguyên thứ tự NgayTao server trả, không phản ánh voucher nào "đáng dùng"
+    /// hơn.
     private var dangCo: [VoucherCuaToi] {
         vouchers.filter { !$0.chuaBatDau && !$0.daSuDung }
-            .sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
+            .sorted { $0.giaTriGiamThamKhao < $1.giaTriGiamThamKhao }
     }
 
     /// Voucher "chưa tới ngày" (lễ tết còn xa) — server trả sẵn qua cờ chuaBatDau (dùng chung 1 cửa sổ
