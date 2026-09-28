@@ -1,22 +1,25 @@
 import SwiftUI
+import UIKit
+import Photos
 
 /// Port từ OrderDetailScreen.tsx — timeline trạng thái, danh sách món, tổng kết tiền, đặt lại.
 /// Đánh giá đơn đã chuyển hẳn sang DanhGiaSheet mở thẳng từ card OrderStatusView (feedback
 /// 2026-09-28: "ko cần thiết phải vào chi tiết hoá đơn để đánh giá") — trang này không còn phần đó.
-/// Khách KHÔNG tự huỷ đơn được nữa (feedback 2026-09-28, giống Long Châu) — nút "Huỷ đơn" đổi thành
-/// "Liên hệ nhân viên để huỷ đơn", bấm vào gọi thẳng hotline quán (HuyDonAsync backend vẫn còn API
-/// nhưng app không gọi tới nữa).
+/// Nút "☎ Hỗ trợ" cũng chuyển hẳn ra card đơn hàng ở OrderStatusView (feedback 2026-09-28) — trang
+/// này không còn gọi hotline nữa.
 struct OrderDetailView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var donHangPath: [DonHangRoute]
     @Binding var selectedTab: AppTab
     @Binding var cartPath: [HomeRoute]
-    @Environment(\.openURL) private var openURL
 
     @State var order: DonHangKhach
 
-    @State private var hotlineQuan: String?
     @State private var alertMessage: (title: String, message: String)?
+    // QR chuyển khoản hiện NGAY TẠI TRANG này (đổi 2026-09-28, feedback: bỏ nút "Thanh toán" điều
+    // hướng sang ThanhToanView riêng) — cùng API bill-qr với ThanhToanView, không tự build lại.
+    @State private var qrImage: UIImage?
+    @State private var qrFailed = false
 
     private let steps: [TrangThaiDon] = [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat]
     private var currentStep: Int { steps.firstIndex(of: order.trangThai) ?? 0 }
@@ -147,30 +150,12 @@ struct OrderDetailView: View {
                     }
                 }
 
-                VStack(spacing: 10) {
-                    if order.trangThai != .hoanTat && order.trangThai != .huy {
-                        Button("💳 Thanh toán") { donHangPath.append(.thanhToan(hoaDonId: order.id)) }
-                            .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
-                    }
-
-                    if order.trangThai == .choXacNhan {
-                        Button {
-                            goiHotline()
-                        } label: {
-                            Text("☎ Hỗ trợ").frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        // BẮT BUỘC .tint() riêng: MainTabView đặt .tint(.white) cho cả NavigationStack
-                        // (để mũi tên back hiện trắng trên header màu) — thiếu dòng này, nút .bordered
-                        // không tint riêng sẽ kế thừa trắng-trên-trắng, border + chữ "Hỗ trợ" vô hình,
-                        // chỉ còn icon ☎️ (emoji màu, không bị tint ảnh hưởng) nổi trơ trọi (phát hiện
-                        // 2026-09-28 qua ảnh chụp thật).
-                        .tint(Theme.primary)
-                        .disabled(hotlineQuan?.isEmpty != false)
-                    }
+                // Bỏ nút "💳 Thanh toán" điều hướng sang trang riêng (feedback 2026-09-28) — đơn
+                // chưa thanh toán VÀ khách đã chọn chuyển khoản QR thì hiện THẲNG mã QR tại đây,
+                // khách quét ngay không cần chuyển màn hình.
+                if canThanhToanQR {
+                    qrSection.padding(.top, 14)
                 }
-                .padding(.top, 14)
-
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
@@ -187,7 +172,7 @@ struct OrderDetailView: View {
         }
         .task {
             await reload()
-            hotlineQuan = await APIClient.shared.getGioMoBan()?.hotlineQuan
+            if canThanhToanQR { await loadQr() }
         }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
@@ -282,6 +267,79 @@ struct OrderDetailView: View {
             if text.contains("Xu") { return "circle.fill" }
         }
         return "creditcard.fill"
+    }
+
+    /// Đơn còn tiền chưa thu VÀ khách khai lúc đặt là chuyển khoản QR (hinhThucThanhToanText, không
+    /// dùng hinhThucThanhToanHienThi/daThuBangChuyenKhoan vì đó là SỰ THẬT ĐÃ THU — đơn chưa thu đồng
+    /// nào thì field đó luôn nil) — điều kiện để hiện mã QR ngay tại trang này (đổi 2026-09-28, xem
+    /// đầu file).
+    private var canThanhToanQR: Bool {
+        order.conLai > 0 && hinhThucThanhToanText == Self.hinhThucThanhToanPrefixes[2]
+    }
+
+    @ViewBuilder
+    private var qrSection: some View {
+        VStack(spacing: 10) {
+            if let qrImage {
+                Image(uiImage: qrImage)
+                    .interpolation(.none)
+                    .resizable()
+                    .frame(width: 220, height: 220)
+                    .padding(10)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+            } else if qrFailed {
+                VStack(spacing: 10) {
+                    Text("Không tải được ảnh QR, mạng có thể đang chậm.")
+                        .font(.system(size: 13)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
+                    Button("Thử tải lại") { Task { await loadQr() } }
+                        .buttonStyle(.gradientProminent)
+                }
+                .frame(width: 220, height: 220)
+                .padding(10)
+                .background(Theme.bg)
+                .cornerRadius(12)
+            } else {
+                ProgressView().frame(width: 220, height: 220)
+            }
+            Button("⬇️ Lưu mã QR về máy") { saveQrToPhotos() }
+                .buttonStyle(.gradientProminent)
+                .frame(maxWidth: .infinity)
+                .disabled(qrImage == nil)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Cùng API bill-qr với ThanhToanView (trang riêng cũ, vẫn còn cho luồng khác gọi tới) — không tự
+    /// build lại VietQR payload ở Swift, xin thẳng ảnh PNG server vẽ sẵn.
+    private func loadQr() async {
+        qrFailed = false
+        qrImage = nil
+        let env = await APIClient.shared.getThanhToanInfo(hoaDonId: order.id)
+        guard env.isSuccess, let info = env.data else { qrFailed = true; return }
+        let data = await APIClient.shared.getBillQrImage(amount: info.amount, addInfo: info.billAddInfo)
+        qrImage = data.flatMap { UIImage(data: $0) }
+        qrFailed = qrImage == nil
+    }
+
+    private func saveQrToPhotos() {
+        guard let qrImage else { return }
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async {
+                    alertMessage = ("Lưu ảnh", "Chưa có quyền lưu ảnh — vào Cài đặt > Đenn Coffee > Ảnh để cấp quyền.")
+                }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: qrImage)
+            }) { success, _ in
+                DispatchQueue.main.async {
+                    alertMessage = ("Lưu ảnh", success ? "Đã lưu mã QR vào Ảnh." : "Lưu ảnh thất bại, vui lòng thử lại.")
+                }
+            }
+        }
     }
 
     /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
@@ -390,13 +448,6 @@ struct OrderDetailView: View {
         order = moi
     }
 
-    /// Mở app Điện thoại gọi thẳng hotline quán — thay cho tự huỷ đơn (feedback 2026-09-28, giống
-    /// Long Châu: khách không tự huỷ được nữa, chỉ có thể liên hệ nhân viên).
-    private func goiHotline() {
-        guard let hotlineQuan, !hotlineQuan.isEmpty,
-              let url = URL(string: "tel://\(hotlineQuan.filter(\.isNumber))") else { return }
-        openURL(url)
-    }
 
     private func datLai() {
         cart.clear()

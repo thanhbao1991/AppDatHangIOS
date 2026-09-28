@@ -9,8 +9,12 @@ struct OrderStatusView: View {
     @Binding var selectedTab: AppTab
     @Binding var cartPath: [HomeRoute]
     var notificationBell: AnyView
+    @Environment(\.openURL) private var openURL
 
     @State private var orders: [DonHangKhach] = []
+    // Nút "☎ Hỗ trợ" chuyển từ trang Chi tiết đơn hàng ra thẳng card đây (feedback 2026-09-28) — xem
+    // actionRow.
+    @State private var hotlineQuan: String?
     @State private var loading = true
     @State private var pollTask: Task<Void, Never>?
     @State private var alertMessage: (title: String, message: String)?
@@ -68,6 +72,7 @@ struct OrderStatusView: View {
         .task {
             await load()
             startPolling()
+            hotlineQuan = await APIClient.shared.getGioMoBan()?.hotlineQuan
         }
         .onDisappear { pollTask?.cancel() }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -220,6 +225,10 @@ struct OrderStatusView: View {
     /// nữa), góc phải là nút hành động. Đổi thứ tự 2 nút 2026-09-24: "Đánh giá"/"Thanh toán" đứng
     /// TRƯỚC "Đặt lại" (trước đây "Đặt lại" luôn đứng đầu bên trái, nay nhường vị trí ngoài cùng —
     /// dễ bấm nhất bằng ngón cái — cho nút cần hành động gấp hơn).
+    ///
+    /// "☎ Hỗ trợ" thêm 2026-09-28 (chuyển từ trang Chi tiết đơn hàng ra đây) — đứng NGAY TRƯỚC "Đặt
+    /// lại", chỉ hiện với đơn CHƯA HOÀN THÀNH (khác Thanh toán chỉ hiện khi còn tiền — Hỗ trợ cần
+    /// thấy được cả lúc đã trả đủ tiền nhưng đơn còn đang xử lý/giao).
     private func actionRow(_ item: DonHangKhach) -> some View {
         HStack(spacing: 8) {
             if item.daDanhGia {
@@ -232,8 +241,20 @@ struct OrderStatusView: View {
             } else if item.trangThai != .hoanTat && item.trangThai != .huy {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
+            if item.trangThai != .hoanTat && item.trangThai != .huy {
+                actionButton("☎ Hỗ trợ") { goiHotline() }
+                    .disabled(hotlineQuan?.isEmpty != false)
+            }
             actionButton("Đặt lại", filled: true) { datLai(item) }
         }
+    }
+
+    /// Mở app Điện thoại gọi thẳng hotline quán — thay cho tự huỷ đơn (feedback 2026-09-28, giống
+    /// Long Châu: khách không tự huỷ được nữa, chỉ có thể liên hệ nhân viên).
+    private func goiHotline() {
+        guard let hotlineQuan, !hotlineQuan.isEmpty,
+              let url = URL(string: "tel://\(hotlineQuan.filter(\.isNumber))") else { return }
+        openURL(url)
     }
 
     /// minWidth cố định — "Đặt lại" (ngắn) và "⭐ Đánh giá"/"💳 Thanh toán" (dài hơn) trước đây mỗi
