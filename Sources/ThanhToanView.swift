@@ -64,8 +64,9 @@ struct ThanhToanView: View {
 
     @ViewBuilder
     private func content(for info: ThanhToanInfoDto) -> some View {
-        let tenKhach = (info.tenKhachHangText?.isEmpty ?? true) ? "Khách lẻ" : info.tenKhachHangText!
-        Text(tenKhach).font(.system(size: 15)).foregroundColor(Theme.textMuted)
+        // Bỏ hiện tên khách (feedback 2026-09-28) — thay bằng câu cảm ơn chung chung, không cần đọc
+        // tenKhachHangText nữa.
+        Text("Cảm ơn bạn đã ủng hộ Đenn Coffee!").font(.system(size: 15)).foregroundColor(Theme.textMuted)
         Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
         Group {
