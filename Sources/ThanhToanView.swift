@@ -16,6 +16,7 @@ struct ThanhToanView: View {
 
     @State private var info: ThanhToanInfoDto?
     @State private var qrImage: UIImage?
+    @State private var qrFailed = false
     @State private var errorMessage: String?
     @State private var saveMessage: String?
 
@@ -58,17 +59,30 @@ struct ThanhToanView: View {
         Text(tenKhach).font(.system(size: 15)).foregroundColor(Theme.textMuted)
         Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
-        if let qrImage {
-            Image(uiImage: qrImage)
-                .interpolation(.none)
-                .resizable()
+        Group {
+            if let qrImage {
+                Image(uiImage: qrImage)
+                    .interpolation(.none)
+                    .resizable()
+                    .frame(width: 240, height: 240)
+                    .padding(12)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+            } else if qrFailed {
+                VStack(spacing: 10) {
+                    Text("Không tải được ảnh QR, mạng có thể đang chậm.")
+                        .font(.system(size: 13)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
+                    Button("Thử tải lại") { Task { await loadQr(for: info) } }
+                        .buttonStyle(.gradientProminent)
+                }
                 .frame(width: 240, height: 240)
                 .padding(12)
-                .background(Color.white)
+                .background(Theme.bg)
                 .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
-        } else {
-            ProgressView().frame(width: 240, height: 240)
+            } else {
+                ProgressView().frame(width: 240, height: 240)
+            }
         }
 
         Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
@@ -93,8 +107,15 @@ struct ThanhToanView: View {
             return
         }
         info = data
-        qrImage = await APIClient.shared.getBillQrImage(amount: data.amount, addInfo: data.billAddInfo)
-            .flatMap { UIImage(data: $0) }
+        await loadQr(for: data)
+    }
+
+    private func loadQr(for info: ThanhToanInfoDto) async {
+        qrFailed = false
+        qrImage = nil
+        let data = await APIClient.shared.getBillQrImage(amount: info.amount, addInfo: info.billAddInfo)
+        qrImage = data.flatMap { UIImage(data: $0) }
+        qrFailed = qrImage == nil
     }
 
     private func saveQrToPhotos() {
