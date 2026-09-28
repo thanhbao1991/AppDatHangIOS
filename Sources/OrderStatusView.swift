@@ -128,7 +128,10 @@ struct OrderStatusView: View {
                     HStack(spacing: 4) {
                         Text(item.hinhThucNhanHangText).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
                         Spacer(minLength: 8)
+                        // Đỏ khi còn ghi nợ (conLai > 0, vd đơn giao xong nhưng chưa thu đủ tiền) —
+                        // khớp màu cảnh báo "CÒN LẠI" ở OrderDetailView (Theme.danger).
                         Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
+                            .foregroundColor(item.conLai > 0 ? Theme.danger : .primary)
                     }
                 }
                 Spacer(minLength: 0)
