@@ -82,7 +82,7 @@ actor APIClient {
               let env = try? JSONDecoder().decode(ApiEnvelope<KhachHangLoginResponse>.self, from: data),
               env.isSuccess, let resp = env.data,
               let token = resp.token, let rt = resp.refreshToken, let ten = resp.tenKhachHang else { return nil }
-        Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: resp.avatarUrl)
+        Prefs.saveSession(token: token, refreshToken: rt, khachHangId: resp.khachHangId, tenKhachHang: ten, avatarUrl: resp.avatarUrl)
         return token
     }
 
@@ -127,7 +127,7 @@ actor APIClient {
         let body = LoginRequest(soDienThoai: soDienThoai, matKhau: matKhau, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
-            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+            Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
         }
         return result
     }
@@ -146,7 +146,7 @@ actor APIClient {
         let body = OtpConfirmRequest(soDienThoai: soDienThoai, otp: otp, matKhau: matKhau, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/xac-nhan-otp", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
-            Prefs.saveSession(token: token, refreshToken: rt, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+            Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
         }
         return result
     }

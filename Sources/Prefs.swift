@@ -69,10 +69,7 @@ enum Prefs {
     /// khởi động (trước khi kịp gọi API), không phải nguồn sự thật (nguồn thật luôn là API).
     private static let keyHang = "hang_khach_hang"
     private static let keyHinhThucThanhToan = "hinh_thuc_thanh_toan"
-    // Khớp key "thongBaoLastSeen" tự đặt trực tiếp ở MainTabView/ThongBaoView (không đi qua Prefs
-    // property) — liệt kê ở đây CHỈ để clear() xoá được, không thêm accessor riêng vì chỉ 2 chỗ đó
-    // dùng trực tiếp UserDefaults.
-    private static let keyThongBaoLastSeen = "thongBaoLastSeen"
+    private static let keyKhachHangId = "khach_hang_id"
 
     static var token: String? {
         get { Keychain.get(keyToken) }
@@ -89,6 +86,12 @@ enum Prefs {
     static var avatarUrl: String? {
         get { defaults.string(forKey: keyAvatarUrl) }
         set { defaults.set(newValue, forKey: keyAvatarUrl) }
+    }
+    /// Id khách đang đăng nhập — CHỈ dùng để tách khoá "đã xem thông báo" theo từng tài khoản (xem
+    /// thongBaoLastSeen bên dưới), không phải nguồn sự thật cho gì khác (API luôn tự suy ra từ JWT).
+    static var khachHangId: String? {
+        get { defaults.string(forKey: keyKhachHangId) }
+        set { defaults.set(newValue, forKey: keyKhachHangId) }
     }
     static var isLoggedIn: Bool { !(token?.isEmpty ?? true) }
     static var hang: String? {
@@ -113,9 +116,23 @@ enum Prefs {
         return id
     }
 
-    static func saveSession(token: String, refreshToken: String, tenKhachHang: String, avatarUrl: String? = nil) {
+    /// Mốc "đã xem thông báo" gần nhất — TÁCH RIÊNG theo khachHangId (feedback 2026-09-29: "login
+    /// vào lúc nào badge cũng 50"). Trước đây dùng 1 key CHUNG CẢ MÁY rồi bị XOÁ mỗi lần đăng xuất
+    /// (fix 2026-09-14 cho bug đổi tài khoản khác trên cùng máy vẫn thấy mốc cũ) — nhưng đăng
+    /// xuất/đăng nhập LẠI CHÍNH tài khoản đó (ví dụ cài lại app, refresh token hết hạn) cũng bị coi
+    /// là "đổi tài khoản", xoá sạch mốc, khiến TOÀN BỘ lịch sử (tối đa 50 tin, xem
+    /// ThongBaoService.Take(50)) hiện lại thành "chưa đọc" mỗi lần đăng nhập. Giờ khoá theo
+    /// khachHangId — mỗi tài khoản có mốc RIÊNG, không đụng nhau (giữ đúng ý fix cũ) NHƯNG không bị
+    /// xoá khi đăng xuất/đăng nhập lại CHÍNH tài khoản đó nữa.
+    static var thongBaoLastSeen: String? {
+        get { defaults.string(forKey: "thongBaoLastSeen_\(khachHangId ?? "anon")") }
+        set { defaults.set(newValue, forKey: "thongBaoLastSeen_\(khachHangId ?? "anon")") }
+    }
+
+    static func saveSession(token: String, refreshToken: String, khachHangId: String? = nil, tenKhachHang: String, avatarUrl: String? = nil) {
         Prefs.token = token
         Prefs.refreshToken = refreshToken
+        if let khachHangId { Prefs.khachHangId = khachHangId }
         Prefs.tenKhachHang = tenKhachHang
         Prefs.avatarUrl = avatarUrl
     }
@@ -126,9 +143,9 @@ enum Prefs {
         tenKhachHang = nil
         avatarUrl = nil
         KhachHangSession.shared.reset()
-        // Không xoá thì mốc "đã xem thông báo" lưu CHUNG CẢ MÁY (UserDefaults.standard, không theo
-        // tài khoản) — đổi sang tài khoản khác trên cùng máy sẽ không thấy badge đỏ dù có thông báo
-        // mới, vì mốc cũ của tài khoản trước vẫn còn đó (phát hiện 2026-09-14 lúc test QuayLai).
-        defaults.removeObject(forKey: keyThongBaoLastSeen)
+        // KHÔNG xoá khachHangId / thongBaoLastSeen ở đây nữa (đổi 2026-09-29) — thongBaoLastSeen giờ
+        // đã khoá riêng theo khachHangId (xem property phía trên) nên tự nhiên không đụng tài khoản
+        // khác, và đăng nhập lại CHÍNH tài khoản này (không đổi khachHangId) vẫn giữ đúng mốc đã xem,
+        // không còn hiện lại toàn bộ lịch sử thành "chưa đọc" mỗi lần đăng xuất/vào lại.
     }
 }

@@ -236,7 +236,7 @@ struct MainTabView: View {
     private func checkUnread() async {
         let items = await APIClient.shared.getThongBao()
         guard !items.isEmpty else { return }
-        let lastSeen = UserDefaults.standard.string(forKey: "thongBaoLastSeen")
+        let lastSeen = Prefs.thongBaoLastSeen
         unreadCount = lastSeen.map { seen in items.filter { $0.ngayTao > seen }.count } ?? items.count
     }
 

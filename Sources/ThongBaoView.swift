@@ -109,7 +109,7 @@ struct ThongBaoView: View {
         if !silent { loading = true }
         items = await APIClient.shared.getThongBao()
         if let first = items.first {
-            UserDefaults.standard.set(first.ngayTao, forKey: "thongBaoLastSeen")
+            Prefs.thongBaoLastSeen = first.ngayTao
         }
         loading = false
     }
