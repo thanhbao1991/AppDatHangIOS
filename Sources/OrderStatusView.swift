@@ -126,7 +126,7 @@ struct OrderStatusView: View {
                             .lineLimit(1)
                     }
                     HStack(spacing: 4) {
-                        Text(phanLoaiLine(item)).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
+                        Text(item.hinhThucNhanHangText).font(.system(size: 12)).foregroundColor(Theme.textFaint).lineLimit(2)
                         Spacer(minLength: 8)
                         Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
                     }
@@ -151,24 +151,8 @@ struct OrderStatusView: View {
         }
     }
 
-    /// Dựa vào diaChiText CÓ THẬT + nhanTaiQuan==false (không đoán qua phanLoai) — bug thật phát hiện
-    /// 2026-09-28: đơn PhanLoai=AppDatHang khách chọn GIAO HÀNG (diaChiText có giá trị,
-    /// nhanTaiQuan=false) vẫn rơi vào nhánh "Tại quán — Bàn AppDatHang 1 ly" vì trước đây chỉ check
-    /// phanLoai=="Ship" mới hiện địa chỉ, còn AppDatHang luôn rơi vào default dù TenBan chỉ là nhãn
-    /// nội bộ POS, KHÔNG có nghĩa "tại quán". Thêm check nhanTaiQuan (cờ THẬT khách chọn ở
-    /// CheckoutView) làm lớp bảo hiểm thứ 2 — CheckoutView đã tự clear diaChiText khi chọn "Nhận tại
-    /// quán" nên riêng diaChiText vốn đã đủ, nhưng đọc đúng field phản ánh lựa chọn gốc rõ ràng hơn
-    /// suy diễn gián tiếp. Cùng cách sửa ở OrderDetailView.
-    private func phanLoaiLine(_ item: DonHangKhach) -> String {
-        if !item.nhanTaiQuan, let diaChi = item.diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
-            return "Giao hàng tại: \(diaChi)"
-        }
-        switch item.phanLoai {
-        case "Ship": return "Giao hàng"
-        case "Mv": return "Mang về"
-        default: return item.tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
-        }
-    }
+    // phanLoaiLine bỏ 2026-09-28 — dùng chung DonHangKhach.hinhThucNhanHangText (xem Models.swift) để
+    // OrderStatusView và OrderDetailView không tự lặp lại 2 bản logic khác nhau.
 
     /// 2026-09-26: đổi từ 4 icon kiểu Long Châu sang tab chữ + gạch chân — khớp đúng cấu trúc tabBar
     /// của LichSuViView (Lịch sử Xu), theo phản hồi "filter chưa giống lịch sử xu, bỏ icon chuyển

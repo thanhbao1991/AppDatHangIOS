@@ -403,6 +403,32 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     // Thực tế đã thu bằng chuyển khoản hay không (nil = chưa thu đồng nào) — KHÁC "hình thức thanh
     // toán" khách tự khai lúc đặt đơn (gắn tiền tố vào ghiChu, có thể lệch thực tế lúc thu tiền).
     let daThuBangChuyenKhoan: Bool?
+
+    /// Nhãn hình thức nhận hàng — MỘT NGUỒN DUY NHẤT dùng chung OrderStatusView (card danh sách) và
+    /// OrderDetailView (chi tiết), thay vì mỗi màn tự viết lại logic riêng (bug từng xảy ra 2026-09-28:
+    /// sửa đúng 1 chỗ, chỗ kia vẫn hiện sai). Ưu tiên diaChiText CÓ THẬT + nhanTaiQuan==false (cờ thật
+    /// khách chọn ở CheckoutView) để hiện "Giao hàng tại: ..." — đúng cho cả đơn AppDatHang khách chọn
+    /// giao hàng lẫn đơn Ship staff tạo có địa chỉ thật. Xử lý RÕ RÀNG từng PhanLoai còn lại thay vì
+    /// dồn hết vào 1 nhánh mặc định như bản cũ.
+    /// true khi đơn thực sự giao hàng có địa chỉ thật — dùng ở OrderDetailView để tách hiện "Nhận
+    /// hàng tại" + "Số điện thoại" thành 2 dòng riêng (chi tiết hơn dòng gộp "Giao hàng tại: ..." ở
+    /// card danh sách), cùng điều kiện với hinhThucNhanHangText để không lệch nhau.
+    var laGiaoHangCoDiaChi: Bool {
+        !nhanTaiQuan && !(diaChiText?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
+    }
+
+    var hinhThucNhanHangText: String {
+        if !nhanTaiQuan, let diaChi = diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
+            return "Giao hàng tại: \(diaChi)"
+        }
+        switch phanLoai {
+        case "Ship": return "Giao hàng"
+        case "Mv": return "Mang về"
+        case "Tại Chỗ": return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
+        case "AppDatHang": return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
+        default: return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
+        }
+    }
 }
 
 // ---- Địa chỉ ----

@@ -50,17 +50,14 @@ struct OrderDetailView: View {
 
                 section {
                     Text("Thông tin nhận hàng").font(.system(size: 15, weight: .bold))
-                    // Dựa vào diaChiText CÓ THẬT + nhanTaiQuan==false (không đoán qua phanLoai=="Ship")
-                    // — bug thật phát hiện 2026-09-28: đơn PhanLoai=AppDatHang khách chọn GIAO HÀNG (có
-                    // diaChiText, nhanTaiQuan=false) vẫn hiện "Tại quán — Bàn AppDatHang 1 ly" vì TenBan
-                    // chỉ là nhãn nội bộ POS luôn được backend gán, KHÔNG có nghĩa "tại quán". Thêm
-                    // check nhanTaiQuan (cờ THẬT khách chọn ở CheckoutView) làm lớp bảo hiểm thứ 2.
-                    // Cùng sửa ở OrderStatusView.phanLoaiLine.
-                    if !order.nhanTaiQuan, let diaChi = order.diaChiText, !diaChi.isEmpty {
+                    // Dùng chung DonHangKhach.laGiaoHangCoDiaChi/hinhThucNhanHangText (Models.swift) với
+                    // OrderStatusView — 1 nguồn duy nhất, tránh lặp lại 2 bản logic dễ lệch nhau (bug
+                    // thật phát hiện 2026-09-28).
+                    if order.laGiaoHangCoDiaChi, let diaChi = order.diaChiText {
                         iconRow("mappin.and.ellipse", "Nhận hàng tại", diaChi)
                         if let sdt = order.soDienThoaiText { iconRow("phone.fill", "Số điện thoại", sdt) }
                     } else {
-                        iconRow("storefront.fill", "Hình thức", order.phanLoai == "Mv" ? "Mang về" : "Tại quán\(order.tenBan.map { " — Bàn \($0)" } ?? "")")
+                        iconRow("storefront.fill", "Hình thức", order.hinhThucNhanHangText)
                     }
                     if let ghiChuRieng, !ghiChuRieng.isEmpty {
                         iconRow("note.text", "Ghi chú", ghiChuRieng)
