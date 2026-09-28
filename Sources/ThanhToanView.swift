@@ -50,6 +50,10 @@ struct ThanhToanView: View {
         .background(Color.white)
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
+        // Bỏ nút back hệ thống (feedback 2026-09-28) — back sẽ pop về CheckoutView (giỏ đã clear(),
+        // hiện trống, trải nghiệm tệ). Chỉ còn đúng 1 lối ra: nút "Xong, xem đơn hàng" gọi onDone()
+        // để về đúng tab Đơn hàng.
+        .navigationBarBackButtonHidden(true)
         .task { await load() }
         .alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
             Button("OK") { saveMessage = nil }
