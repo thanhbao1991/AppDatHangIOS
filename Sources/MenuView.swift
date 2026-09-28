@@ -478,7 +478,7 @@ struct MenuView: View {
     /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
     private var noiBatCarousel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("🔥Best Sellers ⭐")
+            Text("🔥 Best Sellers ⭐")
                 .font(.system(size: 15, weight: .bold))
                 .padding(.horizontal, 16)
             GeometryReader { geo in
@@ -698,8 +698,8 @@ struct ProductPickerSheet: View {
     /// xem isSizeLBienThe/isSizeXLBienThe ở Theme.swift) có giao diện SANG hơn hẳn các size khác khi
     /// active — gradient vàng kim + viền sáng + icon 👑 (XL thì 👑👑, sang hơn 1 bậc), để bấm vào tự
     /// thấy "lên đời" thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác
-    /// chọn size lớn, khớp voucher UpsizeMonMoi (tặng Size L miễn phí món mới, CHƯA áp dụng cho XL —
-    /// xem ghi chú ở isSizeXLBienThe) đang khuyến khích thói quen này.
+    /// chọn size lớn, khớp 2 voucher ĐỘC LẬP UpsizeMonMoi (tặng Size L) / UpsizeXL (tặng Size XL),
+    /// mỗi voucher 1 lần/tài khoản, khách có thể nhận CẢ HAI, đang khuyến khích thói quen này.
     private func isSizeL(_ b: SanPhamBienThe) -> Bool { isSizeLBienThe(b.tenBienThe) }
     private func isSizeXL(_ b: SanPhamBienThe) -> Bool { isSizeXLBienThe(b.tenBienThe) }
     private func crownCount(_ b: SanPhamBienThe) -> Int { isSizeXL(b) ? 2 : (isSizeL(b) ? 1 : 0) }
