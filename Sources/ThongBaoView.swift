@@ -39,6 +39,17 @@ func formatThongBaoTime(_ raw: String) -> String {
     return ngayTaoNgayThangFormatter.string(from: date)
 }
 
+/// Icon riêng theo từng mốc tiến trình đơn hàng (feedback 2026-09-28: "📦" dùng chung cho cả 3 mốc
+/// nhìn không phân biệt được) — khớp đúng 3 chuỗi Tieude cố định server sinh ra (xem
+/// ThongBaoService.cs, DonHang chỉ có đúng 3 mốc: xác nhận/đang giao/hoàn tất, không có mốc huỷ).
+/// Fallback "📦" cho tiêu đề lạ không khớp (phòng khi server đổi chuỗi mà quên cập nhật app).
+private func thongBaoDonHangIcon(_ tieude: String) -> String {
+    if tieude.contains("xác nhận") { return "📝" }
+    if tieude.contains("đang được giao") { return "🚚" }
+    if tieude.contains("hoàn tất") { return "🎉" }
+    return "📦"
+}
+
 /// Port từ ThongBaoScreen.tsx — poll khi mở tab, đánh dấu mốc đã xem để MainTabView tính badge.
 struct ThongBaoView: View {
     @Binding var selectedTab: AppTab
@@ -72,7 +83,7 @@ struct ThongBaoView: View {
                             }
                         } label: {
                             HStack(spacing: 12) {
-                                Text(item.loai == .khuyenMai ? "🎁" : "📦")
+                                Text(item.loai == .khuyenMai ? "🎁" : thongBaoDonHangIcon(item.tieude))
                                     .frame(width: 40, height: 40)
                                     .background(item.loai == .khuyenMai ? Color(red: 1, green: 0.953, blue: 0.878) : Theme.primaryTint)
                                     .clipShape(Circle())
