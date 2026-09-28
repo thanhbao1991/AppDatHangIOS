@@ -478,7 +478,7 @@ struct MenuView: View {
     /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
     private var noiBatCarousel: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("🔥 Bestseller")
+            Text("🔥Best Sellers ⭐")
                 .font(.system(size: 15, weight: .bold))
                 .padding(.horizontal, 16)
             GeometryReader { geo in
