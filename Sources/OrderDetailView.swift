@@ -50,12 +50,13 @@ struct OrderDetailView: View {
 
                 section {
                     Text("Thông tin nhận hàng").font(.system(size: 15, weight: .bold))
-                    // Dựa vào diaChiText CÓ THẬT (không đoán qua phanLoai=="Ship") — bug thật phát hiện
-                    // 2026-09-28: đơn PhanLoai=AppDatHang khách chọn GIAO HÀNG (có diaChiText,
-                    // nhanTaiQuan=false) vẫn hiện "Tại quán — Bàn AppDatHang 1 ly" vì TenBan chỉ là
-                    // nhãn nội bộ POS luôn được backend gán, KHÔNG có nghĩa "tại quán". Cùng sửa ở
-                    // OrderStatusView.phanLoaiLine.
-                    if let diaChi = order.diaChiText, !diaChi.isEmpty {
+                    // Dựa vào diaChiText CÓ THẬT + nhanTaiQuan==false (không đoán qua phanLoai=="Ship")
+                    // — bug thật phát hiện 2026-09-28: đơn PhanLoai=AppDatHang khách chọn GIAO HÀNG (có
+                    // diaChiText, nhanTaiQuan=false) vẫn hiện "Tại quán — Bàn AppDatHang 1 ly" vì TenBan
+                    // chỉ là nhãn nội bộ POS luôn được backend gán, KHÔNG có nghĩa "tại quán". Thêm
+                    // check nhanTaiQuan (cờ THẬT khách chọn ở CheckoutView) làm lớp bảo hiểm thứ 2.
+                    // Cùng sửa ở OrderStatusView.phanLoaiLine.
+                    if !order.nhanTaiQuan, let diaChi = order.diaChiText, !diaChi.isEmpty {
                         iconRow("mappin.and.ellipse", "Nhận hàng tại", diaChi)
                         if let sdt = order.soDienThoaiText { iconRow("phone.fill", "Số điện thoại", sdt) }
                     } else {

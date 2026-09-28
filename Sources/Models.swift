@@ -382,6 +382,12 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     let tenMonSummary: String
     let phanLoai: String?
     let tenBan: String?
+    // Cờ THẬT khách chọn lúc đặt đơn ("Giao tận nơi"/"Nhận tại quán" ở CheckoutView) — thêm 2026-09-28
+    // để quyết định hiện địa chỉ giao hàng thay vì chỉ đoán qua diaChiText có rỗng hay không (an toàn
+    // gấp đôi: CheckoutView đã tự clear diaChiText khi chọn "Nhận tại quán", nhưng field này phản ánh
+    // ĐÚNG lựa chọn thật của khách thay vì suy diễn gián tiếp). false ở đơn Tại Chỗ/Mv do staff tự tạo
+    // (không đi qua cờ này) — đừng dùng riêng lẻ, luôn kết hợp với diaChiText.
+    let nhanTaiQuan: Bool
     let diaChiText: String?
     let soDienThoaiText: String?
     let ghiChu: String?
