@@ -157,7 +157,7 @@ struct OrderDetailView: View {
                         Button {
                             goiHotline()
                         } label: {
-                            Text("☎ Liên hệ nhân viên để huỷ đơn").frame(maxWidth: .infinity)
+                            Text("☎ Hỗ trợ").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .disabled(hotlineQuan?.isEmpty != false)
