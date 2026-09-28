@@ -169,4 +169,11 @@ final class CartStore: ObservableObject {
         vouchers = await voucherTask
         sanPhamDaTungDat = await spTask
     }
+
+    /// Tải LẠI riêng danh sách voucher, bỏ qua guard "1 lần/phiên" của loadUuDaiIfNeeded — dùng cho
+    /// nút "Thử tải lại" ở VoucherPickerSheet khi lần tải đầu bị rớt mạng giữa chừng (feedback
+    /// 2026-09-28: sheet trắng tinh không rõ đang lỗi hay thật sự hết voucher, xem VoucherPickerSheet).
+    func reloadVouchers() async {
+        vouchers = await APIClient.shared.getVoucherKhaDung()
+    }
 }

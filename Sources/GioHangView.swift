@@ -46,8 +46,10 @@ struct GioHangView: View {
             VoucherPickerSheet(
                 vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien,
                 giaTriGiam: { $0.soTienGiamThucTe(tongTienHang: cart.totalPrice, cartItems: cart.items) },
-                selected: $cart.selectedVoucher
-            ) { showVoucherSheet = false }
+                selected: $cart.selectedVoucher,
+                onClose: { showVoucherSheet = false },
+                onRetry: { await cart.reloadVouchers() }
+            )
         }
         .sheet(item: $editingItem) { item in
             let realSp = sanPham(for: item)

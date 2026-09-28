@@ -12,6 +12,13 @@ struct VoucherPickerSheet: View {
     let giaTriGiam: (Voucher) -> Double
     @Binding var selected: Voucher?
     var onClose: () -> Void
+    /// Tải lại danh sách voucher — dùng cho nút "Thử tải lại" khi `vouchers` rỗng. Thêm 2026-09-28
+    /// (feedback: sheet trắng tinh khi request /voucher/kha-dung rớt mạng giữa chừng, APIClient nuốt
+    /// lỗi âm thầm trả về [] nên KHÔNG phân biệt được "thật sự hết voucher" hay "tải lỗi") — không có
+    /// context riêng để tự biết lỗi hay hết thật, nên luôn hiện nút thử lại kèm câu giải thích cả 2
+    /// khả năng, để khách tự quyết định thay vì đứng nhìn màn trắng không rõ đang chờ gì.
+    var onRetry: () async -> Void
+    @State private var retrying = false
 
     /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện xuống dưới (feedback 2026-09-27) —
     /// trong nhóm ĐÃ đủ điều kiện, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên
@@ -41,7 +48,47 @@ struct VoucherPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
+            Group {
+                if vouchers.isEmpty {
+                    emptyState
+                } else {
+                    voucherList
+                }
+            }
+            .navigationTitle("Chọn voucher")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Đóng") { onClose() }
+                }
+            }
+        }
+    }
+
+    /// Trắng tinh không kèm giải thích khiến khách tưởng app treo (feedback 2026-09-28) — dù nguyên
+    /// nhân thật (mất mạng giữa chừng lúc tải) hay hiếm khi thật sự hết voucher, đều nên có CHỮ +
+    /// nút hành động thay vì im lặng.
+    private var emptyState: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "ticket").font(.system(size: 40)).foregroundColor(Theme.textFaint)
+            Text("Chưa tải được voucher, hoặc hiện không có voucher nào khả dụng.")
+                .font(.system(size: 14)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
+            Button {
+                retrying = true
+                Task { await onRetry(); retrying = false }
+            } label: {
+                if retrying { ProgressView().tint(.white) } else { Text("Thử tải lại") }
+            }
+            .buttonStyle(.gradientProminent)
+            .frame(maxWidth: 200)
+            .disabled(retrying)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var voucherList: some View {
+        List {
                 // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
                 // — bỏ hẳn bước "Áp dụng" riêng + state pending tạm (feedback 2026-09-27: chọn hay bỏ
                 // voucher đều phải ăn liền, không bắt bấm thêm 1 nút mới có hiệu lực). Hiện TẤT CẢ
@@ -81,15 +128,7 @@ struct VoucherPickerSheet: View {
                         .disabled(!ok)
                     }
                 }
-            }
-            .cardListBackground()
-            .navigationTitle("Chọn voucher")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Đóng") { onClose() }
-                }
-            }
         }
+        .cardListBackground()
     }
 }
