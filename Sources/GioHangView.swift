@@ -264,7 +264,10 @@ struct GioHangView: View {
             .onTapGesture { openEdit(item) }
             Spacer()
             VStack(alignment: .trailing, spacing: 6) {
-                Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                HStack(spacing: 4) {
+                    if giaRiengMap[item.sanPhamBienTheId] != nil { giaRiengBadge() }
+                    Text(formatTien(item.thanhTien)).font(.system(size: 14, weight: .semibold))
+                }
                 quantityStepper(item)
             }
         }

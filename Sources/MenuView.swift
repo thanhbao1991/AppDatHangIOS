@@ -210,7 +210,7 @@ struct MenuView: View {
                     // lớp bug này, đơn giản và ổn định hơn hẳn.
                     VStack(alignment: .leading, spacing: 0) {
                         // Title ngay trên menu — cùng style "🔥 Món quán đề xuất" (noiBatCarousel).
-                        Text("🧋 Mời bạn chọn")
+                        Text("New Menu 2026")
                             .font(.system(size: 15, weight: .bold))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
@@ -403,6 +403,7 @@ struct MenuView: View {
     private func productRow(_ item: SanPham) -> some View {
         let prices = item.bienThe.map(giaHienThi)
         let minPrice = prices.min()
+        let coGiaRieng = item.bienThe.contains { giaRiengMap[$0.id] != nil }
         let isFavorite = yeuThichIds.contains(item.id)
         HStack(spacing: 12) {
             Button { picking = item } label: {
@@ -422,8 +423,11 @@ struct MenuView: View {
                             .foregroundColor(.primary)
                             .lineLimit(2)
                         if let minPrice {
-                            Text(prices.count > 1 ? "Từ \(formatTien(minPrice))" : formatTien(minPrice))
-                                .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                            HStack(spacing: 6) {
+                                Text(formatTien(minPrice))
+                                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                                if coGiaRieng { giaRiengBadge() }
+                            }
                         }
                     }
                     Spacer(minLength: 0)
@@ -486,9 +490,14 @@ struct MenuView: View {
                                         .foregroundColor(.primary)
                                         .lineLimit(1)
                                     if let minPrice = item.bienThe.map(giaHienThi).min() {
-                                        Text(formatTien(minPrice))
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .foregroundColor(Theme.primary)
+                                        HStack(spacing: 4) {
+                                            Text(formatTien(minPrice))
+                                                .font(.system(size: 12, weight: .semibold))
+                                                .foregroundColor(Theme.primary)
+                                            if item.bienThe.contains(where: { giaRiengMap[$0.id] != nil }) {
+                                                giaRiengBadge()
+                                            }
+                                        }
                                     }
                                 }
                                 .frame(width: cardWidth, alignment: .leading)
@@ -683,7 +692,10 @@ struct ProductPickerSheet: View {
         let vip = isSizeL(b)
         HStack(spacing: 4) {
             if vip { Text("👑").font(.system(size: 11)) }
-            Text("\(b.tenBienThe) \(formatTien(giaHienThi(b)))")
+            // "🏷️" thay cho giaRiengBadge() (Theme.swift) — chip này đổi nền theo trạng thái
+            // active/VIP (gradient vàng/primary đặc/xám nhạt), 1 badge nền cố định sẽ lạc tông trên
+            // vài nền; icon nhỏ theo màu chữ chip thì luôn hợp.
+            Text("\(b.tenBienThe) \(formatTien(giaHienThi(b)))\(giaRiengMap[b.id] != nil ? " 🏷️" : "")")
                 .font(.system(size: 12, weight: .bold))
         }
         .padding(.horizontal, 10).padding(.vertical, 6)

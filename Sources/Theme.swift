@@ -268,6 +268,20 @@ func bienTheSuffix(_ ten: String) -> String {
     ["", "Mặc định", "Size Chuẩn", "Chuẩn"].contains(ten) ? "" : " (\(ten))"
 }
 
+/// Badge nhỏ đánh dấu giá đang hiện là GIÁ RIÊNG (KhachHangGiaBans) chứ không phải giá catalog
+/// chung — feedback 2026-09-29 "cần hiển thị cho khách nhận biết đây là giá áp dụng riêng", tránh
+/// khách thắc mắc/nghi ngờ khi thấy giá khác bạn bè (giá riêng có thể CAO hơn hoặc THẤP hơn giá
+/// catalog tuỳ thoả thuận). Dùng chung MenuView (danh sách món/chip size/dải đề xuất) và
+/// GioHangView (dòng giỏ hàng) để không lệch style.
+func giaRiengBadge() -> some View {
+    Text("Giá riêng")
+        .font(.system(size: 9, weight: .bold))
+        .foregroundColor(.white)
+        .padding(.horizontal, 5).padding(.vertical, 2)
+        .background(Theme.primary)
+        .clipShape(Capsule())
+}
+
 /// Khớp "Size L" và lỗi chính tả có thật "Soze L" trong menu — cùng pattern LIKE '%ze L%' bên Backend
 /// (VoucherDieuKien.UpsizeMonMoi). Dùng chung MenuView (chip VIP) và CheckoutView (tính giảm giá
 /// preview cho voucher UpsizeMonMoi) để không lệch nhau.
