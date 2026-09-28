@@ -17,6 +17,9 @@ struct GioHangView: View {
     @State private var toppings: [Topping] = []
     @State private var editingItem: CartItem?
     @State private var showVoucherSheet = false
+    /// Giá riêng của khách (key sanPhamBienTheId) — khớp MenuView.giaRiengMap, cần tải riêng ở đây vì
+    /// tab này không share state với MenuView. Dùng khi khách ĐỔI SIZE lúc sửa 1 dòng trong giỏ.
+    @State private var giaRiengMap: [String: Double] = [:]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -62,11 +65,12 @@ struct GioHangView: View {
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 existing: item,
+                giaRiengMap: giaRiengMap,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     if soLuong <= 0 {
                         cart.removeItem(item.id)
                     } else {
-                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
+                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: giaRiengMap[bienThe.id] ?? bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
                     }
                 }
             ) { editingItem = nil }
@@ -212,10 +216,12 @@ struct GioHangView: View {
         async let spTask = APIClient.shared.getSanPhamList()
         async let nhomTask = APIClient.shared.getNhomSanPhamList()
         async let topTask = APIClient.shared.getToppingList()
-        let (sp, nhom, top) = await (spTask, nhomTask, topTask)
+        async let giaRiengTask = APIClient.shared.getGiaRieng()
+        let (sp, nhom, top, giaRieng) = await (spTask, nhomTask, topTask, giaRiengTask)
         sanPhams = sp
         nhoms = nhom
         toppings = top
+        giaRiengMap = giaRieng
     }
 
     private func openEdit(_ item: CartItem) {

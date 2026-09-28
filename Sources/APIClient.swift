@@ -331,6 +331,16 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback
+    /// 2026-09-29 "áp giá riêng vào app". Server đã áp ĐÚNG giá này lúc DatMon tính tiền thật
+    /// (DatHangService.DatMonAsync), gọi đây chỉ để HIỂN THỊ đúng giá trên menu/giỏ hàng, tránh
+    /// khách thấy giá catalog rồi bất ngờ khi thanh toán ra số khác. KHÔNG cache đĩa (đa số khách
+    /// không có giá riêng, dict rỗng vô hại; giá riêng hiếm khi đổi nhưng khi đổi cần thấy ngay).
+    func getGiaRieng() async -> [String: Double] {
+        let env: ApiEnvelope<[String: Double]> = await decode("/dat-hang/gia-rieng")
+        return env.isSuccess ? (env.data ?? [:]) : [:]
+    }
+
     // ===== Đặt món =====
 
     func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil, voucherId: String? = nil, laDatLai: Bool = false) async -> ApiEnvelope<DatMonResponse> {

@@ -34,6 +34,10 @@ struct MenuView: View {
     @State private var togglingYeuThichIds: Set<String> = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
+    /// Giá riêng của khách đang đăng nhập (key sanPhamBienTheId) — feedback 2026-09-29 "áp giá riêng
+    /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
+    /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
+    @State private var giaRiengMap: [String: Double] = [:]
 
 
     /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
@@ -275,8 +279,9 @@ struct MenuView: View {
                 isThuocLa: thuocLaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
+                giaRiengMap: giaRiengMap,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id)
+                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: giaHienThi(bienThe), soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id)
                 }
             ) { picking = nil }
         }
@@ -390,9 +395,13 @@ struct MenuView: View {
         return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
     }
 
+    /// Giá THẬT sẽ bị tính lúc đặt cho 1 biến thể — giá riêng (nếu có) ghi đè giá catalog, khớp
+    /// đúng logic server (DatHangService.DatMonAsync). Dùng ở MỌI nơi hiện giá trong tab Thực đơn.
+    private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
+
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
-        let prices = item.bienThe.map(\.giaBan)
+        let prices = item.bienThe.map(giaHienThi)
         let minPrice = prices.min()
         let isFavorite = yeuThichIds.contains(item.id)
         HStack(spacing: 12) {
@@ -476,7 +485,7 @@ struct MenuView: View {
                                         .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)
-                                    if let minPrice = item.bienThe.map(\.giaBan).min() {
+                                    if let minPrice = item.bienThe.map(giaHienThi).min() {
                                         Text(formatTien(minPrice))
                                             .font(.system(size: 12, weight: .semibold))
                                             .foregroundColor(Theme.primary)
@@ -546,7 +555,9 @@ struct MenuView: View {
         async let topTask = APIClient.shared.getToppingList()
         async let viTask = APIClient.shared.getVi()
         async let banChayTask = APIClient.shared.getBanChayIds()
-        let (spResult, nhom, top, vi, banChay) = await (spTask, nhomTask, topTask, viTask, banChayTask)
+        async let giaRiengTask = APIClient.shared.getGiaRieng()
+        let (spResult, nhom, top, vi, banChay, giaRieng) = await (spTask, nhomTask, topTask, viTask, banChayTask, giaRiengTask)
+        giaRiengMap = giaRieng
         yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
@@ -591,8 +602,16 @@ struct ProductPickerSheet: View {
     let showTraNote: Bool
     /// Dòng đang sửa (size/topping/số lượng/ghi chú cũ) — nil nghĩa là đang thêm món mới.
     var existing: CartItem? = nil
+    /// Giá riêng của khách đang đăng nhập (key sanPhamBienTheId) — feedback 2026-09-29, xem
+    /// MenuView.giaHienThi. Mặc định rỗng cho nơi gọi cũ chưa kịp cập nhật (an toàn, rơi về giá
+    /// catalog như trước).
+    var giaRiengMap: [String: Double] = [:]
     let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping]) -> Void
     let onDone: () -> Void
+
+    /// Giá THẬT sẽ bị tính — khớp MenuView.giaHienThi, tách riêng vì struct này độc lập không share
+    /// state với MenuView.
+    private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
 
     @State private var bienThe: SanPhamBienThe?
     @State private var toppingQty: [String: Int] = [:]
@@ -664,7 +683,7 @@ struct ProductPickerSheet: View {
         let vip = isSizeL(b)
         HStack(spacing: 4) {
             if vip { Text("👑").font(.system(size: 11)) }
-            Text("\(b.tenBienThe) \(formatTien(b.giaBan))")
+            Text("\(b.tenBienThe) \(formatTien(giaHienThi(b)))")
                 .font(.system(size: 12, weight: .bold))
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
@@ -695,7 +714,7 @@ struct ProductPickerSheet: View {
             guard let top = toppings.first(where: { $0.id == kv.key }) else { return sum }
             return sum + top.gia * Double(kv.value)
         }
-        return bienThe.giaBan * Double(soLuong) + toppingTien
+        return giaHienThi(bienThe) * Double(soLuong) + toppingTien
     }
 
     /// Nhãn rút gọn cho chip ghi chú nhanh — khớp shortNoteLabels bên ProductPickerPanel
