@@ -23,12 +23,23 @@ struct VoucherCuaToiView: View {
     @State private var loading = true
     @State private var tab: LocTab = .tatCa
 
-    /// Khả dụng: giá trị giảm THẤP nhất lên đầu (đổi 2026-09-28, feedback: bản 27/9 sắp cao->thấp bị
-    /// ngược) — trước đó giữ nguyên thứ tự NgayTao server trả, không phản ánh voucher nào "đáng dùng"
-    /// hơn.
+    /// Sắp theo LOẠI trước: voucher SoTien (giảm theo GIÁ TRỊ cố định) lên trên, sắp giảm dần theo
+    /// soTienGiam; voucher PhanTram (giảm theo %) xuống dưới, sắp giảm dần theo phanTramGiam. Đổi
+    /// 2026-09-29 (feedback "khả dụng trên/không khả dụng dưới, trong mỗi nhóm sắp theo giảm theo
+    /// giá trị ở trên, theo % ở dưới") — trước đó trộn chung 2 loại vào 1 tiêu chí quy đổi
+    /// (giaTriGiamThamKhao: PhanTram lấy trần giamToiDa) nên 1 voucher PhanTram trần cao có thể chen
+    /// vào giữa các voucher SoTien, không tách bạch rõ 2 loại. Dùng chung cho MỌI nhóm sắp theo "giá
+    /// trị" (khả dụng lẫn không khả dụng) — KHÔNG áp cho chuaToiNgay (nhóm đó cố tình sắp theo NGÀY
+    /// gần nhất, xem property riêng bên dưới).
+    private func sapXepGiaTriRoiPhanTram(_ list: [VoucherCuaToi]) -> [VoucherCuaToi] {
+        let soTien = list.filter { $0.loaiGiam != "PhanTram" }.sorted { $0.soTienGiam > $1.soTienGiam }
+        let phanTram = list.filter { $0.loaiGiam == "PhanTram" }.sorted { ($0.phanTramGiam ?? 0) > ($1.phanTramGiam ?? 0) }
+        return soTien + phanTram
+    }
+
+    /// Khả dụng — xem sapXepGiaTriRoiPhanTram phía trên cho tiêu chí sắp xếp.
     private var dangCo: [VoucherCuaToi] {
-        vouchers.filter { !$0.chuaBatDau && !$0.daSuDung }
-            .sorted { $0.giaTriGiamThamKhao < $1.giaTriGiamThamKhao }
+        sapXepGiaTriRoiPhanTram(vouchers.filter { !$0.chuaBatDau && !$0.daSuDung })
     }
 
     /// Voucher "chưa tới ngày" (lễ tết còn xa) — server trả sẵn qua cờ chuaBatDau (dùng chung 1 cửa sổ
@@ -41,17 +52,15 @@ struct VoucherCuaToiView: View {
     }
 
     /// Đã dùng (KHÔNG tính voucher lễ tết chuaBatDau=true trùng lặp — vd voucher lặp hằng năm vừa
-    /// dùng xong năm nay vừa chờ năm sau, đã thuộc chuaToiNgay ở trên, tránh hiện 2 lần). Sắp theo
-    /// giá trị giảm cao nhất trước, giống mọi voucher "không khả dụng" khác trừ lễ tết.
+    /// dùng xong năm nay vừa chờ năm sau, đã thuộc chuaToiNgay ở trên, tránh hiện 2 lần). Xem
+    /// sapXepGiaTriRoiPhanTram cho tiêu chí sắp xếp.
     private var daDungKhongLeTet: [VoucherCuaToi] {
-        vouchers.filter { $0.daSuDung && !$0.chuaBatDau }
-            .sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
+        sapXepGiaTriRoiPhanTram(vouchers.filter { $0.daSuDung && !$0.chuaBatDau })
     }
 
-    /// Chưa đủ điều kiện dù đã tới ngày — sắp theo giá trị giảm cao nhất trước, cùng tiêu chí với
-    /// nhóm "không khả dụng" khác (khác lễ tết ở trên).
+    /// Chưa đủ điều kiện dù đã tới ngày — xem sapXepGiaTriRoiPhanTram cho tiêu chí sắp xếp.
     private var voucherSapCoSapXep: [VoucherCuaToi] {
-        voucherSapCo.sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
+        sapXepGiaTriRoiPhanTram(voucherSapCo)
     }
 
     /// ID các voucher "Sắp có" (gộp cả 2 lý do: chưa tới ngày + chưa đủ điều kiện) — dùng để làm MỜ
