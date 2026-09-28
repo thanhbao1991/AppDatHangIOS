@@ -293,7 +293,7 @@ struct SettingsView: View {
                     // Câu đơn giản thay hẳn cặp nhãn voucher 2 đầu thanh (feedback 2026-09-23 lần 3:
                     // "hơi khó hiểu và nhiều icon quá") — bỏ luôn 2 voucherEndpoint ở đây, chỉ còn
                     // đúng 1 câu số tiền + tên hạng, dễ hiểu ngay không cần suy luận qua vị trí.
-                    Text("Cần chi tiêu thêm \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo)")
+                    Text("Bạn cần chi tiêu thêm \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo)")
                         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                 }
             } else {
