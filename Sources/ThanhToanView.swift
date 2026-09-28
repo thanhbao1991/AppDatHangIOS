@@ -72,7 +72,10 @@ struct ThanhToanView: View {
         }
         .foregroundColor(Theme.textMuted)
         .multilineTextAlignment(.center)
-        Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
+
+        // Đổi bố cục (feedback 2026-09-28): thêm câu mời NGAY TRÊN mã QR, số tiền chuyển XUỐNG DƯỚI
+        // mã QR (trước đây số tiền nằm trên, ngay dưới lời cảm ơn).
+        Text("Mời bạn quét mã QR").font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
 
         Group {
             if let qrImage {
@@ -99,6 +102,8 @@ struct ThanhToanView: View {
                 ProgressView().frame(width: 240, height: 240)
             }
         }
+
+        Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
         Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
             .buttonStyle(.gradientProminent)

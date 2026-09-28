@@ -151,10 +151,13 @@ struct OrderStatusView: View {
         }
     }
 
-    /// Cùng cách map PhanLoai ("Ship"/"Mv"/khác) với OrderDetailView/LichSuCongNoView — đơn Ship có
-    /// địa chỉ thì gộp luôn "Giao hàng tại: ..." thay vì tách riêng nhãn + dòng địa chỉ, đỡ dư dòng.
+    /// Dựa vào diaChiText CÓ THẬT hay không (không đoán qua phanLoai) — bug thật phát hiện 2026-09-28:
+    /// đơn PhanLoai=AppDatHang khách chọn GIAO HÀNG (diaChiText có giá trị, nhanTaiQuan=false) vẫn rơi
+    /// vào nhánh "Tại quán — Bàn AppDatHang 1 ly" vì trước đây chỉ check phanLoai=="Ship" mới hiện địa
+    /// chỉ, còn AppDatHang luôn rơi vào default dù TenBan chỉ là nhãn nội bộ POS, KHÔNG có nghĩa "tại
+    /// quán". Cùng cách sửa ở OrderDetailView.
     private func phanLoaiLine(_ item: DonHangKhach) -> String {
-        if item.phanLoai == "Ship", let diaChi = item.diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
+        if let diaChi = item.diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
             return "Giao hàng tại: \(diaChi)"
         }
         switch item.phanLoai {
