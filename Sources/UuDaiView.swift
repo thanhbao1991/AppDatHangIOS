@@ -111,7 +111,7 @@ struct UuDaiView: View {
                     if dd.daDiemDanhHomNay {
                         HStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill")
-                            Text("Đã điểm danh hôm nay").fontWeight(.bold)
+                            Text("Bạn đã điểm danh hôm nay").fontWeight(.bold)
                         }
                         .foregroundColor(Theme.success)
                         .frame(maxWidth: .infinity)
@@ -221,7 +221,7 @@ struct UuDaiView: View {
                     .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.primary)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else if soLuotConLai == 0 {
-                Text("Còn 0 lượt — quay lại vào ngày mai nhé")
+                Text("Mời bạn quay lại vào ngày mai nhé")
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else if soLuotConLai > 0 {
