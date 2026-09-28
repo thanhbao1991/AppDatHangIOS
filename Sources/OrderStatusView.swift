@@ -108,9 +108,11 @@ struct OrderStatusView: View {
                 // lộ hẳn timestamp kỹ thuật ra UI khách hàng.
                 Text(formatThongBaoTime(item.ngayGio)).font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
                 Spacer()
-                Text(item.trangThai.nhan)
+                // trangThaiNhan/trangThaiMau (Models.swift) tự đổi "Hoàn tất" -> "Ghi nợ" (đỏ) khi
+                // conLai > 0 — khớp màu số tiền đỏ ở dưới (feedback 2026-09-28).
+                Text(item.trangThaiNhan)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(item.trangThai.mau)
+                    .foregroundColor(item.trangThaiMau)
                     .lineLimit(1)
             }
             HStack(alignment: .top, spacing: 12) {

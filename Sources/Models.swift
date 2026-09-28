@@ -410,6 +410,17 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     /// khách chọn ở CheckoutView) để hiện "Giao hàng tại: ..." — đúng cho cả đơn AppDatHang khách chọn
     /// giao hàng lẫn đơn Ship staff tạo có địa chỉ thật. Xử lý RÕ RÀNG từng PhanLoai còn lại thay vì
     /// dồn hết vào 1 nhánh mặc định như bản cũ.
+    /// Nhãn trạng thái hiển thị — "Hoàn tất" nhưng còn ghi nợ (conLai > 0) thì đổi thành "Ghi nợ" để
+    /// biết ngay đơn đã giao xong nhưng CHƯA thu đủ tiền (feedback 2026-09-28). Chỉ áp dụng đúng
+    /// trạng thái hoanTat — các trạng thái khác (đang xử lý/đang giao) giữ nguyên nhãn gốc dù conLai>0
+    /// (đằng nào cũng chưa thu, không cần cảnh báo riêng).
+    var trangThaiNhan: String {
+        trangThai == .hoanTat && conLai > 0 ? "Ghi nợ" : trangThai.nhan
+    }
+    var trangThaiMau: Color {
+        trangThai == .hoanTat && conLai > 0 ? Theme.danger : trangThai.mau
+    }
+
     /// true khi đơn thực sự giao hàng có địa chỉ thật — dùng ở OrderDetailView để tách hiện "Nhận
     /// hàng tại" + "Số điện thoại" thành 2 dòng riêng (chi tiết hơn dòng gộp "Giao hàng tại: ..." ở
     /// card danh sách), cùng điều kiện với hinhThucNhanHangText để không lệch nhau.
