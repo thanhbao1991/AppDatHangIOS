@@ -85,26 +85,6 @@ struct ThanhToanView: View {
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
             .disabled(qrImage == nil)
-
-        VStack(spacing: 8) {
-            infoRow("Ngân hàng", info.bankName)
-            infoRow("Số TK", info.bankAccountNo)
-            infoRow("Chủ TK", info.bankAccountName)
-            infoRow("Nội dung CK", info.billAddInfo)
-        }
-        .padding(16)
-        .background(Theme.bg)
-        .cornerRadius(12)
-        .frame(maxWidth: 340)
-    }
-
-    private func infoRow(_ label: String, _ value: String) -> some View {
-        HStack(alignment: .top) {
-            Text(label).foregroundColor(Theme.textMuted)
-            Spacer()
-            Text(value).fontWeight(.semibold).multilineTextAlignment(.trailing)
-        }
-        .font(.system(size: 14))
     }
 
     private func formatVnd(_ amount: Double) -> String {
