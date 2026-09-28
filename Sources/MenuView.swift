@@ -206,7 +206,7 @@ struct MenuView: View {
                     // lớp bug này, đơn giản và ổn định hơn hẳn.
                     VStack(alignment: .leading, spacing: 0) {
                         // Title ngay trên menu — cùng style "🔥 Món quán đề xuất" (noiBatCarousel).
-                        Text("📜 Mời bạn chọn món")
+                        Text("🧋 Mời bạn chọn")
                             .font(.system(size: 15, weight: .bold))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
@@ -293,11 +293,19 @@ struct MenuView: View {
     /// GIỮ LẠI (feedback 2026-09-27: bỏ hẳn là quá tay, chỉ cần bớt nổi bật) nhưng đổi hẳn sang dạng
     /// FLAT — icon shuffle + chữ nhỏ màu primary trên nền trong suốt, không còn pill nền đậm
     /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
+    /// Tên nhóm (icon+chữ) bọc pill Theme.primaryTint (feedback 2026-09-28 "thêm nền cho tên nhóm
+    /// bên phải") — tách hẳn khỏi nền chung cả thanh header, nổi bật hơn khớp cột nhóm sidebar bên
+    /// trái đã có nền tô đậm cho mục đang chọn.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 6) {
-            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                .font(.system(size: 14))
-            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+            HStack(spacing: 6) {
+                Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
+                    .font(.system(size: 14))
+                Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Theme.primaryTint)
+            .clipShape(Capsule())
             Spacer()
             if !items.isEmpty {
                 Button {
