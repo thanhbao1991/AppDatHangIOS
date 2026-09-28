@@ -41,16 +41,6 @@ struct ThanhToanView: View {
                 .padding()
                 .frame(maxWidth: .infinity)
             }
-
-            VStack(spacing: 12) {
-                Text("Quét mã bằng app ngân hàng bất kỳ — chuyển khoản xong quán sẽ tự ghi nhận.")
-                    .font(.system(size: 12)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
-                Button("Xong, xem đơn của tôi", action: onDone)
-                    .buttonStyle(.gradientProminent)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding()
-            .background(Color.white)
         }
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
