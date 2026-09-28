@@ -391,11 +391,6 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
-    func huyDon(_ id: String) async -> ActionResult {
-        let env: ApiEnvelope<Bool> = await decode("/dat-hang/don/\(id)", method: "DELETE")
-        return ActionResult(success: env.isSuccess, message: env.message)
-    }
-
     // ===== Địa chỉ =====
 
     func getDiaChiList() async -> [DiaChiKhachHang] {

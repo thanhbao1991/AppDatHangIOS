@@ -1,19 +1,21 @@
 import SwiftUI
 
-/// Port từ OrderDetailScreen.tsx — timeline trạng thái, danh sách món, tổng kết tiền, huỷ/đặt lại.
+/// Port từ OrderDetailScreen.tsx — timeline trạng thái, danh sách món, tổng kết tiền, đặt lại.
 /// Đánh giá đơn đã chuyển hẳn sang DanhGiaSheet mở thẳng từ card OrderStatusView (feedback
 /// 2026-09-28: "ko cần thiết phải vào chi tiết hoá đơn để đánh giá") — trang này không còn phần đó.
+/// Khách KHÔNG tự huỷ đơn được nữa (feedback 2026-09-28, giống Long Châu) — nút "Huỷ đơn" đổi thành
+/// "Liên hệ nhân viên để huỷ đơn", bấm vào gọi thẳng hotline quán (HuyDonAsync backend vẫn còn API
+/// nhưng app không gọi tới nữa).
 struct OrderDetailView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var donHangPath: [DonHangRoute]
     @Binding var selectedTab: AppTab
     @Binding var cartPath: [HomeRoute]
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     @State var order: DonHangKhach
 
-    @State private var dangHuy = false
-    @State private var showHuyConfirm = false
+    @State private var hotlineQuan: String?
     @State private var alertMessage: (title: String, message: String)?
 
     private let steps: [TrangThaiDon] = [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat]
@@ -152,10 +154,13 @@ struct OrderDetailView: View {
                     }
 
                     if order.trangThai == .choXacNhan {
-                        Button(role: .destructive) { showHuyConfirm = true } label: {
-                            if dangHuy { ProgressView() } else { Text("Huỷ đơn").frame(maxWidth: .infinity) }
+                        Button {
+                            goiHotline()
+                        } label: {
+                            Text("☎ Liên hệ nhân viên để huỷ đơn").frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered).disabled(dangHuy)
+                        .buttonStyle(.bordered)
+                        .disabled(hotlineQuan?.isEmpty != false)
                     }
                 }
                 .padding(.top, 14)
@@ -174,12 +179,9 @@ struct OrderDetailView: View {
                     .font(.system(size: 15, weight: .semibold))
             }
         }
-        .task { await reload() }
-        .confirmationDialog("Huỷ đơn \(order.maHoaDon)?", isPresented: $showHuyConfirm, titleVisibility: .visible) {
-            Button("Huỷ đơn", role: .destructive) { Task { await huyDon() } }
-            Button("Không", role: .cancel) {}
-        } message: {
-            Text("Đơn sẽ bị huỷ, không thể hoàn tác.")
+        .task {
+            await reload()
+            hotlineQuan = await APIClient.shared.getGioMoBan()?.hotlineQuan
         }
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
@@ -382,11 +384,12 @@ struct OrderDetailView: View {
         order = moi
     }
 
-    private func huyDon() async {
-        dangHuy = true
-        defer { dangHuy = false }
-        let result = await APIClient.shared.huyDon(order.id)
-        if result.success { dismiss() }
+    /// Mở app Điện thoại gọi thẳng hotline quán — thay cho tự huỷ đơn (feedback 2026-09-28, giống
+    /// Long Châu: khách không tự huỷ được nữa, chỉ có thể liên hệ nhân viên).
+    private func goiHotline() {
+        guard let hotlineQuan, !hotlineQuan.isEmpty,
+              let url = URL(string: "tel://\(hotlineQuan.filter(\.isNumber))") else { return }
+        openURL(url)
     }
 
     private func datLai() {

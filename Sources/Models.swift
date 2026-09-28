@@ -8,6 +8,9 @@ import SwiftUI
 struct GioMoBanDto: Decodable {
     let gioMoCua: Int
     let gioDongCua: Int
+    // Hotline quán — nút "Liên hệ nhân viên để huỷ đơn" (OrderDetailView) dùng gọi điện, staff chỉnh
+    // qua AppQuanLyIOS (GamificationConfig), 2026-09-28.
+    let hotlineQuan: String
 
     /// So theo giờ VN thật (Asia/Ho_Chi_Minh), không phải giờ hệ thống máy khách — phòng trường hợp
     /// máy đặt sai múi giờ. Server vẫn là nơi chặn thật (DatMonAsync); đây chỉ để hiện banner/khoá
