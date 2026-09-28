@@ -94,6 +94,16 @@ struct ThanhToanView: View {
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
             .disabled(qrImage == nil)
+
+        // "onDone" từng bị KHAI BÁO nhưng KHÔNG NƠI NÀO GỌI (bug thật, phát hiện 2026-09-28) — khách
+        // xem/lưu QR xong chỉ có nút back hệ thống, pop về đúng route TRƯỚC route .thanhToan trên
+        // stack (CheckoutView nếu vừa đặt hàng xong, cart đã clear() nên hiện trống — trải nghiệm tệ).
+        // Bấm "Xong" gọi onDone() thật để về tab Đơn hàng (xem MainTabView: onDone luôn set
+        // selectedTab=.donHang + path=[], KHÔNG bao giờ tới trang chi tiết đơn hàng).
+        Button("Xong, xem đơn hàng") { onDone() }
+            .buttonStyle(.bordered)
+            .tint(Theme.primary)
+            .frame(maxWidth: 320)
     }
 
     private func formatVnd(_ amount: Double) -> String {

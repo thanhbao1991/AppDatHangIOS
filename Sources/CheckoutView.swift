@@ -490,9 +490,10 @@ struct CheckoutView: View {
     /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
     /// GhiChu cho nhân viên biết trước, cộng thêm dungVi/hinhThucThanhToan để server tự trừ ví
     /// (best-effort) và biết PhuongThucThanhToanId nào khi ghi dòng trừ ví. Điều hướng sau khi đặt:
-    /// LUÔN về thẳng tab Đơn hàng (đổi 2026-09-28) — kể cả chọn QR, vì mã QR giờ hiện NGAY trong
-    /// Chi tiết đơn hàng (OrderDetailView.canThanhToanQR), không còn trang quét mã riêng để điều
-    /// hướng sang nữa.
+    /// Xu trả đủ hoặc chọn COD → về thẳng tab Đơn hàng; chọn QR (còn tiền phải chuyển khoản) → sang
+    /// trang quét mã (ThanhToanView) NGAY — quay lại đổi 2026-09-28 sau khi thử bỏ hẳn bước này
+    /// (feedback: "tôi nhầm, bấm thanh toán vẫn phải hiện mã QR"). Trang quét mã xong bấm "Xong" tự
+    /// điều hướng về tab Đơn hàng qua onDone (xem MainTabView) — KHÔNG phải trang chi tiết đơn hàng.
     private func datHang() async {
         guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
             error = "Vui lòng nhập địa chỉ giao hàng."
@@ -513,12 +514,16 @@ struct CheckoutView: View {
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
             dungVi: cart.dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: cart.selectedVoucher?.id, laDatLai: cart.laDatLai
         )
-        if result.isSuccess {
+        if result.isSuccess, let data = result.data {
             clientOrderId = nil
             cart.clear()
             let navigate: () -> Void = {
-                selectedTab = .donHang
-                path = []
+                if !xuTraDu && hinhThucThanhToan == .chuyenKhoanQR {
+                    path.append(.thanhToan(hoaDonId: data.id))
+                } else {
+                    selectedTab = .donHang
+                    path = []
+                }
             }
             if let warnings = result.warnings, !warnings.isEmpty {
                 pendingNavigationAfterOrder = navigate
