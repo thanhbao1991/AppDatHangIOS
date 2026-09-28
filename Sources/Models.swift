@@ -404,12 +404,6 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     // toán" khách tự khai lúc đặt đơn (gắn tiền tố vào ghiChu, có thể lệch thực tế lúc thu tiền).
     let daThuBangChuyenKhoan: Bool?
 
-    /// Nhãn hình thức nhận hàng — MỘT NGUỒN DUY NHẤT dùng chung OrderStatusView (card danh sách) và
-    /// OrderDetailView (chi tiết), thay vì mỗi màn tự viết lại logic riêng (bug từng xảy ra 2026-09-28:
-    /// sửa đúng 1 chỗ, chỗ kia vẫn hiện sai). Ưu tiên diaChiText CÓ THẬT + nhanTaiQuan==false (cờ thật
-    /// khách chọn ở CheckoutView) để hiện "Giao hàng tại: ..." — đúng cho cả đơn AppDatHang khách chọn
-    /// giao hàng lẫn đơn Ship staff tạo có địa chỉ thật. Xử lý RÕ RÀNG từng PhanLoai còn lại thay vì
-    /// dồn hết vào 1 nhánh mặc định như bản cũ.
     /// Nhãn trạng thái hiển thị — "Hoàn tất" nhưng còn ghi nợ (conLai > 0) thì đổi thành "Ghi nợ" để
     /// biết ngay đơn đã giao xong nhưng CHƯA thu đủ tiền (feedback 2026-09-28). Chỉ áp dụng đúng
     /// trạng thái hoanTat — các trạng thái khác (đang xử lý/đang giao) giữ nguyên nhãn gốc dù conLai>0
@@ -421,22 +415,35 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
         trangThai == .hoanTat && conLai > 0 ? Theme.danger : trangThai.mau
     }
 
+    /// PhanLoai THẬT SỰ có thể là đơn giao hàng — "Ship"/"AppDatHang" là 2 loại duy nhất khách/shipper
+    /// có thể chọn giao tận nơi. "Tại Chỗ"/"Mv" (staff tạo trực tiếp tại quầy) KHÔNG BAO GIỜ là giao
+    /// hàng dù DiaChiText có giá trị — bug thật phát hiện 2026-09-28 (ảnh chụp thật, khách "Nguyễn Hoà
+    /// App"): DiaChiText là ĐỊA CHỈ NHÀ lưu sẵn trong hồ sơ khách, Desktop tự mang theo khi staff tạo
+    /// đơn Tại Chỗ cho khách quen — KHÔNG có nghĩa "giao tới đó", chỉ là dữ liệu còn sót trên hồ sơ.
+    /// nhanTaiQuan cũng vậy — cờ này CHỈ có ý nghĩa ở CheckoutView (app khách), staff tạo đơn Tại Chỗ/
+    /// Mv không hề đụng tới field này nên luôn mặc định false, KHÔNG được coi là tín hiệu "không tại
+    /// quán".
+    private var coThePhaiGiaoHang: Bool {
+        phanLoai == "Ship" || phanLoai == "AppDatHang"
+    }
+
     /// true khi đơn thực sự giao hàng có địa chỉ thật — dùng ở OrderDetailView để tách hiện "Nhận
     /// hàng tại" + "Số điện thoại" thành 2 dòng riêng (chi tiết hơn dòng gộp "Giao hàng tại: ..." ở
     /// card danh sách), cùng điều kiện với hinhThucNhanHangText để không lệch nhau.
     var laGiaoHangCoDiaChi: Bool {
-        !nhanTaiQuan && !(diaChiText?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
+        coThePhaiGiaoHang && !nhanTaiQuan && !(diaChiText?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
     }
 
+    /// Nhãn hình thức nhận hàng — MỘT NGUỒN DUY NHẤT dùng chung OrderStatusView (card danh sách) và
+    /// OrderDetailView (chi tiết), thay vì mỗi màn tự viết lại logic riêng (bug từng xảy ra 2026-09-28:
+    /// sửa đúng 1 chỗ, chỗ kia vẫn hiện sai).
     var hinhThucNhanHangText: String {
-        if !nhanTaiQuan, let diaChi = diaChiText?.trimmingCharacters(in: .whitespaces), !diaChi.isEmpty {
+        if laGiaoHangCoDiaChi, let diaChi = diaChiText?.trimmingCharacters(in: .whitespaces) {
             return "Giao hàng tại: \(diaChi)"
         }
         switch phanLoai {
         case "Ship": return "Giao hàng"
         case "Mv": return "Mang về"
-        case "Tại Chỗ": return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
-        case "AppDatHang": return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
         default: return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
         }
     }
