@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Port từ LoginScreen.tsx (bản RN cũ). SĐT đã có mật khẩu → đăng nhập 1 bước; SĐT chưa có mật khẩu
-/// (mới hoặc khách cũ do staff tạo, chưa từng dùng app) → gửi OTP (Zalo ZNS/Bark) rồi đặt mật khẩu.
+/// (mới hoặc khách cũ do staff tạo, chưa từng dùng app) → gửi OTP (Zalo ZNS) rồi đặt mật khẩu.
 private enum LoginStep { case phone, password, otpCode, otpPassword }
 
 // Khớp OtpResendCooldownSeconds phía backend.
@@ -88,11 +88,18 @@ struct LoginView: View {
     private var phoneStep: some View {
         VStack(spacing: 14) {
             fieldBox(icon: "phone") {
-                TextField("Số điện thoại", text: $phone)
+                TextField("Số điện thoại Zalo", text: $phone)
                     .keyboardType(.numberPad)
+                    .textContentType(.telephoneNumber)
                     .focused($focusedField, equals: "phone")
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
+            // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
+            // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
+            Text("Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(Theme.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
             quickTestAccountsRow
         }
@@ -174,7 +181,7 @@ struct LoginView: View {
     private var otpCodeStep: some View {
         VStack(spacing: 14) {
             fieldBox(icon: "number") {
-                TextField("Mã xác thực (SMS)", text: $otpCode)
+                TextField("Mã xác thực (Zalo)", text: $otpCode)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: "otpCode")
                     .onChange(of: otpCode) { otpCode = String($0.filter(\.isNumber).prefix(6)) }
