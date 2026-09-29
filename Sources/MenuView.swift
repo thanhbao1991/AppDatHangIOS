@@ -696,20 +696,18 @@ struct ProductPickerSheet: View {
 
     /// Chip biến thể — Size L/XL (khớp "Size L"/lỗi chính tả có thật "Soze L", và riêng "Size XL",
     /// xem isSizeLBienThe/isSizeXLBienThe ở Theme.swift) có giao diện SANG hơn hẳn các size khác khi
-    /// active — gradient vàng kim + viền sáng + icon 👑 (XL thì 👑👑, sang hơn 1 bậc), để bấm vào tự
-    /// thấy "lên đời" thay vì chỉ đổi màu nền như chip thường — mục tiêu: khách quen/thích cảm giác
-    /// chọn size lớn, khớp 2 voucher ĐỘC LẬP UpsizeMonMoi (tặng Size L) / UpsizeXL (tặng Size XL),
-    /// mỗi voucher 1 lần/tài khoản, khách có thể nhận CẢ HAI, đang khuyến khích thói quen này.
+    /// active — gradient vàng kim + viền sáng (BỎ icon 👑/👑👑 2026-09-29 theo feedback, chỉ còn giữ
+    /// màu sắc "lên đời"), để bấm vào tự thấy khác biệt thay vì chỉ đổi màu nền như chip thường —
+    /// mục tiêu: khách quen/thích cảm giác chọn size lớn, khớp 2 voucher ĐỘC LẬP UpsizeL (tặng Size
+    /// L) / UpsizeXL (tặng Size XL), mỗi voucher 1 lần/tài khoản, khách có thể nhận CẢ HAI, đang
+    /// khuyến khích thói quen này.
     private func isSizeL(_ b: SanPhamBienThe) -> Bool { isSizeLBienThe(b.tenBienThe) }
     private func isSizeXL(_ b: SanPhamBienThe) -> Bool { isSizeXLBienThe(b.tenBienThe) }
-    private func crownCount(_ b: SanPhamBienThe) -> Int { isSizeXL(b) ? 2 : (isSizeL(b) ? 1 : 0) }
 
     @ViewBuilder
     private func sizeChipLabel(_ b: SanPhamBienThe, active: Bool) -> some View {
-        let crowns = crownCount(b)
-        let vip = crowns > 0
+        let vip = isSizeL(b) || isSizeXL(b)
         HStack(spacing: 4) {
-            if crowns > 0 { Text(String(repeating: "👑", count: crowns)).font(.system(size: 11)) }
             // "🏷️" thay cho giaRiengBadge() (Theme.swift) — chip này đổi nền theo trạng thái
             // active/VIP (gradient vàng/primary đặc/xám nhạt), 1 badge nền cố định sẽ lạc tông trên
             // vài nền; icon nhỏ theo màu chữ chip thì luôn hợp.
