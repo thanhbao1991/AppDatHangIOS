@@ -558,17 +558,6 @@ struct CongNoLichSu: Decodable, Identifiable {
     var id: String { hoaDonId }
 }
 
-struct LyBiMatResult: Decodable {
-    let hoaDonId: String
-    let maHoaDon: String
-    let tenSanPham: String
-    let tenBienThe: String
-    let giaThat: Double
-    let giaTraTien: Double
-    let tietKiem: Double
-}
-
-struct DatLyBiMatRequest: Encodable { let diaChiText: String; let ghiChu: String?; let clientOrderId: String? }
 struct DanhGiaDonRequest: Encodable { let hoaDonId: String; let soSao: Int; let nhanXet: String? }
 
 

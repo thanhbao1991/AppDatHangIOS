@@ -5,7 +5,14 @@ name: Build unsigned iOS IPA
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      release:
+        # Bản nộp App Store: KHÔNG nhúng tài khoản test, giữ version dạng số (1.0.0) từ project.yml.
+        # Mặc định false = bản sideload nội bộ như cũ.
+        description: "Bản nộp App Store (không có nút Test nhanh, version dạng số)"
+        type: boolean
+        default: false
 
 jobs:
   test:
@@ -48,12 +55,22 @@ jobs:
       # Chỉ dev/test dùng — danh sách SĐT test (mật khẩu chung "123456") KHÔNG được commit vào repo
       # PUBLIC này (xem LoginView.swift, quickTestAccounts). Bí mật TEST_ACCOUNTS_JSON rỗng/chưa set
       # thì bỏ qua, hàng nút chọn nhanh ở màn Login tự ẩn, không ảnh hưởng build thật.
+      # Bản nộp App Store (inputs.release) KHÔNG BAO GIỜ nhúng file này — nếu không, hàng nút "Test
+      # nhanh" (đăng nhập thẳng bằng mật khẩu chung) sẽ lọt tới tay khách thật.
       - name: Write local test accounts (from secret, not committed)
+        if: ${{ !inputs.release }}
         env:
           TEST_ACCOUNTS_JSON: ${{ secrets.TEST_ACCOUNTS_JSON }}
         run: |
           if [ -n "$TEST_ACCOUNTS_JSON" ]; then
             echo "$TEST_ACCOUNTS_JSON" > Sources/TestAccounts.local.json
+          fi
+
+      - name: Guard - release build must not contain test accounts
+        if: ${{ inputs.release }}
+        run: |
+          if [ -f Sources/TestAccounts.local.json ]; then
+            echo "TestAccounts.local.json ton tai trong ban release - dung lai"; exit 1
           fi
 
       - name: Install XcodeGen
@@ -62,14 +79,21 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      # CFBundleShortVersionString/CFBundleVersion trong project.yml cố định "1.0"/"1" — stamp
-      # gitSha+build time để phân biệt bản đang cài, khớp cách AppQuanLyIOS đang làm.
+      # Bản sideload: stamp gitSha+build time vào version để phân biệt bản đang cài (khớp cách
+      # AppQuanLyIOS đang làm). Bản App Store: GIỮ CFBundleShortVersionString dạng số từ project.yml
+      # (App Store Connect từ chối version chứa chữ), build number = số lần chạy workflow (luôn tăng).
+      # gitSha vẫn ghi vào key riêng DennGitSha để tra ngược bản nào đang chạy.
       - name: Stamp build version into Info.plist
         run: |
           SHORT_SHA=$(git rev-parse --short=8 HEAD)
-          BUILD_TIME=$(date -u +%Y%m%d%H%M%S)
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SHORT_SHA}" Sources/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_TIME}" Sources/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :DennGitSha string ${SHORT_SHA}" Sources/Info.plist
+          if [ "${{ inputs.release }}" = "true" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Sources/Info.plist
+          else
+            BUILD_TIME=$(date -u +%Y%m%d%H%M%S)
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SHORT_SHA}" Sources/Info.plist
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_TIME}" Sources/Info.plist
+          fi
 
       - name: Build unsigned .app
         run: |

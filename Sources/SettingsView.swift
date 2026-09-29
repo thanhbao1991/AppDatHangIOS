@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// Port từ SettingsScreen.tsx — ví/hạng thành viên, địa chỉ đã lưu. Các thao tác bảo mật/tài khoản
@@ -8,7 +9,7 @@ struct SettingsView: View {
     var notificationBell: AnyView
     var accountSettingsGear: AnyView
 
-    @Environment(\.openURL) private var openURL
+    @Environment(\.requestReview) private var requestReview
 
     @State private var diaChiList: [DiaChiKhachHang] = []
     // Hiện ĐẦY ĐỦ cả địa chỉ nhân viên nhập qua Desktop lẫn khách tự thêm (đổi lại 2026-09-24 — trước
@@ -179,13 +180,10 @@ struct SettingsView: View {
         (diaChiHienThi.first(where: { $0.isDefault }) ?? diaChiHienThi.first)?.diaChi ?? "Chưa có địa chỉ mặc định"
     }
 
-    // ID số của app trên App Store — CHƯA CÓ THẬT vì app hiện chỉ phân phối qua Sideloadly (xem
-    // README), chưa publish lên store. Thay giá trị này khi app thật sự lên App Store, lấy từ URL
-    // trang app trong App Store Connect (dạng id1234567890).
-    private static let appStoreId = "TODO_APP_STORE_ID"
-
-    /// Mời khách đánh giá — CHỈ mở trang App Store trung lập, KHÔNG kèm bất kỳ quà/voucher/Xu nào
-    /// (vi phạm chính sách Apple nếu gắn khuyến khích, và cũng không có API verify ai đã đánh giá).
+    /// Mời khách đánh giá — popup đánh giá chuẩn của iOS (StoreKit requestReview), KHÔNG kèm bất kỳ
+    /// quà/voucher/Xu nào (vi phạm chính sách Apple nếu gắn khuyến khích). Trước dùng link
+    /// apps.apple.com/app/<id> với id giả "TODO_APP_STORE_ID" — bấm ra trang lỗi; requestReview không
+    /// cần id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
     private var danhGiaCard: some View {
         cardBox {
             HStack {
@@ -208,8 +206,7 @@ struct SettingsView: View {
     }
 
     private func moDanhGia() {
-        guard let url = URL(string: "https://apps.apple.com/app/\(Self.appStoreId)?action=write-review") else { return }
-        openURL(url)
+        requestReview()
     }
 
     /// Xu (điểm thưởng quy đổi đơn hàng) + Công nợ gộp CHUNG 1 card (2026-09-18, trước là 2 card

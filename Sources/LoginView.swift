@@ -161,6 +161,12 @@ struct LoginView: View {
                 }
             }
             primaryButton("Đăng nhập", disabled: loading || password.isEmpty) { Task { await submitPassword() } }
+            // Quên mật khẩu = đi lại đúng luồng OTP → đặt mật khẩu mới như lần đăng ký đầu. Backend
+            // (KhachHangAuthService.CompletePhoneVerifiedLoginAsync) thấy SĐT đã có mật khẩu + gửi kèm
+            // mật khẩu mới sau OTP đúng thì đặt lại và thu hồi mọi phiên cũ.
+            Button("Quên mật khẩu?") { Task { await forgotPassword() } }
+                .foregroundColor(Theme.primary).fontWeight(.semibold)
+                .disabled(loading)
             Button("Đổi SĐT khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
@@ -330,6 +336,16 @@ struct LoginView: View {
             isLoggedIn = true
         } else {
             error = result.message ?? "Xác nhận thất bại."
+        }
+    }
+
+    private func forgotPassword() async {
+        loading = true; error = ""
+        defer { loading = false }
+        password = ""
+        if await sendOtp() {
+            resendConLai = otpResendCooldown
+            step = .otpCode
         }
     }
 

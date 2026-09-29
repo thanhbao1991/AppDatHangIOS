@@ -12,12 +12,20 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
+      # Privacy manifest bắt buộc với App Store (app dùng UserDefaults — "required reason API").
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: Sources/Info.plist
       properties:
         CFBundleDisplayName: Đenn Coffee
-        CFBundleShortVersionString: "1.0"
+        # App Store chỉ nhận dạng số "X.Y.Z" — tăng tay mỗi lần nộp bản mới lên store. CFBundleVersion
+        # (build number) do CI tự đặt theo số lần chạy workflow, xem .github/workflows/build-ios.yml.
+        CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
+        # App chỉ dùng HTTPS chuẩn của iOS — miễn khai báo xuất khẩu mã hoá, khỏi phải trả lời lại
+        # câu hỏi này mỗi lần upload lên App Store Connect.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
