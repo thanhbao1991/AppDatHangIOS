@@ -57,7 +57,7 @@ private enum Keychain {
 }
 
 enum Prefs {
-    static let apiBase = "https://api.denncoffee.uk/api"
+    static let apiBase = "https://api.denncoffee.com/api"
 
     private static let defaults = UserDefaults.standard
     private static let keyToken = "token"

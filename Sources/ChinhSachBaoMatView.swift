@@ -7,7 +7,7 @@ struct ChinhSachBaoMatView: View {
 
     var body: some View {
         ZStack {
-            WebView(url: URL(string: "https://api.denncoffee.uk/privacy/dat-hang.html")!) { loading = false }
+            WebView(url: URL(string: "https://api.denncoffee.com/privacy/dat-hang.html")!) { loading = false }
             if loading { ProgressView().tint(Theme.primary) }
         }
         .navigationTitle("Chính sách bảo mật")

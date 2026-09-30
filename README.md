@@ -4,7 +4,7 @@ App đặt hàng khách, native SwiftUI (chuyển từ React Native/Expo ngày 2
 lịch sử git trước commit chuyển native). Đăng nhập SĐT + OTP, đặt món, theo dõi đơn, ví/điểm thưởng
 (thẻ tem, vòng quay, giới thiệu bạn bè).
 
-Backend (ASP.NET Core, không nằm trong repo này — private) tại `api.denncoffee.uk`.
+Backend (ASP.NET Core, không nằm trong repo này — private) tại `api.denncoffee.com`.
 
 ## Build
 
