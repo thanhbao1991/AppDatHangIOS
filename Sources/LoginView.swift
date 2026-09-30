@@ -94,6 +94,9 @@ struct LoginView: View {
                     .focused($focusedField, equals: "phone")
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
+            #if DEV_LOGIN
+            devKhachSearch
+            #endif
             #if !DEV_LOGIN
             // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
             // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
@@ -105,6 +108,47 @@ struct LoginView: View {
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
         }
     }
+
+    #if DEV_LOGIN
+    @State private var devQuery = ""
+    @State private var devKetQua: [APIClient.DevKhach] = []
+    @State private var devSearchTask: Task<Void, Never>?
+
+    private var devKhachSearch: some View {
+        VStack(spacing: 8) {
+            fieldBox(icon: "magnifyingglass") {
+                TextField("Tìm khách theo tên", text: $devQuery)
+                    .autocorrectionDisabled()
+                    .onChange(of: devQuery) { q in
+                        devSearchTask?.cancel()
+                        devSearchTask = Task {
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            if Task.isCancelled { return }
+                            let r = await APIClient.shared.devTimKhach(q)
+                            if Task.isCancelled { return }
+                            devKetQua = r.data ?? []
+                            if !r.isSuccess { error = r.message ?? "" }
+                        }
+                    }
+            }
+            ForEach(devKetQua) { k in
+                Button {
+                    phone = k.soDienThoai
+                    Task { await continuePhone() }
+                } label: {
+                    HStack {
+                        Text(k.ten).fontWeight(.semibold)
+                        Spacer()
+                        Text(k.soDienThoai).foregroundColor(Theme.textMuted)
+                    }
+                    .padding(.vertical, 6)
+                }
+                .disabled(loading)
+                Divider()
+            }
+        }
+    }
+    #endif
 
     private var passwordStep: some View {
         VStack(spacing: 14) {

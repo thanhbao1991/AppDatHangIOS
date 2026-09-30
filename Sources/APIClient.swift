@@ -137,13 +137,28 @@ actor APIClient {
     private struct DevLoginRequest: Encodable { let soDienThoai: String; let key: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
     private struct DevLoginKeyFile: Decodable { let key: String }
 
-    func devDangNhap(soDienThoai: String) async -> ApiEnvelope<KhachHangLoginResponse> {
+    struct DevKhach: Decodable, Identifiable { let ten: String; let soDienThoai: String; var id: String { soDienThoai } }
+    private struct DevTimKhachRequest: Encodable { let key: String; let tuKhoa: String }
+
+    private func devKey() -> String? {
         guard let url = Bundle.main.url(forResource: "DevLogin.local", withExtension: "json"),
               let data = try? Data(contentsOf: url),
-              let k = try? JSONDecoder().decode(DevLoginKeyFile.self, from: data) else {
+              let k = try? JSONDecoder().decode(DevLoginKeyFile.self, from: data) else { return nil }
+        return k.key
+    }
+
+    func devTimKhach(_ tuKhoa: String) async -> ApiEnvelope<[DevKhach]> {
+        guard let key = devKey() else {
             return ApiEnvelope(isSuccess: false, message: "Thiếu DevLogin.local.json trong bản build.", data: nil, warnings: nil)
         }
-        let body = DevLoginRequest(soDienThoai: soDienThoai, key: k.key, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
+        return await decode("/khachhang-auth/dev-tim-khach", method: "POST", body: jsonBody(DevTimKhachRequest(key: key, tuKhoa: tuKhoa)), authorized: false)
+    }
+
+    func devDangNhap(soDienThoai: String) async -> ApiEnvelope<KhachHangLoginResponse> {
+        guard let key = devKey() else {
+            return ApiEnvelope(isSuccess: false, message: "Thiếu DevLogin.local.json trong bản build.", data: nil, warnings: nil)
+        }
+        let body = DevLoginRequest(soDienThoai: soDienThoai, key: key, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dev-dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
             Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
