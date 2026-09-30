@@ -34,7 +34,20 @@ struct VoucherCuaToiView: View {
     private func sapXepGiaTriRoiPhanTram(_ list: [VoucherCuaToi]) -> [VoucherCuaToi] {
         let soTien = list.filter { $0.loaiGiam != "PhanTram" }.sorted { $0.soTienGiam > $1.soTienGiam }
         let phanTram = list.filter { $0.loaiGiam == "PhanTram" }.sorted { ($0.phanTramGiam ?? 0) > ($1.phanTramGiam ?? 0) }
-        return soTien + phanTram
+        return uuTienThuTu(soTien + phanTram)
+    }
+
+    /// Số thứ tự do quán tự đặt (Voucher.ThuTu): có số thì lên trước, nhỏ trước; chưa đặt giữ nguyên
+    /// thứ tự cũ phía sau. sorted của Swift KHÔNG ổn định nên phải tự ràng buộc theo vị trí ban đầu.
+    private func uuTienThuTu(_ list: [VoucherCuaToi]) -> [VoucherCuaToi] {
+        list.enumerated().sorted { a, b in
+            switch (a.element.thuTu, b.element.thuTu) {
+            case let (x?, y?): return x != y ? x < y : a.offset < b.offset
+            case (.some, nil): return true
+            case (nil, .some): return false
+            case (nil, nil): return a.offset < b.offset
+            }
+        }.map(\.element)
     }
 
     /// Khả dụng — xem sapXepGiaTriRoiPhanTram phía trên cho tiêu chí sắp xếp.

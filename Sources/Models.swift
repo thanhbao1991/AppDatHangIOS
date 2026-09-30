@@ -167,6 +167,7 @@ struct Voucher: Decodable, Identifiable, Equatable {
 /// CheckoutView. Xem DatHangService.GetVoucherCuaToiAsync.
 struct VoucherCuaToi: Decodable, Identifiable {
     let id: String
+    var thuTu: Int?
     let ma: String
     let ten: String
     let moTa: String?
