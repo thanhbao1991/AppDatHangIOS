@@ -281,6 +281,7 @@ actor APIClient {
         let nhoms: [NhomSanPham]
         let toppings: [Topping]
         let banChayIds: [String]
+        let giaRieng: [String: Double]
     }
 
     func getMenuDiskSnapshot() -> MenuSnapshot? {
@@ -289,11 +290,13 @@ actor APIClient {
         let nhomEnv: ApiEnvelope<[NhomSanPham]>? = loadDiskCache("/dat-hang/menu/nhom")
         let topEnv: ApiEnvelope<[Topping]>? = loadDiskCache("/dat-hang/menu/topping")
         let banChayEnv: ApiEnvelope<[String]>? = loadDiskCache("/dat-hang/menu/ban-chay")
+        let giaRiengEnv: ApiEnvelope<[String: Double]>? = loadDiskCache("/dat-hang/gia-rieng")
         return MenuSnapshot(
             sanPhams: sp,
             nhoms: nhomEnv?.data ?? [],
             toppings: topEnv?.data ?? [],
-            banChayIds: banChayEnv?.data ?? []
+            banChayIds: banChayEnv?.data ?? [],
+            giaRieng: giaRiengEnv?.data ?? [:]
         )
     }
 
@@ -334,10 +337,13 @@ actor APIClient {
     /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback
     /// 2026-09-29 "áp giá riêng vào app". Server đã áp ĐÚNG giá này lúc DatMon tính tiền thật
     /// (DatHangService.DatMonAsync), gọi đây chỉ để HIỂN THỊ đúng giá trên menu/giỏ hàng, tránh
-    /// khách thấy giá catalog rồi bất ngờ khi thanh toán ra số khác. KHÔNG cache đĩa (đa số khách
-    /// không có giá riêng, dict rỗng vô hại; giá riêng hiếm khi đổi nhưng khi đổi cần thấy ngay).
+    /// khách thấy giá catalog rồi bất ngờ khi thanh toán ra số khác. Cache đĩa như mọi endpoint
+    /// catalog khác (2026-09-30 dọn lại) — trước đó CỐ Ý không cache vì sợ hiện giá cũ, nhưng
+    /// sanPhams/giaBan catalog cũng bị đúng rủi ro staleness y hệt mà vẫn cache đĩa bình thường:
+    /// snapshot đĩa chỉ hiện tạm vài trăm ms-vài giây lúc cold-start, network thật luôn chạy nền
+    /// và ghi đè ngay sau đó (xem MenuView.load) — không phải nguồn sự thật lâu dài.
     func getGiaRieng() async -> [String: Double] {
-        let env: ApiEnvelope<[String: Double]> = await decode("/dat-hang/gia-rieng")
+        let env: ApiEnvelope<[String: Double]> = await decode("/dat-hang/gia-rieng", onRawData: { raw in self.saveDiskCache("/dat-hang/gia-rieng", data: raw) })
         return env.isSuccess ? (env.data ?? [:]) : [:]
     }
 

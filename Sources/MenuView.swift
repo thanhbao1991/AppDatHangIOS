@@ -562,6 +562,7 @@ struct MenuView: View {
             nhoms = snapshot.nhoms
             toppings = snapshot.toppings.filter { !$0.ngungBan }
             banChayIds = snapshot.banChayIds
+            giaRiengMap = snapshot.giaRieng
             noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
             if selectedNhomId.isEmpty { selectedNhomId = Self.yeuThichNhomId }
             loading = false
