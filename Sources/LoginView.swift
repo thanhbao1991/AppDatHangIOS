@@ -94,64 +94,16 @@ struct LoginView: View {
                     .focused($focusedField, equals: "phone")
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
+            #if !DEV_LOGIN
             // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
             // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
             Text("Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            #endif
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
-            quickTestAccountsRow
         }
-    }
-
-    // KHÔNG bọc #if DEBUG — CI (build-ios.yml) build ở cấu hình Release nên #if DEBUG sẽ bị loại
-    // hoàn toàn khỏi .ipa thật cài qua Sideloadly, hàng nút sẽ không bao giờ hiện. An toàn nằm ở chỗ
-    // KHÔNG hardcode SĐT khách thật vào source (repo AppDatHangIOS là PUBLIC — sẽ lộ công khai và
-    // nằm mãi trong git history): đọc TestAccounts.local.json như 1 BUNDLE RESOURCE thật (không phải
-    // đọc thẳng filesystem qua #file — cách đó chỉ trỏ tới máy build, KHÔNG tồn tại trên iPhone
-    // thật). File nằm trong .gitignore, KHÔNG commit — local dev tự tạo trong Sources/, CI ghi từ
-    // secret TEST_ACCOUNTS_JSON trước bước xcodegen generate (XcodeGen tự gom .json trong Sources/
-    // vào Copy Bundle Resources). Không có file → mảng rỗng, hàng nút tự ẩn — ai fork/build repo này
-    // mà không có quyền truy cập secret của org sẽ không bao giờ thấy nút, kể cả bản Release thật.
-    // Định dạng: [{"label":"💎 Vàng","phone":"09xxxxxxxx"}, ...] — mật khẩu chung "123456" (set tay
-    // qua SQL cho tài khoản test, xem trao đổi 2026-09-14).
-    private struct TestAccountEntry: Decodable { let label: String; let phone: String }
-
-    private var quickTestAccounts: [TestAccountEntry] {
-        guard let url = Bundle.main.url(forResource: "TestAccounts.local", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let arr = try? JSONDecoder().decode([TestAccountEntry].self, from: data) else { return [] }
-        return arr
-    }
-
-    @ViewBuilder
-    private var quickTestAccountsRow: some View {
-        let accounts = quickTestAccounts
-        if !accounts.isEmpty {
-            VStack(spacing: 8) {
-                Text("Test nhanh").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.textFaint)
-                HStack(spacing: 8) {
-                    ForEach(accounts, id: \.phone) { acc in
-                        Button { Task { await quickLogin(acc.phone) } } label: {
-                            Text(acc.label).font(.system(size: 12, weight: .bold))
-                                .padding(.horizontal, 10).padding(.vertical, 6)
-                                .background(Theme.primaryTint)
-                                .foregroundColor(Theme.primary)
-                                .clipShape(Capsule())
-                        }
-                        .disabled(loading)
-                    }
-                }
-            }
-            .padding(.top, 4)
-        }
-    }
-
-    private func quickLogin(_ testPhone: String) async {
-        phone = testPhone
-        password = "123456"
-        await submitPassword()
     }
 
     private var passwordStep: some View {
@@ -297,6 +249,12 @@ struct LoginView: View {
         guard isPhoneValid else { error = "Số điện thoại không hợp lệ."; return }
         loading = true; error = ""
         defer { loading = false }
+        #if DEV_LOGIN
+        // Bản ipa nội bộ của chủ quán: vào thẳng bằng SĐT, không OTP/mật khẩu (xem build-ios.yml, cờ DEV_LOGIN).
+        let dev = await APIClient.shared.devDangNhap(soDienThoai: phone)
+        if dev.isSuccess, dev.data != nil { isLoggedIn = true } else { error = dev.message ?? "Đăng nhập thất bại." }
+        return
+        #endif
         let result = await APIClient.shared.kiemTraSdt(phone)
         guard result.isSuccess else {
             error = result.message ?? "Không kiểm tra được số điện thoại."

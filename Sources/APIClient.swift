@@ -132,6 +132,26 @@ actor APIClient {
         return result
     }
 
+    #if DEV_LOGIN
+    // Chỉ biên dịch vào bản ipa sideload nội bộ (CI đặt cờ DEV_LOGIN); bản App Store KHÔNG có đoạn này.
+    private struct DevLoginRequest: Encodable { let soDienThoai: String; let key: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
+    private struct DevLoginKeyFile: Decodable { let key: String }
+
+    func devDangNhap(soDienThoai: String) async -> ApiEnvelope<KhachHangLoginResponse> {
+        guard let url = Bundle.main.url(forResource: "DevLogin.local", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let k = try? JSONDecoder().decode(DevLoginKeyFile.self, from: data) else {
+            return ApiEnvelope(isSuccess: false, message: "Thiếu DevLogin.local.json trong bản build.", data: nil, warnings: nil)
+        }
+        let body = DevLoginRequest(soDienThoai: soDienThoai, key: k.key, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
+        let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dev-dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
+        if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
+            Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+        }
+        return result
+    }
+    #endif
+
     struct OtpResponse: Decodable { let moPhong: Bool?; let otp: String? }
     func guiOtp(_ soDienThoai: String) async -> ApiEnvelope<OtpResponse> {
         await decode("/khachhang-auth/gui-otp", method: "POST", body: jsonBody(SdtBody(soDienThoai: soDienThoai)), authorized: false)

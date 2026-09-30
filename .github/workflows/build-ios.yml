@@ -52,25 +52,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Chỉ dev/test dùng — danh sách SĐT test (mật khẩu chung "123456") KHÔNG được commit vào repo
-      # PUBLIC này (xem LoginView.swift, quickTestAccounts). Bí mật TEST_ACCOUNTS_JSON rỗng/chưa set
-      # thì bỏ qua, hàng nút chọn nhanh ở màn Login tự ẩn, không ảnh hưởng build thật.
-      # Bản nộp App Store (inputs.release) KHÔNG BAO GIỜ nhúng file này — nếu không, hàng nút "Test
-      # nhanh" (đăng nhập thẳng bằng mật khẩu chung) sẽ lọt tới tay khách thật.
-      - name: Write local test accounts (from secret, not committed)
+      # Bản ipa sideload nội bộ của chủ quán: nhập SĐT là vào thẳng (cờ biên dịch DEV_LOGIN + khoá
+      # DevLogin.local.json). Khoá nằm trong secret DEV_LOGIN_KEY, KHÔNG commit vào repo PUBLIC này.
+      # Bản App Store (inputs.release) không có file, không có cờ => không có cả code lẫn khoá.
+      - name: Write dev login key (from secret, not committed)
         if: ${{ !inputs.release }}
         env:
-          TEST_ACCOUNTS_JSON: ${{ secrets.TEST_ACCOUNTS_JSON }}
+          DEV_LOGIN_KEY: ${{ secrets.DEV_LOGIN_KEY }}
         run: |
-          if [ -n "$TEST_ACCOUNTS_JSON" ]; then
-            echo "$TEST_ACCOUNTS_JSON" > Sources/TestAccounts.local.json
+          if [ -n "$DEV_LOGIN_KEY" ]; then
+            printf '{"key":"%s"}' "$DEV_LOGIN_KEY" > Sources/DevLogin.local.json
+            echo "DEV_LOGIN_ON=1" >> "$GITHUB_ENV"
           fi
 
-      - name: Guard - release build must not contain test accounts
+      - name: Guard - release build must not contain dev login
         if: ${{ inputs.release }}
         run: |
-          if [ -f Sources/TestAccounts.local.json ]; then
-            echo "TestAccounts.local.json ton tai trong ban release - dung lai"; exit 1
+          if [ -f Sources/DevLogin.local.json ]; then
+            echo "DevLogin.local.json ton tai trong ban release - dung lai"; exit 1
           fi
 
       - name: Install XcodeGen
@@ -97,6 +96,10 @@ jobs:
 
       - name: Build unsigned .app
         run: |
+          EXTRA="ONLY_ACTIVE_ARCH=NO"
+          if [ "${{ inputs.release }}" != "true" ] && [ "$DEV_LOGIN_ON" = "1" ]; then
+            EXTRA='SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) DEV_LOGIN'
+          fi
           xcodebuild \
             -project AppDatHangIOS.xcodeproj \
             -scheme AppDatHangIOS \
@@ -107,6 +110,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
+            "$EXTRA" \
             build
 
       - name: Package unsigned .ipa
@@ -137,10 +141,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Guard - release build must not contain test accounts
+      - name: Guard - release build must not contain dev login
         run: |
-          if [ -f Sources/TestAccounts.local.json ]; then
-            echo "TestAccounts.local.json ton tai trong ban release - dung lai"; exit 1
+          if [ -f Sources/DevLogin.local.json ]; then
+            echo "DevLogin.local.json ton tai trong ban release - dung lai"; exit 1
+          fi
+          if grep -n "DEV_LOGIN" project.yml; then
+            echo "project.yml co DEV_LOGIN - dung lai"; exit 1
           fi
 
       - name: Install XcodeGen
@@ -198,6 +205,12 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             CODE_SIGN_IDENTITY="Apple Distribution"
+
+      - name: Guard - archive binary must not contain dev login
+        run: |
+          if grep -rl "dev-dang-nhap" build/AppDatHangIOS.xcarchive; then
+            echo "Binary chua dev-dang-nhap - dung lai"; exit 1
+          fi
 
       - name: Export .ipa (App Store method)
         env:

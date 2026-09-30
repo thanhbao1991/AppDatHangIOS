@@ -5,4 +5,4 @@ Payload/
 *.ipa
 .DS_Store
 sideloadlydaemon.log
-Sources/TestAccounts.local.json
+Sources/DevLogin.local.json
