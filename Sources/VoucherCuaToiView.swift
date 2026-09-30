@@ -60,8 +60,8 @@ struct VoucherCuaToiView: View {
     /// Sắp theo NGÀY GẦN NHẤT lên trước (feedback 2026-09-27) — khác các voucher "không khả dụng"
     /// khác: lễ tết cần biết dịp nào TỚI TRƯỚC để canh quay lại, không phải giảm nhiều hay ít.
     private var chuaToiNgay: [VoucherCuaToi] {
-        vouchers.filter { $0.chuaBatDau }
-            .sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") }
+        uuTienThuTu(vouchers.filter { $0.chuaBatDau }
+            .sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") })
     }
 
     /// Đã dùng (KHÔNG tính voucher lễ tết chuaBatDau=true trùng lặp — vd voucher lặp hằng năm vừa
