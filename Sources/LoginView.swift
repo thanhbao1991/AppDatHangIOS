@@ -87,6 +87,9 @@ struct LoginView: View {
 
     private var phoneStep: some View {
         VStack(spacing: 14) {
+            #if DEV_LOGIN
+            devKhachSearch
+            #else
             fieldBox(icon: "phone") {
                 TextField("Số điện thoại Zalo", text: $phone)
                     .keyboardType(.numberPad)
@@ -94,18 +97,14 @@ struct LoginView: View {
                     .focused($focusedField, equals: "phone")
                     .onChange(of: phone) { phone = String($0.filter(\.isNumber).prefix(10)) }
             }
-            #if DEV_LOGIN
-            devKhachSearch
-            #endif
-            #if !DEV_LOGIN
             // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
             // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
             Text("Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            #endif
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
+            #endif
         }
     }
 
