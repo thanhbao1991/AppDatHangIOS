@@ -502,7 +502,7 @@ struct CheckoutView: View {
         loading = true; error = ""
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
-        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
+        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }, dungGiaRieng: $0.dungGiaRieng ?? false) }
         let ghiChuPrefix = xuTraDu
             ? "🟡 Đã thanh toán bằng Xu"
             : (hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR")

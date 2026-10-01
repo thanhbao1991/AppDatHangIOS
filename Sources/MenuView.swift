@@ -280,8 +280,8 @@ struct MenuView: View {
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 giaRiengMap: giaRiengMap,
-                onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: giaHienThi(bienThe), soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id)
+                onConfirm: { bienThe, soLuong, ghiChu, toppings, dungGiaRieng in
+                    cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: dungGiaRieng ? (giaRiengMap[bienThe.id] ?? bienThe.giaBan) : bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id, dungGiaRieng: dungGiaRieng)
                 }
             ) { picking = nil }
         }
@@ -395,9 +395,9 @@ struct MenuView: View {
         return Theme.nhomIcons[ten] ?? Theme.defaultNhomIcon
     }
 
-    /// Giá THẬT sẽ bị tính lúc đặt cho 1 biến thể — giá riêng (nếu có) ghi đè giá catalog, khớp
-    /// đúng logic server (DatHangService.DatMonAsync). Dùng ở MỌI nơi hiện giá trong tab Thực đơn.
-    private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
+    /// Menu luôn hiện GIÁ GỐC (badge giá riêng vẫn hiện); giá riêng chỉ áp khi khách chọn "giá riêng"
+    /// ở hộp thoại lúc thêm món (ProductPickerSheet.confirmAdd).
+    private func giaHienThi(_ b: SanPhamBienThe) -> Double { b.giaBan }
 
     /// Giá hiện ở dòng danh sách + có phải size đó đang mang giá riêng hay không. Đổi 2 lần
     /// 2026-09-29:
@@ -630,18 +630,18 @@ struct ProductPickerSheet: View {
     /// MenuView.giaHienThi. Mặc định rỗng cho nơi gọi cũ chưa kịp cập nhật (an toàn, rơi về giá
     /// catalog như trước).
     var giaRiengMap: [String: Double] = [:]
-    let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping]) -> Void
+    let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping], _ dungGiaRieng: Bool) -> Void
     let onDone: () -> Void
 
-    /// Giá THẬT sẽ bị tính — khớp MenuView.giaHienThi, tách riêng vì struct này độc lập không share
-    /// state với MenuView.
-    private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
+    /// Luôn giá gốc — giá riêng chỉ áp khi khách chọn ở hộp thoại lúc bấm thêm/cập nhật (confirmAdd).
+    private func giaHienThi(_ b: SanPhamBienThe) -> Double { b.giaBan }
 
     @State private var bienThe: SanPhamBienThe?
     @State private var toppingQty: [String: Int] = [:]
     @State private var soLuong = 1
     @State private var ghiChu = ""
     @State private var tab: Int = 0
+    @State private var hoiGiaRieng = false
 
     // ---- Xác minh 18 tuổi (thuốc lá) ----
     @State private var ngaySinhInfo: SinhNhatInfo?
@@ -904,6 +904,15 @@ struct ProductPickerSheet: View {
             .padding(.bottom, 8)
             .background(.bar)
         }
+        .confirmationDialog("Món này có giá bán riêng dành cho bạn", isPresented: $hoiGiaRieng, titleVisibility: .visible) {
+            if let b = bienThe, let giaRieng = giaRiengMap[b.id] {
+                Button("Giá menu \(formatTien(b.giaBan))") { chonGiaRieng(false) }
+                Button("Giá riêng \(formatTien(giaRieng))") { chonGiaRieng(true) }
+            }
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("Mời chọn giá")
+        }
         .onAppear {
             if let existing {
                 // Ưu tiên khớp đúng id, rồi tới tên biến thể — "Đặt lại" (OrderDetailView.datLai)
@@ -1071,7 +1080,31 @@ struct ProductPickerSheet: View {
             guard let qty = toppingQty[t.id], qty > 0 else { return nil }
             return CartTopping(id: t.id, ten: t.ten, gia: t.gia, soLuong: qty)
         }
-        onConfirm(bienThe, soLuong, ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, chosen)
+        let ghiChuOut = ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu
+        // Có giá riêng cho size này → hỏi khách chọn giá. Đang sửa dòng cũ mà không đổi size thì giữ lựa
+        // chọn trước đó, không hỏi lại.
+        if giaRiengMap[bienThe.id] != nil, soLuong > 0 {
+            if let existing, existing.sanPhamBienTheId == bienThe.id {
+                finish(bienThe, ghiChuOut, chosen, dung: existing.dungGiaRieng ?? false)
+            } else {
+                hoiGiaRieng = true
+            }
+            return
+        }
+        finish(bienThe, ghiChuOut, chosen, dung: false)
+    }
+
+    private func finish(_ bienThe: SanPhamBienThe, _ ghiChu: String?, _ chosen: [CartTopping], dung: Bool) {
+        onConfirm(bienThe, soLuong, ghiChu, chosen, dung)
         onDone()
+    }
+
+    private func chonGiaRieng(_ dung: Bool) {
+        guard let bienThe else { return }
+        let chosen = toppings.compactMap { t -> CartTopping? in
+            guard let qty = toppingQty[t.id], qty > 0 else { return nil }
+            return CartTopping(id: t.id, ten: t.ten, gia: t.gia, soLuong: qty)
+        }
+        finish(bienThe, ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, chosen, dung: dung)
     }
 }
