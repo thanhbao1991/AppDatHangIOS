@@ -279,6 +279,9 @@ struct UocTinhShip: Decodable {
     let shopLat: Double
     let shopLong: Double
     let tuyenDuong: [TuyenDuongPoint]?
+    /// Bán kính miễn phí ship CỦA ĐƠN NÀY (soLy trong giỏ + km thưởng theo hạng) — dùng để hiện
+    /// giải thích cụ thể ở popup "Phí vận chuyển" (CheckoutView), xem KmMienPhi bên Backend DTO.
+    let kmMienPhi: Double
 }
 
 struct DonHangKhachItemTopping: Decodable, Identifiable, Hashable {

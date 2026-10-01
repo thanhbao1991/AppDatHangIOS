@@ -275,6 +275,21 @@ struct SettingsView: View {
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
                 Spacer()
+                // Icon "!" giải thích phí ship tính theo số ly + hạng — bấm mở alert, không ghi số
+                // config cụ thể (0.5/1/1.5km, 4.000đ/km) ngay trong app vì staff chỉnh được qua
+                // AppQuanLyIOS (GamificationConfig), không có API lộ số này cho app khách (xem
+                // DatHangController.GetGioMoBan cố tình chỉ trả GioMoCua/GioDongCua/HotlineQuan).
+                Button {
+                    alertMessage = (
+                        "🛵 Cách tính phí ship",
+                        "Phí ship tính theo khoảng cách thật từ quán đến bạn.\n\n• Mỗi ly nước trong đơn giúp bạn được miễn phí thêm 1km ship.\n• Hạng thành viên càng cao, bạn càng được miễn phí ship xa hơn.\n\nĐặt càng nhiều ly, hạng càng cao → ship càng rẻ (hoặc miễn phí)!"
+                    )
+                } label: {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
             }
 
             if let hangTiepTheo = vi.hangTiepTheo {

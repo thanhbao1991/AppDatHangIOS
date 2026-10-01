@@ -18,6 +18,10 @@ struct CheckoutView: View {
     /// hàng (UpsizeMonMoi cần biết dòng hàng cụ thể). Phải xem xong mới điều hướng đi tiếp, tránh
     /// khách không biết vì sao không được giảm giá.
     @State private var voucherWarning: String?
+    /// Icon "!" cạnh dòng "Phí vận chuyển" — nội dung giống hệt popup ở card Hạng thành viên
+    /// (SettingsView.diemHangCard), đặt thêm ở đây vì đây mới là lúc khách thấy số tiền thật và
+    /// thắc mắc tại sao (xem thảo luận 2026-10-01).
+    @State private var showPhiShipInfo = false
     @State private var pendingNavigationAfterOrder: (() -> Void)?
     @State private var savedDiaChi: [DiaChiKhachHang] = []
     @State private var loading = false
@@ -62,6 +66,28 @@ struct CheckoutView: View {
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
+
+    /// Giải thích CỤ THỂ cho đơn đang đặt (khác bản chung chung ở card Hạng thành viên bên
+    /// SettingsView — ở đây đã có đủ số ly + kết quả ước tính ship thật nên tính ra số km miễn phí
+    /// của riêng đơn này thay vì nói chung chung, xem thảo luận 2026-10-01).
+    private var phiShipInfoMessage: String {
+        guard let ship, let km = ship.khoangCachKm else {
+            return "Phí ship tính theo khoảng cách thật từ quán đến bạn — mỗi ly nước trong đơn giúp bạn được miễn phí thêm 1km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
+        }
+        let soLy = cart.totalCount
+        let banKinh = ship.kmMienPhi
+        var msg = "Đơn \(soLy) ly + hạng \(KhachHangSession.shared.hang) → bạn được miễn phí ship trong bán kính \(formatKm(banKinh))km quanh quán.\n\nQuán cách bạn \(formatKm(km))km."
+        if km > banKinh {
+            msg += "\nVượt \(formatKm(km - banKinh))km ngoài bán kính miễn phí nên đơn có phí ship \(formatTien(phiShip))."
+        } else {
+            msg += "\n🎉 Đơn này được FREE SHIP!"
+        }
+        return msg
+    }
+
+    private func formatKm(_ km: Double) -> String {
+        String(format: km.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", km)
+    }
     /// Trần 50% (thêm 2026-09-23, chặn farm "đơn thành công +1 lượt quay" bằng Xu trả đủ 100%) đã BỎ
     /// theo yêu cầu 2026-09-27 — khớp DatHangService.DatMonAsync bên backend, Xu giờ trả được tối đa
     /// 100% đơn.
@@ -95,6 +121,11 @@ struct CheckoutView: View {
             }
         } message: {
             Text(voucherWarning ?? "")
+        }
+        .alert("🛵 Cách tính phí ship", isPresented: $showPhiShipInfo) {
+            Button("Đã hiểu") {}
+        } message: {
+            Text(phiShipInfoMessage)
         }
         .task {
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
@@ -359,7 +390,17 @@ struct CheckoutView: View {
                 chiTietRow("Giảm giá voucher", "-" + formatTien(voucherGiam), color: Theme.danger)
             }
             if !nhanTaiQuan {
-                chiTietRow("Phí vận chuyển", formatTien(phiShip))
+                HStack {
+                    HStack(spacing: 4) {
+                        Text("Phí vận chuyển").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                        Button { showPhiShipInfo = true } label: {
+                            Image(systemName: "info.circle").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Spacer()
+                    Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
+                }
             }
             if soTienDungXu > 0 {
                 chiTietRow("Dùng Xu", "-" + formatTien(soTienDungXu), color: Theme.danger)
