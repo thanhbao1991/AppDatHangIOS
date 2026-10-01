@@ -66,11 +66,11 @@ struct GioHangView: View {
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 existing: item,
                 giaRiengMap: giaRiengMap,
-                onConfirm: { bienThe, soLuong, ghiChu, toppings, dungGiaRieng in
+                onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     if soLuong <= 0 {
                         cart.removeItem(item.id)
                     } else {
-                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: dungGiaRieng ? (giaRiengMap[bienThe.id] ?? bienThe.giaBan) : bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, dungGiaRieng: dungGiaRieng)
+                        cart.updateItem(item.id, sanPhamBienTheId: bienThe.id, tenBienThe: bienThe.tenBienThe, giaBan: giaRiengMap[bienThe.id] ?? bienThe.giaBan, soLuong: soLuong, ghiChu: ghiChu, toppings: toppings)
                     }
                 }
             ) { editingItem = nil }
