@@ -281,7 +281,10 @@ struct UocTinhShip: Decodable {
     let tuyenDuong: [TuyenDuongPoint]?
     /// Bán kính miễn phí ship CỦA ĐƠN NÀY (soLy trong giỏ + km thưởng theo hạng) — dùng để hiện
     /// giải thích cụ thể ở popup "Phí vận chuyển" (CheckoutView), xem KmMienPhi bên Backend DTO.
-    let kmMienPhi: Double
+    /// PHẢI để optional: field mới thêm 2026-10-01, nếu app build này chạy trước khi Backend deploy
+    /// bản có field này thì JSON thiếu field — optional tránh decode cả response bị lỗi (trước đây
+    /// từng có incident key reorder/field thiếu làm vỡ toàn bộ parse).
+    let kmMienPhi: Double?
 }
 
 struct DonHangKhachItemTopping: Decodable, Identifiable, Hashable {

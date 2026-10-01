@@ -71,11 +71,11 @@ struct CheckoutView: View {
     /// SettingsView — ở đây đã có đủ số ly + kết quả ước tính ship thật nên tính ra số km miễn phí
     /// của riêng đơn này thay vì nói chung chung, xem thảo luận 2026-10-01).
     private var phiShipInfoMessage: String {
-        guard let ship, let km = ship.khoangCachKm else {
-            return "Phí ship tính theo khoảng cách thật từ quán đến bạn — mỗi ly nước trong đơn giúp bạn được miễn phí thêm 1km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
+        let fallback = "Phí ship tính theo khoảng cách thật từ quán đến bạn — mỗi ly nước trong đơn giúp bạn được miễn phí thêm 1km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
+        guard let ship, let km = ship.khoangCachKm, let banKinh = ship.kmMienPhi else {
+            return fallback
         }
         let soLy = cart.totalCount
-        let banKinh = ship.kmMienPhi
         var msg = "Đơn \(soLy) ly + hạng \(KhachHangSession.shared.hang) → bạn được miễn phí ship trong bán kính \(formatKm(banKinh))km quanh quán.\n\nQuán cách bạn \(formatKm(km))km."
         if km > banKinh {
             msg += "\nVượt \(formatKm(km - banKinh))km ngoài bán kính miễn phí nên đơn có phí ship \(formatTien(phiShip))."
