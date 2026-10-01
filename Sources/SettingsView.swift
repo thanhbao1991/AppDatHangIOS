@@ -282,7 +282,7 @@ struct SettingsView: View {
                 Button {
                     alertMessage = (
                         "🛵 Cách tính phí ship",
-                        "Phí ship tính theo khoảng cách thật từ quán đến bạn.\n\n• Cứ 2 ly nước trong đơn giúp bạn được miễn phí thêm 1km ship.\n• Hạng thành viên càng cao, bạn càng được miễn phí ship xa hơn.\n\nĐặt càng nhiều ly, hạng càng cao → ship càng rẻ (hoặc miễn phí)!"
+                        "Phí ship tính theo khoảng cách thật từ quán đến bạn.\n\n• Mỗi ly nước trong đơn giúp bạn được miễn phí thêm 0,5km ship.\n• Hạng thành viên càng cao, bạn càng được miễn phí ship xa hơn.\n\nĐặt càng nhiều ly, hạng càng cao → ship càng rẻ (hoặc miễn phí)!"
                     )
                 } label: {
                     Image(systemName: "info.circle.fill")
