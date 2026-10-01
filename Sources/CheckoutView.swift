@@ -76,7 +76,10 @@ struct CheckoutView: View {
             return fallback
         }
         let soLy = cart.totalCount
-        var msg = "Đơn \(soLy) ly + hạng \(KhachHangSession.shared.hang) → bạn được miễn phí ship trong bán kính \(formatKm(banKinh))km quanh quán.\n\nQuán cách bạn \(formatKm(km))km."
+        // Hạng dùng ĐÚNG hangThangTruoc (hạng THẬT dùng để cộng km) — không dùng
+        // KhachHangSession.shared.hang (hạng hiện tại, có thể khác, xem comment UocTinhShip.hangThangTruoc).
+        let hang = ship.hangThangTruoc?.isEmpty == false ? ship.hangThangTruoc! : KhachHangSession.shared.hang
+        var msg = "Đơn \(soLy) ly + hạng \(hang) → bạn được miễn phí ship trong bán kính \(formatKm(banKinh))km quanh quán.\n\nQuán cách bạn \(formatKm(km))km."
         if km > banKinh {
             msg += "\nVượt \(formatKm(km - banKinh))km ngoài bán kính miễn phí nên đơn có phí ship \(formatTien(phiShip))."
         } else {

@@ -288,6 +288,11 @@ struct UocTinhShip: Decodable {
     /// Phí ship GỐC (coi như không có ưu đãi miễn phí) — hiện gạch ngang cạnh phiShip thật. Cùng lý
     /// do optional như kmMienPhi ở trên.
     let phiShipGoc: Double?
+    /// Hạng THÁNG TRƯỚC thực sự dùng để cộng km vào kmMienPhi — KHÁC hạng hiện tại
+    /// (KhachHangSession.shared.hang). PHẢI dùng field này khi nói về lý do miễn phí, không dùng
+    /// hạng hiện tại (phát hiện 2026-10-01: khách hạng tháng trước khác hạng tháng này, hiện nhầm
+    /// hạng gây khó hiểu dù số km/tiền vẫn tính đúng).
+    let hangThangTruoc: String?
 }
 
 struct DonHangKhachItemTopping: Decodable, Identifiable, Hashable {
