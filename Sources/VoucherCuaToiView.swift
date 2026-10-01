@@ -86,12 +86,12 @@ struct VoucherCuaToiView: View {
         switch tab {
         // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có), khả dụng lên đầu — chưa khả dụng (đã dùng/
         // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, mỗi khối tự sắp theo tiêu chí riêng.
-        case .tatCa: return dangCo + daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep
+        case .tatCa: return dangCo + uuTienThuTu(daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep)
         case .dangCo: return dangCo
         // SẮP CÓ = chưa tới ngày (chuaToiNgay, sắp theo ngày) + chưa đủ điều kiện dù đã tới ngày
         // (voucherSapCoSapXep, sắp theo giá trị giảm) — 2 nguồn cùng 1 cửa sổ hiện-trước ở server,
         // chỉ khác lý do hiển thị VÀ tiêu chí sắp xếp.
-        case .sapCo: return chuaToiNgay + voucherSapCoSapXep
+        case .sapCo: return uuTienThuTu(chuaToiNgay + voucherSapCoSapXep)
         }
     }
 
