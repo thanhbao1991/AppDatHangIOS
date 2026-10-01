@@ -399,7 +399,19 @@ struct CheckoutView: View {
                         .buttonStyle(.plain)
                     }
                     Spacer()
-                    Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
+                    HStack(spacing: 6) {
+                        // phiShipGoc = phí nếu KHÔNG có ưu đãi miễn phí ly/hạng — chỉ hiện gạch ngang
+                        // khi thật sự có giảm (goc > thật), tránh gạch 1 số trùng chính nó.
+                        if let goc = ship?.phiShipGoc, goc > phiShip {
+                            Text(formatTien(goc)).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                                .strikethrough(color: Theme.textMuted)
+                        }
+                        if phiShip <= 0 {
+                            Text("Miễn phí").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.success)
+                        } else {
+                            Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
+                        }
+                    }
                 }
             }
             if soTienDungXu > 0 {
