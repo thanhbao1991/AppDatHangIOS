@@ -322,7 +322,13 @@ struct SettingsView: View {
             if vi.diemThangNay >= 0 {
                 HStack(spacing: 12) {
                     statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này")
-                    statBoxDark(String(format: "%.0f", vi.diemThangTruoc / 10), "Điểm tháng trước")
+                    // Hạng THÁNG TRƯỚC thay vì điểm — đây là hạng THẬT dùng tính ưu đãi ship
+                    // (ShippingFeeHelper.TinhPhiShip dùng hạng tháng trước, không phải vi.hang đang
+                    // xét dở tháng này), khách cần thấy đúng hạng này để hiểu vì sao popup phí ship
+                    // (CheckoutView) nói tới 1 hạng có thể khác hạng lớn ở đầu card (phát hiện
+                    // 2026-10-01 qua ảnh chụp thật gây hiểu lầm). Icon + màu riêng theo đúng hạng đó,
+                    // không dùng icon/màu của vi.hang (hạng tháng này).
+                    hangBoxDark(vi.hangThangTruoc.isEmpty ? vi.hang : vi.hangThangTruoc)
                 }
             }
         }
@@ -532,6 +538,25 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity)
         .padding(10)
         .background(Color.white.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// Ô "Hạng tháng trước" — nền tint theo ĐÚNG màu hạng đó (hangGradient), khác hẳn nền trắng mờ
+    /// của statBoxDark để nổi bật hạng rõ ràng, tránh khách tưởng nhầm đây cũng chỉ là 1 con số.
+    private func hangBoxDark(_ hang: String) -> some View {
+        VStack(spacing: 2) {
+            Text("\(hangIcon[hang] ?? "🌱") \(hang)")
+                .font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text("Hạng tháng trước").font(.system(size: 11)).foregroundColor(.white.opacity(0.8))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(10)
+        .background(
+            LinearGradient(
+                colors: hangGradient[hang] ?? [Theme.primary, Theme.primaryDark],
+                startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
