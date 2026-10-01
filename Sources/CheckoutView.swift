@@ -71,7 +71,7 @@ struct CheckoutView: View {
     /// SettingsView — ở đây đã có đủ số ly + kết quả ước tính ship thật nên tính ra số km miễn phí
     /// của riêng đơn này thay vì nói chung chung, xem thảo luận 2026-10-01).
     private var phiShipInfoMessage: String {
-        let fallback = "Phí ship tính theo khoảng cách thật từ quán đến bạn — mỗi ly nước trong đơn giúp bạn được miễn phí thêm 1km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
+        let fallback = "Phí ship tính theo khoảng cách thật từ quán đến bạn — từ ly thứ 2 trở đi, mỗi ly thêm giúp bạn được miễn phí thêm 1km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
         guard let ship, let km = ship.khoangCachKm, let banKinh = ship.kmMienPhi else {
             return fallback
         }
