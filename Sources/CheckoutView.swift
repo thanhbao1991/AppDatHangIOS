@@ -116,17 +116,25 @@ struct CheckoutView: View {
             bottomBar
         }
         .toolbar(.hidden, for: .navigationBar)
+        // .tint(.black) trên từng Button vì NavigationStack cha (MainTabView) áp .tint(.white) cho
+        // mũi tên back — alert() kế thừa tint đó làm nút "Đã hiểu" trắng trên nền sáng, gần như vô
+        // hình (phát hiện 2026-10-01 qua ảnh chụp thật). Dùng .black thay vì Theme.primary để khớp
+        // quyết định sẵn có ở AppDatHangIOSApp.init (UIAlertController ép tintColor đen thuần, không
+        // dùng màu theo hạng vì có thể không đủ tương phản) — SwiftUI .tint() ở đây ghi đè UIAppearance
+        // proxy đó nên phải set đúng cùng giá trị.
         .alert("Lưu ý về voucher", isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
             Button("Đã hiểu") {
                 voucherWarning = nil
                 pendingNavigationAfterOrder?()
                 pendingNavigationAfterOrder = nil
             }
+            .tint(.black)
         } message: {
             Text(voucherWarning ?? "")
         }
         .alert("🛵 Cách tính phí ship", isPresented: $showPhiShipInfo) {
             Button("Đã hiểu") {}
+                .tint(.black)
         } message: {
             Text(phiShipInfoMessage)
         }

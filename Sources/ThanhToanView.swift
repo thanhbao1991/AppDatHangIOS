@@ -55,8 +55,11 @@ struct ThanhToanView: View {
         // để về đúng tab Đơn hàng.
         .navigationBarBackButtonHidden(true)
         .task { await load() }
+        // .tint(.black) khớp quyết định sẵn có ở AppDatHangIOSApp.init (UIAlertController ép
+        // tintColor đen thuần) — tránh nút trắng vô hình nếu tint trắng nào đó kế thừa xuống đây.
         .alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
             Button("OK") { saveMessage = nil }
+                .tint(.black)
         } message: {
             Text(saveMessage ?? "")
         }

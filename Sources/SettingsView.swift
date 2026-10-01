@@ -76,8 +76,13 @@ struct SettingsView: View {
         // congNoContent), không phải ở navigationDestination — giữ nguyên 2 modifier tách theo subview
         // (fix 2026-09-23 lần 2) vì đúng hướng, chỉ thiếu buttonStyle (fix 2026-09-23 lần 3, ĐÃ XONG).
         .task { await load() }
+        // .tint(.black) trên từng Button vì NavigationStack cha (MainTabView) áp .tint(.white) cho
+        // mũi tên back — alert() kế thừa tint đó làm nút trắng trên nền sáng, gần như vô hình (phát
+        // hiện 2026-10-01 qua ảnh chụp thật, rà soát lại TOÀN BỘ popup trong app). Dùng .black để
+        // khớp quyết định sẵn có ở AppDatHangIOSApp.init (UIAlertController ép tintColor đen thuần).
         .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
             Button("OK") {}
+                .tint(.black)
         } message: {
             Text(alertMessage?.message ?? "")
         }
@@ -90,11 +95,14 @@ struct SettingsView: View {
                 if let id = diaChiChoXoa?.id { Task { await xoaDiaChi(id) } }
             }
             Button("Huỷ", role: .cancel) {}
+                .tint(.black)
         }
         .alert("Đổi tên hiển thị", isPresented: $showEditTen) {
             TextField("Tên hiển thị trong app", text: $tenHienThi)
             Button("Lưu") { Task { await luuTenHienThi() } }
+                .tint(.black)
             Button("Huỷ", role: .cancel) { tenHienThi = Prefs.tenKhachHang ?? "" }
+                .tint(.black)
         } message: {
             Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
         }
