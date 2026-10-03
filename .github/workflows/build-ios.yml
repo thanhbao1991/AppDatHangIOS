@@ -150,6 +150,17 @@ jobs:
             echo "project.yml co DEV_LOGIN - dung lai"; exit 1
           fi
 
+      # Apple bat buoc build bang Xcode 26 / iOS 26 SDK tro len de nop App Store Connect
+      # (altool tra 409 "SDK version issue" neu dung Xcode mac dinh cua macos-15 runner, hien la 16.4).
+      - name: Select latest Xcode
+        run: |
+          echo "Available Xcode versions:"
+          ls /Applications | grep Xcode
+          sudo xcode-select -s /Applications/Xcode_26.0.1.app 2>/dev/null \
+            || sudo xcode-select -s /Applications/Xcode_26.0.app 2>/dev/null \
+            || sudo xcode-select -s "$(ls -d /Applications/Xcode_2*.app | sort -V | tail -1)"
+          xcodebuild -version
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
