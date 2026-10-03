@@ -1,6 +1,6 @@
 name: AppDatHangIOS
 options:
-  bundleIdPrefix: uk.denncoffee
+  bundleIdPrefix: com.denncoffee
   deploymentTarget:
     iOS: "16.0"
 settings:
@@ -34,7 +34,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: Đenn Coffee cần lưu ảnh để tải mã QR chuyển khoản về máy bạn.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: uk.denncoffee.appdathangios
+        PRODUCT_BUNDLE_IDENTIFIER: com.denncoffee.appdathang
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
@@ -55,5 +55,5 @@ targets:
       - target: AppDatHangIOS
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: uk.denncoffee.appdathangios.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.denncoffee.appdathang.tests
         SWIFT_VERSION: "5.0"

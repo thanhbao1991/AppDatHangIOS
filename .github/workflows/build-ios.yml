@@ -230,7 +230,7 @@ jobs:
             <string>manual</string>
             <key>provisioningProfiles</key>
             <dict>
-              <key>uk.denncoffee.appdathangios</key>
+              <key>com.denncoffee.appdathang</key>
               <string>$PROFILE_NAME</string>
             </dict>
           </dict>
