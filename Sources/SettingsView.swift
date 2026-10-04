@@ -391,7 +391,9 @@ struct SettingsView: View {
                                 .font(.system(size: 14))
                         }
                         .buttonStyle(.plain)
-                        .disabled(item.isDefault)
+                        // KHÔNG dùng .disabled: SwiftUI làm mờ label của nút disabled (sao đầy bị nhạt).
+                        // allowsHitTesting chặn bấm mà giữ nguyên màu.
+                        .allowsHitTesting(!item.isDefault)
                         // Bấm thẳng vào chữ địa chỉ để sửa (thay cho icon bút riêng) — chỉ khi khách
                         // tự tạo được (coTheXoa), địa chỉ nhân viên nhập chỉ xem/chọn mặc định.
                         Group {
