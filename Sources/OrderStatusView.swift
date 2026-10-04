@@ -100,16 +100,17 @@ struct OrderStatusView: View {
     /// (cùng bài học nút X trong GioHangView.itemRow — Button con cần .buttonStyle(.plain) mới thắng).
     /// Layout theo phong cách Shopee (ảnh mẫu 2026-09-24): ảnh món đầu tiên bên trái, tên các món
     /// viết liền 1 dòng (tenMonSummary server đã join sẵn bằng ", "), tổng tiền + số sản phẩm căn phải
-    /// phía dưới. Dòng đầu bỏ mã hoá đơn (vô nghĩa với khách, cùng lý do đã bỏ ở LichSuCongNoView
-    /// feedback 2026-09-22) — thay bằng phân loại (kèm địa chỉ nếu là đơn Ship). Trạng thái chỉ còn
-    /// text màu, không nền, đỡ rối mắt cạnh phân loại (2026-09-24).
+    /// phía dưới. Dòng đầu từng bỏ mã hoá đơn (feedback 2026-09-22, vô nghĩa với khách) — thêm lại
+    /// 2026-10-04 dạng "#xxxxxxxx" cạnh ngày giờ vì giờ có push notification nhắc theo mã này (xem
+    /// HoaDonTrangThaiService/HoaDonThanhToanService), khách cần so khớp đơn với thông báo. Trạng
+    /// thái chỉ còn text màu, không nền, đỡ rối mắt cạnh phân loại (2026-09-24).
     private func orderCardContent(_ item: DonHangKhach) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 // ngayGio là ISO thô server trả (vd "2026-09-17T19:12:03.8821513") — dùng lại
                 // formatThongBaoTime (ThongBaoView.swift) cho gọn kiểu "Hôm nay, HH:mm" thay vì
                 // lộ hẳn timestamp kỹ thuật ra UI khách hàng.
-                Text(formatThongBaoTime(item.ngayGio)).font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
+                Text("#\(item.maHoaDon) · \(formatThongBaoTime(item.ngayGio))").font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
                 Spacer()
                 // trangThaiNhan/trangThaiMau (Models.swift) tự đổi "Hoàn tất" -> "Ghi nợ" (đỏ) khi
                 // conLai > 0 — khớp màu số tiền đỏ ở dưới (feedback 2026-09-28).

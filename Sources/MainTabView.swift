@@ -22,6 +22,7 @@ struct MainTabView: View {
     @State private var pollTask: Task<Void, Never>?
     @State private var showThongBao = false
     @State private var showTaiKhoanBaoMat = false
+    @StateObject private var deepLinkRouter = DeepLinkRouter.shared
 
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
     /// có thể push route .checkout, xem navigationDestination bên dưới) — dùng để ẩn tabBar dưới cùng.
@@ -129,6 +130,25 @@ struct MainTabView: View {
             startPolling()
         }
         .onDisappear { pollTask?.cancel() }
+        .onChange(of: deepLinkRouter.pendingHoaDonId) { hoaDonId in
+            guard let hoaDonId else { return }
+            deepLinkRouter.pendingHoaDonId = nil
+            openDonHang(id: hoaDonId)
+        }
+    }
+
+    /// Bấm vào push notification -> chuyển tab Đơn hàng, tải lại danh sách rồi push thẳng vào chi
+    /// tiết đơn vừa nhận thông báo. Không có API lấy 1 đơn theo id (chỉ có list "don-cua-toi") nên
+    /// tải cả list rồi lọc — danh sách tối đa 50 đơn gần nhất, chấp nhận được cho thao tác hiếm khi
+    /// này (bấm thông báo), không đáng để thêm endpoint riêng.
+    private func openDonHang(id: String) {
+        selectedTab = .donHang
+        donHangPath = []
+        Task {
+            let orders = await APIClient.shared.getDonCuaToi()
+            guard let order = orders.first(where: { $0.id == id }) else { return }
+            donHangPath = [.detail(order)]
+        }
     }
 
     /// Icon chuông đặt làm `trailing` trong header (SearchBar/TitleBar) của TỪNG tab (thay cho tab
