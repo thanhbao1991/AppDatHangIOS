@@ -43,6 +43,7 @@ targets:
         # "Invalid file" ngay khi chưa kịp liên lạc mạng. Không ảnh hưởng gì khi cài qua TestFlight/
         # App Store thật, chỉ cần thiết cho luồng sideload free Apple ID.
         OTHER_LDFLAGS: -Wl,-no_fixup_chains
+        CODE_SIGN_ENTITLEMENTS: AppDatHangIOS.entitlements
     scheme:
       testTargets:
         - AppDatHangIOSTests

@@ -128,6 +128,7 @@ actor APIClient {
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
             Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+            if let pushToken = AppDelegate.deviceTokenHex { await registerPushToken(pushToken) }
         }
         return result
     }
@@ -162,6 +163,7 @@ actor APIClient {
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/dev-dang-nhap", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
             Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+            if let pushToken = AppDelegate.deviceTokenHex { await registerPushToken(pushToken) }
         }
         return result
     }
@@ -182,6 +184,7 @@ actor APIClient {
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/xac-nhan-otp", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
             Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
+            if let pushToken = AppDelegate.deviceTokenHex { await registerPushToken(pushToken) }
         }
         return result
     }
@@ -202,11 +205,10 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
-    /// Chưa gọi thật ở đâu cho tới khi có APNs (Apple Developer Program) — giữ sẵn để không phải
-    /// sửa kiến trúc khi cắm push vào sau. Field "expoPushToken" giữ nguyên tên JSON backend đang
-    /// đọc (KhachHangAuthController) — đổi tên khi backend đổi sang APNs raw token.
+    /// token: chuỗi hex của Data nhận từ didRegisterForRemoteNotificationsWithDeviceToken (xem
+    /// DennCoffeeApp.swift) — truyền nil để gỡ đăng ký (app tắt quyền thông báo).
     func registerPushToken(_ token: String?) async {
-        _ = await decode("/khachhang-auth/push-token", method: "PUT", body: jsonBody(PushTokenRequest(expoPushToken: token))) as ApiEnvelope<Bool>
+        _ = await decode("/khachhang-auth/push-token", method: "PUT", body: jsonBody(PushTokenRequest(apnsDeviceToken: token))) as ApiEnvelope<Bool>
     }
 
     /// Xoá tài khoản giờ đòi 2 bước: guiOtpXoaTaiKhoan (xác minh mật khẩu, gửi OTP về SĐT) rồi mới

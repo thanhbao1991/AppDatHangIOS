@@ -603,4 +603,4 @@ struct DiemDanhInfo: Decodable {
 /// POST /dat-hang/diem-danh
 struct DiemDanhResult: Decodable { let ngay: Int; let thuong: Double }
 
-struct PushTokenRequest: Encodable { let expoPushToken: String? }
+struct PushTokenRequest: Encodable { let apnsDeviceToken: String? }

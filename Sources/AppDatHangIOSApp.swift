@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct AppDatHangIOSApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     init() {
         // iOS 15+ tự thêm 1 khoảng trống phía trên header ghim (pinned) ĐẦU TIÊN của List — lỗi
         // đã biết của UITableView, thấy rõ nhất ở tab Thực đơn (header "Yêu thích" bị đẩy xuống
