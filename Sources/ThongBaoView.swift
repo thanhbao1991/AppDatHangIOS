@@ -17,12 +17,14 @@ private let ngayTaoGioFormatter: DateFormatter = {
 }()
 private let ngayTaoNgayThangFormatter: DateFormatter = {
     let f = DateFormatter()
-    f.dateFormat = "HH:mm dd-MM-yyyy"
+    // Bỏ năm + đổi "-" thành "/" (2026-10-04, feedback: ngày tháng dạng "4/10" gọn hơn "04-10-2026",
+    // năm hầu như luôn là năm hiện tại nên không cần hiện).
+    f.dateFormat = "HH:mm d/M"
     f.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
     return f
 }()
 
-/// "Hôm nay, HH:mm" / "Hôm qua, HH:mm" / "HH:mm dd-MM-yyyy" — khớp kiểu Shopee đang hiện ở tab
+/// "Hôm nay, HH:mm" / "Hôm qua, HH:mm" / "HH:mm d/M" — khớp kiểu Shopee đang hiện ở tab
 /// Thông báo (2026-09-15), gọn hơn ISO thô server trả về.
 func formatThongBaoTime(_ raw: String) -> String {
     // Chuỗi ISO đôi khi có phần .microseconds (vd "...T00:00:00.0000000") — cắt bỏ trước khi parse

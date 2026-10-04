@@ -110,7 +110,7 @@ struct OrderStatusView: View {
                 // ngayGio là ISO thô server trả (vd "2026-09-17T19:12:03.8821513") — dùng lại
                 // formatThongBaoTime (ThongBaoView.swift) cho gọn kiểu "Hôm nay, HH:mm" thay vì
                 // lộ hẳn timestamp kỹ thuật ra UI khách hàng.
-                Text("#\(item.maHoaDon) · \(formatThongBaoTime(item.ngayGio))").font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
+                Text("\(formatThongBaoTime(item.ngayGio)) · #\(item.maHoaDon)").font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
                 Spacer()
                 // trangThaiNhan/trangThaiMau (Models.swift) tự đổi "Hoàn tất" -> "Ghi nợ" (đỏ) khi
                 // conLai > 0 — khớp màu số tiền đỏ ở dưới (feedback 2026-09-28).

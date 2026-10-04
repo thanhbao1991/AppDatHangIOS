@@ -33,7 +33,7 @@ struct OrderDetailView: View {
                 section {
                     // Từng bỏ hẳn mã hoá đơn khỏi đầu trang (feedback 2026-09-28) — thêm lại 2026-10-04
                     // dạng "#xxxxxxxx" vì giờ có push notification nhắc theo mã này, khớp OrderStatusView.
-                    Text("#\(order.maHoaDon) · \(formatThongBaoTime(order.ngayGio))").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    Text("\(formatThongBaoTime(order.ngayGio)) · #\(order.maHoaDon)").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     // Đơn huỷ không đi qua timeline 4 bước (steps.firstIndex trả nil, sẽ hiện sai
                     // thành "bước 0" như chưa huỷ gì) — thay bằng 1 dòng trạng thái đơn giản.
                     if order.trangThai == .huy {

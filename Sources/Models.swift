@@ -328,7 +328,7 @@ enum TrangThaiDon: String, Decodable, Hashable, CaseIterable {
     var nhan: String {
         switch self {
         case .choXacNhan: return "Chờ quán xác nhận"
-        case .daXacNhan: return "Quán đã nhận, đang chuẩn bị"
+        case .daXacNhan: return "Đang chuẩn bị"
         case .dangGiao: return "Đang giao"
         case .hoanTat: return "Hoàn tất"
         case .huy: return "Đã huỷ"
