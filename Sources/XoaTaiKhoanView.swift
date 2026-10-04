@@ -64,11 +64,13 @@ struct XoaTaiKhoanView: View {
         }
         .navigationTitle("Xoá tài khoản")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Xoá tài khoản?", isPresented: $showConfirm, titleVisibility: .visible) {
-            Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Mật khẩu và phiên đăng nhập hiện tại sẽ bị xoá vĩnh viễn. Không thể hoàn tác.")
+        .popupHost { host in
+            host.confirmationDialog("Xoá tài khoản?", isPresented: $showConfirm, titleVisibility: .visible) {
+                Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
+                Button("Huỷ", role: .cancel) {}
+            } message: {
+                Text("Mật khẩu và phiên đăng nhập hiện tại sẽ bị xoá vĩnh viễn. Không thể hoàn tác.")
+            }
         }
     }
 

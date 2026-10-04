@@ -42,13 +42,15 @@ struct ThietBiDangNhapView: View {
         .navigationTitle("Thiết bị đăng nhập")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
-        .confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
-            Button("Đăng xuất", role: .destructive) {
-                if let s = revokingSession { Task { await revoke(s) } }
+        .popupHost { host in
+            host.confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
+                Button("Đăng xuất", role: .destructive) {
+                    if let s = revokingSession { Task { await revoke(s) } }
+                }
+                Button("Huỷ", role: .cancel) {}
+            } message: {
+                Text("Đăng xuất thiết bị này?")
             }
-            Button("Huỷ", role: .cancel) {}
-        } message: {
-            Text("Đăng xuất thiết bị này?")
         }
     }
 
