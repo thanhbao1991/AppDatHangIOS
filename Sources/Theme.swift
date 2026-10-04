@@ -127,6 +127,14 @@ enum Theme {
             guard let windowScene = scene as? UIWindowScene else { continue }
             for window in windowScene.windows {
                 applyNavBarAppearance(to: window.rootViewController, appearance: navAppearance)
+                // UIAlertController lấy tint nút ("OK"/"Huỷ"...) từ window.tintColor thật sự present nó,
+                // KHÔNG đọc UIView.appearance(whenContainedInInstancesOf:) (proxy đó không ăn vì
+                // UIAlertController present qua window riêng/transition, containment-matching hay bị bỏ
+                // qua) và cũng không đọc SwiftUI .tint() trên Button bên trong .alert() — phát hiện
+                // 2026-10-05: "fix" cũ (UIView.appearance + .tint(.black) rải khắp 7 file) đã lên
+                // TestFlight 4 ngày nhưng nút OK vẫn trắng vô hình trên máy thật. Set thẳng tintColor
+                // trên từng UIWindow thật là cách duy nhất verify được bằng ảnh chụp.
+                window.tintColor = .black
             }
         }
     }

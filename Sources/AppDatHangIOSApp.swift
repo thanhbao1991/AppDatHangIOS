@@ -28,11 +28,12 @@ struct AppDatHangIOSApp: App {
         // lệch tông. Ép luôn ở tầng UIWindow để alert/action sheet cũng theo light, đồng bộ toàn app.
         UIWindow.appearance().overrideUserInterfaceStyle = .light
 
-        // Chữ nút "Huỷ"/"Lưu" trong .alert() vẫn mờ/nhạt dù đã ép light ở trên — UIAlertController kế
-        // thừa tintColor hệ thống (theo rank hiện tại, có màu rất tối như Kim Cương gần đen nhưng vẫn
-        // không đủ tương phản rõ như đen thuần) thay vì màu chữ mặc định của alert. Ép riêng tintColor
-        // CHỈ trong phạm vi UIAlertController về đen thuần, không ảnh hưởng tint theo hạng ở nơi khác.
-        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = .black
+        // Chữ nút "Huỷ"/"Lưu" trong .alert() vẫn mờ/nhạt dù đã ép light ở trên. Từng thử
+        // UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = .black ở
+        // đây — KHÔNG ăn (verify ảnh chụp máy thật 2026-10-05, dù đã lên TestFlight 4 ngày): proxy
+        // UIAppearance containment không bắt được UIAlertController vì nó present qua window riêng.
+        // Fix thật nằm ở Theme.applyNavBarAppearance() — set thẳng window.tintColor = .black trên từng
+        // UIWindow thật (không qua proxy), gọi ngay bên trên và mỗi khi KhachHangSession đổi hạng.
     }
 
     var body: some Scene {
