@@ -11,10 +11,6 @@ struct VoucherTicketCard: View {
     let nhanGiam: String
     let nhanGiamToiDa: String?
     var donToiThieu: Double? = nil
-    /// "Bạc" — voucher chỉ dùng được khi khách đạt hạng này (TÍNH THEO THÁNG TRƯỚC) trở lên. Hiện LUÔN
-    /// (kể cả card đã khả dụng) để nhấn mạnh giá trị của hạng — mục đích chính của HangToiThieu là làm
-    /// hạng bớt "thuần trang trí", che đi nhãn này thì card không khác gì trước. Xem VoucherCuaToi.hangToiThieu.
-    var hangYeuCau: String? = nil
     /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã sử dụng".
     var daSuDung: Bool = false
     /// Đang được chọn (sheet "Chọn voucher") — dấu tick tròn góc phải.
@@ -38,6 +34,12 @@ struct VoucherTicketCard: View {
     /// textFaint (màu nhạt sẵn) dù cùng hệ số 0.55, gây cảm giác "2 độ mờ khác nhau" dù không phải bug
     /// chồng opacity. Gộp vào `mo` để left block cũng đổi màu xám textFaint đồng bộ với các card mờ khác.
     var forceMo: Bool = false
+    /// "Bạc" — voucher chỉ dùng được khi khách đạt hạng này (TÍNH THEO THÁNG TRƯỚC) trở lên. Hiện LUÔN
+    /// (kể cả card đã khả dụng) để nhấn mạnh giá trị của hạng — mục đích chính của HangToiThieu là làm
+    /// hạng bớt "thuần trang trí", che đi nhãn này thì card không khác gì trước. Xem VoucherCuaToi.hangToiThieu.
+    /// Đặt CUỐI danh sách tham số (không chen giữa) — Swift bắt buộc thứ tự argument tại nơi gọi khớp
+    /// đúng thứ tự khai báo dù có default value, chen giữa đã gây lỗi biên dịch thật ở 1 nơi gọi cũ.
+    var hangYeuCau: String? = nil
 
     /// Card không bấm/dùng được lúc này — gộp 3 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
     private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil || forceMo) }

@@ -112,25 +112,7 @@ struct VoucherCuaToiView: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(hienThi) { v in
-                                VoucherTicketCard(
-                                    ten: v.ten, moTa: moTaHienThi(v), ma: v.ma,
-                                    nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
-                                    donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
-                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
-                                    hangYeuCau: v.hangToiThieu,
-                                    // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân
-                                    // biệt — ĐANG CÓ (toàn khả dụng) và SẮP CÓ (toàn chưa khả dụng)
-                                    // đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
-                                    applyDim: tab == .tatCa,
-                                    // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa)
-                                    // không tự mờ được từ card qua daSuDung/nhanSapDienRa — ép mờ qua
-                                    // forceMo, KHÔNG dùng .opacity() overlay riêng nữa (2026-09-27 fix:
-                                    // overlay riêng chỉ nhân mờ lên khối trái vẫn tô đậm primaryGradient,
-                                    // nhìn ĐẬM HƠN hẳn card mờ kiểu textFaint dù cùng hệ số — "2 độ mờ
-                                    // khác nhau"). forceMo đi qua chung `mo` nên khối trái cũng đổi màu
-                                    // xám textFaint đồng bộ.
-                                    forceMo: tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung
-                                )
+                                card(for: v)
                             }
                         }
                         .padding(.horizontal)
@@ -176,6 +158,30 @@ struct VoucherCuaToiView: View {
     /// nhãn "SẮP CÓ"/mờ card đã đủ ngụ ý "chưa dùng được") — chỉ còn hiện moTa gốc staff gõ sẵn, không
     /// đụng gì tới lyDoChuaKhaDung ở nơi khác (model vẫn giữ field này).
     private func moTaHienThi(_ v: VoucherCuaToi) -> String? { v.moTa }
+
+    /// Tách khỏi `body` thành hàm trả về KIỂU CỤ THỂ (không phải `some View`) — gộp thẳng vào ForEach
+    /// trong `body` khiến Swift type-checker vượt quá thời gian suy luận cho phép ("unable to
+    /// type-check this expression in reasonable time") sau khi thêm tham số `hangYeuCau` 2026-10-04,
+    /// vì toàn bộ cây VStack/ScrollView/if-else trong `body` vốn đã là 1 biểu thức lớn. Tách constructor
+    /// voucher ra khỏi cây đó giúp mỗi phần tự suy luận kiểu độc lập, nhanh hơn nhiều.
+    private func card(for v: VoucherCuaToi) -> VoucherTicketCard {
+        VoucherTicketCard(
+            ten: v.ten, moTa: moTaHienThi(v), ma: v.ma,
+            nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+            donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
+            nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+            // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân biệt — ĐANG CÓ (toàn khả
+            // dụng) và SẮP CÓ (toàn chưa khả dụng) đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
+            applyDim: tab == .tatCa,
+            // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa) không tự mờ được từ
+            // card qua daSuDung/nhanSapDienRa — ép mờ qua forceMo, KHÔNG dùng .opacity() overlay riêng
+            // nữa (2026-09-27 fix: overlay riêng chỉ nhân mờ lên khối trái vẫn tô đậm primaryGradient,
+            // nhìn ĐẬM HƠN hẳn card mờ kiểu textFaint dù cùng hệ số — "2 độ mờ khác nhau"). forceMo đi
+            // qua chung `mo` nên khối trái cũng đổi màu xám textFaint đồng bộ.
+            forceMo: tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung,
+            hangYeuCau: v.hangToiThieu
+        )
+    }
 
     private var emptyState: some View {
         VStack(spacing: 10) {
