@@ -246,7 +246,7 @@ struct OrderStatusView: View {
             }
             if item.trangThai == .hoanTat && !item.daDanhGia && isLastOrder(item) {
                 actionButton("⭐ Đánh giá", filled: true) { danhGiaTarget = item }
-            } else if item.trangThai != .hoanTat && item.trangThai != .huy {
+            } else if item.trangThai != .hoanTat && item.trangThai != .huy && item.conLai > 0 {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
             actionButton("Đặt lại", filled: true) { datLai(item) }
