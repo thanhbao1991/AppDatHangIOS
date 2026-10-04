@@ -354,11 +354,11 @@ func formatXu(_ value: Double) -> String {
 }
 
 extension View {
-    /// Gắn .alert()/.confirmationDialog() lên 1 view nền riêng có tint đen. SwiftUI lấy màu chữ nút
-    /// của popup từ tint trong environment TẠI NƠI GẮN modifier — mà MainTabView bọc mọi
-    /// NavigationStack bằng .tint(.white) (cho mũi tên back), nên popup gắn thẳng lên màn hình ra nút
-    /// trắng vô hình. .tint() đặt trên Button bên trong popup không có tác dụng.
+    /// Gắn .alert()/.confirmationDialog() lên 1 view nền riêng có tint Theme.primary (màu theo hạng).
+    /// SwiftUI lấy màu chữ nút của popup từ tint trong environment TẠI NƠI GẮN modifier — mà
+    /// MainTabView bọc mọi NavigationStack bằng .tint(.white) (cho mũi tên back), nên popup gắn thẳng
+    /// lên màn hình ra nút trắng vô hình. .tint() đặt trên Button bên trong popup không có tác dụng.
     func popupHost<P: View>(@ViewBuilder _ attach: (Color) -> P) -> some View {
-        background(attach(Color.clear).tint(.black))
+        background(attach(Color.clear).tint(Theme.primary))
     }
 }
