@@ -11,6 +11,10 @@ struct VoucherTicketCard: View {
     let nhanGiam: String
     let nhanGiamToiDa: String?
     var donToiThieu: Double? = nil
+    /// "Bạc" — voucher chỉ dùng được khi khách đạt hạng này (TÍNH THEO THÁNG TRƯỚC) trở lên. Hiện LUÔN
+    /// (kể cả card đã khả dụng) để nhấn mạnh giá trị của hạng — mục đích chính của HangToiThieu là làm
+    /// hạng bớt "thuần trang trí", che đi nhãn này thì card không khác gì trước. Xem VoucherCuaToi.hangToiThieu.
+    var hangYeuCau: String? = nil
     /// Card đã dùng/không còn dùng được — làm mờ + đổi khối trái sang xám, kèm nhãn "Đã sử dụng".
     var daSuDung: Bool = false
     /// Đang được chọn (sheet "Chọn voucher") — dấu tick tròn góc phải.
@@ -126,6 +130,11 @@ struct VoucherTicketCard: View {
             }
             if let nhanSoLan {
                 Text("🔁 \(nhanSoLan)")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Theme.primary)
+            }
+            if let hangYeuCau {
+                Text("🏅 Yêu cầu hạng \(hangYeuCau) trở lên")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Theme.primary)
             }

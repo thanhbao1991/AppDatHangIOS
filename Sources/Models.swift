@@ -193,6 +193,10 @@ struct VoucherCuaToi: Decodable, Identifiable {
     /// Giải thích ngắn cần làm gì để mở khoá — chỉ có giá trị ở danh sách "Sắp có"
     /// (APIClient.getVoucherSapCo), nil với voucher đã liên quan tới khách (getVoucherCuaToi).
     var lyDoChuaKhaDung: String?
+    /// Hạng tối thiểu yêu cầu (vd "Bạc") — nil = không giới hạn hạng. Thêm 2026-10-04 cùng đợt gắn
+    /// HangToiThieu cho voucher lễ tết/sinh nhật, để card tự hiện nhãn "Yêu cầu hạng X trở lên" thay vì
+    /// khách không biết vì sao voucher chưa dùng được dù đã tới ngày (xem VoucherTicketCard.hangYeuCau).
+    var hangToiThieu: String?
 
     /// Giá trị giảm THAM KHẢO để sắp xếp (không phải số tiền giảm thực tế cho 1 đơn cụ thể — tab
     /// Voucher không có ngữ cảnh giỏ hàng như VoucherPickerSheet) — PhanTram dùng trần giamToiDa (số

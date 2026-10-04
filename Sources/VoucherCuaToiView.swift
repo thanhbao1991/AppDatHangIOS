@@ -117,6 +117,7 @@ struct VoucherCuaToiView: View {
                                     nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
                                     donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
                                     nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+                                    hangYeuCau: v.hangToiThieu,
                                     // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân
                                     // biệt — ĐANG CÓ (toàn khả dụng) và SẮP CÓ (toàn chưa khả dụng)
                                     // đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
