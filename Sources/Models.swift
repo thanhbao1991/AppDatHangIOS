@@ -492,6 +492,9 @@ struct ThongBao: Decodable, Identifiable {
     let noiDung: String
     let ngayTao: String
     let hoaDonId: String?
+    /// Mã đơn (vd "HD1937dae8") kèm theo noiDung — dùng để tô màu riêng đoạn mã trong câu, khớp cách
+    /// OrderStatusView tô "#maHoaDon". nil ở tin KhuyenMai (không gắn 1 đơn cụ thể).
+    let maHoaDon: String?
 }
 
 // ---- Ví / gamification ----

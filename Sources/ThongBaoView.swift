@@ -52,6 +52,18 @@ private func thongBaoDonHangIcon(_ tieude: String) -> String {
     return "📦"
 }
 
+/// Tô màu riêng đoạn "#mãĐơn" trong noiDung (vd "Đơn #HD1937dae8 đã hoàn tất...") — khớp cách
+/// OrderStatusView tô mã đơn trong list "Đơn hàng". Fallback Text thường nếu không tìm thấy đúng
+/// chuỗi "#maHoaDon" (tin KhuyenMai không có maHoaDon, hoặc server/app lệch định dạng).
+private func noiDungText(_ item: ThongBao) -> Text {
+    guard let ma = item.maHoaDon, let range = item.noiDung.range(of: "#\(ma)") else {
+        return Text(item.noiDung)
+    }
+    let prefix = String(item.noiDung[item.noiDung.startIndex..<range.lowerBound])
+    let suffix = String(item.noiDung[range.upperBound...])
+    return Text(prefix) + Text("#\(ma)").foregroundColor(Theme.primary) + Text(suffix)
+}
+
 /// Port từ ThongBaoScreen.tsx — poll khi mở tab, đánh dấu mốc đã xem để MainTabView tính badge.
 struct ThongBaoView: View {
     @Binding var selectedTab: AppTab
@@ -91,7 +103,7 @@ struct ThongBaoView: View {
                                     .clipShape(Circle())
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(item.tieude).font(.system(size: 14, weight: .bold))
-                                    Text(item.noiDung).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                                    noiDungText(item).font(.system(size: 13)).foregroundColor(Theme.textMuted)
                                     Text(formatThongBaoTime(item.ngayTao)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
                                 }
                             }
