@@ -49,13 +49,12 @@ struct UuDaiView: View {
         }
         .task { await load() }
         .navigationDestination(isPresented: $showLichSuVi) { LichSuViView() }
-        // .tint(.black): tint trắng kế thừa từ NavigationStack cha (MainTabView) làm nút trắng vô
-        // hình trên nền sáng (xem 2026-10-01) — .black khớp AppDatHangIOSApp.init.
-        .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
-            Button("OK") {}
-                .tint(.black)
-        } message: {
-            Text(alertMessage?.message ?? "")
+        .popupHost { host in
+            host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
+                Button("OK") {}
+            } message: {
+                Text(alertMessage?.message ?? "")
+            }
         }
     }
 

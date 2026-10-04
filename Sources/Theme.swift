@@ -127,14 +127,6 @@ enum Theme {
             guard let windowScene = scene as? UIWindowScene else { continue }
             for window in windowScene.windows {
                 applyNavBarAppearance(to: window.rootViewController, appearance: navAppearance)
-                // UIAlertController lấy tint nút ("OK"/"Huỷ"...) từ window.tintColor thật sự present nó,
-                // KHÔNG đọc UIView.appearance(whenContainedInInstancesOf:) (proxy đó không ăn vì
-                // UIAlertController present qua window riêng/transition, containment-matching hay bị bỏ
-                // qua) và cũng không đọc SwiftUI .tint() trên Button bên trong .alert() — phát hiện
-                // 2026-10-05: "fix" cũ (UIView.appearance + .tint(.black) rải khắp 7 file) đã lên
-                // TestFlight 4 ngày nhưng nút OK vẫn trắng vô hình trên máy thật. Set thẳng tintColor
-                // trên từng UIWindow thật là cách duy nhất verify được bằng ảnh chụp.
-                window.tintColor = .black
             }
         }
     }
@@ -359,4 +351,14 @@ func formatXu(_ value: Double) -> String {
     formatter.maximumFractionDigits = 0
     let number = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
     return "\(number) Xu"
+}
+
+extension View {
+    /// Gắn .alert()/.confirmationDialog() lên 1 view nền riêng có tint đen. SwiftUI lấy màu chữ nút
+    /// của popup từ tint trong environment TẠI NƠI GẮN modifier — mà MainTabView bọc mọi
+    /// NavigationStack bằng .tint(.white) (cho mũi tên back), nên popup gắn thẳng lên màn hình ra nút
+    /// trắng vô hình. .tint() đặt trên Button bên trong popup không có tác dụng.
+    func popupHost<P: View>(@ViewBuilder _ attach: (Color) -> P) -> some View {
+        background(attach(Color.clear).tint(.black))
+    }
 }
