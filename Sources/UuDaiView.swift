@@ -1,5 +1,10 @@
 import SwiftUI
 
+extension Notification.Name {
+    /// Phát sau khi điểm danh/mở hộp quà xong để MainTabView cập nhật chấm đỏ trên tab Ưu đãi.
+    static let uuDaiDaThayDoi = Notification.Name("uuDaiDaThayDoi")
+}
+
 /// Port từ UuDaiScreen.tsx — vòng quay may mắn. Ngày sinh (khai báo + nhận quà sinh nhật) đã chuyển
 /// sang SettingsView (mục "Thông tin cá nhân", tab Tài khoản) — đây là thông tin cá nhân, không phải
 /// phần thưởng, nên không thuộc tab Ưu đãi. Thẻ sưu tập ly VÀ giới thiệu bạn bè đã XOÁ HẲN 2026-09-23
@@ -306,6 +311,7 @@ struct UuDaiView: View {
         }
         ketQuaQuay = data.label
         dangQuay = false
+        NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
     }
 
     private func lamDiemDanh() async {
@@ -315,6 +321,7 @@ struct UuDaiView: View {
         if res.isSuccess {
             diemDanh = await APIClient.shared.getDiemDanhInfo() ?? diemDanh
             soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
+            NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
         }

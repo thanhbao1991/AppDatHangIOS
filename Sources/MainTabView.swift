@@ -19,6 +19,7 @@ struct MainTabView: View {
     @State private var cartPath: [HomeRoute] = []
     @State private var donHangPath: [DonHangRoute] = []
     @State private var unreadCount = 0
+    @State private var uuDaiCanLam = false
     @State private var pollTask: Task<Void, Never>?
     @State private var showThongBao = false
     @State private var showTaiKhoanBaoMat = false
@@ -114,6 +115,10 @@ struct MainTabView: View {
         .onChange(of: selectedTab) { _ in
             showThongBao = false
             showTaiKhoanBaoMat = false
+            Task { await checkUuDai() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .uuDaiDaThayDoi)) { _ in
+            Task { await checkUuDai() }
         }
         .sheet(isPresented: $showThongBao) {
             NavigationStack {
@@ -127,6 +132,7 @@ struct MainTabView: View {
         }
         .task {
             await checkUnread()
+            await checkUuDai()
             startPolling()
         }
         .onDisappear { pollTask?.cancel() }
@@ -202,7 +208,7 @@ struct MainTabView: View {
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
             tabButton(.voucher, label: "Voucher", icon: "ticket")
-            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift")
+            tabButton(.sanThuong, label: "Ưu đãi", icon: "gift", showDot: uuDaiCanLam)
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }
         .padding(.top, 6)
@@ -211,7 +217,7 @@ struct MainTabView: View {
     }
 
     @ViewBuilder
-    private func tabButton(_ tab: AppTab, label: String, icon: String, badgeText: String? = nil, badgeCount: Int = 0) -> some View {
+    private func tabButton(_ tab: AppTab, label: String, icon: String, badgeText: String? = nil, badgeCount: Int = 0, showDot: Bool = false) -> some View {
         let isSelected = selectedTab == tab
         Button {
             selectedTab = tab
@@ -224,6 +230,12 @@ struct MainTabView: View {
                         tabBadge(badgeText, pulse: tab == .cart)
                     } else if badgeCount > 0 {
                         tabBadge("\(badgeCount)")
+                    } else if showDot {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 10, height: 10)
+                            .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 1.5))
+                            .offset(x: 6, y: -2)
                     }
                 }
                 Text(label)
@@ -265,8 +277,19 @@ struct MainTabView: View {
                 try? await Task.sleep(nanoseconds: UInt64(thongBaoPollInterval * 1_000_000_000))
                 if Task.isCancelled { break }
                 await checkUnread()
+                await checkUuDai()
             }
         }
+    }
+
+    /// Chấm đỏ trên tab Ưu đãi khi hôm nay còn việc làm: chưa điểm danh HOẶC còn lượt mở hộp quà.
+    /// Lỗi mạng (nil) thì giữ nguyên trạng thái cũ, không nhấp nháy tắt/bật.
+    private func checkUuDai() async {
+        async let dd = APIClient.shared.getDiemDanhInfo()
+        async let quay = APIClient.shared.getVongQuayInfo()
+        let (ddInfo, quayInfo) = await (dd, quay)
+        guard ddInfo != nil || quayInfo != nil else { return }
+        uuDaiCanLam = (ddInfo.map { !$0.daDiemDanhHomNay } ?? false) || ((quayInfo?.soLuotConLai ?? 0) > 0)
     }
 }
 
