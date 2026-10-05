@@ -82,9 +82,9 @@ struct CheckoutView: View {
         // Hạng dùng ĐÚNG hangThangTruoc (hạng THẬT dùng để cộng km) — không dùng
         // KhachHangSession.shared.hang (hạng hiện tại, có thể khác, xem comment UocTinhShip.hangThangTruoc).
         let hang = ship.hangThangTruoc?.isEmpty == false ? ship.hangThangTruoc! : KhachHangSession.shared.hang
-        // 0,5km/ly khớp DatHangService.UocTinhShipAsync (KmMienPhi = SoLuong*0.5 + km theo hạng).
-        let kmTheoLy = Double(soLy) * 0.5
-        let kmTheoHang = max(0, banKinh - kmTheoLy)
+        // Backend cũ chưa trả kmTheoLy/kmTheoHang → suy ngược (0,5km/ly, khớp DatHangService.UocTinhPhiShip).
+        let kmTheoLy = ship.kmTheoLy ?? Double(soLy) * 0.5
+        let kmTheoHang = ship.kmTheoHang ?? max(0, banKinh - kmTheoLy)
         var msg = "\(soLy) ly: free ship \(formatKm(kmTheoLy))km"
         msg += "\nHạng \(hang) (tháng trước): free ship \(formatKm(kmTheoHang))km"
         msg += "\nTổng free ship: \(formatKm(banKinh))km"

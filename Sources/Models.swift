@@ -289,6 +289,9 @@ struct UocTinhShip: Decodable {
     /// bản có field này thì JSON thiếu field — optional tránh decode cả response bị lỗi (trước đây
     /// từng có incident key reorder/field thiếu làm vỡ toàn bộ parse).
     let kmMienPhi: Double?
+    /// Tách kmMienPhi thành phần theo ly + phần theo hạng (backend mới trả; bản cũ thì nil).
+    let kmTheoLy: Double?
+    let kmTheoHang: Double?
     /// Phí ship GỐC (coi như không có ưu đãi miễn phí) — hiện gạch ngang cạnh phiShip thật. Cùng lý
     /// do optional như kmMienPhi ở trên.
     let phiShipGoc: Double?
