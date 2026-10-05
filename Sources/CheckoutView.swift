@@ -108,10 +108,10 @@ struct CheckoutView: View {
             header
             List {
                 cardRow(topExtra: 6) { diaChiSection }
-                cardRow { cardBox { donHangCardContent } }
                 if !xuTraDu {
                     cardRow { cardBox { thanhToanCardContent } }
                 }
+                cardRow { cardBox { donHangCardContent } }
                 cardRow { cardBox { chiTietThanhToanCardContent } }
                 cardRow { cardBox { ghiChuCardContent } }
             }
