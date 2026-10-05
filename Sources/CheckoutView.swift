@@ -236,6 +236,23 @@ struct CheckoutView: View {
             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
+    private func diaChiRow(icon: String, text: String, chon: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon).font(.system(size: 13))
+                Text(text).font(.system(size: 13)).lineLimit(2).multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+                if chon { Image(systemName: "checkmark.circle.fill").font(.system(size: 14)) }
+            }
+            .padding(.horizontal, 10).padding(.vertical, 8)
+            .background(chon ? Theme.primaryTint : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(chon ? Theme.primary : Theme.divider))
+        }
+        .buttonStyle(.plain)
+        .foregroundColor(chon ? Theme.primary : Theme.textMuted)
+    }
+
     private var addressContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
@@ -265,38 +282,16 @@ struct CheckoutView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
 
-            VStack(alignment: .leading, spacing: 0) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        Button {
-                            Task { await dungViTriHienTai(baoLoi: true) }
-                        } label: {
-                            Text("📍 Vị trí hiện tại")
-                                .font(.system(size: 12))
-                                .lineLimit(1)
-                                .padding(.horizontal, 10).padding(.vertical, 5)
-                                .background(usingGPS ? Theme.primaryTint : Color.clear)
-                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(usingGPS ? Theme.primary : Theme.divider))
-                        }
-                        .foregroundColor(usingGPS ? Theme.primary : Theme.textMuted)
-
-                        ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
-                            let chon = !usingGPS && diaChi == d.diaChi
-                            Button {
-                                usingGPS = false
-                                diaChi = d.diaChi
-                                if let lat = d.lat, let long = d.long {
-                                    Task { await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long)) }
-                                }
-                            } label: {
-                                Text((d.isDefault ? "★ " : "") + d.diaChi)
-                                    .font(.system(size: 12))
-                                    .lineLimit(1)
-                                    .padding(.horizontal, 10).padding(.vertical, 5)
-                                    .background(chon ? Theme.primaryTint : Color.clear)
-                                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(chon ? Theme.primary : Theme.divider))
-                            }
-                            .foregroundColor(chon ? Theme.primary : Theme.textMuted)
+            VStack(spacing: 6) {
+                diaChiRow(icon: "location.fill", text: "Vị trí hiện tại", chon: usingGPS) {
+                    Task { await dungViTriHienTai(baoLoi: true) }
+                }
+                ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
+                    diaChiRow(icon: d.isDefault ? "star.fill" : "mappin", text: d.diaChi, chon: !usingGPS && diaChi == d.diaChi) {
+                        usingGPS = false
+                        diaChi = d.diaChi
+                        if let lat = d.lat, let long = d.long {
+                            Task { await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long)) }
                         }
                     }
                 }
