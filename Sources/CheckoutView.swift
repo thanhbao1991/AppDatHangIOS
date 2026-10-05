@@ -47,6 +47,11 @@ struct CheckoutView: View {
     /// (khách quen), tự bung nếu chưa có gì để nhập (xem .task).
     @State private var diaChiExpanded = false
 
+    /// GPS hiện tại khi lệch xa địa chỉ đang chọn (xem kiemTraLechGPS()) — hiện banner hỏi khách,
+    /// KHÔNG tự ghi đè vì khách có thể cố ý đặt giao về nhà từ chỗ khác.
+    @State private var gpsLech: CLLocation?
+    @State private var gpsLechKm: Double = 0
+
     /// Hình thức thanh toán khách chọn — KHÔNG có schema riêng ở backend, chỉ gắn tiền tố vào GhiChu
     /// cho nhân viên biết trước (xem datHang()). Mặc định COD nếu chưa từng đặt lần nào, còn lại nhớ
     /// đúng lựa chọn lần đặt gần nhất (Prefs.hinhThucThanhToan).
@@ -141,12 +146,16 @@ struct CheckoutView: View {
             // — chỉ thật sự gọi API ở đây khi khách vào thẳng trang này chưa từng ghé Giỏ hàng.
             await cart.loadUuDaiIfNeeded()
             gioMoBan = await gioMoBanTask
-            diaChiExpanded = diaChi.trimmingCharacters(in: .whitespaces).isEmpty
-            // Xin định vị NGAY khi vào trang này (đúng lúc cần, khác bản cũ chỉ xin lúc khách tự bấm
-            // nút GPS) — bỏ qua nếu đã có toạ độ rồi (địa chỉ mặc định đã kèm sẵn lat/long từ
-            // loadDiaChi(), hoặc chọn "Nhận tại quán" không cần).
-            if !nhanTaiQuan && coord == nil {
-                await dungViTriHienTai()
+            // Luôn mở sẵn thẻ địa chỉ + bản đồ để khách thấy ghim trước khi bấm Đặt hàng.
+            diaChiExpanded = true
+            // Xin định vị NGAY khi vào trang này. Chưa có toạ độ → dùng luôn GPS. Đã có toạ độ (địa chỉ
+            // mặc định) → vẫn lấy GPS để so, lệch xa thì hỏi khách thay vì im lặng giao về địa chỉ cũ.
+            if !nhanTaiQuan {
+                if coord == nil {
+                    await dungViTriHienTai()
+                } else {
+                    await kiemTraLechGPS()
+                }
             }
         }
     }
@@ -182,6 +191,9 @@ struct CheckoutView: View {
     private var diaChiSection: some View {
         VStack(spacing: 0) {
             diaChiCompactBar
+            if let gpsLech, !nhanTaiQuan {
+                gpsLechBanner(gpsLech)
+            }
             if diaChiExpanded {
                 Divider().padding(.horizontal, 14)
                 VStack(alignment: .leading, spacing: 10) {
@@ -511,6 +523,7 @@ struct CheckoutView: View {
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
         coord = c
+        gpsLech = nil
         ship = nil
         locError = ""
         estimatingShip = true
@@ -540,10 +553,43 @@ struct CheckoutView: View {
             locError = "Không lấy được vị trí. Bạn có thể kéo ghim trên bản đồ hoặc nhập địa chỉ tay."
             return
         }
+        await apDungViTri(location)
+    }
+
+    private func apDungViTri(_ location: CLLocation) async {
+        gpsLech = nil
         await applyCoord(location.coordinate)
         if let address = await LocationHelper.shared.reverseGeocode(location) {
             diaChi = address
         }
+    }
+
+    private static let nguongLechGPSMet: Double = 300
+
+    private func kiemTraLechGPS() async {
+        guard let coord, let location = await LocationHelper.shared.requestLocation() else { return }
+        let met = location.distance(from: CLLocation(latitude: coord.latitude, longitude: coord.longitude))
+        guard met > Self.nguongLechGPSMet else { return }
+        gpsLechKm = met / 1000
+        gpsLech = location
+    }
+
+    private func gpsLechBanner(_ location: CLLocation) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("📍 Bạn đang ở cách địa chỉ giao hàng khoảng \(String(format: "%.1f", gpsLechKm))km. Giao tới vị trí hiện tại của bạn?")
+                .font(.system(size: 13)).foregroundColor(.primary)
+            HStack(spacing: 10) {
+                Button("Dùng vị trí hiện tại") { Task { await apDungViTri(location) } }
+                    .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
+                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(Theme.primary).clipShape(RoundedRectangle(cornerRadius: 8))
+                Button("Giữ địa chỉ cũ") { gpsLech = nil }
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Theme.primaryTint)
     }
 
     /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
