@@ -46,6 +46,8 @@ struct CheckoutView: View {
 
     /// true = đang dùng "Vị trí hiện tại" (chip đầu tiên, mặc định khi vào trang); false = địa chỉ đã lưu/tự chỉnh.
     @State private var usingGPS = false
+    /// Bản đồ chỉ hiện khi dùng vị trí hiện tại (hoặc đã kéo ghim chỉnh tay) — địa chỉ đã lưu không cần.
+    @State private var hienBanDo = false
 
     /// Hình thức thanh toán khách chọn — KHÔNG có schema riêng ở backend, chỉ gắn tiền tố vào GhiChu
     /// cho nhân viên biết trước (xem datHang()). Mặc định COD nếu chưa từng đặt lần nào, còn lại nhớ
@@ -271,6 +273,7 @@ struct CheckoutView: View {
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
                     diaChiRow(icon: d.isDefault ? "star.fill" : "mappin", text: d.diaChi, chon: !usingGPS && diaChi == d.diaChi) {
                         usingGPS = false
+                        hienBanDo = false
                         diaChi = d.diaChi
                         if let lat = d.lat, let long = d.long {
                             Task { await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long)) }
@@ -293,14 +296,16 @@ struct CheckoutView: View {
                     Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
             } else if let coord, let ship, let km = ship.khoangCachKm {
-                DeliveryMapView(
-                    shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
-                    deliveryCoordinate: coord,
-                    routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                    onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
-                )
-                .frame(height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                if hienBanDo {
+                    DeliveryMapView(
+                        shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
+                        deliveryCoordinate: coord,
+                        routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
+                        onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
+                    )
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
 
                 Text("Khoảng cách ~\(String(format: "%.1f", km))km")
                     .font(.system(size: 13)).foregroundColor(Theme.textMuted)
@@ -479,6 +484,7 @@ struct CheckoutView: View {
 
     private func apDungDiaChiMacDinh() async {
         usingGPS = false
+        hienBanDo = false
         guard let macDinh = savedDiaChi.first(where: \.isDefault) else { return }
         diaChi = macDinh.diaChi
         if let lat = macDinh.lat, let long = macDinh.long {
@@ -542,6 +548,7 @@ struct CheckoutView: View {
             return false
         }
         usingGPS = true
+        hienBanDo = true
         await applyCoord(location.coordinate)
         if let address = await LocationHelper.shared.reverseGeocode(location) {
             diaChi = address
