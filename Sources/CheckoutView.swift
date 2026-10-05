@@ -411,14 +411,9 @@ struct CheckoutView: View {
                 chiTietRow("Giảm giá voucher", "-" + formatTien(voucherGiam), color: Theme.danger)
             }
             if !nhanTaiQuan {
+                Button { showPhiShipInfo = true } label: {
                 HStack {
-                    HStack(spacing: 4) {
-                        Text("Phí vận chuyển").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                        Button { showPhiShipInfo = true } label: {
-                            Image(systemName: "info.circle").font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    Text("Phí vận chuyển").font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     Spacer()
                     HStack(spacing: 6) {
                         // phiShipGoc = phí nếu KHÔNG có ưu đãi miễn phí ly/hạng — chỉ hiện gạch ngang
@@ -432,8 +427,12 @@ struct CheckoutView: View {
                         } else {
                             Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
                         }
+                        Image(systemName: "info.circle").font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     }
                 }
+                .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
             if soTienDungXu > 0 {
                 chiTietRow("Dùng Xu", "-" + formatTien(soTienDungXu), color: Theme.danger)
