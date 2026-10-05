@@ -247,6 +247,12 @@ struct CheckoutView: View {
                 .onChange(of: diaChiFocused) { focused in
                     if !focused { Task { await geocodeTypedAddressIfNeeded() } }
                 }
+                .onChange(of: diaChi) { _ in
+                    // Khách đang gõ/sửa tay → toạ độ cũ không còn khớp với chữ, bỏ đi để geocode lại
+                    // (nếu không, phí ship vẫn tính theo chỗ cũ).
+                    guard diaChiFocused else { return }
+                    coord = nil; ship = nil; usingGPS = false; hienBanDo = false
+                }
 
             if !diaChiSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
@@ -272,12 +278,7 @@ struct CheckoutView: View {
                 }
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
                     diaChiRow(icon: d.isDefault ? "star.fill" : "mappin", text: d.diaChi, chon: !usingGPS && diaChi == d.diaChi) {
-                        usingGPS = false
-                        hienBanDo = false
-                        diaChi = d.diaChi
-                        if let lat = d.lat, let long = d.long {
-                            Task { await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long)) }
-                        }
+                        Task { await chonDiaChiLuu(d) }
                     }
                 }
             }
@@ -290,6 +291,10 @@ struct CheckoutView: View {
             }
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
+            if thieuViTri && locError.isEmpty {
+                Text("Chưa xác định được vị trí địa chỉ này nên chưa tính được phí ship. Hãy chọn \"Vị trí hiện tại\" hoặc địa chỉ khác, hoặc ghi rõ hơn (số nhà, tên đường).")
+                    .font(.system(size: 12)).foregroundColor(Theme.danger)
+            }
             if estimatingShip {
                 HStack(spacing: 6) {
                     ProgressView().scaleEffect(0.8)
@@ -468,7 +473,7 @@ struct CheckoutView: View {
                 }
                 .buttonStyle(.gradientProminent)
                 .frame(minWidth: 140)
-                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
+                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty) || thieuViTri)
             }
         }
         .padding(.horizontal).padding(.vertical, 12)
@@ -483,13 +488,29 @@ struct CheckoutView: View {
     }
 
     private func apDungDiaChiMacDinh() async {
+        guard let macDinh = savedDiaChi.first(where: \.isDefault) else { return }
+        await chonDiaChiLuu(macDinh)
+    }
+
+    /// Địa chỉ đã lưu: có lat/long thì dùng; thiếu thì BỎ toạ độ cũ (tránh tính ship theo chỗ trước đó)
+    /// rồi geocode từ chữ — không ra thì để trống, nút Đặt hàng bị khoá + báo khách chọn lại.
+    private func chonDiaChiLuu(_ d: DiaChiKhachHang) async {
         usingGPS = false
         hienBanDo = false
-        guard let macDinh = savedDiaChi.first(where: \.isDefault) else { return }
-        diaChi = macDinh.diaChi
-        if let lat = macDinh.lat, let long = macDinh.long {
+        diaChi = d.diaChi
+        if let lat = d.lat, let long = d.long {
             await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
+        } else {
+            coord = nil
+            ship = nil
+            await geocodeTypedAddressIfNeeded()
         }
+    }
+
+    /// Đang giao tận nơi, đã có chữ địa chỉ nhưng chưa xác định được toạ độ → không tính được ship.
+    private var thieuViTri: Bool {
+        !nhanTaiQuan && coord == nil && !diaChi.trimmingCharacters(in: .whitespaces).isEmpty
+            && !geocodingTyped && !locLoading && !estimatingShip
     }
 
     private func loadTenDuong() async {
@@ -526,7 +547,10 @@ struct CheckoutView: View {
         guard !trimmed.isEmpty, coord == nil, !geocodingTyped else { return }
         geocodingTyped = true
         defer { geocodingTyped = false }
-        guard let found = await LocationHelper.shared.geocodeAddressString(trimmed) else { return }
+        // Địa chỉ thường không ghi tỉnh — thêm vùng quán để Apple không geocode nhầm sang nơi khác.
+        let coVung = trimmed.range(of: "đắk lắk", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        let query = coVung ? trimmed : trimmed + ", Krông Pắc, Đắk Lắk"
+        guard let found = await LocationHelper.shared.geocodeAddressString(query) else { return }
         await applyCoord(found)
     }
 
@@ -564,7 +588,7 @@ struct CheckoutView: View {
     /// (feedback: "tôi nhầm, bấm thanh toán vẫn phải hiện mã QR"). Trang quét mã xong bấm "Xong" tự
     /// điều hướng về tab Đơn hàng qua onDone (xem MainTabView) — KHÔNG phải trang chi tiết đơn hàng.
     private func datHang() async {
-        guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
+        guard !cart.items.isEmpty, nhanTaiQuan || (!diaChi.trimmingCharacters(in: .whitespaces).isEmpty && coord != nil) else {
             error = "Vui lòng nhập địa chỉ giao hàng."
             return
         }
