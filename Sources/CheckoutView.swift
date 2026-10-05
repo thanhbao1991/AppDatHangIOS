@@ -22,6 +22,7 @@ struct CheckoutView: View {
     /// (SettingsView.diemHangCard), đặt thêm ở đây vì đây mới là lúc khách thấy số tiền thật và
     /// thắc mắc tại sao (xem thảo luận 2026-10-01).
     @State private var showPhiShipInfo = false
+    @State private var showLocationSettings = false
     @State private var pendingNavigationAfterOrder: (() -> Void)?
     @State private var savedDiaChi: [DiaChiKhachHang] = []
     @State private var loading = false
@@ -140,6 +141,14 @@ struct CheckoutView: View {
                     Button("Đã hiểu") {}
                 } message: {
                     Text(phiShipInfoMessage)
+                }
+                .alert("Chưa cho phép định vị", isPresented: $showLocationSettings) {
+                    Button("Mở Cài đặt") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }
+                    Button("Để sau", role: .cancel) {}
+                } message: {
+                    Text("Bạn đã từ chối quyền vị trí trước đó nên iOS không hỏi lại được. Vào Cài đặt > Đenn Coffee > Vị trí, chọn \"Khi dùng ứng dụng\" để dùng vị trí hiện tại.")
                 }
         }
         .task {
@@ -557,7 +566,13 @@ struct CheckoutView: View {
         locLoading = true
         defer { locLoading = false }
         guard let location = await LocationHelper.shared.requestLocation() else {
-            if baoLoi { locError = "Không lấy được vị trí. Bạn có thể kéo ghim trên bản đồ hoặc chọn địa chỉ đã lưu." }
+            if baoLoi {
+                if LocationHelper.shared.isDenied {
+                    showLocationSettings = true
+                } else {
+                    locError = "Không lấy được vị trí. Bạn có thể kéo ghim trên bản đồ hoặc chọn địa chỉ đã lưu."
+                }
+            }
             return false
         }
         usingGPS = true

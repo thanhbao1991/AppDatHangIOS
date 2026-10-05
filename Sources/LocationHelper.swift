@@ -15,6 +15,12 @@ final class LocationHelper: NSObject, CLLocationManagerDelegate {
         manager.delegate = self
     }
 
+    /// iOS chỉ hiện hộp thoại xin quyền đúng 1 lần — sau khi khách Từ chối, bấm lại không hiện nữa,
+    /// chỉ còn cách đưa khách vào Cài đặt.
+    var isDenied: Bool {
+        manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted
+    }
+
     func requestLocation() async -> CLLocation? {
         let granted = await requestAuthorization()
         guard granted else { return nil }
