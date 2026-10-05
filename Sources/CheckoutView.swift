@@ -154,8 +154,9 @@ struct CheckoutView: View {
             diaChiExpanded = true
             // Mặc định chọn chip "Vị trí hiện tại" (kiểu Grab/ShopeeFood) — không lấy được GPS
             // (từ chối quyền/tín hiệu yếu) thì lùi về địa chỉ mặc định đã lưu.
-            if !nhanTaiQuan && !(await dungViTriHienTai()) {
-                await apDungDiaChiMacDinh()
+            if !nhanTaiQuan {
+                let coGPS = await dungViTriHienTai()
+                if !coGPS { await apDungDiaChiMacDinh() }
             }
         }
     }
