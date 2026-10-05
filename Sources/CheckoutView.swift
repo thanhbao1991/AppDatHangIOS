@@ -44,10 +44,6 @@ struct CheckoutView: View {
     /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định).
     @State private var nhanTaiQuan = false
 
-    /// Bung/thu thanh địa chỉ gọn (kiểu Shopee) — mặc định thu gọn nếu đã có địa chỉ mặc định sẵn
-    /// (khách quen), tự bung nếu chưa có gì để nhập (xem .task).
-    @State private var diaChiExpanded = false
-
     /// true = đang dùng "Vị trí hiện tại" (chip đầu tiên, mặc định khi vào trang); false = địa chỉ đã lưu/tự chỉnh.
     @State private var usingGPS = false
 
@@ -159,8 +155,6 @@ struct CheckoutView: View {
             // — chỉ thật sự gọi API ở đây khi khách vào thẳng trang này chưa từng ghé Giỏ hàng.
             await cart.loadUuDaiIfNeeded()
             gioMoBan = await gioMoBanTask
-            // Luôn mở sẵn thẻ địa chỉ + bản đồ để khách thấy ghim trước khi bấm Đặt hàng.
-            diaChiExpanded = true
             // Mặc định chọn chip "Vị trí hiện tại" (kiểu Grab/ShopeeFood) — không lấy được GPS
             // (từ chối quyền/tín hiệu yếu) thì lùi về địa chỉ mặc định đã lưu.
             if !nhanTaiQuan {
@@ -196,52 +190,24 @@ struct CheckoutView: View {
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .bottom)
     }
 
-    // MARK: - Thanh địa chỉ gọn (bung ra sửa) — gộp toggle Giao tận nơi/Nhận tại quán
+    // MARK: - Thẻ địa chỉ — toggle Giao tận nơi/Nhận tại quán, luôn mở sẵn để khách thấy ghim bản đồ
 
     private var diaChiSection: some View {
-        VStack(spacing: 0) {
-            diaChiCompactBar
-            if diaChiExpanded {
-                Divider().padding(.horizontal, 14)
-                VStack(alignment: .leading, spacing: 10) {
-                    Picker("", selection: $nhanTaiQuan) {
-                        Text("Giao tận nơi").tag(false)
-                        Text("Nhận tại quán").tag(true)
-                    }
-                    .pickerStyle(.segmented)
-
-                    if nhanTaiQuan { pickupContent } else { addressContent }
-                }
-                .padding(14)
+        VStack(alignment: .leading, spacing: 10) {
+            Picker("", selection: $nhanTaiQuan) {
+                Text("Giao tận nơi").tag(false)
+                Text("Nhận tại quán").tag(true)
             }
+            .pickerStyle(.segmented)
+
+            if nhanTaiQuan { pickupContent } else { addressContent }
         }
+        .padding(14)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
         .padding(.horizontal)
         .padding(.vertical, 6)
-    }
-
-    private var diaChiCompactBar: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) { diaChiExpanded.toggle() }
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "mappin.circle.fill").foregroundColor(Theme.primary).font(.system(size: 20))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(nhanTaiQuan ? "Nhận tại quán" : "Giao tận nơi")
-                        .font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
-                    Text(nhanTaiQuan ? "Ghé quán lấy hàng, không mất phí ship" : (diaChi.isEmpty ? "Chưa có địa chỉ giao hàng" : diaChi))
-                        .font(.system(size: 13)).foregroundColor(Theme.textMuted).lineLimit(1)
-                }
-                Spacer()
-                Image(systemName: diaChiExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 12)).foregroundColor(Theme.textMuted)
-            }
-            .padding(14)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 
     /// Chọn "Nhận tại quán": không cần địa chỉ/GPS/phí ship — KHÔNG mở quà Xu ngay ở đây nữa (trước
