@@ -47,10 +47,8 @@ struct CheckoutView: View {
     /// (khách quen), tự bung nếu chưa có gì để nhập (xem .task).
     @State private var diaChiExpanded = false
 
-    /// GPS hiện tại khi lệch xa địa chỉ đang chọn (xem kiemTraLechGPS()) — hiện banner hỏi khách,
-    /// KHÔNG tự ghi đè vì khách có thể cố ý đặt giao về nhà từ chỗ khác.
-    @State private var gpsLech: CLLocation?
-    @State private var gpsLechKm: Double = 0
+    /// true = đang dùng "Vị trí hiện tại" (chip đầu tiên, mặc định khi vào trang); false = địa chỉ đã lưu/tự chỉnh.
+    @State private var usingGPS = false
 
     /// Hình thức thanh toán khách chọn — KHÔNG có schema riêng ở backend, chỉ gắn tiền tố vào GhiChu
     /// cho nhân viên biết trước (xem datHang()). Mặc định COD nếu chưa từng đặt lần nào, còn lại nhớ
@@ -148,14 +146,10 @@ struct CheckoutView: View {
             gioMoBan = await gioMoBanTask
             // Luôn mở sẵn thẻ địa chỉ + bản đồ để khách thấy ghim trước khi bấm Đặt hàng.
             diaChiExpanded = true
-            // Xin định vị NGAY khi vào trang này. Chưa có toạ độ → dùng luôn GPS. Đã có toạ độ (địa chỉ
-            // mặc định) → vẫn lấy GPS để so, lệch xa thì hỏi khách thay vì im lặng giao về địa chỉ cũ.
-            if !nhanTaiQuan {
-                if coord == nil {
-                    await dungViTriHienTai()
-                } else {
-                    await kiemTraLechGPS()
-                }
+            // Mặc định chọn chip "Vị trí hiện tại" (kiểu Grab/ShopeeFood) — không lấy được GPS
+            // (từ chối quyền/tín hiệu yếu) thì lùi về địa chỉ mặc định đã lưu.
+            if !nhanTaiQuan && !(await dungViTriHienTai()) {
+                await apDungDiaChiMacDinh()
             }
         }
     }
@@ -191,9 +185,6 @@ struct CheckoutView: View {
     private var diaChiSection: some View {
         VStack(spacing: 0) {
             diaChiCompactBar
-            if let gpsLech, !nhanTaiQuan {
-                gpsLechBanner(gpsLech)
-            }
             if diaChiExpanded {
                 Divider().padding(.horizontal, 14)
                 VStack(alignment: .leading, spacing: 10) {
@@ -274,11 +265,25 @@ struct CheckoutView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
 
-            if !savedDiaChi.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(savedDiaChi) { d in
+                        Button {
+                            Task { await dungViTriHienTai(baoLoi: true) }
+                        } label: {
+                            Text("📍 Vị trí hiện tại")
+                                .font(.system(size: 12))
+                                .lineLimit(1)
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(usingGPS ? Theme.primaryTint : Color.clear)
+                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(usingGPS ? Theme.primary : Theme.divider))
+                        }
+                        .foregroundColor(usingGPS ? Theme.primary : Theme.textMuted)
+
+                        ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
+                            let chon = !usingGPS && diaChi == d.diaChi
                             Button {
+                                usingGPS = false
                                 diaChi = d.diaChi
                                 if let lat = d.lat, let long = d.long {
                                     Task { await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long)) }
@@ -288,18 +293,15 @@ struct CheckoutView: View {
                                     .font(.system(size: 12))
                                     .lineLimit(1)
                                     .padding(.horizontal, 10).padding(.vertical, 5)
-                                    .background(diaChi == d.diaChi ? Theme.primaryTint : Color.clear)
-                                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(diaChi == d.diaChi ? Theme.primary : Theme.divider))
+                                    .background(chon ? Theme.primaryTint : Color.clear)
+                                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(chon ? Theme.primary : Theme.divider))
                             }
-                            .foregroundColor(diaChi == d.diaChi ? Theme.primary : Theme.textMuted)
+                            .foregroundColor(chon ? Theme.primary : Theme.textMuted)
                         }
                     }
                 }
             }
 
-            // Nút "Dùng vị trí hiện tại" đã bỏ — từ khi có auto-xin định vị ngay lúc vào trang này
-            // (.task ở body), bấm tay lại thành thừa. locLoading vẫn còn dùng cho spinner lúc auto-xin
-            // chạy lần đầu.
             if locLoading {
                 HStack(spacing: 6) {
                     ProgressView().scaleEffect(0.8)
@@ -318,7 +320,7 @@ struct CheckoutView: View {
                     shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
                     deliveryCoordinate: coord,
                     routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                    onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
+                    onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
                 )
                 .frame(height: 180)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -496,13 +498,15 @@ struct CheckoutView: View {
     // MARK: - Data loading / logic
 
     private func loadDiaChi() async {
-        let list = await APIClient.shared.getDiaChiList()
-        savedDiaChi = list
-        if let macDinh = list.first(where: \.isDefault) {
-            diaChi = macDinh.diaChi
-            if let lat = macDinh.lat, let long = macDinh.long {
-                await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
-            }
+        savedDiaChi = await APIClient.shared.getDiaChiList()
+    }
+
+    private func apDungDiaChiMacDinh() async {
+        usingGPS = false
+        guard let macDinh = savedDiaChi.first(where: \.isDefault) else { return }
+        diaChi = macDinh.diaChi
+        if let lat = macDinh.lat, let long = macDinh.long {
+            await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
         }
     }
 
@@ -523,7 +527,6 @@ struct CheckoutView: View {
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
         coord = c
-        gpsLech = nil
         ship = nil
         locError = ""
         estimatingShip = true
@@ -545,51 +548,23 @@ struct CheckoutView: View {
         await applyCoord(found)
     }
 
-    private func dungViTriHienTai() async {
+    /// true nếu lấy được GPS và đã áp dụng. Thất bại chỉ báo lỗi khi khách tự bấm chip — gọi tự động
+    /// lúc vào trang thì caller lùi về địa chỉ mặc định, không hiện lỗi.
+    @discardableResult
+    private func dungViTriHienTai(baoLoi: Bool = false) async -> Bool {
         locError = ""
         locLoading = true
         defer { locLoading = false }
         guard let location = await LocationHelper.shared.requestLocation() else {
-            locError = "Không lấy được vị trí. Bạn có thể kéo ghim trên bản đồ hoặc nhập địa chỉ tay."
-            return
+            if baoLoi { locError = "Không lấy được vị trí. Bạn có thể kéo ghim trên bản đồ hoặc chọn địa chỉ đã lưu." }
+            return false
         }
-        await apDungViTri(location)
-    }
-
-    private func apDungViTri(_ location: CLLocation) async {
-        gpsLech = nil
+        usingGPS = true
         await applyCoord(location.coordinate)
         if let address = await LocationHelper.shared.reverseGeocode(location) {
             diaChi = address
         }
-    }
-
-    private static let nguongLechGPSMet: Double = 300
-
-    private func kiemTraLechGPS() async {
-        guard let coord, let location = await LocationHelper.shared.requestLocation() else { return }
-        let met = location.distance(from: CLLocation(latitude: coord.latitude, longitude: coord.longitude))
-        guard met > Self.nguongLechGPSMet else { return }
-        gpsLechKm = met / 1000
-        gpsLech = location
-    }
-
-    private func gpsLechBanner(_ location: CLLocation) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("📍 Bạn đang ở cách địa chỉ giao hàng khoảng \(String(format: "%.1f", gpsLechKm))km. Giao tới vị trí hiện tại của bạn?")
-                .font(.system(size: 13)).foregroundColor(.primary)
-            HStack(spacing: 10) {
-                Button("Dùng vị trí hiện tại") { Task { await apDungViTri(location) } }
-                    .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
-                    .padding(.horizontal, 12).padding(.vertical, 7)
-                    .background(Theme.primary).clipShape(RoundedRectangle(cornerRadius: 8))
-                Button("Giữ địa chỉ cũ") { gpsLech = nil }
-                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Theme.primaryTint)
+        return true
     }
 
     /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
