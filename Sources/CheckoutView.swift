@@ -199,7 +199,7 @@ struct CheckoutView: View {
     /// đây bấm mở luôn lúc đặt, nay chỉ báo trước để khách biết, quà thật sự mở sau khi đơn hoàn
     /// thành — tránh khách "ăn quà" xong huỷ đơn/không tới lấy).
     private var pickupContent: some View {
-        Text("🎁 Bạn sẽ được mở 1 lượt quà Xu sau khi đơn hoàn thành")
+        Text("🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn")
             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
