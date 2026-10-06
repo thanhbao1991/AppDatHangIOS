@@ -73,32 +73,16 @@ struct CheckoutView: View {
     /// SettingsView — ở đây đã có đủ số ly + kết quả ước tính ship thật nên tính ra số km miễn phí
     /// của riêng đơn này thay vì nói chung chung, xem thảo luận 2026-10-01).
     private var phiShipInfoMessage: String {
-        let fallback = "Phí ship tính theo khoảng cách thật từ quán đến bạn — mỗi ly nước trong đơn giúp bạn được miễn phí thêm 0,5km ship, hạng thành viên càng cao thì được miễn phí ship xa hơn."
-        guard let ship, let km = ship.khoangCachKm, let banKinh = ship.kmMienPhi else {
-            return fallback
-        }
         let soLy = cart.totalCount
-        // Hạng dùng ĐÚNG hangThangTruoc (hạng THẬT dùng để cộng km) — không dùng
-        // KhachHangSession.shared.hang (hạng hiện tại, có thể khác, xem comment UocTinhShip.hangThangTruoc).
-        let hang = ship.hangThangTruoc?.isEmpty == false ? ship.hangThangTruoc! : KhachHangSession.shared.hang
-        // Backend cũ chưa trả kmTheoLy/kmTheoHang → suy ngược (0,5km/ly, khớp DatHangService.UocTinhPhiShip).
-        let kmTheoLy = ship.kmTheoLy ?? Double(soLy) * 0.5
-        let kmTheoHang = ship.kmTheoHang ?? max(0, banKinh - kmTheoLy)
-        var msg = "\(soLy) ly: free ship \(formatKm(kmTheoLy))km"
-        msg += "\nHạng \(hang) (tháng trước): free ship \(formatKm(kmTheoHang))km"
-        msg += "\nTổng free ship: \(formatKm(banKinh))km"
-        msg += "\n\nKhoảng cách: \(formatKm(km))km"
-        if km > banKinh {
-            msg += "\nVượt \(formatKm(km - banKinh))km nên phí ship: \(formatTien(phiShip))"
-        } else {
-            msg += "\n\n🎉 Đơn này được FREE SHIP!"
-        }
+        let hang = ship?.hangThangTruoc?.isEmpty == false ? ship!.hangThangTruoc! : KhachHangSession.shared.hang
+        var msg = "Phí ship: 5.000đ"
+        msg += "\n\nMiễn phí ship khi:"
+        msg += "\n• Đơn từ 2 ly trở lên (đơn này: \(soLy) ly)"
+        msg += "\n• Hạng tháng trước từ Bạc trở lên (hạng của bạn: \(hang))"
+        if phiShip == 0 { msg += "\n\n🎉 Đơn này được FREE SHIP!" }
         return msg
     }
 
-    private func formatKm(_ km: Double) -> String {
-        String(format: km.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", km)
-    }
     /// Trần 50% (thêm 2026-09-23, chặn farm "đơn thành công +1 lượt quay" bằng Xu trả đủ 100%) đã BỎ
     /// theo yêu cầu 2026-09-27 — khớp DatHangService.DatMonAsync bên backend, Xu giờ trả được tối đa
     /// 100% đơn.
@@ -160,6 +144,7 @@ struct CheckoutView: View {
             // Mặc định chọn chip "Vị trí hiện tại" (kiểu Grab/ShopeeFood) — không lấy được GPS
             // (từ chối quyền/tín hiệu yếu) thì lùi về địa chỉ mặc định đã lưu.
             if !nhanTaiQuan {
+                await tinhShip()
                 let coGPS = await dungViTriHienTai()
                 if !coGPS { await apDungDiaChiMacDinh() }
             }
@@ -201,6 +186,9 @@ struct CheckoutView: View {
                 Text("Nhận tại quán").tag(true)
             }
             .pickerStyle(.segmented)
+            .onChange(of: nhanTaiQuan) { nhan in
+                if !nhan { Task { await tinhShip() } }
+            }
 
             if nhanTaiQuan { pickupContent } else { addressContent }
         }
@@ -251,7 +239,7 @@ struct CheckoutView: View {
                     // Khách đang gõ/sửa tay → toạ độ cũ không còn khớp với chữ, bỏ đi để geocode lại
                     // (nếu không, phí ship vẫn tính theo chỗ cũ).
                     guard diaChiFocused else { return }
-                    coord = nil; ship = nil; usingGPS = false; hienBanDo = false
+                    coord = nil; usingGPS = false; hienBanDo = false
                 }
 
             if !diaChiSuggestions.isEmpty {
@@ -291,16 +279,7 @@ struct CheckoutView: View {
             }
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
-            if thieuViTri && locError.isEmpty {
-                Text("Chưa xác định được vị trí địa chỉ này nên chưa tính được phí ship. Hãy chọn \"Vị trí hiện tại\" hoặc địa chỉ khác, hoặc ghi rõ hơn (số nhà, tên đường).")
-                    .font(.system(size: 12)).foregroundColor(Theme.danger)
-            }
-            if estimatingShip {
-                HStack(spacing: 6) {
-                    ProgressView().scaleEffect(0.8)
-                    Text("Đang tính phí ship...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
-            } else if let coord, let ship, let km = ship.khoangCachKm {
+            if let coord, let ship {
                 if hienBanDo {
                     DeliveryMapView(
                         shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
@@ -311,14 +290,10 @@ struct CheckoutView: View {
                     .frame(height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-
-                Text("Khoảng cách ~\(String(format: "%.1f", km))km")
-                    .font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .onChange(of: cart.totalPrice) { _ in
-            if let coord { Task { await applyCoord(coord) } }
+        .onChange(of: cart.totalCount) { _ in
+            Task { await tinhShip() }
         }
     }
 
@@ -473,7 +448,7 @@ struct CheckoutView: View {
                 }
                 .buttonStyle(.gradientProminent)
                 .frame(minWidth: 140)
-                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty) || thieuViTri)
+                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
             }
         }
         .padding(.horizontal).padding(.vertical, 12)
@@ -502,16 +477,10 @@ struct CheckoutView: View {
             await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
         } else {
             coord = nil
-            ship = nil
             await geocodeTypedAddressIfNeeded()
         }
     }
 
-    /// Đang giao tận nơi, đã có chữ địa chỉ nhưng chưa xác định được toạ độ → không tính được ship.
-    private var thieuViTri: Bool {
-        !nhanTaiQuan && coord == nil && !diaChi.trimmingCharacters(in: .whitespaces).isEmpty
-            && !geocodingTyped && !locLoading && !estimatingShip
-    }
 
     private func loadTenDuong() async {
         tenDuongs = await APIClient.shared.getTenDuongList()
@@ -530,11 +499,16 @@ struct CheckoutView: View {
 
     private func applyCoord(_ c: CLLocationCoordinate2D) async {
         coord = c
-        ship = nil
         locError = ""
+        await tinhShip()
+    }
+
+    /// Phí ship cố định (xem backend ShippingFeeHelper) — toạ độ chỉ để shipper tìm đường, không ảnh hưởng phí.
+    private func tinhShip() async {
+        guard !nhanTaiQuan else { return }
         estimatingShip = true
         defer { estimatingShip = false }
-        let result = await APIClient.shared.uocTinhShip(lat: c.latitude, long: c.longitude, tongTienDon: cart.totalPrice, soLuong: cart.totalCount)
+        let result = await APIClient.shared.uocTinhShip(lat: coord?.latitude ?? 0, long: coord?.longitude ?? 0, tongTienDon: cart.totalPrice, soLuong: cart.totalCount)
         if result.isSuccess {
             ship = result.data
         } else {
@@ -588,7 +562,7 @@ struct CheckoutView: View {
     /// (feedback: "tôi nhầm, bấm thanh toán vẫn phải hiện mã QR"). Trang quét mã xong bấm "Xong" tự
     /// điều hướng về tab Đơn hàng qua onDone (xem MainTabView) — KHÔNG phải trang chi tiết đơn hàng.
     private func datHang() async {
-        guard !cart.items.isEmpty, nhanTaiQuan || (!diaChi.trimmingCharacters(in: .whitespaces).isEmpty && coord != nil) else {
+        guard !cart.items.isEmpty, nhanTaiQuan || !diaChi.trimmingCharacters(in: .whitespaces).isEmpty else {
             error = "Vui lòng nhập địa chỉ giao hàng."
             return
         }
