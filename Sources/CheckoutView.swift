@@ -75,11 +75,9 @@ struct CheckoutView: View {
     private var phiShipInfoMessage: String {
         let soLy = cart.totalCount
         let hang = ship?.hangThangTruoc?.isEmpty == false ? ship!.hangThangTruoc! : KhachHangSession.shared.hang
-        var msg = "Phí ship: 5.000đ"
-        msg += "\n\nMiễn phí ship khi:"
-        msg += "\n• Đơn từ 2 ly trở lên (đơn này: \(soLy) ly)"
-        msg += "\n• Hạng tháng trước từ Bạc trở lên (hạng của bạn: \(hang))"
-        if phiShip == 0 { msg += "\n\n🎉 Đơn này được FREE SHIP!" }
+        var msg = "Ship 5.000đ/đơn.\nFree ship nếu từ 2 ly hoặc hạng Bạc trở lên (tháng trước)."
+        msg += "\n\nBạn: \(soLy) ly · hạng \(hang)"
+        if phiShip == 0 { msg += "\n🎉 Đơn này FREE SHIP!" }
         return msg
     }
 
