@@ -251,6 +251,8 @@ struct DatMonRequest: Encodable {
     let soDienThoaiText: String?
     let deliveryLat: Double?
     let deliveryLong: Double?
+    /// Khách tự kéo ghim / bấm "Dùng vị trí hiện tại" — backend mới được cập nhật toạ độ địa chỉ đã lưu.
+    let ghimDoKhachChinh: Bool
     let clientOrderId: String?
     let nhanTaiQuan: Bool
     let dungVi: Bool

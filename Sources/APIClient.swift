@@ -386,8 +386,8 @@ actor APIClient {
 
     // ===== Đặt món =====
 
-    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil, voucherId: String? = nil, laDatLai: Bool = false) async -> ApiEnvelope<DatMonResponse> {
-        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan, dungVi: dungVi, hinhThucThanhToan: hinhThucThanhToan, voucherId: voucherId, laDatLai: laDatLai)
+    func datMon(items: [DatMonItem], diaChiText: String, ghiChu: String?, soDienThoaiText: String?, deliveryLat: Double?, deliveryLong: Double?, ghimDoKhachChinh: Bool = false, clientOrderId: String?, nhanTaiQuan: Bool = false, dungVi: Bool = false, hinhThucThanhToan: String? = nil, voucherId: String? = nil, laDatLai: Bool = false) async -> ApiEnvelope<DatMonResponse> {
+        let body = DatMonRequest(items: items, ghiChu: ghiChu, diaChiText: diaChiText, soDienThoaiText: soDienThoaiText, deliveryLat: deliveryLat, deliveryLong: deliveryLong, ghimDoKhachChinh: ghimDoKhachChinh, clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan, dungVi: dungVi, hinhThucThanhToan: hinhThucThanhToan, voucherId: voucherId, laDatLai: laDatLai)
         return await decode("/dat-hang/dat-mon", method: "POST", body: jsonBody(body))
     }
 

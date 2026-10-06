@@ -43,10 +43,9 @@ struct CheckoutView: View {
     @State private var chonKey = ""
     @State private var dangSua = false
 
-    /// true = công tắc "Sử dụng định vị" đang bật (toạ độ lấy từ GPS thay vì từ địa chỉ).
-    @State private var usingGPS = false
-    /// Bản đồ chỉ hiện khi dùng vị trí hiện tại (hoặc đã kéo ghim chỉnh tay) — địa chỉ đã lưu không cần.
-    @State private var hienBanDo = false
+    /// true = khách tự đặt ghim (kéo ghim hoặc bấm "Dùng vị trí hiện tại") cho địa chỉ đang chọn — chỉ
+    /// khi đó backend mới cập nhật toạ độ của địa chỉ đã lưu. Đổi/chọn địa chỉ khác thì reset về false.
+    @State private var ghimDoKhach = false
 
     /// Hình thức thanh toán khách chọn — KHÔNG có schema riêng ở backend, chỉ gắn tiền tố vào GhiChu
     /// cho nhân viên biết trước (xem datHang()). Mặc định COD nếu chưa từng đặt lần nào, còn lại nhớ
@@ -138,13 +137,10 @@ struct CheckoutView: View {
             await cart.loadUuDaiIfNeeded()
             gioMoBan = await gioMoBanTask
             // Địa chỉ là bắt buộc (chọn địa chỉ đã lưu hoặc nhập tay) — vào trang tự chọn địa chỉ mặc
-            // đã lưu nếu có, định vị chỉ bật khi khách gạt công tắc.
+            // đã lưu nếu có; vị trí hiện tại chỉ dùng khi khách bấm nút.
             if !nhanTaiQuan {
                 await tinhShip()
                 await apDungDiaChiMacDinh()
-                if Prefs.dinhViBat && !usingGPS && !LocationHelper.shared.isDenied {
-                    await batDinhVi()
-                }
             }
         }
     }
@@ -221,7 +217,8 @@ struct CheckoutView: View {
                     .onChange(of: diaChi) { _ in
                         // Đang gõ → toạ độ cũ không còn khớp chữ, bỏ để geocode lại khi xong.
                         guard diaChiFocused else { return }
-                        if !usingGPS { coord = nil }
+                        coord = nil
+                        ghimDoKhach = false
                     }
             } else {
                 Text(text).font(.system(size: 13)).lineLimit(2).multilineTextAlignment(.leading)
@@ -320,29 +317,34 @@ struct CheckoutView: View {
                           editing: dangSua && chonKey == "custom", coTheSua: true,
                           batDauSua: { dangSua = true }) {
                     chonKey = "custom"
-                    if !usingGPS { coord = nil }
+                    coord = nil
+                    ghimDoKhach = false
                     diaChi = ""; dangSua = true
                 }
-                Toggle(isOn: Binding(get: { usingGPS }, set: { bat in Task { bat ? await batDinhVi() : await tatDinhVi() } })) {
+                Button {
+                    Task { await dungViTriHienTai() }
+                } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "location.fill").font(.system(size: 13))
-                        Text("Bật định vị để shipper giao dễ hơn").font(.system(size: 13))
+                        Text("Dùng vị trí hiện tại của tôi").font(.system(size: 13, weight: .medium))
                         if locLoading { ProgressView().scaleEffect(0.8) }
                     }
-                    .foregroundColor(.primary)
+                    .foregroundColor(Theme.primary)
                 }
-                .tint(Theme.primary)
                 .disabled(locLoading)
                 .padding(.horizontal, 10).padding(.top, 4)
-                if hienBanDo, let coord {
+                if let coord {
                     DeliveryMapView(
                         shopCoordinate: CLLocationCoordinate2D(latitude: ship?.shopLat ?? 12.7095521, longitude: ship?.shopLong ?? 108.3016576),
                         deliveryCoordinate: coord,
                         routePoints: (ship?.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                        onDragEnd: { newCoord in Task { await applyCoord(newCoord) } }
+                        onDragEnd: { newCoord in ghimDoKhach = true; Task { await applyCoord(newCoord) } }
                     )
                     .frame(height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Text("Kéo ghim để chọn đúng chỗ giao hàng")
+                        .font(.system(size: 11)).foregroundColor(Theme.textMuted)
+                        .padding(.horizontal, 10)
                 }
             }
             .onChange(of: diaChiFocused) { focused in
@@ -532,8 +534,7 @@ struct CheckoutView: View {
         dangSua = false
         chonKey = d.id
         diaChi = d.diaChi
-        // Đang bật định vị thì giữ toạ độ GPS cho địa chỉ này (sẽ được lưu vào địa chỉ khi đặt đơn).
-        if usingGPS { return }
+        ghimDoKhach = false
         if let lat = d.lat, let long = d.long {
             await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
         } else {
@@ -589,14 +590,13 @@ struct CheckoutView: View {
         await applyCoord(found)
     }
 
-    /// Bật công tắc: lấy GPS làm toạ độ giao hàng cho địa chỉ đang chọn/nhập (không đổi chữ địa chỉ).
-    /// Toạ độ gửi kèm đơn, backend tự lưu lat/long vào địa chỉ đó (DatMonAsync).
-    private func batDinhVi() async {
+    /// Nút "Dùng vị trí hiện tại": đặt ghim tại GPS MỘT LẦN (không nhớ, không tự bật lại) — khách thấy ghim
+    /// trên bản đồ và kéo chỉnh được. Chữ địa chỉ không đổi.
+    private func dungViTriHienTai() async {
         locError = ""
         locLoading = true
         defer { locLoading = false }
         guard let location = await LocationHelper.shared.requestLocation() else {
-            usingGPS = false
             if LocationHelper.shared.isDenied {
                 showLocationSettings = true
             } else {
@@ -604,23 +604,8 @@ struct CheckoutView: View {
             }
             return
         }
-        usingGPS = true
-        Prefs.dinhViBat = true
-        hienBanDo = true
+        ghimDoKhach = true
         await applyCoord(location.coordinate)
-    }
-
-    /// Tắt công tắc: bỏ toạ độ GPS, quay về toạ độ của địa chỉ đang chọn (đã lưu hoặc geocode từ chữ).
-    private func tatDinhVi() async {
-        usingGPS = false
-        Prefs.dinhViBat = false
-        hienBanDo = false
-        coord = nil
-        if let d = savedDiaChi.first(where: { $0.id == chonKey }), let lat = d.lat, let long = d.long {
-            await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
-        } else {
-            await geocodeTypedAddressIfNeeded()
-        }
     }
 
     /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
@@ -646,7 +631,7 @@ struct CheckoutView: View {
         let ghiChuFull = ghiChuTrimmed.isEmpty ? ghiChuPrefix : "\(ghiChuPrefix) — \(ghiChuTrimmed)"
         let result = await APIClient.shared.datMon(
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
-            soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude,
+            soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude, ghimDoKhachChinh: !nhanTaiQuan && ghimDoKhach,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
             dungVi: cart.dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: cart.selectedVoucher?.id, laDatLai: cart.laDatLai
         )
