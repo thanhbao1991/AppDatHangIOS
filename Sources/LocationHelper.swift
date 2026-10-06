@@ -13,6 +13,8 @@ final class LocationHelper: NSObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         manager.delegate = self
+        // Giao hàng chỉ cần ~100m — mặc định "best" chờ GPS khoá rất lâu (nhiều giây).
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
     }
 
     /// iOS chỉ hiện hộp thoại xin quyền đúng 1 lần — sau khi khách Từ chối, bấm lại không hiện nữa,
@@ -24,6 +26,11 @@ final class LocationHelper: NSObject, CLLocationManagerDelegate {
     func requestLocation() async -> CLLocation? {
         let granted = await requestAuthorization()
         guard granted else { return nil }
+        // Vị trí đã có trong bộ nhớ máy và còn mới (<2 phút) → dùng luôn, khỏi chờ.
+        if let last = manager.location, abs(last.timestamp.timeIntervalSinceNow) < 120,
+           last.horizontalAccuracy > 0, last.horizontalAccuracy <= 200 {
+            return last
+        }
         return await withCheckedContinuation { cont in
             locationContinuation = cont
             manager.requestLocation()

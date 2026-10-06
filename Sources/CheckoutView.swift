@@ -206,13 +206,17 @@ struct CheckoutView: View {
             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
-    private func diaChiRow(icon: String, text: String, chon: Bool, action: @escaping () -> Void) -> some View {
+    private func diaChiRow(icon: String, text: String, chon: Bool, loading: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon).font(.system(size: 13))
                 Text(text).font(.system(size: 13)).lineLimit(2).multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
-                if chon { Image(systemName: "checkmark.circle.fill").font(.system(size: 14)) }
+                if loading {
+                    ProgressView().scaleEffect(0.8)
+                } else if chon {
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
+                }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
             .background(chon ? Theme.primaryTint : Color.clear)
@@ -228,6 +232,8 @@ struct CheckoutView: View {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .tint(Theme.primary)
+                .opacity(locLoading ? 0.5 : 1)
+                .animation(.easeInOut(duration: 0.25), value: locLoading)
                 .focused($diaChiFocused)
                 .onSubmit { Task { await geocodeTypedAddressIfNeeded() } }
                 .onChange(of: diaChiFocused) { focused in
@@ -259,7 +265,7 @@ struct CheckoutView: View {
             }
 
             VStack(spacing: 6) {
-                diaChiRow(icon: "location.fill", text: "Vị trí hiện tại", chon: usingGPS) {
+                diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : "Vị trí hiện tại", chon: usingGPS, loading: locLoading) {
                     Task { await dungViTriHienTai(baoLoi: true) }
                 }
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
@@ -269,12 +275,6 @@ struct CheckoutView: View {
                 }
             }
 
-            if locLoading {
-                HStack(spacing: 6) {
-                    ProgressView().scaleEffect(0.8)
-                    Text("Đang lấy vị trí...").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
-            }
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
 
             if let coord, let ship {
@@ -545,10 +545,15 @@ struct CheckoutView: View {
         }
         usingGPS = true
         hienBanDo = true
-        await applyCoord(location.coordinate)
+        // Hiện ghim + chữ địa chỉ ngay, tính ship chạy song song (không chờ nhau).
+        coord = location.coordinate
+        locError = ""
+        locLoading = false
+        async let phi: Void = tinhShip()
         if let address = await LocationHelper.shared.reverseGeocode(location) {
             diaChi = address
         }
+        await phi
         return true
     }
 
