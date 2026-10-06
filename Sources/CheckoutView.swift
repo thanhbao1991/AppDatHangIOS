@@ -230,7 +230,15 @@ struct CheckoutView: View {
                 Text(text).font(.system(size: 13)).lineLimit(2).multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
-            if loading {
+            if editing {
+                Button { luuDiaChi() } label: {
+                    Text("Lưu").font(.system(size: 13, weight: .bold))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Theme.primary).foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            } else if loading {
                 ProgressView().scaleEffect(0.8)
             } else if chon && coTheSua && !editing {
                 Button(action: batDauSua) {
@@ -250,6 +258,27 @@ struct CheckoutView: View {
         .contentShape(RoundedRectangle(cornerRadius: 8))
         .onTapGesture { if !editing { action() } }
         .foregroundColor(chon ? Theme.primary : Theme.textMuted)
+    }
+
+    /// Bấm Lưu: dùng cho đơn này + ghi vào sổ địa chỉ (sửa dòng đã lưu, hoặc thêm mới nếu là GPS/nhập tay).
+    private func luuDiaChi() {
+        let text = diaChi.trimmingCharacters(in: .whitespaces)
+        dangSua = false
+        diaChiFocused = false
+        guard !text.isEmpty else { return }
+        Task {
+            await geocodeTypedAddressIfNeeded()
+            if let cu = savedDiaChi.first(where: { $0.id == chonKey }) {
+                _ = await APIClient.shared.suaDiaChi(cu.id, diaChi: text)
+                await loadDiaChi()
+                chonKey = cu.id
+            } else {
+                let r = await APIClient.shared.themDiaChi(text)
+                await loadDiaChi()
+                if r.success, let moi = savedDiaChi.first(where: { $0.diaChi == text }) { chonKey = moi.id }
+            }
+            diaChi = text
+        }
     }
 
     private func ketThucSua() {
