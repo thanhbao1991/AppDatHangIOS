@@ -142,6 +142,9 @@ struct CheckoutView: View {
             if !nhanTaiQuan {
                 await tinhShip()
                 await apDungDiaChiMacDinh()
+                if Prefs.dinhViBat && !usingGPS && !LocationHelper.shared.isDenied {
+                    await batDinhVi()
+                }
             }
         }
     }
@@ -602,6 +605,7 @@ struct CheckoutView: View {
             return
         }
         usingGPS = true
+        Prefs.dinhViBat = true
         hienBanDo = true
         await applyCoord(location.coordinate)
     }
@@ -609,6 +613,7 @@ struct CheckoutView: View {
     /// Tắt công tắc: bỏ toạ độ GPS, quay về toạ độ của địa chỉ đang chọn (đã lưu hoặc geocode từ chữ).
     private func tatDinhVi() async {
         usingGPS = false
+        Prefs.dinhViBat = false
         hienBanDo = false
         coord = nil
         if let d = savedDiaChi.first(where: { $0.id == chonKey }), let lat = d.lat, let long = d.long {

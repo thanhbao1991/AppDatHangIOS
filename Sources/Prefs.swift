@@ -102,6 +102,12 @@ enum Prefs {
     /// Hình thức thanh toán khách chọn lần đặt hàng GẦN NHẤT (rawValue của HinhThucThanhToan, xem
     /// CheckoutView.swift) — nhớ lại để lần sau tự chọn sẵn, khỏi bắt khách chọn lại mỗi đơn. nil =
     /// chưa từng đặt lần nào, CheckoutView tự coi là COD (mặc định).
+    /// Khách đã bật công tắc định vị ở trang thanh toán lần gần nhất → lần sau tự bật lại.
+    static var dinhViBat: Bool {
+        get { defaults.bool(forKey: "dinh_vi_bat") }
+        set { defaults.set(newValue, forKey: "dinh_vi_bat") }
+    }
+
     static var hinhThucThanhToan: String? {
         get { defaults.string(forKey: keyHinhThucThanhToan) }
         set { defaults.set(newValue, forKey: keyHinhThucThanhToan) }

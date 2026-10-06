@@ -122,7 +122,7 @@ struct VoucherPickerSheet: View {
                                 daChon: selected?.id == v.id
                             )
                             .padding(.horizontal).padding(.vertical, 6)
-                            .opacity(ok ? 1 : 0.4)
+                            .opacity(ok ? 1 : 0.65)
                         }
                         .buttonStyle(.plain)
                         .disabled(!ok)
