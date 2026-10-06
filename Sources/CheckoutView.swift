@@ -229,6 +229,7 @@ struct CheckoutView: View {
 
     private var addressContent: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if !hienBanDo {
             TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .tint(Theme.primary)
@@ -245,8 +246,9 @@ struct CheckoutView: View {
                     guard diaChiFocused else { return }
                     coord = nil; usingGPS = false; hienBanDo = false
                 }
+            }
 
-            if !diaChiSuggestions.isEmpty {
+            if !hienBanDo && !diaChiSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(diaChiSuggestions, id: \.self) { ten in
                         Button { selectTenDuong(ten) } label: {
@@ -268,6 +270,16 @@ struct CheckoutView: View {
                 diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : "Vị trí hiện tại", chon: usingGPS, loading: locLoading) {
                     Task { await dungViTriHienTai(baoLoi: true) }
                 }
+                if hienBanDo, let coord {
+                    DeliveryMapView(
+                        shopCoordinate: CLLocationCoordinate2D(latitude: ship?.shopLat ?? 12.7095521, longitude: ship?.shopLong ?? 108.3016576),
+                        deliveryCoordinate: coord,
+                        routePoints: (ship?.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
+                        onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
+                    )
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
                     diaChiRow(icon: d.isDefault ? "star.fill" : "mappin", text: d.diaChi, chon: !usingGPS && diaChi == d.diaChi) {
                         Task { await chonDiaChiLuu(d) }
@@ -276,19 +288,6 @@ struct CheckoutView: View {
             }
 
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
-
-            if let coord, let ship {
-                if hienBanDo {
-                    DeliveryMapView(
-                        shopCoordinate: CLLocationCoordinate2D(latitude: ship.shopLat, longitude: ship.shopLong),
-                        deliveryCoordinate: coord,
-                        routePoints: (ship.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                        onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
-                    )
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-            }
         }
         .onChange(of: cart.totalCount) { _ in
             Task { await tinhShip() }
