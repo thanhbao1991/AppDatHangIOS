@@ -36,13 +36,11 @@ struct GioHangView: View {
                     ForEach(cart.items) { item in
                         itemRow(item)
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Ghi chú thêm").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                        TextField("", text: $cart.ghiChuDon)
-                            .textFieldStyle(.roundedBorder)
-                            .tint(Theme.primary)
-                    }
-                    .padding(.vertical, 6)
+                    TextField("Ghi chú thêm", text: $cart.ghiChuDon)
+                        .textFieldStyle(.roundedBorder)
+                        .tint(Theme.primary)
+                        .padding(.vertical, 6)
+                        .listRowSeparator(.hidden, edges: .bottom)
                 }
                 .listStyle(.plain)
                 bottomBar
