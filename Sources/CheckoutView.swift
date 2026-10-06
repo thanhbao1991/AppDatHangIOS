@@ -312,7 +312,7 @@ struct CheckoutView: View {
                     }
                 }
                 diaChiRow(icon: "square.and.pencil",
-                          text: chonKey == "custom" && !diaChi.isEmpty ? diaChi : "Nhập địa chỉ khác",
+                          text: chonKey == "custom" && !diaChi.isEmpty ? diaChi : (savedDiaChi.isEmpty ? "Nhập địa chỉ" : "Nhập địa chỉ khác"),
                           chon: chonKey == "custom",
                           editing: dangSua && chonKey == "custom", coTheSua: true,
                           batDauSua: { dangSua = true }) {
@@ -445,8 +445,8 @@ struct CheckoutView: View {
                         }
                     }
                 }
-                Text("Free ship từ 2 ly hoặc hạng Bạc trở lên")
-                    .font(.system(size: 11)).foregroundColor(Theme.textMuted)
+                Text("Đơn 2 ly hoặc hạng Bạc trở lên miễn phí ship")
+                    .font(.system(size: 11)).foregroundColor(phiShip > 0 ? Theme.danger : Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             if soTienDungXu > 0 {
@@ -471,12 +471,19 @@ struct CheckoutView: View {
     /// nil, vd mất mạng) thì KHÔNG khoá nhầm, để server (DatMonAsync) là nơi chặn thật cuối cùng.
     private var dangDongCua: Bool { gioMoBan?.dangMoCua == false }
 
+    /// Lý do nút Đặt hàng bị khoá — hiện ngay dưới nút để khách biết phải làm gì.
+    private var lyDoKhongDatDuoc: String? {
+        if dangDongCua, let gioMoBan {
+            return "🕑 Quán đã đóng cửa. Giờ mở bán: \(gioMoBan.gioMoCua)h–\(gioMoBan.gioDongCua)h."
+        }
+        if !nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty {
+            return "Vui lòng nhập hoặc chọn địa chỉ giao hàng để đặt hàng."
+        }
+        return nil
+    }
+
     private var bottomBar: some View {
         VStack(spacing: 8) {
-            if dangDongCua, let gioMoBan {
-                Text("🕑 Quán đã đóng cửa. Giờ mở bán: \(gioMoBan.gioMoCua)h–\(gioMoBan.gioDongCua)h.")
-                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
-            }
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -491,7 +498,13 @@ struct CheckoutView: View {
                 }
                 .buttonStyle(.gradientProminent)
                 .frame(minWidth: 140)
-                .disabled(loading || dangDongCua || (!nhanTaiQuan && diaChi.trimmingCharacters(in: .whitespaces).isEmpty))
+                .disabled(loading || lyDoKhongDatDuoc != nil)
+            }
+            if let lyDo = lyDoKhongDatDuoc {
+                Text(lyDo)
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.danger)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
         }
         .padding(.horizontal).padding(.vertical, 12)
