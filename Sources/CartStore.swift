@@ -46,6 +46,8 @@ final class CartStore: ObservableObject {
     // lý voucher hết hạn/hết lượt khi khôi phục từ UserDefaults sau nhiều ngày.
     @Published var selectedVoucher: Voucher?
     @Published var dungXu = false
+    /// Ghi chú chung cho cả đơn — nhập ở tab Giỏ hàng, CheckoutView chỉ đọc lại. Không persist.
+    @Published var ghiChuDon = ""
     @Published private(set) var vouchers: [Voucher] = []
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
@@ -108,6 +110,7 @@ final class CartStore: ObservableObject {
         laDatLai = false
         selectedVoucher = nil
         dungXu = false
+        ghiChuDon = ""
     }
 
     var soDuXu: Double { vi?.soDu ?? 0 }

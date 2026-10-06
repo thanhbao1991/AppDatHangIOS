@@ -11,18 +11,14 @@ struct CheckoutView: View {
     @Binding var path: [HomeRoute]
     @Binding var selectedTab: AppTab
 
-    @State private var ghiChu = ""
     @State private var diaChi = ""
     /// Cảnh báo từ server khi voucher đã chọn KHÔNG áp dụng được (đơn vẫn tạo thành công, chỉ không
     /// giảm giá) — vd voucher hiện trong danh sách lúc CHƯA có đơn nên không kiểm được chính xác giỏ
     /// hàng (UpsizeMonMoi cần biết dòng hàng cụ thể). Phải xem xong mới điều hướng đi tiếp, tránh
     /// khách không biết vì sao không được giảm giá.
     @State private var voucherWarning: String?
-    /// Icon "!" cạnh dòng "Phí vận chuyển" — nội dung giống hệt popup ở card Hạng thành viên
-    /// (SettingsView.diemHangCard), đặt thêm ở đây vì đây mới là lúc khách thấy số tiền thật và
-    /// thắc mắc tại sao (xem thảo luận 2026-10-01).
-    @State private var showPhiShipInfo = false
     @State private var showLocationSettings = false
+    @State private var showXacNhan = false
     @State private var pendingNavigationAfterOrder: (() -> Void)?
     @State private var savedDiaChi: [DiaChiKhachHang] = []
     @State private var loading = false
@@ -72,16 +68,15 @@ struct CheckoutView: View {
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
 
-    /// Giải thích CỤ THỂ cho đơn đang đặt (khác bản chung chung ở card Hạng thành viên bên
-    /// SettingsView — ở đây đã có đủ số ly + kết quả ước tính ship thật nên tính ra số km miễn phí
-    /// của riêng đơn này thay vì nói chung chung, xem thảo luận 2026-10-01).
-    private var phiShipInfoMessage: String {
-        let soLy = cart.totalCount
-        let hang = ship?.hangThangTruoc?.isEmpty == false ? ship!.hangThangTruoc! : KhachHangSession.shared.hang
-        var msg = "Ship 5.000đ/đơn.\nFree ship nếu từ 2 ly hoặc hạng Bạc trở lên (tháng trước)."
-        msg += "\n\nBạn: \(soLy) ly · hạng \(hang)"
-        if phiShip == 0 { msg += "\n🎉 Đơn này FREE SHIP!" }
-        return msg
+    private var xacNhanMessage: String {
+        var lines = ["\(cart.totalCount) ly"]
+        lines.append(nhanTaiQuan ? "Nhận tại quán" : "Giao đến: \(diaChi.trimmingCharacters(in: .whitespaces))")
+        if !nhanTaiQuan { lines.append("Phí ship: " + (phiShip <= 0 ? "Miễn phí" : formatTien(phiShip))) }
+        if soTienDungXu > 0 { lines.append("Dùng Xu: -" + formatTien(soTienDungXu)) }
+        let httt = conLaiPhaiTra <= 0 ? "Đã thanh toán bằng Xu" : (hinhThucThanhToan == .codTraKhiNhanHang ? "Thanh toán khi nhận hàng" : "Chuyển khoản qua mã QR")
+        lines.append("Thanh toán: \(httt)")
+        lines.append("Cần trả: " + formatTien(conLaiPhaiTra))
+        return lines.joined(separator: "\n")
     }
 
     /// Trần 50% (thêm 2026-09-23, chặn farm "đơn thành công +1 lượt quay" bằng Xu trả đủ 100%) đã BỎ
@@ -103,7 +98,6 @@ struct CheckoutView: View {
                 }
                 cardRow { cardBox { donHangCardContent } }
                 cardRow { cardBox { chiTietThanhToanCardContent } }
-                cardRow { cardBox { ghiChuCardContent } }
             }
             .cardListBackground()
             bottomBar
@@ -120,10 +114,11 @@ struct CheckoutView: View {
                 } message: {
                     Text(voucherWarning ?? "")
                 }
-                .alert("🛵 Cách tính phí ship", isPresented: $showPhiShipInfo) {
-                    Button("Đã hiểu") {}
+                .alert("Xác nhận đặt hàng", isPresented: $showXacNhan) {
+                    Button("Đặt hàng") { Task { await datHang() } }
+                    Button("Kiểm tra lại", role: .cancel) {}
                 } message: {
-                    Text(phiShipInfoMessage)
+                    Text(xacNhanMessage)
                 }
                 .alert("Chưa cho phép định vị", isPresented: $showLocationSettings) {
                     Button("Mở Cài đặt") {
@@ -308,22 +303,6 @@ struct CheckoutView: View {
             }
 
             VStack(spacing: 6) {
-                diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : (chonKey == "gps" && !usingGPS && !diaChi.isEmpty ? diaChi : "Vị trí hiện tại"),
-                          chon: chonKey == "gps", loading: locLoading,
-                          editing: dangSua && chonKey == "gps", coTheSua: true,
-                          batDauSua: { dangSua = true }) {
-                    Task { await dungViTriHienTai(baoLoi: true) }
-                }
-                if hienBanDo, let coord {
-                    DeliveryMapView(
-                        shopCoordinate: CLLocationCoordinate2D(latitude: ship?.shopLat ?? 12.7095521, longitude: ship?.shopLong ?? 108.3016576),
-                        deliveryCoordinate: coord,
-                        routePoints: (ship?.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
-                        onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
-                    )
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
                     let chon = chonKey == d.id
                     diaChiRow(icon: d.isDefault ? "star.fill" : "mappin",
@@ -340,6 +319,22 @@ struct CheckoutView: View {
                           batDauSua: { dangSua = true }) {
                     chonKey = "custom"; usingGPS = false; hienBanDo = false
                     coord = nil; diaChi = ""; dangSua = true
+                }
+                diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : (chonKey == "gps" && !usingGPS && !diaChi.isEmpty ? diaChi : "Sử dụng định vị"),
+                          chon: chonKey == "gps", loading: locLoading,
+                          editing: dangSua && chonKey == "gps", coTheSua: true,
+                          batDauSua: { dangSua = true }) {
+                    Task { await dungViTriHienTai(baoLoi: true) }
+                }
+                if hienBanDo, let coord {
+                    DeliveryMapView(
+                        shopCoordinate: CLLocationCoordinate2D(latitude: ship?.shopLat ?? 12.7095521, longitude: ship?.shopLong ?? 108.3016576),
+                        deliveryCoordinate: coord,
+                        routePoints: (ship?.tuyenDuong ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.long) },
+                        onDragEnd: { newCoord in usingGPS = false; Task { await applyCoord(newCoord) } }
+                    )
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
             .onChange(of: diaChiFocused) { focused in
@@ -428,7 +423,6 @@ struct CheckoutView: View {
                 chiTietRow("Giảm giá voucher", "-" + formatTien(voucherGiam), color: Theme.danger)
             }
             if !nhanTaiQuan {
-                Button { showPhiShipInfo = true } label: {
                 HStack {
                     Text("Phí vận chuyển").font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     Spacer()
@@ -444,12 +438,11 @@ struct CheckoutView: View {
                         } else {
                             Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
                         }
-                        Image(systemName: "info.circle").font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     }
                 }
-                .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                Text("Free ship từ 2 ly hoặc hạng Bạc trở lên")
+                    .font(.system(size: 11)).foregroundColor(Theme.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             if soTienDungXu > 0 {
                 chiTietRow("Dùng Xu", "-" + formatTien(soTienDungXu), color: Theme.danger)
@@ -464,17 +457,6 @@ struct CheckoutView: View {
             Text(label).font(.system(size: 13)).foregroundColor(bold ? .primary : Theme.textMuted)
             Spacer()
             Text(value).font(.system(size: bold ? 15 : 13, weight: bold ? .bold : .regular)).foregroundColor(color)
-        }
-    }
-
-    // MARK: - Card: Ghi chú
-
-    private var ghiChuCardContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Ghi chú thêm").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-            TextField("", text: $ghiChu)
-                .textFieldStyle(.roundedBorder)
-                .tint(Theme.primary)
         }
     }
 
@@ -498,7 +480,7 @@ struct CheckoutView: View {
                 }
                 Spacer()
                 Button {
-                    Task { await datHang() }
+                    showXacNhan = true
                 } label: {
                     if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
                 }
@@ -638,7 +620,7 @@ struct CheckoutView: View {
         let ghiChuPrefix = xuTraDu
             ? "🟡 Đã thanh toán bằng Xu"
             : (hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR")
-        let ghiChuTrimmed = ghiChu.trimmingCharacters(in: .whitespaces)
+        let ghiChuTrimmed = cart.ghiChuDon.trimmingCharacters(in: .whitespaces)
         let ghiChuFull = ghiChuTrimmed.isEmpty ? ghiChuPrefix : "\(ghiChuPrefix) — \(ghiChuTrimmed)"
         let result = await APIClient.shared.datMon(
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
