@@ -43,6 +43,9 @@ struct CheckoutView: View {
 
     /// true = "Nhận tại quán" (bỏ qua địa chỉ/GPS/phí ship), false = "Giao tận nơi" (mặc định).
     @State private var nhanTaiQuan = false
+    /// Dòng địa chỉ đang chọn: "gps" / id địa chỉ đã lưu / "custom" (nhập tay). dangSua = đang sửa chữ ngay trên dòng đó.
+    @State private var chonKey = ""
+    @State private var dangSua = false
 
     /// true = đang dùng "Vị trí hiện tại" (chip đầu tiên, mặc định khi vào trang); false = địa chỉ đã lưu/tự chỉnh.
     @State private var usingGPS = false
@@ -206,49 +209,58 @@ struct CheckoutView: View {
             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
-    private func diaChiRow(icon: String, text: String, chon: Bool, loading: Bool = false, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon).font(.system(size: 13))
+    private func diaChiRow(icon: String, text: String, chon: Bool, loading: Bool = false,
+                            editing: Bool = false, coTheSua: Bool = false,
+                            batDauSua: @escaping () -> Void = {}, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 13))
+            if editing {
+                TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
+                    .font(.system(size: 13))
+                    .tint(Theme.primary)
+                    .focused($diaChiFocused)
+                    .onAppear { diaChiFocused = true }
+                    .onSubmit { diaChiFocused = false }
+                    .onChange(of: diaChi) { _ in
+                        // Đang gõ → toạ độ cũ không còn khớp chữ, bỏ để geocode lại khi xong.
+                        guard diaChiFocused else { return }
+                        coord = nil; usingGPS = false; hienBanDo = false
+                    }
+            } else {
                 Text(text).font(.system(size: 13)).lineLimit(2).multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-                if loading {
-                    ProgressView().scaleEffect(0.8)
-                } else if chon {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
-                }
             }
-            .padding(.horizontal, 10).padding(.vertical, 8)
-            .background(chon ? Theme.primaryTint : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(chon ? Theme.primary : Theme.divider))
+            Spacer(minLength: 0)
+            if loading {
+                ProgressView().scaleEffect(0.8)
+            } else if chon && coTheSua && !editing {
+                Button(action: batDauSua) {
+                    Image(systemName: "pencil").font(.system(size: 14))
+                        .padding(.horizontal, 6).padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
+            } else if chon {
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
+            }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .background(chon ? Theme.primaryTint : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(chon ? Theme.primary : Theme.divider))
+        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .onTapGesture { if !editing { action() } }
         .foregroundColor(chon ? Theme.primary : Theme.textMuted)
+    }
+
+    private func ketThucSua() {
+        guard dangSua else { return }
+        dangSua = false
+        Task { await geocodeTypedAddressIfNeeded() }
     }
 
     private var addressContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if !hienBanDo {
-            TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .tint(Theme.primary)
-                .opacity(locLoading ? 0.5 : 1)
-                .animation(.easeInOut(duration: 0.25), value: locLoading)
-                .focused($diaChiFocused)
-                .onSubmit { Task { await geocodeTypedAddressIfNeeded() } }
-                .onChange(of: diaChiFocused) { focused in
-                    if !focused { Task { await geocodeTypedAddressIfNeeded() } }
-                }
-                .onChange(of: diaChi) { _ in
-                    // Khách đang gõ/sửa tay → toạ độ cũ không còn khớp với chữ, bỏ đi để geocode lại
-                    // (nếu không, phí ship vẫn tính theo chỗ cũ).
-                    guard diaChiFocused else { return }
-                    coord = nil; usingGPS = false; hienBanDo = false
-                }
-            }
-
-            if !hienBanDo && !diaChiSuggestions.isEmpty {
+            if dangSua && !diaChiSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(diaChiSuggestions, id: \.self) { ten in
                         Button { selectTenDuong(ten) } label: {
@@ -267,7 +279,10 @@ struct CheckoutView: View {
             }
 
             VStack(spacing: 6) {
-                diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : "Vị trí hiện tại", chon: usingGPS, loading: locLoading) {
+                diaChiRow(icon: "location.fill", text: locLoading ? "Đang lấy vị trí..." : (chonKey == "gps" && !usingGPS && !diaChi.isEmpty ? diaChi : "Vị trí hiện tại"),
+                          chon: chonKey == "gps", loading: locLoading,
+                          editing: dangSua && chonKey == "gps", coTheSua: true,
+                          batDauSua: { dangSua = true }) {
                     Task { await dungViTriHienTai(baoLoi: true) }
                 }
                 if hienBanDo, let coord {
@@ -281,10 +296,25 @@ struct CheckoutView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
-                    diaChiRow(icon: d.isDefault ? "star.fill" : "mappin", text: d.diaChi, chon: !usingGPS && diaChi == d.diaChi) {
+                    let chon = chonKey == d.id
+                    diaChiRow(icon: d.isDefault ? "star.fill" : "mappin",
+                              text: chon ? diaChi : d.diaChi, chon: chon,
+                              editing: dangSua && chon, coTheSua: true,
+                              batDauSua: { dangSua = true }) {
                         Task { await chonDiaChiLuu(d) }
                     }
                 }
+                diaChiRow(icon: "square.and.pencil",
+                          text: chonKey == "custom" && !diaChi.isEmpty ? diaChi : "Nhập địa chỉ khác",
+                          chon: chonKey == "custom",
+                          editing: dangSua && chonKey == "custom", coTheSua: true,
+                          batDauSua: { dangSua = true }) {
+                    chonKey = "custom"; usingGPS = false; hienBanDo = false
+                    coord = nil; diaChi = ""; dangSua = true
+                }
+            }
+            .onChange(of: diaChiFocused) { focused in
+                if !focused { ketThucSua() }
             }
 
             if !locError.isEmpty { Text(locError).font(.system(size: 12)).foregroundColor(Theme.danger) }
@@ -469,6 +499,8 @@ struct CheckoutView: View {
     private func chonDiaChiLuu(_ d: DiaChiKhachHang) async {
         usingGPS = false
         hienBanDo = false
+        dangSua = false
+        chonKey = d.id
         diaChi = d.diaChi
         if let lat = d.lat, let long = d.long {
             await applyCoord(CLLocationCoordinate2D(latitude: lat, longitude: long))
@@ -544,6 +576,8 @@ struct CheckoutView: View {
         }
         usingGPS = true
         hienBanDo = true
+        dangSua = false
+        chonKey = "gps"
         // Hiện ghim + chữ địa chỉ ngay, tính ship chạy song song (không chờ nhau).
         coord = location.coordinate
         locError = ""
