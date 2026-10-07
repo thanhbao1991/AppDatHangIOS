@@ -70,7 +70,7 @@ struct MainTabView: View {
                 case .cart where !isLoggedIn:
                     guestGate("Giỏ hàng", icon: "cart", message: "Đăng nhập để thêm món vào giỏ và đặt hàng.")
                 case .donHang where !isLoggedIn:
-                    guestGate("Đơn hàng", icon: "list.bullet.rectangle", message: "Đăng nhập để xem và theo dõi đơn hàng của bạn.")
+                    guestGate("Đơn hàng", icon: "shippingbox", message: "Đăng nhập để xem và theo dõi đơn hàng của bạn.")
                 case .sanThuong where !isLoggedIn:
                     guestGate("Ưu đãi", icon: "gift", message: "Đăng nhập để điểm danh, mở hộp quà và nhận ưu đãi.")
                 case .voucher where !isLoggedIn:
@@ -243,19 +243,23 @@ struct MainTabView: View {
 
     /// Màn thay thế cho tab cần tài khoản khi khách chưa đăng nhập (Apple 5.1.1(v)).
     private func guestGate(_ title: String, icon: String, message: String) -> some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: icon).font(.system(size: 54)).foregroundColor(Theme.primary)
-            Text(title).font(.system(size: 20, weight: .bold))
-            Text(message).font(.system(size: 15)).foregroundColor(Theme.textMuted)
-                .multilineTextAlignment(.center).padding(.horizontal, 32)
-            Button { showLogin = true } label: {
-                Text("Đăng nhập / Đăng ký").fontWeight(.bold).frame(minWidth: 220)
+        VStack(spacing: 0) {
+            // Cùng thanh tiêu đề (gradient + chuông) như các tab đã đăng nhập, để khách chưa đăng nhập
+            // không thấy màn "trắng trơn" lệch phong cách.
+            TitleBar(title: title, icon: icon, centerTitle: true, trailing: AnyView(notificationBell))
+            VStack(spacing: 16) {
+                Spacer()
+                Image(systemName: icon).font(.system(size: 54)).foregroundColor(Theme.primary)
+                Text(message).font(.system(size: 15)).foregroundColor(Theme.textMuted)
+                    .multilineTextAlignment(.center).padding(.horizontal, 32)
+                Button { showLogin = true } label: {
+                    Text("Đăng nhập / Đăng ký").fontWeight(.bold).frame(minWidth: 220)
+                }
+                .buttonStyle(.gradientProminent)
+                Spacer()
             }
-            .buttonStyle(.gradientProminent)
-            Spacer()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
     }
 
