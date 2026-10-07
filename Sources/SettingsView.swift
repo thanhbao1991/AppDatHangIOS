@@ -277,18 +277,6 @@ struct SettingsView: View {
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
                 Spacer()
-                // Icon "!" giải thích phí ship cố định + điều kiện miễn phí — bấm mở alert.
-                Button {
-                    alertMessage = (
-                        "🛵 Cách tính phí ship",
-                        "Phí ship cố định 5.000đ cho mỗi đơn giao tận nơi.\n\nMiễn phí ship khi:\n• Đơn từ 2 ly trở lên, hoặc\n• Bạn đang ở hạng Bạc trở lên (hạng tháng này hoặc tháng trước)."
-                    )
-                } label: {
-                    Image(systemName: "info.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .buttonStyle(.plain)
             }
 
             if let hangTiepTheo = vi.hangTiepTheo {
