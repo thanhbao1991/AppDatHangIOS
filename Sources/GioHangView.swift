@@ -99,7 +99,11 @@ struct GioHangView: View {
                 }
                 Spacer()
                 Button {
-                    path.append(.checkout)
+                    if Prefs.isLoggedIn {
+                        path.append(.checkout)
+                    } else {
+                        NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil)
+                    }
                 } label: {
                     Text("Đặt hàng").fontWeight(.bold).frame(minWidth: 120)
                 }

@@ -23,6 +23,7 @@ struct MainTabView: View {
     @State private var pollTask: Task<Void, Never>?
     @State private var showThongBao = false
     @State private var showTaiKhoanBaoMat = false
+    @State private var showLogin = false
     @StateObject private var deepLinkRouter = DeepLinkRouter.shared
 
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
@@ -66,6 +67,14 @@ struct MainTabView: View {
                                 }
                             }
                     }
+                case .donHang where !isLoggedIn:
+                    guestGate("Đơn hàng", icon: "list.bullet.rectangle", message: "Đăng nhập để xem và theo dõi đơn hàng của bạn.")
+                case .sanThuong where !isLoggedIn:
+                    guestGate("Ưu đãi", icon: "gift", message: "Đăng nhập để điểm danh, mở hộp quà và nhận ưu đãi.")
+                case .voucher where !isLoggedIn:
+                    guestGate("Voucher", icon: "ticket", message: "Đăng nhập để xem và dùng voucher của bạn.")
+                case .settings where !isLoggedIn:
+                    guestGate("Tài khoản", icon: "person.crop.circle", message: "Đăng nhập hoặc đăng ký để quản lý tài khoản và tích điểm.")
                 case .donHang:
                     NavigationStack(path: $donHangPath) {
                         OrderStatusView(path: $donHangPath, selectedTab: $selectedTab, cartPath: $cartPath, notificationBell: AnyView(notificationBell))
@@ -100,6 +109,8 @@ struct MainTabView: View {
             // (vd nút primary màu Theme.primary) vẫn override được bình thường, không bị đè.
             .tint(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Đăng nhập/đăng xuất → dựng lại nội dung tab (tải lại giá riêng, đơn hàng...) nhưng giữ giỏ hàng.
+            .id(isLoggedIn)
 
             // Ẩn hẳn thanh tab dưới cùng khi đang ở trang Thanh toán (CheckoutView) — khớp Shopee:
             // checkout là luồng riêng tách biệt, không cho lỡ tay chuyển tab giữa chừng khi đang điền
@@ -112,6 +123,31 @@ struct MainTabView: View {
         }
         .tint(Theme.primary)
         .environmentObject(cart)
+        .onReceive(NotificationCenter.default.publisher(for: .yeuCauDangNhap)) { _ in
+            if !isLoggedIn { showLogin = true }
+        }
+        .onChange(of: isLoggedIn) { loggedIn in
+            if loggedIn {
+                showLogin = false
+                Task { await checkUnread(); await checkUuDai() }
+            } else {
+                cart.clear()
+                unreadCount = 0
+                uuDaiCanLam = false
+                homePath = []; cartPath = []; donHangPath = []
+                selectedTab = .home
+            }
+        }
+        .fullScreenCover(isPresented: $showLogin) {
+            ZStack(alignment: .topTrailing) {
+                LoginView(isLoggedIn: $isLoggedIn)
+                Button { showLogin = false } label: {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 28)).foregroundColor(.white.opacity(0.9))
+                        .padding(16)
+                }
+                .accessibilityLabel("Đóng")
+            }
+        }
         .onChange(of: selectedTab) { _ in
             showThongBao = false
             showTaiKhoanBaoMat = false
@@ -164,6 +200,7 @@ struct MainTabView: View {
     /// làm trailing thật trong HStack của từng header để không chồng lấn.
     private var notificationBell: some View {
         Button {
+            guard isLoggedIn else { showLogin = true; return }
             showThongBao = true
             unreadCount = 0
         } label: {
@@ -200,6 +237,24 @@ struct MainTabView: View {
                 .foregroundColor(.white)
                 .frame(width: 30, height: 30)
         }
+    }
+
+    /// Màn thay thế cho tab cần tài khoản khi khách chưa đăng nhập (Apple 5.1.1(v)).
+    private func guestGate(_ title: String, icon: String, message: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: icon).font(.system(size: 54)).foregroundColor(Theme.primary)
+            Text(title).font(.system(size: 20, weight: .bold))
+            Text(message).font(.system(size: 15)).foregroundColor(Theme.textMuted)
+                .multilineTextAlignment(.center).padding(.horizontal, 32)
+            Button { showLogin = true } label: {
+                Text("Đăng nhập / Đăng ký").fontWeight(.bold).frame(minWidth: 220)
+            }
+            .buttonStyle(.gradientProminent)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 
     private var tabBar: some View {
@@ -264,6 +319,7 @@ struct MainTabView: View {
     }
 
     private func checkUnread() async {
+        guard isLoggedIn else { return }
         let items = await APIClient.shared.getThongBao()
         guard !items.isEmpty else { return }
         let lastSeen = Prefs.thongBaoLastSeen
@@ -285,6 +341,7 @@ struct MainTabView: View {
     /// Chấm đỏ trên tab Ưu đãi khi hôm nay còn việc làm: chưa điểm danh HOẶC còn lượt mở hộp quà.
     /// Lỗi mạng (nil) thì giữ nguyên trạng thái cũ, không nhấp nháy tắt/bật.
     private func checkUuDai() async {
+        guard isLoggedIn else { return }
         async let dd = APIClient.shared.getDiemDanhInfo()
         async let quay = APIClient.shared.getVongQuayInfo()
         let (ddInfo, quayInfo) = await (dd, quay)

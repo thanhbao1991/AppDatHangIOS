@@ -5,6 +5,8 @@ import Security
 // ContentView lắng nghe để đưa app quay lại LoginView.
 extension Notification.Name {
     static let sessionExpired = Notification.Name("sessionExpired")
+    /// Khách chưa đăng nhập bấm tính năng cần tài khoản (vd "Đặt hàng") — MainTabView mở màn đăng nhập.
+    static let yeuCauDangNhap = Notification.Name("yeuCauDangNhap")
 }
 
 /// Host app THẬT được khởi động khi chạy unit test — xem giải thích chi tiết ở Prefs.swift của

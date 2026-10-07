@@ -9,13 +9,9 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        Group {
-            if isLoggedIn {
-                MainTabView(isLoggedIn: $isLoggedIn)
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn)
-            }
-        }
+        // Apple 5.1.1(v): khách chưa đăng nhập vẫn xem được thực đơn/giỏ hàng — chỉ bắt đăng nhập ở
+        // tính năng gắn với tài khoản (đặt hàng, đơn hàng, voucher, ưu đãi, tài khoản), xem MainTabView.
+        MainTabView(isLoggedIn: $isLoggedIn)
         .onReceive(NotificationCenter.default.publisher(for: .sessionExpired)) { _ in
             isLoggedIn = false
         }

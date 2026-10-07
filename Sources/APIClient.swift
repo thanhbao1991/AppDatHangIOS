@@ -380,6 +380,7 @@ actor APIClient {
     /// snapshot đĩa chỉ hiện tạm vài trăm ms-vài giây lúc cold-start, network thật luôn chạy nền
     /// và ghi đè ngay sau đó (xem MenuView.load) — không phải nguồn sự thật lâu dài.
     func getGiaRieng() async -> [String: Double] {
+        guard Prefs.isLoggedIn else { return [:] }
         let env: ApiEnvelope<[String: Double]> = await decode("/dat-hang/gia-rieng", onRawData: { raw in self.saveDiskCache("/dat-hang/gia-rieng", data: raw) })
         return env.isSuccess ? (env.data ?? [:]) : [:]
     }
