@@ -90,6 +90,7 @@ struct SanPham: Decodable, Identifiable {
 struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
 /// Danh sách tên đường dùng gợi ý khi khách gõ địa chỉ giao hàng — cùng nguồn TenDuong Desktop dùng
 /// cho TenDuongBox (nhân viên tạo đơn), xem CheckoutView.diaChiSuggestions.
+struct ToaDoDiaChi: Decodable { let lat: Double; let long: Double }
 struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
 
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem

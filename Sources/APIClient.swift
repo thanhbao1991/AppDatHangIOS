@@ -439,6 +439,13 @@ actor APIClient {
         await decode("/dat-hang/uoc-tinh-ship", method: "POST", body: jsonBody(UocTinhShipRequest(lat: lat, long: long, tongTienDon: tongTienDon, soLuong: soLuong)))
     }
 
+    /// Toạ độ địa chỉ tra từ dữ liệu quán (backend DiaChiToaDoService); nil = không có, rơi về Apple.
+    func traToaDoDiaChi(_ diaChi: String) async -> ToaDoDiaChi? {
+        let q = diaChi.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let env: ApiEnvelope<ToaDoDiaChi?> = await decode("/dat-hang/dia-chi/toa-do?q=\(q)")
+        return env.isSuccess ? (env.data ?? nil) : nil
+    }
+
     func getDonCuaToi() async -> [DonHangKhach] {
         let env: ApiEnvelope<[DonHangKhach]> = await decode("/dat-hang/don-cua-toi?take=50")
         return env.isSuccess ? (env.data ?? []) : []
