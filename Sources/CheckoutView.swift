@@ -594,7 +594,7 @@ struct CheckoutView: View {
         // Apple hay đặt nhầm sang nơi khác — quá xa quán (Krông Pắc) thì bỏ, khách tự ghim trên bản đồ.
         let khoangCachKm = CLLocation(latitude: found.latitude, longitude: found.longitude)
             .distance(from: CLLocation(latitude: 12.7095521, longitude: 108.3016576)) / 1000
-        guard khoangCachKm <= 20 else { return }
+        guard khoangCachKm <= 10 else { return }
         await applyCoord(found)
     }
 
