@@ -24,14 +24,14 @@ enum DiaChiSuggestion {
         return String(text[..<r.upperBound])
     }
 
-    /// Danh sách tên đường khớp phần fragment (sau số nhà) khách đang gõ — rỗng nếu đang gõ trùng
-    /// khớp DUY NHẤT 1 tên đường sẵn có (coi như đã chọn xong, khỏi hiện gợi ý thừa).
+    /// Danh sách tên đường khớp phần fragment (sau số nhà) khách đang gõ — rỗng nếu đang gõ ĐÚNG (cả dấu)
+    /// DUY NHẤT 1 tên đường sẵn có (coi như đã chọn xong, khỏi hiện gợi ý thừa).
     static func matches(for text: String, in tenDuongs: [TenDuong], limit: Int = 8) -> [String] {
         let fragment = streetFragment(text).trimmingCharacters(in: .whitespaces)
         guard !fragment.isEmpty else { return [] }
         let norm = normalizeVN(fragment)
         let ketQua = tenDuongs.map(\.ten).filter { normalizeVN($0).contains(norm) }
-        if ketQua.count == 1 && normalizeVN(ketQua[0]) == norm { return [] }
+        if ketQua.count == 1 && ketQua[0].caseInsensitiveCompare(fragment) == .orderedSame { return [] }
         return Array(ketQua.prefix(limit))
     }
 
