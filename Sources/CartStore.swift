@@ -113,6 +113,17 @@ final class CartStore: ObservableObject {
         ghiChuDon = ""
     }
 
+    /// Đăng xuất: bỏ dữ liệu gắn với tài khoản cũ (ví Xu, voucher) để người đăng nhập sau không thấy
+    /// của người trước, và cho phép tải lại ưu đãi ở phiên đăng nhập mới. Giỏ hàng do clear() lo.
+    func resetUuDaiTheoTaiKhoan() {
+        selectedVoucher = nil
+        dungXu = false
+        vi = nil
+        vouchers = []
+        sanPhamDaTungDat = []
+        uuDaiLoaded = false
+    }
+
     var soDuXu: Double { vi?.soDu ?? 0 }
 
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
@@ -166,7 +177,7 @@ final class CartStore: ObservableObject {
     /// ưu đãi giờ đây) và CheckoutView (phòng khi khách vào thẳng bằng "Đặt lại" mà chưa ghé Giỏ hàng
     /// lần nào từ lúc mở app). Chỉ tải 1 LẦN/phiên (uuDaiLoaded) — cả 2 màn cùng gọi không tải trùng.
     func loadUuDaiIfNeeded() async {
-        guard !uuDaiLoaded else { return }
+        guard !uuDaiLoaded, Prefs.isLoggedIn else { return }
         uuDaiLoaded = true
         async let viTask: KhachHangVi? = APIClient.shared.getVi()
         async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()

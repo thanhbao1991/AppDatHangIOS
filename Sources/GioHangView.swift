@@ -84,7 +84,20 @@ struct GioHangView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 0) {
-            uuDaiSection
+            if Prefs.isLoggedIn {
+                uuDaiSection
+            } else {
+                // Voucher/Xu gắn với tài khoản — khách chưa đăng nhập vẫn thêm món được, đăng nhập ở bước Đặt hàng.
+                Button { NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil) } label: {
+                    HStack {
+                        Image(systemName: "ticket").foregroundColor(Theme.primary)
+                        Text("Đăng nhập để dùng voucher và Xu").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    }
+                    .padding(.horizontal).padding(.vertical, 12)
+                }
+            }
             Divider()
             HStack {
                 VStack(alignment: .leading, spacing: 2) {

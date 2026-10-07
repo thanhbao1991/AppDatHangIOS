@@ -281,15 +281,6 @@ struct MenuView: View {
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 giaRiengMap: giaRiengMap,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
-                    // Giỏ hàng gắn với tài khoản (Apple 5.1.1(v)) — khách chưa đăng nhập chỉ xem món,
-                    // bấm thêm vào giỏ thì mời đăng nhập (đợi sheet chọn món đóng xong mới mở login).
-                    guard Prefs.isLoggedIn else {
-                        picking = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil)
-                        }
-                        return
-                    }
                     cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: giaHienThi(bienThe), soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id)
                 }
             ) { picking = nil }

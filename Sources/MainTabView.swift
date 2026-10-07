@@ -57,8 +57,6 @@ struct MainTabView: View {
                                 }
                             }
                     }
-                case .cart where !isLoggedIn:
-                    guestGate("Giỏ hàng", icon: "cart", message: "Đăng nhập để thêm món vào giỏ và đặt hàng.")
                 case .cart:
                     NavigationStack(path: $cartPath) {
                         GioHangView(path: $cartPath, notificationBell: AnyView(notificationBell))
@@ -133,7 +131,8 @@ struct MainTabView: View {
                 showLogin = false
                 Task { await checkUnread(); await checkUuDai() }
             } else {
-                cart.clear()
+                // Giữ nguyên giỏ (trước đây cũng sống qua đăng xuất nhờ lưu UserDefaults), chỉ bỏ ưu đãi gắn tài khoản cũ.
+                cart.resetUuDaiTheoTaiKhoan()
                 unreadCount = 0
                 uuDaiCanLam = false
                 homePath = []; cartPath = []; donHangPath = []
