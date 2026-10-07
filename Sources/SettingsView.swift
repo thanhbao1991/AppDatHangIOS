@@ -300,10 +300,10 @@ struct SettingsView: View {
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
 
-            // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá
-            // DuocNhanVoucher — hiện tại chỉ 1 số khách được bật (chờ app lên App Store chính thức
-            // mới bật cho TẤT CẢ, xem project_voucher_system_2026_09 trong memory). Ẩn hẳn 2 ô điểm
-            // thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
+            // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá điểm. Với app
+            // khách điều này KHÔNG xảy ra: DatHangService.GetViAsync luôn coi khách là được nhận voucher
+            // (cờ KhachHangs.DuocNhanVoucher chỉ dành cho Desktop/staff). Giữ nhánh ẩn này làm phòng
+            // thủ — ẩn hẳn 2 ô điểm thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
             // Bỏ icon hạng ở 2 ô điểm (feedback 2026-09-23: "hơi khó hiểu và nhiều icon quá") — card
             // đã có 2 icon hạng ở dòng tiến độ ngay trên rồi, thêm nữa ở đây gây rối không cần thiết.
             if vi.diemThangNay >= 0 {
