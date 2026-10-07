@@ -194,10 +194,6 @@ struct GioHangView: View {
         if let hinhAnh = item.hinhAnh ?? sp?.hinhAnh, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                 .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-        } else {
-            let ten = sp.flatMap { sp in nhoms.first { $0.id == sp.nhomSanPhamId }?.ten }
-            RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
-                .overlay(Text(ten.flatMap { Theme.nhomIcons[$0] } ?? Theme.defaultNhomIcon).font(.system(size: 24)))
         }
     }
 

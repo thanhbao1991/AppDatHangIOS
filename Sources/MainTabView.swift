@@ -70,9 +70,7 @@ struct MainTabView: View {
                 case .donHang where !isLoggedIn:
                     guestGate("Đơn hàng", icon: "shippingbox", message: "Đăng nhập để xem và theo dõi đơn hàng của bạn.")
                 case .sanThuong where !isLoggedIn:
-                    guestGate("Ưu đãi", icon: "gift", message: "Đăng nhập để điểm danh, mở hộp quà và nhận ưu đãi.")
-                case .voucher where !isLoggedIn:
-                    guestGate("Voucher", icon: "ticket", message: "Đăng nhập để xem và dùng voucher của bạn.")
+                    guestGate("Ưu đãi", icon: "gift", message: "Đăng nhập để điểm danh, mở hộp quà, nhận ưu đãi và dùng voucher.")
                 case .settings where !isLoggedIn:
                     guestGate("Tài khoản", icon: "person.crop.circle", message: "Đăng nhập hoặc đăng ký để quản lý tài khoản và tích điểm.")
                 case .donHang:
@@ -89,11 +87,7 @@ struct MainTabView: View {
                     }
                 case .sanThuong:
                     NavigationStack {
-                        UuDaiView(notificationBell: AnyView(notificationBell))
-                    }
-                case .voucher:
-                    NavigationStack {
-                        VoucherCuaToiView(notificationBell: AnyView(notificationBell))
+                        UuDaiVoucherView(notificationBell: AnyView(notificationBell))
                     }
                 case .settings:
                     NavigationStack {
@@ -267,7 +261,6 @@ struct MainTabView: View {
             tabButton(.home, label: "Thực đơn", icon: "cup.and.saucer")
             tabButton(.cart, label: "Giỏ hàng", icon: "cart", badgeText: cartBadgeText)
             tabButton(.donHang, label: "Đơn hàng", icon: "list.bullet.rectangle")
-            tabButton(.voucher, label: "Voucher", icon: "ticket")
             tabButton(.sanThuong, label: "Ưu đãi", icon: "gift", showDot: uuDaiCanLam)
             tabButton(.settings, label: "Tài khoản", icon: "person.crop.circle")
         }

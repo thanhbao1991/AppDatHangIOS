@@ -17,6 +17,8 @@ struct VoucherCuaToiView: View {
     }
 
     var notificationBell: AnyView
+    /// false khi nhúng trong UuDaiVoucherView (thanh tiêu đề do view cha vẽ).
+    var showHeader: Bool = true
 
     @State private var vouchers: [VoucherCuaToi] = []
     @State private var voucherSapCo: [VoucherCuaToi] = []
@@ -97,7 +99,7 @@ struct VoucherCuaToiView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Voucher", icon: "ticket", centerTitle: true, trailing: notificationBell)
+            if showHeader { TitleBar(title: "Voucher", icon: "ticket", centerTitle: true, trailing: notificationBell) }
             tabBar
 
             Group {

@@ -11,6 +11,8 @@ extension Notification.Name {
 /// (backend không còn endpoint the-tem/gioi-thieu nữa — yêu cầu "app đơn giản thôi").
 struct UuDaiView: View {
     var notificationBell: AnyView
+    /// false khi nhúng trong UuDaiVoucherView (thanh tiêu đề do view cha vẽ).
+    var showHeader: Bool = true
 
     @State private var loading = true
 
@@ -32,7 +34,7 @@ struct UuDaiView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TitleBar(title: "Ưu đãi", icon: "gift", centerTitle: true, trailing: notificationBell)
+            if showHeader { TitleBar(title: "Ưu đãi", icon: "gift", centerTitle: true, trailing: notificationBell) }
 
             Group {
                 if loading {

@@ -425,12 +425,9 @@ struct MenuView: View {
                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                             .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-                    } else {
-                        // Icon nhóm món (emoji, khớp nhomIcons dùng ở sidebar) thay vì chữ cái đầu tên
-                        // món — chữ cái đầu nhìn khô khan, icon nhóm gợi hình đồ uống hơn hẳn.
-                        RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
-                            .overlay(Text(nhomIcon(for: item)).font(.system(size: 26)))
                     }
+                    // Món chưa có ảnh: KHÔNG vẽ ô thay thế (icon ly mặc định nhìn như thiếu dữ liệu) —
+                    // dòng chỉ còn tên + giá, sạch hơn.
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.ten)
                             .font(.system(size: 15, weight: .semibold))
@@ -495,9 +492,6 @@ struct MenuView: View {
                                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                                             .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: cardWidth, height: 90)
-                                            .overlay(Text(nhomIcon(for: item)).font(.system(size: 32)))
                                     }
                                     Text(item.ten)
                                         .font(.system(size: 13, weight: .semibold))
