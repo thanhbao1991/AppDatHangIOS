@@ -67,6 +67,8 @@ struct MainTabView: View {
                                 }
                             }
                     }
+                case .cart where !isLoggedIn:
+                    guestGate("Giỏ hàng", icon: "cart", message: "Đăng nhập để thêm món vào giỏ và đặt hàng.")
                 case .donHang where !isLoggedIn:
                     guestGate("Đơn hàng", icon: "list.bullet.rectangle", message: "Đăng nhập để xem và theo dõi đơn hàng của bạn.")
                 case .sanThuong where !isLoggedIn:
