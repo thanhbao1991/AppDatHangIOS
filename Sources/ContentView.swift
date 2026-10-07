@@ -5,6 +5,8 @@ import SwiftUI
 /// nếu tìm bối cảnh: kế hoạch chuyển AppDatHangIOS từ React Native sang native SwiftUI).
 struct ContentView: View {
     @State private var isLoggedIn = Prefs.isLoggedIn
+    @State private var batBuocCapNhat: AppVersionPolicy?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -17,5 +19,19 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .sessionExpired)) { _ in
             isLoggedIn = false
         }
+        // Cổng chặn phiên bản tối thiểu, xem VersionGate.swift. Phủ lên TRÊN cùng, không đóng được.
+        .overlay {
+            if let policy = batBuocCapNhat { ForceUpdateView(policy: policy) }
+        }
+        .task { await kiemTraPhienBan() }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { Task { await kiemTraPhienBan() } }
+        }
+    }
+
+    /// Lỗi mạng/server → fetchPolicy trả nil → giữ nguyên trạng thái hiện tại (fail-open).
+    private func kiemTraPhienBan() async {
+        guard let policy = await VersionGate.fetchPolicy() else { return }
+        batBuocCapNhat = VersionGate.isOutdated(current: VersionGate.currentVersion, minimum: policy.toiThieu) ? policy : nil
     }
 }
