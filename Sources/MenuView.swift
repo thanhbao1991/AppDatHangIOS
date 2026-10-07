@@ -425,9 +425,9 @@ struct MenuView: View {
                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                             .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                    } else {
+                        AnhMonPlaceholder(width: 56, height: 56)
                     }
-                    // Món chưa có ảnh: KHÔNG vẽ ô thay thế (icon ly mặc định nhìn như thiếu dữ liệu) —
-                    // dòng chỉ còn tên + giá, sạch hơn.
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.ten)
                             .font(.system(size: 15, weight: .semibold))
@@ -492,6 +492,8 @@ struct MenuView: View {
                                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                                             .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
+                                    } else {
+                                        AnhMonPlaceholder(width: cardWidth, height: 90)
                                     }
                                     Text(item.ten)
                                         .font(.system(size: 13, weight: .semibold))
