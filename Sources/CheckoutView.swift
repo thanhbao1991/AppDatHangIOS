@@ -67,15 +67,60 @@ struct CheckoutView: View {
     private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
     private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
 
-    private var xacNhanMessage: String {
-        var lines = ["\(cart.totalCount) ly"]
-        lines.append(nhanTaiQuan ? "Nhận tại quán" : "Giao đến: \(diaChi.trimmingCharacters(in: .whitespaces))")
-        if !nhanTaiQuan { lines.append("Phí ship: " + (phiShip <= 0 ? "Miễn phí" : formatTien(phiShip))) }
-        if soTienDungXu > 0 { lines.append("Dùng Xu: -" + formatTien(soTienDungXu)) }
-        let httt = conLaiPhaiTra <= 0 ? "Đã thanh toán bằng Xu" : (hinhThucThanhToan == .codTraKhiNhanHang ? "Thanh toán khi nhận hàng" : "Chuyển khoản qua mã QR")
-        lines.append("Thanh toán: \(httt)")
-        lines.append("Cần trả: " + formatTien(conLaiPhaiTra))
-        return lines.joined(separator: "\n")
+    private var xacNhanRows: [(icon: String, label: String, value: String)] {
+        var rows: [(String, String, String)] = [("🧋", "Số lượng", "\(cart.totalCount) ly")]
+        if nhanTaiQuan {
+            rows.append(("🏪", "Nhận hàng", "Nhận tại quán"))
+        } else {
+            rows.append(("📍", "Giao đến", diaChi.trimmingCharacters(in: .whitespaces)))
+            rows.append(("🛵", "Phí ship", phiShip <= 0 ? "Miễn phí" : formatTien(phiShip)))
+        }
+        if soTienDungXu > 0 { rows.append(("🪙", "Dùng Xu", "-" + formatTien(soTienDungXu))) }
+        let httt = conLaiPhaiTra <= 0 ? "Đã trả bằng Xu" : (hinhThucThanhToan == .codTraKhiNhanHang ? "Khi nhận hàng" : "Chuyển khoản QR")
+        rows.append(("💳", "Thanh toán", httt))
+        rows.append(("💰", "Cần trả", formatTien(conLaiPhaiTra)))
+        return rows
+    }
+
+    private var xacNhanSheet: some View {
+        VStack(spacing: 0) {
+            Text("Xác nhận đặt hàng")
+                .font(.headline)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+            VStack(spacing: 14) {
+                ForEach(Array(xacNhanRows.enumerated()), id: \.offset) { _, r in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(r.icon)
+                        Text(r.label).foregroundStyle(.secondary)
+                        Spacer(minLength: 12)
+                        Text(r.value)
+                            .fontWeight(r.label == "Cần trả" ? .bold : .medium)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .font(.subheadline)
+                }
+            }
+            .padding(.horizontal, 24)
+            Spacer(minLength: 20)
+            HStack(spacing: 12) {
+                Button { showXacNhan = false } label: {
+                    Text("Kiểm tra lại").fontWeight(.semibold).frame(maxWidth: .infinity).padding(.vertical, 14)
+                }
+                .background(Color(.secondarySystemFill), in: RoundedRectangle(cornerRadius: 12))
+                Button {
+                    showXacNhan = false
+                    Task { await datHang() }
+                } label: {
+                    Text("Đặt hàng").fontWeight(.bold).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.gradientProminent)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 20)
+        }
+        .presentationDetents([.height(CGFloat(190 + xacNhanRows.count * 36))])
+        .presentationDragIndicator(.visible)
     }
 
     /// Trần 50% (thêm 2026-09-23, chặn farm "đơn thành công +1 lượt quay" bằng Xu trả đủ 100%) đã BỎ
@@ -113,12 +158,7 @@ struct CheckoutView: View {
                 } message: {
                     Text(voucherWarning ?? "")
                 }
-                .alert("Xác nhận đặt hàng", isPresented: $showXacNhan) {
-                    Button("Đặt hàng") { Task { await datHang() } }
-                    Button("Kiểm tra lại", role: .cancel) {}
-                } message: {
-                    Text(xacNhanMessage)
-                }
+                .sheet(isPresented: $showXacNhan) { xacNhanSheet }
                 .alert("Chưa cho phép định vị", isPresented: $showLocationSettings) {
                     Button("Mở Cài đặt") {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
