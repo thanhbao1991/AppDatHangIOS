@@ -36,8 +36,8 @@ struct DeliveryMapView: UIViewRepresentable {
 
         let coords = points + [shopCoordinate, deliveryCoordinate]
         var region = MKCoordinateRegion(coordinates: coords)
-        region.span.latitudeDelta = max(region.span.latitudeDelta, 0.01)
-        region.span.longitudeDelta = max(region.span.longitudeDelta, 0.01)
+        region.span.latitudeDelta = max(region.span.latitudeDelta, 0.003)
+        region.span.longitudeDelta = max(region.span.longitudeDelta, 0.003)
         map.setRegion(region, animated: true)
     }
 
