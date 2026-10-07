@@ -281,26 +281,29 @@ struct CheckoutView: View {
         Task { await geocodeTypedAddressIfNeeded() }
     }
 
+    /// Gợi ý tên đường — hiện NGAY dưới dòng địa chỉ đang gõ.
+    @ViewBuilder private var diaChiSuggestionsBox: some View {
+        if dangSua && !diaChiSuggestions.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(diaChiSuggestions, id: \.self) { ten in
+                    Button { selectTenDuong(ten) } label: {
+                        Text(ten)
+                            .font(.system(size: 13))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    if ten != diaChiSuggestions.last { Divider() }
+                }
+            }
+            .background(Theme.primaryTint.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
     private var addressContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if dangSua && !diaChiSuggestions.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(diaChiSuggestions, id: \.self) { ten in
-                        Button { selectTenDuong(ten) } label: {
-                            Text(ten)
-                                .font(.system(size: 13))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 10).padding(.vertical, 8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                        if ten != diaChiSuggestions.last { Divider() }
-                    }
-                }
-                .background(Theme.primaryTint.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-
             VStack(spacing: 6) {
                 ForEach(savedDiaChi.sorted { $0.isDefault && !$1.isDefault }) { d in
                     let chon = chonKey == d.id
@@ -310,6 +313,7 @@ struct CheckoutView: View {
                               batDauSua: { dangSua = true }) {
                         Task { await chonDiaChiLuu(d) }
                     }
+                    if dangSua && chon { diaChiSuggestionsBox }
                 }
                 diaChiRow(icon: "square.and.pencil",
                           text: chonKey == "custom" && !diaChi.isEmpty ? diaChi : (savedDiaChi.isEmpty ? "Nhập địa chỉ" : "Nhập địa chỉ khác"),
@@ -321,6 +325,7 @@ struct CheckoutView: View {
                     ghimDoKhach = false
                     diaChi = ""; dangSua = true
                 }
+                if dangSua && chonKey == "custom" { diaChiSuggestionsBox }
                 Button {
                     Task { await dungViTriHienTai() }
                 } label: {
