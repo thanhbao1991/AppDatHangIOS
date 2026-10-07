@@ -21,6 +21,7 @@ struct LoginView: View {
     @State private var loading = false
     @State private var error = ""
     @State private var resendConLai = 0
+    @State private var showChinhSach = false
     @FocusState private var focusedField: String?
 
     private let phoneRegex = try! NSRegularExpression(pattern: "^0\\d{9}$")
@@ -72,6 +73,15 @@ struct LoginView: View {
                             .fill(Color(.secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 12)
                     )
+
+                    // Chính sách bảo mật phải xem được TRƯỚC khi tạo tài khoản (App Store 5.1.1) —
+                    // trước chỉ có trong Tài khoản > Bảo mật, tức phải đăng nhập xong mới đọc được.
+                    Button { showChinhSach = true } label: {
+                        Text("Chính sách bảo mật")
+                            .font(.system(size: 13, weight: .semibold))
+                            .underline()
+                            .foregroundColor(.white.opacity(0.9))
+                    }
                 }
                 .padding(28)
                 .frame(maxWidth: 400)
@@ -80,6 +90,16 @@ struct LoginView: View {
         }
         .onReceive(resendTimer) { _ in
             if resendConLai > 0 { resendConLai -= 1 }
+        }
+        .sheet(isPresented: $showChinhSach) {
+            NavigationStack {
+                ChinhSachBaoMatView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Đóng") { showChinhSach = false }
+                        }
+                    }
+            }
         }
     }
 

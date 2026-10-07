@@ -184,9 +184,8 @@ struct SettingsView: View {
     }
 
     /// Mời khách đánh giá — popup đánh giá chuẩn của iOS (StoreKit requestReview), KHÔNG kèm bất kỳ
-    /// quà/voucher/Xu nào (vi phạm chính sách Apple nếu gắn khuyến khích). Trước dùng link
-    /// apps.apple.com/app/<id> với id giả "TODO_APP_STORE_ID" — bấm ra trang lỗi; requestReview không
-    /// cần id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
+    /// quà/voucher/Xu nào (vi phạm chính sách Apple nếu gắn khuyến khích). requestReview không
+    /// cần App Store id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
     private var danhGiaCard: some View {
         cardBox {
             HStack {

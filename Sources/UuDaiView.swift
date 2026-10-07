@@ -237,6 +237,11 @@ struct UuDaiView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
+            // App Store Review Guideline 5.3.2: chương trình quà tặng phải ghi rõ Apple không tài trợ.
+            Text("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
+                .font(.system(size: 10, weight: .medium)).foregroundColor(Theme.textFaint)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
