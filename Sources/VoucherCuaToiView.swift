@@ -6,16 +6,9 @@ import SwiftUI
 /// phải), thay vì list rời rạc chữ-với-chữ trong 1 card chung.
 ///
 /// 2026-09-26: từng thử đổi hẳn sang dòng chữ phẳng (bỏ VoucherTicketCard) nhưng nhìn không còn
-/// giống bản gốc (phản hồi thực tế kèm ảnh so sánh) — LẤY LẠI đúng VoucherTicketCard cũ, chỉ THÊM
-/// thanh tab TẤT CẢ/ĐANG CÓ/SẮP CÓ ở trên (giữ nguyên phần đã làm — voucher hệ thống khách chưa đủ
-/// điều kiện, API getVoucherSapCo), không đụng gì tới cách hiển thị từng card.
+/// giống bản gốc (phản hồi thực tế kèm ảnh so sánh) — LẤY LẠI đúng VoucherTicketCard cũ.
+/// 2026-10-11: bỏ thanh tab TẤT CẢ/ĐANG CÓ/SẮP CÓ, gom thành 1 danh sách (đồng bộ Android).
 struct VoucherCuaToiView: View {
-    private enum LocTab: String, CaseIterable {
-        case tatCa = "TẤT CẢ"
-        case dangCo = "ĐANG CÓ"
-        case sapCo = "SẮP CÓ"
-    }
-
     var notificationBell: AnyView
     /// false khi nhúng trong UuDaiVoucherView (thanh tiêu đề do view cha vẽ).
     var showHeader: Bool = true
@@ -23,7 +16,6 @@ struct VoucherCuaToiView: View {
     @State private var vouchers: [VoucherCuaToi] = []
     @State private var voucherSapCo: [VoucherCuaToi] = []
     @State private var loading = true
-    @State private var tab: LocTab = .tatCa
 
     /// Sắp theo LOẠI trước: voucher SoTien (giảm theo GIÁ TRỊ cố định) lên trên, sắp giảm dần theo
     /// soTienGiam; voucher PhanTram (giảm theo %) xuống dưới, sắp giảm dần theo phanTramGiam. Đổi
@@ -79,28 +71,20 @@ struct VoucherCuaToiView: View {
     }
 
     /// ID các voucher "Sắp có" (gộp cả 2 lý do: chưa tới ngày + chưa đủ điều kiện) — dùng để làm MỜ
-    /// đúng những dòng này khi chúng xuất hiện gộp chung trong tab TẤT CẢ (voucherSapCo tự thân không
+    /// đúng những dòng này khi chúng xuất hiện gộp chung trong danh sách (voucherSapCo tự thân không
     /// mang cờ daSuDung/chuaBatDau nào để VoucherTicketCard tự mờ qua nhanSapDienRa, phải đánh dấu từ
     /// bên ngoài qua forceMo — chuaToiNgay thì tự có nhanSapDienRa nên không cần trong set này).
     private var sapCoIds: Set<String> { Set(voucherSapCo.map(\.id)) }
 
+    /// Gộp 1 danh sách duy nhất (2026-10-11, bỏ thanh TẤT CẢ/ĐANG CÓ/SẮP CÓ theo feedback): khả dụng lên
+    /// đầu, chưa khả dụng (đã dùng/chưa tới ngày/chưa đủ điều kiện) dồn xuống dưới và mờ đi.
     private var hienThi: [VoucherCuaToi] {
-        switch tab {
-        // TẤT CẢ = gộp cả 2 danh sách (Đang có/Sắp có), khả dụng lên đầu — chưa khả dụng (đã dùng/
-        // chưa tới ngày/voucherSapCo) dồn xuống dưới rồi mờ đi, mỗi khối tự sắp theo tiêu chí riêng.
-        case .tatCa: return dangCo + uuTienThuTu(daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep)
-        case .dangCo: return dangCo
-        // SẮP CÓ = chưa tới ngày (chuaToiNgay, sắp theo ngày) + chưa đủ điều kiện dù đã tới ngày
-        // (voucherSapCoSapXep, sắp theo giá trị giảm) — 2 nguồn cùng 1 cửa sổ hiện-trước ở server,
-        // chỉ khác lý do hiển thị VÀ tiêu chí sắp xếp.
-        case .sapCo: return uuTienThuTu(chuaToiNgay + voucherSapCoSapXep)
-        }
+        dangCo + uuTienThuTu(daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             if showHeader { TitleBar(title: "Voucher", icon: "ticket", centerTitle: true, trailing: notificationBell) }
-            tabBar
 
             Group {
                 if loading {
@@ -130,32 +114,6 @@ struct VoucherCuaToiView: View {
         .task { await load() }
     }
 
-    private var tabBar: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach(LocTab.allCases, id: \.self) { t in
-                    Button {
-                        tab = t
-                    } label: {
-                        VStack(spacing: 8) {
-                            Text(t.rawValue)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(tab == t ? Theme.primary : Theme.textMuted)
-                            Rectangle()
-                                .fill(tab == t ? Theme.primary : Color.clear)
-                                .frame(height: 2)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 12)
-                }
-            }
-            Divider()
-        }
-        .background(Color(.systemBackground))
-    }
-
     /// 2026-09-27: BỎ hẳn phần ghép "— Cần: ..." theo phản hồi (dòng lý do chưa mở khoá làm rối card,
     /// nhãn "SẮP CÓ"/mờ card đã đủ ngụ ý "chưa dùng được") — chỉ còn hiện moTa gốc staff gõ sẵn, không
     /// đụng gì tới lyDoChuaKhaDung ở nơi khác (model vẫn giữ field này).
@@ -172,15 +130,14 @@ struct VoucherCuaToiView: View {
             nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
             donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
             nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
-            // Chỉ tab TẤT CẢ trộn khả dụng/chưa khả dụng mới cần mờ để phân biệt — ĐANG CÓ (toàn khả
-            // dụng) và SẮP CÓ (toàn chưa khả dụng) đồng nhất 1 trạng thái, mờ ở 2 tab đó chỉ dư thừa.
-            applyDim: tab == .tatCa,
+            // Danh sách trộn khả dụng/chưa khả dụng nên mờ để phân biệt.
+            applyDim: true,
             // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa) không tự mờ được từ
             // card qua daSuDung/nhanSapDienRa — ép mờ qua forceMo, KHÔNG dùng .opacity() overlay riêng
             // nữa (2026-09-27 fix: overlay riêng chỉ nhân mờ lên khối trái vẫn tô đậm primaryGradient,
             // nhìn ĐẬM HƠN hẳn card mờ kiểu textFaint dù cùng hệ số — "2 độ mờ khác nhau"). forceMo đi
             // qua chung `mo` nên khối trái cũng đổi màu xám textFaint đồng bộ.
-            forceMo: tab == .tatCa && sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung,
+            forceMo: sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung,
             hangYeuCau: v.hangToiThieu
         )
     }
@@ -188,7 +145,7 @@ struct VoucherCuaToiView: View {
     private var emptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "ticket").font(.system(size: 40)).foregroundColor(Theme.textFaint)
-            Text(tab == .sapCo ? "Chưa có ưu đãi nào sắp mở khoá." : "Bạn chưa có voucher nào")
+            Text("Bạn chưa có voucher nào")
                 .font(.system(size: 14)).foregroundColor(Theme.textMuted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
