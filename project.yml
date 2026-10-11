@@ -21,7 +21,7 @@ targets:
         CFBundleDisplayName: Đenn Coffee
         # App Store chỉ nhận dạng số "X.Y.Z" — tăng tay mỗi lần nộp bản mới lên store. CFBundleVersion
         # (build number) do CI tự đặt theo số lần chạy workflow, xem .github/workflows/build-ios.yml.
-        CFBundleShortVersionString: "1.0.1"
+        CFBundleShortVersionString: "1.0.2"
         CFBundleVersion: "1"
         # App chỉ dùng HTTPS chuẩn của iOS — miễn khai báo xuất khẩu mã hoá, khỏi phải trả lời lại
         # câu hỏi này mỗi lần upload lên App Store Connect.
