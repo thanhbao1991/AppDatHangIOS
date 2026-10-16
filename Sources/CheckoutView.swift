@@ -234,7 +234,7 @@ struct CheckoutView: View {
                     Image(systemName: "bag.fill").foregroundColor(Theme.primary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Mua hộ — nhận tại quán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                        Text("Giảm 5% tổng tiền hàng (hoặc voucher nếu giảm nhiều hơn)")
+                        Text("Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!")
                             .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     }
                 }
