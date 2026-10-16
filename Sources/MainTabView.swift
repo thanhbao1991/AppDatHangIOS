@@ -29,7 +29,7 @@ struct MainTabView: View {
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
     /// có thể push route .checkout, xem navigationDestination bên dưới) — dùng để ẩn tabBar dưới cùng.
     private var isCheckoutActive: Bool {
-        homePath.last == .checkout || cartPath.last == .checkout
+        [HomeRoute.checkout, .checkoutMuaHo].contains { homePath.last == $0 || cartPath.last == $0 }
     }
 
     /// Badge số tiền giỏ hàng dạng viết tắt trên tab bar (vd "25k", "1.2tr") — nil khi giỏ trống để
@@ -53,6 +53,7 @@ struct MainTabView: View {
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .checkout: CheckoutView(path: $homePath, selectedTab: $selectedTab)
+                                case .checkoutMuaHo: CheckoutView(path: $homePath, selectedTab: $selectedTab, muaHo: true)
                                 case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
                                 }
                             }
@@ -63,6 +64,7 @@ struct MainTabView: View {
                             .navigationDestination(for: HomeRoute.self) { route in
                                 switch route {
                                 case .checkout: CheckoutView(path: $cartPath, selectedTab: $selectedTab)
+                                case .checkoutMuaHo: CheckoutView(path: $cartPath, selectedTab: $selectedTab, muaHo: true)
                                 case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; cartPath = [] }
                                 }
                             }

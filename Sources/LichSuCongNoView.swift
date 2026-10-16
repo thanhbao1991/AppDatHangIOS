@@ -77,6 +77,7 @@ struct LichSuCongNoView: View {
         switch phanLoai {
         case "Ship": return "Giao hàng"
         case "Mv": return "Mang về"
+        case "Mh": return "Mua hộ"
         default: return "Tại quán"
         }
     }

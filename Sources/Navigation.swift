@@ -6,6 +6,8 @@ enum HomeRoute: Hashable {
     /// Trang "Thanh toán" trước khi đặt (địa chỉ + hình thức thanh toán) — bước 2 sau tab Giỏ hàng,
     /// KHÁC với .thanhToan bên dưới (đó là trang QR chuyển khoản SAU khi đơn đã tạo xong).
     case checkout
+    /// Cùng trang Thanh toán nhưng cho shipper đặt "Mua hộ" (nhận tại quán, giảm 5%) — nút Mua hộ ở Giỏ hàng.
+    case checkoutMuaHo
     case thanhToan(hoaDonId: String)
 }
 

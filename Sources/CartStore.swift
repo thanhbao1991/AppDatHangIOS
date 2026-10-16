@@ -125,6 +125,12 @@ final class CartStore: ObservableObject {
     }
 
     var soDuXu: Double { vi?.soDu ?? 0 }
+    var laShipper: Bool { vi?.laShipper ?? false }
+
+    /// Giảm tự động của đơn Mua hộ — 5% làm tròn 1000, khớp MuaHoGiamGia.Giam5PhanTram bên Backend.
+    func giamMuaHo(tongTienHang: Double) -> Double {
+        (tongTienHang * 0.05 / 1000).rounded() * 1000
+    }
 
     /// Voucher hợp lệ để hiện cho khách chọn — UpsizeMonMoi (chiApDungKhiCoSizeL) cần giỏ có ít nhất 1
     /// dòng Size L, UpsizeXL (chiApDungKhiCoSizeXL) cần ít nhất 1 dòng Size XL, ToppingMienPhi

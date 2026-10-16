@@ -10,6 +10,9 @@ struct CheckoutView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
     @Binding var selectedTab: AppTab
+    /// Shipper đặt "Mua hộ" (nút ở Giỏ hàng) — khoá Nhận tại quán, giảm 5% hoặc voucher nếu lớn hơn
+    /// (khớp DatHangService.DatMonAsync). Server tự kiểm tra lại tài khoản shipper.
+    var muaHo = false
 
     @State private var diaChi = ""
     /// Cảnh báo từ server khi voucher đã chọn KHÔNG áp dụng được (đơn vẫn tạo thành công, chỉ không
@@ -64,12 +67,21 @@ struct CheckoutView: View {
     private var soDu: Double { cart.soDuXu }
     private var tongTienHang: Double { cart.totalPrice }
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
-    private var voucherGiam: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
-    private var tongCanTra: Double { tongTienHang - voucherGiam + phiShip }
+    private var voucherGiamChon: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
+    private var giam5MuaHo: Double { muaHo ? cart.giamMuaHo(tongTienHang: tongTienHang) : 0 }
+    /// Mua hộ: voucher chỉ dùng khi giảm NHIỀU hơn 5% (bằng nhau lấy 5%, voucher để dành) — cùng luật server.
+    private var dungVoucher: Bool { voucherGiamChon > 0 && voucherGiamChon > giam5MuaHo }
+    private var voucherGiam: Double { dungVoucher ? voucherGiamChon : 0 }
+    private var muaHoGiam: Double { dungVoucher ? 0 : giam5MuaHo }
+    private var tongCanTra: Double { tongTienHang - voucherGiam - muaHoGiam + phiShip }
 
     private var xacNhanRows: [(icon: String, label: String, value: String)] {
         var rows: [(String, String, String)] = [("🧋", "Số lượng", "\(cart.totalCount) ly")]
-        if nhanTaiQuan {
+        if muaHo {
+            rows.append(("🛍️", "Loại đơn", "Mua hộ — nhận tại quán"))
+            if muaHoGiam > 0 { rows.append(("🏷️", "Giảm Mua hộ 5%", "-" + formatTien(muaHoGiam))) }
+            if voucherGiam > 0 { rows.append(("🎟️", "Giảm voucher", "-" + formatTien(voucherGiam))) }
+        } else if nhanTaiQuan {
             rows.append(("🏪", "Nhận hàng", "Nhận tại quán"))
         } else {
             rows.append(("📍", "Giao đến", diaChi.trimmingCharacters(in: .whitespaces)))
@@ -84,7 +96,7 @@ struct CheckoutView: View {
 
     private var xacNhanSheet: some View {
         VStack(spacing: 0) {
-            Text("Xác nhận đặt hàng")
+            Text(muaHo ? "Xác nhận Mua hộ" : "Xác nhận đặt hàng")
                 .font(.headline)
                 .padding(.top, 24)
                 .padding(.bottom, 16)
@@ -112,7 +124,7 @@ struct CheckoutView: View {
                     showXacNhan = false
                     Task { await datHang() }
                 } label: {
-                    Text("Đặt hàng").fontWeight(.bold).frame(maxWidth: .infinity)
+                    Text(nutDatText).fontWeight(.bold).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.gradientProminent)
             }
@@ -169,6 +181,7 @@ struct CheckoutView: View {
                 }
         }
         .task {
+            if muaHo { nhanTaiQuan = true }
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
             await loadDiaChi()
             await loadTenDuong()
@@ -190,7 +203,7 @@ struct CheckoutView: View {
 
     private var header: some View {
         ZStack {
-            Text("Thanh toán").font(.system(size: 17, weight: .bold)).foregroundColor(.primary)
+            Text(muaHo ? "Mua hộ" : "Thanh toán").font(.system(size: 17, weight: .bold)).foregroundColor(.primary)
             HStack {
                 Button {
                     if !path.isEmpty { path.removeLast() }
@@ -215,16 +228,28 @@ struct CheckoutView: View {
 
     private var diaChiSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker("", selection: $nhanTaiQuan) {
-                Text("Giao tận nơi").tag(false)
-                Text("Nhận tại quán").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: nhanTaiQuan) { nhan in
-                if !nhan { Task { await tinhShip() } }
-            }
+            if muaHo {
+                // Mua hộ luôn nhận tại quán — không cho chọn giao tận nơi.
+                HStack(spacing: 8) {
+                    Image(systemName: "bag.fill").foregroundColor(Theme.primary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Mua hộ — nhận tại quán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                        Text("Giảm 5% tổng tiền hàng (hoặc voucher nếu giảm nhiều hơn)")
+                            .font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    }
+                }
+            } else {
+                Picker("", selection: $nhanTaiQuan) {
+                    Text("Giao tận nơi").tag(false)
+                    Text("Nhận tại quán").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: nhanTaiQuan) { nhan in
+                    if !nhan { Task { await tinhShip() } }
+                }
 
-            if nhanTaiQuan { pickupContent } else { addressContent }
+                if nhanTaiQuan { pickupContent } else { addressContent }
+            }
         }
         .padding(14)
         .background(Color.white)
@@ -474,6 +499,13 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Chi tiết thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
             chiTietRow("Tổng tiền hàng", formatTien(tongTienHang))
+            if muaHoGiam > 0 {
+                chiTietRow("Giảm Mua hộ 5%", "-" + formatTien(muaHoGiam), color: Theme.danger)
+            }
+            if muaHo && voucherGiamChon > 0 && !dungVoucher {
+                Text("Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.")
+                    .font(.system(size: 11)).foregroundColor(Theme.textMuted)
+            }
             if voucherGiam > 0 {
                 chiTietRow("Giảm giá voucher", "-" + formatTien(voucherGiam), color: Theme.danger)
             }
@@ -521,6 +553,8 @@ struct CheckoutView: View {
     /// nil, vd mất mạng) thì KHÔNG khoá nhầm, để server (DatMonAsync) là nơi chặn thật cuối cùng.
     private var dangDongCua: Bool { gioMoBan?.dangMoCua == false }
 
+    private var nutDatText: String { muaHo ? "Mua hộ" : "Đặt hàng" }
+
     /// Lý do nút Đặt hàng bị khoá — hiện ngay dưới nút để khách biết phải làm gì.
     private var lyDoKhongDatDuoc: String? {
         if dangDongCua, let gioMoBan {
@@ -544,7 +578,7 @@ struct CheckoutView: View {
                 Button {
                     showXacNhan = true
                 } label: {
-                    if loading { ProgressView().tint(.white) } else { Text("Đặt hàng").fontWeight(.bold) }
+                    if loading { ProgressView().tint(.white) } else { Text(nutDatText).fontWeight(.bold) }
                 }
                 .buttonStyle(.gradientProminent)
                 .frame(minWidth: 140)
@@ -686,7 +720,9 @@ struct CheckoutView: View {
             items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude, ghimDoKhachChinh: !nhanTaiQuan && ghimDoKhach,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
-            dungVi: cart.dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue, voucherId: cart.selectedVoucher?.id, laDatLai: cart.laDatLai
+            // Mua hộ mà 5% đã lớn hơn voucher thì không gửi voucher — để dành, khỏi bị server cảnh báo.
+            dungVi: cart.dungXu, hinhThucThanhToan: hinhThucThanhToan.rawValue,
+            voucherId: muaHo && !dungVoucher ? nil : cart.selectedVoucher?.id, laDatLai: cart.laDatLai, muaHo: muaHo
         )
         if result.isSuccess, let data = result.data {
             clientOrderId = nil

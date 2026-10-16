@@ -262,6 +262,8 @@ struct DatMonRequest: Encodable {
     /// Giỏ hàng hiện tại đến từ nút "Đặt lại" (tab Hoá đơn) — dùng cho voucher DieuKien=DatLai. Xem
     /// CartStore.laDatLai/markDatLai().
     let laDatLai: Bool
+    /// Shipper bấm "Mua hộ" — server tự kiểm tra shipper, ép nhận tại quán, giảm 5% (hoặc voucher nếu lớn hơn).
+    let muaHo: Bool
 }
 struct DatMonResponse: Decodable { let id: String; let thanhTien: Double }
 
@@ -473,6 +475,8 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
         switch phanLoai {
         case "Ship": return "Giao hàng"
         case "Mv": return "Mang về"
+        // tenBan đơn Mh là "Mh 3 ly" (Backend tự đặt) — rơi xuống default sẽ hiện "Bàn Mh 3 ly".
+        case "Mh": return "Mua hộ — nhận tại quán"
         default: return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
         }
     }
@@ -536,6 +540,9 @@ struct KhachHangVi: Decodable {
     let duocNhanVoucher: Bool
     let daNhanVoucher: Bool
     let tongNo: Double
+    /// Tài khoản shipper (khách "… App" có AppDriverId) — chỉ khi true mới hiện nút "Mua hộ" ở Giỏ hàng.
+    /// Optional để không vỡ decode khi backend chưa có field này.
+    let laShipper: Bool?
     let tongChiTieuThangNay: Double
     let hang: String
     // Hạng tính theo chi tiêu THÁNG TRƯỚC — chỉ để hiển thị tham khảo cạnh "Điểm tháng trước", KHÁC

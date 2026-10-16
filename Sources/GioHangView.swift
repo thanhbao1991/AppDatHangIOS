@@ -111,6 +111,16 @@ struct GioHangView: View {
                         .animation(.easeOut(duration: 0.6), value: tongSauGiam)
                 }
                 Spacer()
+                // Chỉ tài khoản shipper — đặt hộ khách, nhận tại quán, giảm 5% (xem CheckoutView muaHo).
+                if Prefs.isLoggedIn && cart.laShipper {
+                    Button { path.append(.checkoutMuaHo) } label: {
+                        Text("Mua hộ").fontWeight(.bold).foregroundColor(Theme.primary)
+                            .padding(.horizontal, 16).padding(.vertical, 12)
+                            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.primary, lineWidth: 1.5))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
                 Button {
                     if Prefs.isLoggedIn {
                         path.append(.checkout)
@@ -118,7 +128,7 @@ struct GioHangView: View {
                         NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil)
                     }
                 } label: {
-                    Text("Đặt hàng").fontWeight(.bold).frame(minWidth: 120)
+                    Text("Đặt hàng").fontWeight(.bold).frame(minWidth: cart.laShipper ? 90 : 120)
                 }
                 .buttonStyle(.gradientProminent)
             }
