@@ -251,6 +251,8 @@ struct CheckoutView: View {
                 if nhanTaiQuan { pickupContent } else { addressContent }
             }
         }
+        // Nội dung Mua hộ ngắn hơn segmented picker — kéo full width cho bằng các card bên dưới.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
