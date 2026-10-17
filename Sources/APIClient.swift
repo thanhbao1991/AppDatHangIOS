@@ -16,6 +16,14 @@ actor APIClient {
     // mới thực sự chạy — nhìn như tab Giỏ hàng "mờ mãi" tới khi tab Thực đơn tải menu xong.
     private var inFlightCatalog: [String: Task<Any, Never>] = [:]
 
+    /// "1.0.3 (551)" — backend ghi lên phiên khách để biết từng khách đang dùng bản nào.
+    private static let appVersion: String = {
+        let info = Bundle.main.infoDictionary
+        let ver = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(ver) (\(build))"
+    }()
+
     private func jsonBody<T: Encodable>(_ obj: T) -> Data {
         try! JSONEncoder().encode(obj)
     }
@@ -24,6 +32,7 @@ actor APIClient {
         var req = URLRequest(url: URL(string: Prefs.apiBase + path)!)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Self.appVersion, forHTTPHeaderField: "X-App-Version")
         if authorized, let token = Prefs.token {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
