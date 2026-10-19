@@ -153,10 +153,21 @@ struct SettingsView: View {
                 Task { await uploadAvatar(data) }
             }
             VStack(alignment: .leading, spacing: 2) {
+                // 19/10/2026: icon bút chì trơn sau tên khó nhận ra là "sửa tên" → nút viên thuốc có chữ.
+                // Khách chưa đặt tên (tên trống / chỉ là SĐT) thì ghi "Đặt tên" để mời đặt.
                 Button { showEditTen = true } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 8) {
                         Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                        Image(systemName: "pencil").font(.system(size: 12)).foregroundColor(.white.opacity(0.85))
+                            .lineLimit(1)
+                        HStack(spacing: 3) {
+                            Image(systemName: "pencil").font(.system(size: 10, weight: .semibold))
+                            Text(chuaDatTen ? "Đặt tên" : "Sửa tên").font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color.white.opacity(0.22)))
+                        .fixedSize()
                     }
                 }
                 .buttonStyle(.plain)
@@ -174,6 +185,11 @@ struct SettingsView: View {
         .padding(.vertical, HeaderBarMetrics.verticalPadding)
         .frame(minHeight: HeaderBarMetrics.rowHeight)
         .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
+    }
+
+    private var chuaDatTen: Bool {
+        let ten = (Prefs.tenKhachHang ?? "").trimmingCharacters(in: .whitespaces)
+        return ten.isEmpty || ten.allSatisfy { $0.isNumber || $0 == "+" || $0 == " " }
     }
 
     // Dùng diaChiHienThi thay vì diaChiList thẳng để header trên cùng luôn khớp đúng danh sách card
