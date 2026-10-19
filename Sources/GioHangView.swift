@@ -5,6 +5,28 @@ import SwiftUI
 /// (trước đây gộp cả 3 bước "Hoá đơn/Nhận hàng/Thanh toán" thành 1 timeline dài trong CÙNG tab) theo
 /// yêu cầu tham khảo bố cục Shopee — 2 màn rõ ràng: xem giỏ trước, bấm "Đặt hàng" mới sang bước điền
 /// địa chỉ/chọn thanh toán.
+/// Mờ/rõ lặp lại khi `bat` = true; tắt thì về rõ hẳn ngay.
+private struct NhapNhay: ViewModifier {
+    let bat: Bool
+    @State private var mo = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(bat && mo ? 0.25 : 1)
+            .onAppear { capNhat(bat) }
+            .onChange(of: bat) { capNhat($0) }
+    }
+
+    private func capNhat(_ bat: Bool) {
+        if bat {
+            mo = false
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { mo = true }
+        } else {
+            withAnimation(.easeOut(duration: 0.2)) { mo = false }
+        }
+    }
+}
+
 struct GioHangView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
@@ -172,6 +194,8 @@ struct GioHangView: View {
                         Text("Chọn voucher").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
                         Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                     }
+                    // Nhấp nháy gây chú ý khi có voucher dùng được mà khách chưa chọn (2026-10-19).
+                    .modifier(NhapNhay(bat: cart.selectedVoucher == nil && !cart.vouchersHienThi.isEmpty))
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(Theme.bg)
