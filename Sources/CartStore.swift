@@ -51,6 +51,9 @@ final class CartStore: ObservableObject {
     @Published private(set) var vouchers: [Voucher] = []
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
+    /// SanPhamId món không pha chế (nước lon, ăn vặt, nhóm Khác...) — voucher bỏ qua hẳn các dòng này,
+    /// khớp DatHangService.GetSanPhamKhongApDungVoucherIdsAsync bên Backend (2026-10-20).
+    @Published private(set) var spKhongApDungVoucher: Set<String> = []
     private var uuDaiLoaded = false
 
     /// Giỏ hàng lưu qua UserDefaults (JSON) — trước đây thuần in-memory nên tắt app (không chỉ gỡ
@@ -141,7 +144,18 @@ final class CartStore: ObservableObject {
     /// ẩn khỏi danh sách chọn thay vì hiện rồi báo lỗi/-0đ lúc đặt hàng.
     var vouchersHienThi: [Voucher] { vouchers.filter { voucherDuDieuKien($0) } }
 
+    /// Dòng voucher được xét — bỏ món không pha chế. Dòng giỏ cũ thiếu sanPhamId vẫn tính (server chốt).
+    var itemsApDungVoucher: [CartItem] {
+        items.filter { item in
+            guard let sanPhamId = item.sanPhamId?.lowercased() else { return true }
+            return !spKhongApDungVoucher.contains(sanPhamId)
+        }
+    }
+    var coMonKhongApDungVoucher: Bool { itemsApDungVoucher.count < items.count }
+    var tongTienApDungVoucher: Double { itemsApDungVoucher.reduce(0) { $0 + $1.thanhTien } }
+
     func voucherDuDieuKien(_ v: Voucher) -> Bool {
+        let items = itemsApDungVoucher
         if v.chiApDungKhiCoSizeL {
             return items.contains { isSizeLBienThe($0.tenBienThe) }
         }
@@ -160,18 +174,24 @@ final class CartStore: ObservableObject {
         if v.chiApDungKhiDatLai {
             return laDatLai
         }
-        if let donToiThieu = v.donToiThieu, donToiThieu > 0, totalPrice < donToiThieu {
+        if let donToiThieu = v.donToiThieu, donToiThieu > 0, tongTienApDungVoucher < donToiThieu {
             return false
         }
         if let soLuongToiThieu = v.soLuongToiThieu, soLuongToiThieu > 0 {
-            return totalCount >= soLuongToiThieu
+            return items.reduce(0) { $0 + $1.soLuong } >= soLuongToiThieu
         }
         return true
     }
 
-    /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền hàng.
-    func voucherGiam(tongTienHang: Double) -> Double {
-        min(selectedVoucher?.soTienGiamThucTe(tongTienHang: tongTienHang, cartItems: items) ?? 0, tongTienHang)
+    /// Số tiền voucher v giảm được cho giỏ hiện tại — chỉ tính trên món pha chế.
+    func soTienGiam(_ v: Voucher) -> Double {
+        let base = tongTienApDungVoucher
+        return min(v.soTienGiamThucTe(tongTienHang: base, cartItems: itemsApDungVoucher), base)
+    }
+
+    /// Giảm giá voucher trừ THẲNG vào tiền hàng (trước ship) — không vượt quá tiền món pha chế.
+    func voucherGiam() -> Double {
+        selectedVoucher.map(soTienGiam) ?? 0
     }
 
     private func validateSelectedVoucher() {
@@ -188,10 +208,13 @@ final class CartStore: ObservableObject {
         async let viTask: KhachHangVi? = APIClient.shared.getVi()
         async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
         async let spTask: [String] = APIClient.shared.getSanPhamDaTungDat()
+        async let loaiTruTask: [String] = APIClient.shared.getSanPhamKhongApDungVoucher()
         vi = await viTask
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         vouchers = await voucherTask
         sanPhamDaTungDat = await spTask
+        spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
+        validateSelectedVoucher()
     }
 
     /// Tải LẠI riêng danh sách voucher, bỏ qua guard "1 lần/phiên" của loadUuDaiIfNeeded — dùng cho

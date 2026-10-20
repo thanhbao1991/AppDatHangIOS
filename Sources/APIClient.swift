@@ -443,6 +443,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// SanPhamId món không pha chế — voucher không áp dụng cho các món này (CartStore.itemsApDungVoucher).
+    func getSanPhamKhongApDungVoucher() async -> [String] {
+        let env: ApiEnvelope<[String]> = await decode("/dat-hang/menu/khong-ap-dung-voucher")
+        return env.isSuccess ? (env.data ?? []) : []
+    }
+
     /// soLuong = tổng số ly (drinks, không tính topping) trong giỏ — miễn phí ship từ 2 ly
     /// (xem ShippingFeeHelper.TinhPhiShip), tongTienDon chỉ để ghi log.
     func uocTinhShip(lat: Double, long: Double, tongTienDon: Double, soLuong: Int) async -> ApiEnvelope<UocTinhShip> {

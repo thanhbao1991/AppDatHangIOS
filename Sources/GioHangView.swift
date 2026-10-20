@@ -75,7 +75,7 @@ struct GioHangView: View {
         .sheet(isPresented: $showVoucherSheet) {
             VoucherPickerSheet(
                 vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien,
-                giaTriGiam: { $0.soTienGiamThucTe(tongTienHang: cart.totalPrice, cartItems: cart.items) },
+                giaTriGiam: { cart.soTienGiam($0) },
                 selected: $cart.selectedVoucher,
                 onClose: { showVoucherSheet = false },
                 onRetry: { await cart.reloadVouchers() }
@@ -160,7 +160,7 @@ struct GioHangView: View {
         .overlay(Rectangle().fill(Theme.divider).frame(height: 1), alignment: .top)
     }
 
-    private var voucherGiam: Double { cart.voucherGiam(tongTienHang: cart.totalPrice) }
+    private var voucherGiam: Double { cart.voucherGiam() }
 
     /// Tổng tiền hàng sau khi trừ voucher — nền cho bước tính trừ Xu bên dưới (chưa gồm phí ship, màn
     /// này không biết ship vì địa chỉ chọn ở bước Thanh toán).
@@ -203,6 +203,12 @@ struct GioHangView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+
+            if cart.coMonKhongApDungVoucher {
+                Text("Nước lon, ăn vặt và món không pha chế không áp dụng voucher.")
+                    .font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             Toggle(isOn: $cart.dungXu) {
                 HStack(spacing: 8) {

@@ -67,7 +67,7 @@ struct CheckoutView: View {
     private var soDu: Double { cart.soDuXu }
     private var tongTienHang: Double { cart.totalPrice }
     private var phiShip: Double { nhanTaiQuan ? 0 : (ship?.phiShip ?? 0) }
-    private var voucherGiamChon: Double { cart.voucherGiam(tongTienHang: tongTienHang) }
+    private var voucherGiamChon: Double { cart.voucherGiam() }
     private var giam5MuaHo: Double { muaHo ? cart.giamMuaHo(tongTienHang: tongTienHang) : 0 }
     /// Mua hộ: voucher chỉ dùng khi giảm NHIỀU hơn 5% (bằng nhau lấy 5%, voucher để dành) — cùng luật server.
     private var dungVoucher: Bool { voucherGiamChon > 0 && voucherGiamChon > giam5MuaHo }
