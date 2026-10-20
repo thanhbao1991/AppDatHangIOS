@@ -18,6 +18,10 @@ struct LoginView: View {
     @State private var newPassword = ""
     @State private var confirmPassword = ""
     @State private var showNewPassword = false
+    /// Đăng ký lần đầu (SĐT chưa có mật khẩu) — khác "Quên mật khẩu" cùng đi qua bước OTP. Chỉ đăng ký
+    /// mới hỏi "Tên gọi" (2026-10-21), để app không hiện SĐT làm tên cho khách mới.
+    @State private var laDangKy = false
+    @State private var tenGoi = ""
     @State private var loading = false
     @State private var error = ""
     @State private var resendConLai = 0
@@ -214,6 +218,14 @@ struct LoginView: View {
 
     private var otpPasswordStep: some View {
         VStack(spacing: 14) {
+            if laDangKy {
+                fieldBox(icon: "person") {
+                    TextField("Tên gọi của bạn", text: $tenGoi)
+                        .textContentType(.givenName)
+                        .focused($focusedField, equals: "tenGoi")
+                        .onChange(of: tenGoi) { if $0.count > 50 { tenGoi = String($0.prefix(50)) } }
+                }
+            }
             fieldBox(icon: "lock") {
                 Group {
                     if showNewPassword { TextField("Mật khẩu mới", text: $newPassword) }
@@ -231,7 +243,8 @@ struct LoginView: View {
                 }
                 .focused($focusedField, equals: "confirmPassword")
             }
-            primaryButton("Xác nhận", disabled: loading || newPassword.isEmpty || confirmPassword.isEmpty) {
+            primaryButton("Xác nhận", disabled: loading || newPassword.isEmpty || confirmPassword.isEmpty
+                          || (laDangKy && tenGoi.trimmingCharacters(in: .whitespaces).isEmpty)) {
                 Task { await submitOtpPassword() }
             }
             Button("Quay lại") { step = .otpCode }.foregroundColor(Theme.primary).fontWeight(.semibold)
@@ -265,6 +278,7 @@ struct LoginView: View {
         guard let focusedField else { return [] }
         switch focusedField {
         case "phone": return ["phone"]
+        case "tenGoi": return ["person"]
         case "password": return ["lock"]
         case "otpCode": return ["number"]
         case "newPassword", "confirmPassword": return ["lock"]
@@ -292,6 +306,7 @@ struct LoginView: View {
 
     private func resetFields() {
         password = ""; otpCode = ""; newPassword = ""; confirmPassword = ""; error = ""
+        laDangKy = false; tenGoi = ""
     }
 
     private func backToPhone() {
@@ -326,6 +341,7 @@ struct LoginView: View {
         if result.data == true {
             step = .password
         } else if await sendOtp() {
+            laDangKy = true
             step = .otpCode
         }
     }
@@ -347,6 +363,10 @@ struct LoginView: View {
         let code = otpCode.trimmingCharacters(in: .whitespaces)
         let result = await APIClient.shared.kiemTraOtp(soDienThoai: phone, otp: code)
         if result.isSuccess, result.data == true {
+            // Khách cũ đã có tên trong hệ thống → điền sẵn cho tự sửa (backend chỉ trả khi mã đúng).
+            if laDangKy, tenGoi.isEmpty, let goiY = await APIClient.shared.tenGoiY(soDienThoai: phone, otp: code).data {
+                tenGoi = goiY
+            }
             step = .otpPassword
         } else {
             error = result.message ?? "Mã xác thực không đúng hoặc đã hết hạn."
@@ -359,7 +379,9 @@ struct LoginView: View {
         loading = true; error = ""
         defer { loading = false }
         let code = otpCode.trimmingCharacters(in: .whitespaces)
-        let result = await APIClient.shared.xacNhanOtp(soDienThoai: phone, otp: code, matKhau: newPassword)
+        let ten = tenGoi.trimmingCharacters(in: .whitespaces)
+        let result = await APIClient.shared.xacNhanOtp(soDienThoai: phone, otp: code, matKhau: newPassword,
+                                                       tenHienThi: laDangKy && !ten.isEmpty ? ten : nil)
         if result.isSuccess, result.data != nil {
             isLoggedIn = true
         } else {

@@ -36,7 +36,7 @@ struct ActionResult { let success: Bool; let message: String? }
 // ---- Auth ----
 
 struct LoginRequest: Encodable { let soDienThoai: String; let matKhau: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
-struct OtpConfirmRequest: Encodable { let soDienThoai: String; let otp: String; let matKhau: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
+struct OtpConfirmRequest: Encodable { let soDienThoai: String; let otp: String; let matKhau: String; let tenHienThi: String?; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
 struct RefreshRequest: Encodable { let refreshToken: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
 
 struct KhachHangLoginResponse: Decodable {

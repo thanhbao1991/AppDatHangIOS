@@ -188,8 +188,13 @@ actor APIClient {
         await decode("/khachhang-auth/kiem-tra-otp", method: "POST", body: jsonBody(KiemTraOtpBody(soDienThoai: soDienThoai, otp: otp)), authorized: false)
     }
 
-    func xacNhanOtp(soDienThoai: String, otp: String, matKhau: String) async -> ApiEnvelope<KhachHangLoginResponse> {
-        let body = OtpConfirmRequest(soDienThoai: soDienThoai, otp: otp, matKhau: matKhau, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
+    /// Tên điền sẵn ô "Tên gọi" khi đăng ký — backend chỉ trả khi mã OTP đúng, rỗng nếu không có gì gợi ý.
+    func tenGoiY(soDienThoai: String, otp: String) async -> ApiEnvelope<String> {
+        await decode("/khachhang-auth/ten-goi-y", method: "POST", body: jsonBody(KiemTraOtpBody(soDienThoai: soDienThoai, otp: otp)), authorized: false)
+    }
+
+    func xacNhanOtp(soDienThoai: String, otp: String, matKhau: String, tenHienThi: String? = nil) async -> ApiEnvelope<KhachHangLoginResponse> {
+        let body = OtpConfirmRequest(soDienThoai: soDienThoai, otp: otp, matKhau: matKhau, tenHienThi: tenHienThi, thietBi: deviceName(), nenTang: "iOS", thietBiId: Prefs.thietBiId)
         let result: ApiEnvelope<KhachHangLoginResponse> = await decode("/khachhang-auth/xac-nhan-otp", method: "POST", body: jsonBody(body), authorized: false)
         if result.isSuccess, let d = result.data, let token = d.token, let rt = d.refreshToken, let ten = d.tenKhachHang {
             Prefs.saveSession(token: token, refreshToken: rt, khachHangId: d.khachHangId, tenKhachHang: ten, avatarUrl: d.avatarUrl)
