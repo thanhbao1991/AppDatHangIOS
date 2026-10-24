@@ -309,6 +309,7 @@ struct OrderDetailView: View {
             } else {
                 ProgressView().frame(width: 220, height: 220)
             }
+            NhacGiuNoiDungCk()
             Button("⬇️ Lưu mã QR về máy") { saveQrToPhotos() }
                 .buttonStyle(.gradientProminent)
                 .frame(maxWidth: .infinity)

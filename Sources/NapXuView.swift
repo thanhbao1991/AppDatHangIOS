@@ -70,21 +70,25 @@ struct NapXuView: View {
             Theme.xuIcon(40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(formatTien(goi.soTien)).font(.system(size: 17, weight: .bold))
+                    .lineLimit(1).minimumScaleFactor(0.8)
                 Text("Nhận \(formatXu(goi.tongXuNhan))").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    .lineLimit(1).minimumScaleFactor(0.8)
             }
             Spacer()
             // Số Xu tặng thay vì %: thưởng cố định theo mốc nên % giảm dần ở gói lớn — nhìn "+3%" khách tưởng gói
             // lớn kém lời hơn. Số Xu thì tăng theo gói (24/10/2026). Lần đầu: ghi số GỐC + "x2" nhấp nháy (backend
             // trả soXuTang đã nhân đôi khi lanDau → chia 2 lấy số gốc).
             HStack(spacing: 5) {
-                Text("+\(formatXu(lanDau ? goi.soXuTang / 2 : goi.soXuTang))")
+                Text("+\(formatXu(lanDau ? goi.soXuTang / 2 : goi.soXuTang))").lineLimit(1)
                 if lanDau { NhapNhayX2() }
             }
             .font(.system(size: 13, weight: .bold))
             .foregroundColor(.white)
             .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .background(Capsule().fill(Theme.success))
+            .fixedSize() // không cho xuống dòng "+5.000 / Xu" (24/10 user: badge lệch)
+            .layoutPriority(1)
             Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
         }
         .padding(.vertical, 6)
@@ -189,13 +193,14 @@ struct NapXuQrView: View {
                 ProgressView().frame(width: 240, height: 240)
             }
         }
+        NhacGiuNoiDungCk()
 
         Text(formatTien(goi.soTien)).font(.system(size: 32, weight: .bold))
         Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(formatXu(goi.soXuTang)))")
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(Theme.success)
 
-        Text("Giữ nguyên số tiền và nội dung chuyển khoản \"\(noiDung)\" để Xu được cộng tự động.")
+        Text("Giữ nguyên số tiền và nội dung \"\(noiDung)\" để Xu được cộng tự động.")
             .font(.system(size: 12))
             .foregroundColor(Theme.textFaint)
             .multilineTextAlignment(.center)

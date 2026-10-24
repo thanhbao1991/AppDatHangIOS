@@ -10,6 +10,18 @@ import Photos
 /// hàng có support hay không, ngoài tầm kiểm soát của mình (xem thảo luận session). Thay bằng nút
 /// tải ảnh QR về máy — khách tự mở app ngân hàng bất kỳ rồi quét từ Ảnh, luôn hoạt động vì QR tự
 /// chứa đủ thông tin (không phụ thuộc integration riêng như Zalo Pay).
+/// Dòng nhắc NGAY DƯỚI mọi mã QR chuyển khoản (thanh toán đơn, chi tiết đơn, nạp Xu) — cùng câu với
+/// BankQrConfig.NhacGiuNoiDungCk bên backend/Desktop. SePay tự thu/tự cộng Xu nhờ mã trong nội dung CK.
+struct NhacGiuNoiDungCk: View {
+    var body: some View {
+        Text("Quý khách vui lòng không thay đổi nội dung chuyển khoản (ghi chú)!")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(Theme.danger)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 300)
+    }
+}
+
 struct ThanhToanView: View {
     let hoaDonId: String
     let onDone: () -> Void
@@ -104,6 +116,7 @@ struct ThanhToanView: View {
                 ProgressView().frame(width: 240, height: 240)
             }
         }
+        NhacGiuNoiDungCk()
 
         Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
