@@ -17,6 +17,19 @@ struct NapXuView: View {
         Group {
             if let info {
                 List {
+                    if info.lanDau == true {
+                        Section {
+                            HStack(spacing: 10) {
+                                Text("🎁").font(.system(size: 26))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Nạp lần đầu: nhân đôi Xu tặng").font(.system(size: 15, weight: .bold))
+                                    Text("Số Xu tặng bên dưới đã gồm phần nhân đôi.")
+                                        .font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
                     Section {
                         ForEach(info.goi, id: \.self) { goi in
                             Button { goiChon = goi } label: { goiRow(goi) }
@@ -58,7 +71,9 @@ struct NapXuView: View {
                 Text("Nhận \(formatXu(goi.tongXuNhan))").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             }
             Spacer()
-            Text("+\(goi.phanTramTang)%")
+            // Số Xu tặng thay vì %: thưởng cố định theo mốc nên % giảm dần ở gói lớn — nhìn "+3%" khách tưởng gói
+            // lớn kém lời hơn. Số Xu thì tăng theo gói (24/10/2026).
+            Text("+\(formatXu(goi.soXuTang))")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 10)
@@ -152,7 +167,7 @@ struct NapXuQrView: View {
         }
 
         Text(formatTien(goi.soTien)).font(.system(size: 32, weight: .bold))
-        Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(goi.phanTramTang)%)")
+        Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(formatXu(goi.soXuTang)))")
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(Theme.success)
 

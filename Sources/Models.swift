@@ -287,6 +287,8 @@ struct NapXuInfoDto: Decodable {
     let bankAccountNo: String
     let bankAccountName: String
     let bankAppCode: String
+    /// Khách chưa nạp lần nào — các gói đã tính sẵn x2 Xu tặng. Optional: backend cũ chưa có field này.
+    let lanDau: Bool?
     let goi: [GoiNapXu]
 }
 
