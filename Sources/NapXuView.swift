@@ -6,6 +6,9 @@ import Photos
 /// cho số tiền lẻ), bấm 1 gói ra QR khoá sẵn số tiền + nội dung "SEVQR NAP…" của khách. Tiền về qua
 /// webhook SePay, app chỉ cần tải lại số dư để thấy.
 struct NapXuView: View {
+    /// Nạp xong bấm "Xong" → đóng cả chuỗi Nạp Xu về tab Tài khoản (SettingsView set showNapXu = false).
+    var onXong: () -> Void = {}
+
     @State private var info: NapXuInfoDto?
     @State private var errorMessage: String?
     @State private var goiChon: GoiNapXu?
@@ -42,7 +45,7 @@ struct NapXuView: View {
         .task { if info == nil { await load() } }
         .navigationDestination(isPresented: Binding(get: { goiChon != nil }, set: { if !$0 { goiChon = nil } })) {
             if let goiChon, let info {
-                NapXuQrView(goi: goiChon, noiDung: info.noiDungChuyenKhoan)
+                NapXuQrView(goi: goiChon, noiDung: info.noiDungChuyenKhoan, onXong: onXong)
             }
         }
     }
@@ -83,8 +86,8 @@ struct NapXuView: View {
 struct NapXuQrView: View {
     let goi: GoiNapXu
     let noiDung: String
+    var onXong: () -> Void = {}
 
-    @Environment(\.dismiss) private var dismiss
     @State private var qrImage: UIImage?
     @State private var qrFailed = false
     @State private var saveMessage: String?
@@ -179,7 +182,7 @@ struct NapXuQrView: View {
         Text("Nạp Xu thành công").font(.system(size: 20, weight: .bold))
         Text("+\(formatXu(goi.tongXuNhan)) đã vào ví của bạn.")
             .font(.system(size: 14)).foregroundColor(Theme.textMuted)
-        Button("Xong") { dismiss() }
+        Button("Xong") { onXong() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
     }
@@ -192,12 +195,14 @@ struct NapXuQrView: View {
         qrFailed = qrImage == nil
     }
 
-    /// Tự huỷ khi rời màn (task gắn view). So với số dư lúc mở: tăng đủ tổng Xu của gói = đã nạp.
+    /// Tự huỷ khi rời màn (task gắn view). So với số dư lúc mở: tăng đủ tổng Xu của gói = đã nạp. Lần đọc
+    /// số dư đầu lỗi mạng thì vòng sau đọc lại làm mốc (không thì không bao giờ báo được thành công).
     private func doSoDu() async {
         soDuBanDau = await APIClient.shared.getVi()?.soDu
         while !Task.isCancelled && !daNhan {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
-            guard let batDau = soDuBanDau, let hienTai = await APIClient.shared.getVi()?.soDu else { continue }
+            guard let hienTai = await APIClient.shared.getVi()?.soDu else { continue }
+            guard let batDau = soDuBanDau else { soDuBanDau = hienTai; continue }
             if hienTai - batDau >= goi.tongXuNhan - 0.5 {
                 daNhan = true
             }

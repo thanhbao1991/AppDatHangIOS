@@ -279,7 +279,7 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
-        .navigationDestination(isPresented: $showNapXu) { NapXuView() }
+        .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
         .onChange(of: showNapXu) { dangMo in
             if !dangMo { Task { await load() } }
         }
