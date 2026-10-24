@@ -527,6 +527,10 @@ actor APIClient {
         return env.isSuccess ? env.data : nil
     }
 
+    func getNapXuInfo() async -> ApiEnvelope<NapXuInfoDto> {
+        await decode("/dat-hang/nap-xu")
+    }
+
     func getLichSuVi() async -> [ViGiaoDich] {
         let env: ApiEnvelope<[ViGiaoDich]> = await decode("/dat-hang/vi-giao-dich")
         return env.isSuccess ? (env.data ?? []) : []

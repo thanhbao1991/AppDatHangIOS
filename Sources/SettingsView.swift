@@ -38,6 +38,7 @@ struct SettingsView: View {
     @State private var dangUploadAvatar = false
 
     @State private var showLichSuXu = false
+    @State private var showNapXu = false
     @State private var showCongNoHienTai = false
 
     // Ngày sinh — tái dùng đúng field/API đã có cho xác minh tuổi 18+ (MenuView), chỉ thêm chỗ khai
@@ -245,8 +246,24 @@ struct SettingsView: View {
 
     private func xuContent(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
-            Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold))
+            // Bấm vào số Xu (hoặc nút "+ Nạp Xu" bên dưới) mở danh sách gói nạp — NapXuView.
+            Button { showNapXu = true } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Xu khả dụng").font(.system(size: 14, weight: .bold)).foregroundColor(Theme.textMuted)
+                    Text(formatXu(vi.soDu)).font(.system(size: 24, weight: .bold)).foregroundColor(.primary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { showNapXu = true } label: {
+                Text("+ Nạp Xu")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Theme.primaryGradient))
+            }
+            .buttonStyle(.plain)
             // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
             // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
             // .buttonStyle(.plain) LÀ CHỖ SAI THẬT SỰ (fix 2026-09-23 lần 3, sau 2 lần đổi kiến trúc
@@ -263,6 +280,10 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
+        .navigationDestination(isPresented: $showNapXu) { NapXuView() }
+        .onChange(of: showNapXu) { dangMo in
+            if !dangMo { Task { await load() } }
+        }
     }
 
     private func congNoContent(_ vi: KhachHangVi) -> some View {

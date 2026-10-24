@@ -278,6 +278,25 @@ struct ThanhToanInfoDto: Decodable {
     let tenKhachHangText: String?
 }
 
+/// Màn Nạp Xu (GET /dat-hang/nap-xu) — gói cố định + nội dung chuyển khoản riêng của khách. Backend chỉ
+/// cộng Xu khi số tiền về ĐÚNG 1 gói (NapXuService), nên QR luôn khoá sẵn số tiền của gói.
+struct NapXuInfoDto: Decodable {
+    let maNap: String
+    let noiDungChuyenKhoan: String
+    let bankName: String
+    let bankAccountNo: String
+    let bankAccountName: String
+    let bankAppCode: String
+    let goi: [GoiNapXu]
+}
+
+struct GoiNapXu: Decodable, Hashable {
+    let soTien: Double
+    let phanTramTang: Int
+    let soXuTang: Double
+    let tongXuNhan: Double
+}
+
 struct UocTinhShipRequest: Encodable { let lat: Double; let long: Double; let tongTienDon: Double; let soLuong: Int }
 struct TuyenDuongPoint: Decodable { let lat: Double; let long: Double }
 struct UocTinhShip: Decodable {
