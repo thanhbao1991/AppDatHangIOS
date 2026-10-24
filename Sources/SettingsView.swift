@@ -255,28 +255,27 @@ struct SettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            Button { showNapXu = true } label: {
-                Text("+ Nạp Xu")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Theme.primaryGradient))
+            // "Nạp Xu" + "Lịch sử" chung 1 hàng chữ link (cùng kiểu "Xem chi tiết" cột Công nợ) — 2 cột
+            // đều 3 dòng, thẳng hàng nhau (24/10: nút viên thuốc riêng 1 hàng làm cột Xu cao lệch).
+            HStack(spacing: 16) {
+                Button { showNapXu = true } label: {
+                    Text("Nạp Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                }
+                .buttonStyle(.plain)
+                Button { showLichSuXu = true } label: {
+                    Text("Lịch sử").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
             // Đổi NavigationLink -> Button + state (2026-09-22 tối, xem comment ở navigationDestination
             // phía trên) — không còn tự vẽ chevron, nhưng đây là link dạng text nên vẫn không cần thêm.
-            // .buttonStyle(.plain) LÀ CHỖ SAI THẬT SỰ (fix 2026-09-23 lần 3, sau 2 lần đổi kiến trúc
+            // .buttonStyle(.plain) trên MỌI Button của card LÀ CHỖ SAI THẬT SỰ (fix 2026-09-23 lần 3, sau 2 lần đổi kiến trúc
             // navigation không trúng): 2 Button mặc định (không set style) trong CÙNG 1 row của List
             // bị chính List "nuốt" gesture — List coi cả row là 1 vùng chạm và chỉ route tới ĐÚNG 1
             // control bên trong (thường là control cuối cùng), nên bấm nút đầu (Lịch sử Xu) vẫn kích
             // hoạt action của nút sau (Công nợ). .buttonStyle(.plain) tắt hành vi "hàng-là-1-nút" đó
             // của List, trả lại gesture riêng cho từng Button. Đây là bug List quen thuộc của SwiftUI,
             // không phải lỗi ở tầng navigationDestination như 2 lần sửa trước đoán.
-            Button { showLichSuXu = true } label: {
-                Text("Lịch sử Xu").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-            }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
