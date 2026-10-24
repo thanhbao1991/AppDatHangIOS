@@ -52,7 +52,7 @@ struct NapXuView: View {
             Theme.xuIcon(40)
             VStack(alignment: .leading, spacing: 3) {
                 Text(formatTien(goi.soTien)).font(.system(size: 17, weight: .bold))
-                Text("Nhận \(formatXu(goi.tongXuNhan)) Xu").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                Text("Nhận \(formatXu(goi.tongXuNhan))").font(.system(size: 13)).foregroundColor(Theme.textMuted)
             }
             Spacer()
             Text("+\(goi.phanTramTang)%")
@@ -149,7 +149,7 @@ struct NapXuQrView: View {
         }
 
         Text(formatTien(goi.soTien)).font(.system(size: 32, weight: .bold))
-        Text("Nhận \(formatXu(goi.tongXuNhan)) Xu (tặng \(goi.phanTramTang)%)")
+        Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(goi.phanTramTang)%)")
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(Theme.success)
 
@@ -177,7 +177,7 @@ struct NapXuQrView: View {
             .foregroundColor(Theme.success)
             .padding(.top, 60)
         Text("Nạp Xu thành công").font(.system(size: 20, weight: .bold))
-        Text("+\(formatXu(goi.tongXuNhan)) Xu đã vào ví của bạn.")
+        Text("+\(formatXu(goi.tongXuNhan)) đã vào ví của bạn.")
             .font(.system(size: 14)).foregroundColor(Theme.textMuted)
         Button("Xong") { dismiss() }
             .buttonStyle(.gradientProminent)
