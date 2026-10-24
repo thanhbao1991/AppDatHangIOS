@@ -63,6 +63,8 @@ struct NapXuView: View {
         }
     }
 
+    private var lanDau: Bool { info?.lanDau == true }
+
     private func goiRow(_ goi: GoiNapXu) -> some View {
         HStack(spacing: 12) {
             Theme.xuIcon(40)
@@ -72,13 +74,17 @@ struct NapXuView: View {
             }
             Spacer()
             // Số Xu tặng thay vì %: thưởng cố định theo mốc nên % giảm dần ở gói lớn — nhìn "+3%" khách tưởng gói
-            // lớn kém lời hơn. Số Xu thì tăng theo gói (24/10/2026).
-            Text("+\(formatXu(goi.soXuTang))")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Theme.success))
+            // lớn kém lời hơn. Số Xu thì tăng theo gói (24/10/2026). Lần đầu: ghi số GỐC + "x2" nhấp nháy (backend
+            // trả soXuTang đã nhân đôi khi lanDau → chia 2 lấy số gốc).
+            HStack(spacing: 5) {
+                Text("+\(formatXu(lanDau ? goi.soXuTang / 2 : goi.soXuTang))")
+                if lanDau { NhapNhayX2() }
+            }
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(Theme.success))
             Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
         }
         .padding(.vertical, 6)
@@ -93,6 +99,24 @@ struct NapXuView: View {
             return
         }
         info = data
+    }
+}
+
+/// Chữ "x2" nhấp nháy trên nhãn gói nạp khi khách nạp lần đầu.
+private struct NhapNhayX2: View {
+    @State private var sang = true
+
+    var body: some View {
+        Text("x2")
+            .font(.system(size: 12, weight: .heavy))
+            .foregroundColor(Theme.success)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(Capsule().fill(Color.yellow))
+            .opacity(sang ? 1 : 0.25)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { sang = false }
+            }
     }
 }
 
