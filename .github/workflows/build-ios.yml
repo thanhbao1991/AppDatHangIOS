@@ -13,6 +13,13 @@ on:
         description: "Bản nộp App Store (không có nút Test nhanh, version dạng số)"
         type: boolean
         default: false
+      dev_testflight:
+        # Bản DEV (có dev login) lên TestFlight cho chủ quán test — version CỐ ĐỊNH 9.9.0 nên KHÔNG
+        # gắn được vào bản nộp App Store 1.0.x (ASC bắt version build khớp version đang nộp). Backend
+        # chỉ cho máy trong DevLogin:ThietBiIds dùng dev login. Không chạy cùng release.
+        description: "Bản DEV lên TestFlight (version 9.9.0, có dev login)"
+        type: boolean
+        default: false
 
 jobs:
   test:
@@ -136,12 +143,26 @@ jobs:
   # (base64 file .p8 tạo ở App Store Connect > Users and Access > Integrations > App Store Connect
   # API, role tối thiểu "App Manager").
   testflight:
-    if: ${{ inputs.release }}
+    if: ${{ inputs.release || inputs.dev_testflight }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
+      - name: Guard - release and dev_testflight are exclusive
+        if: ${{ inputs.release && inputs.dev_testflight }}
+        run: |
+          echo "Khong chay release va dev_testflight cung luc"; exit 1
+
+      - name: Write dev login key (dev_testflight only)
+        if: ${{ inputs.dev_testflight }}
+        env:
+          DEV_LOGIN_KEY: ${{ secrets.DEV_LOGIN_KEY }}
+        run: |
+          if [ -z "$DEV_LOGIN_KEY" ]; then echo "Thieu secret DEV_LOGIN_KEY"; exit 1; fi
+          printf '{"key":"%s"}' "$DEV_LOGIN_KEY" > Sources/DevLogin.local.json
+
       - name: Guard - release build must not contain dev login
+        if: ${{ inputs.release }}
         run: |
           if [ -f Sources/DevLogin.local.json ]; then
             echo "DevLogin.local.json ton tai trong ban release - dung lai"; exit 1
@@ -174,6 +195,9 @@ jobs:
           SHORT_SHA=$(git rev-parse --short=8 HEAD)
           /usr/libexec/PlistBuddy -c "Add :DennGitSha string ${SHORT_SHA}" Sources/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Sources/Info.plist
+          if [ "${{ inputs.dev_testflight }}" = "true" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 9.9.0" Sources/Info.plist
+          fi
 
       # Theo huong dan chinh thuc cua GitHub cho macOS runner:
       # https://docs.github.com/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
@@ -207,6 +231,10 @@ jobs:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
         run: |
+          EXTRA="ONLY_ACTIVE_ARCH=NO"
+          if [ "${{ inputs.dev_testflight }}" = "true" ]; then
+            EXTRA='SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) DEV_LOGIN'
+          fi
           xcodebuild archive \
             -project AppDatHangIOS.xcodeproj \
             -scheme AppDatHangIOS \
@@ -215,9 +243,11 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            "$EXTRA"
 
       - name: Guard - archive binary must not contain dev login
+        if: ${{ inputs.release }}
         run: |
           if grep -rl "dev-dang-nhap" build/AppDatHangIOS.xcarchive; then
             echo "Binary chua dev-dang-nhap - dung lai"; exit 1

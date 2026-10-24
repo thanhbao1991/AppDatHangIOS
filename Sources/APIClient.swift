@@ -104,6 +104,8 @@ actor APIClient {
         let (data, status) = await send(req)
 
         if status == 401 {
+            // Request chưa đăng nhập (vd dev login máy chưa được phép): giữ nguyên lý do backend trả về.
+            if !authorized, let data, let env = try? JSONDecoder().decode(ApiEnvelope<T>.self, from: data) { return env }
             return ApiEnvelope(isSuccess: false, message: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.", data: nil, warnings: nil)
         }
         if let data, let env = try? JSONDecoder().decode(ApiEnvelope<T>.self, from: data) {
@@ -148,7 +150,8 @@ actor APIClient {
     private struct DevLoginKeyFile: Decodable { let key: String }
 
     struct DevKhach: Decodable, Identifiable { let ten: String; let soDienThoai: String; var id: String { soDienThoai } }
-    private struct DevTimKhachRequest: Encodable { let key: String; let tuKhoa: String }
+    // thietBiId: backend chỉ cho máy nằm trong DevLogin:ThietBiIds (bản dev có lên TestFlight).
+    private struct DevTimKhachRequest: Encodable { let key: String; let tuKhoa: String; let thietBiId: String }
 
     private func devKey() -> String? {
         guard let url = Bundle.main.url(forResource: "DevLogin.local", withExtension: "json"),
@@ -161,7 +164,7 @@ actor APIClient {
         guard let key = devKey() else {
             return ApiEnvelope(isSuccess: false, message: "Thiếu DevLogin.local.json trong bản build.", data: nil, warnings: nil)
         }
-        return await decode("/khachhang-auth/dev-tim-khach", method: "POST", body: jsonBody(DevTimKhachRequest(key: key, tuKhoa: tuKhoa)), authorized: false)
+        return await decode("/khachhang-auth/dev-tim-khach", method: "POST", body: jsonBody(DevTimKhachRequest(key: key, tuKhoa: tuKhoa, thietBiId: Prefs.thietBiId)), authorized: false)
     }
 
     func devDangNhap(soDienThoai: String) async -> ApiEnvelope<KhachHangLoginResponse> {
