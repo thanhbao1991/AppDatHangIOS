@@ -1,0 +1,170 @@
+import SwiftUI
+
+/// Màn chúc mừng đầu tháng (2026-10-25): ngày 1 backend cộng Xu thưởng theo hạng tháng trước
+/// (Bạc 10k / Vàng 30k / Kim Cương 60k, dùng đến hết tháng). Mở app lần đầu sau khi được cộng thì hiện
+/// màn này đúng 1 lần (nhớ theo Id lần cộng — ChucMungHang.daXem).
+enum ChucMungHang {
+    private static let key = "chucMungHang.daXem"
+
+    static func canHien(_ t: ThuongHangThang?) -> Bool {
+        guard let t, t.soXu > 0 else { return false }
+        return UserDefaults.standard.string(forKey: key) != t.id
+    }
+
+    static func danhDauDaXem(_ t: ThuongHangThang) {
+        UserDefaults.standard.set(t.id, forKey: key)
+    }
+
+    /// "2026-11-30T00:00:00" → "30/11"
+    static func ngayHetHan(_ iso: String) -> String {
+        let p = iso.prefix(10).split(separator: "-")
+        return p.count == 3 ? "\(p[2])/\(p[1])" : ""
+    }
+
+    /// "10/2026" → "tháng 10"
+    static func tenThang(_ thangDat: String) -> String {
+        guard let m = thangDat.split(separator: "/").first, let so = Int(m) else { return "tháng trước" }
+        return "tháng \(so)"
+    }
+}
+
+struct ChucMungHangView: View {
+    let thuong: ThuongHangThang
+    let onXong: () -> Void
+
+    @State private var hien = false
+    @State private var soDem: Double = 0
+
+    private var mau: (primary: Color, dark: Color) {
+        Theme.hangColors[thuong.hang] ?? Theme.hangColors["Thành Viên"]!
+    }
+    private var icon: String {
+        ["Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈"][thuong.hang] ?? "🎉"
+    }
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [mau.primary, mau.dark], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            // Quầng sáng sau huy hiệu
+            RadialGradient(colors: [.white.opacity(0.35), .clear], center: .center, startRadius: 10, endRadius: 260)
+                .offset(y: -140)
+                .ignoresSafeArea()
+            PhaoGiayView().ignoresSafeArea().allowsHitTesting(false)
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                Text(icon)
+                    .font(.system(size: 110))
+                    .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+                    .scaleEffect(hien ? 1 : 0.2)
+                    .rotationEffect(.degrees(hien ? 0 : -30))
+                    .animation(.spring(response: 0.6, dampingFraction: 0.55), value: hien)
+
+                Text("CHÚC MỪNG!")
+                    .font(.system(size: 15, weight: .heavy)).tracking(3)
+                    .foregroundColor(.white.opacity(0.85))
+                    .padding(.top, 24)
+
+                Text("Bạn đạt hạng \(thuong.hang)\n\(ChucMungHang.tenThang(thuong.thangDat))")
+                    .font(.system(size: 30, weight: .heavy))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .padding(.top, 6)
+
+                VStack(spacing: 6) {
+                    Text("Quà tháng này")
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.8))
+                    Text("+\(formatXu(soDem))")
+                        .font(.system(size: 40, weight: .heavy)).monospacedDigit()
+                        .foregroundColor(.white)
+                    Text("Đã cộng vào ví · dùng đến hết \(ChucMungHang.ngayHetHan(thuong.hetHan))")
+                        .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+                }
+                .padding(.vertical, 22)
+                .frame(maxWidth: .infinity)
+                .background(.white.opacity(0.14))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.3), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .padding(.horizontal, 28)
+                .padding(.top, 28)
+                .opacity(hien ? 1 : 0)
+                .offset(y: hien ? 0 : 30)
+                .animation(.easeOut(duration: 0.5).delay(0.25), value: hien)
+
+                Text("Tiếp tục giữ hạng để nhận quà vào ngày 1 tháng sau nhé!")
+                    .font(.system(size: 13)).foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 16)
+                    .opacity(hien ? 1 : 0)
+                    .animation(.easeOut(duration: 0.5).delay(0.45), value: hien)
+
+                Spacer()
+
+                Button {
+                    onXong()
+                } label: {
+                    Text("Tuyệt vời!")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(mau.dark)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(.white)
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 24)
+            }
+        }
+        .onAppear {
+            hien = true
+            demSo()
+        }
+    }
+
+    /// Số Xu chạy từ 0 lên đủ trong ~1 giây.
+    private func demSo() {
+        let buoc = 30
+        for i in 1...buoc {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35 + Double(i) * 0.03) {
+                soDem = (thuong.soXu * Double(i) / Double(buoc) / 1000).rounded() * 1000
+                if i == buoc { soDem = thuong.soXu }
+            }
+        }
+    }
+}
+
+/// Pháo giấy rơi — vẽ bằng Canvas + TimelineView, không cần thư viện ngoài.
+private struct PhaoGiayView: View {
+    private struct Manh {
+        let x: Double, tre: Double, tocDo: Double, co: Double, mau: Color, lac: Double
+    }
+
+    private let manh: [Manh] = (0..<70).map { _ in
+        Manh(x: .random(in: 0...1), tre: .random(in: 0...2.5), tocDo: .random(in: 0.12...0.25),
+             co: .random(in: 6...11),
+             mau: [.yellow, .white, .pink, .orange, .mint, .cyan].randomElement()!,
+             lac: .random(in: 0...(2 * .pi)))
+    }
+    @State private var batDau = Date()
+
+    var body: some View {
+        TimelineView(.animation) { tl in
+            Canvas { ctx, size in
+                let t = tl.date.timeIntervalSince(batDau)
+                for m in manh {
+                    let tt = t - m.tre
+                    guard tt > 0 else { continue }
+                    let y = (tt * m.tocDo).truncatingRemainder(dividingBy: 1.3) - 0.1
+                    let x = m.x + sin(tt * 2 + m.lac) * 0.03
+                    var c = ctx
+                    c.translateBy(x: x * size.width, y: y * size.height)
+                    c.rotate(by: .radians(tt * 3 + m.lac))
+                    c.fill(Path(CGRect(x: -m.co / 2, y: -m.co / 4, width: m.co, height: m.co / 2)), with: .color(m.mau.opacity(0.9)))
+                }
+            }
+        }
+    }
+}

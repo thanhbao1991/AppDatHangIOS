@@ -301,6 +301,20 @@ struct SettingsView: View {
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
     /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
     /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
+    /// Thưởng hạng bằng Xu (từ 11/2026): quà đang giữ được + Xu thưởng tháng này còn lại, hết hạn ngày nào.
+    @ViewBuilder
+    private func thuongHangDong(_ vi: KhachHangVi) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let xu = vi.thuongXuHangHienTai, xu > 0 {
+                Text("🎁 Giữ hạng \(vi.hang) đến cuối tháng: ngày 1 nhận \(formatXu(xu))")
+            }
+            if let t = vi.thuongHangThang, t.conLai > 0 {
+                Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
+            }
+        }
+        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
+    }
+
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
@@ -338,6 +352,10 @@ struct SettingsView: View {
                             .multilineTextAlignment(.leading)
                     }
                     .buttonStyle(.plain)
+                    if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
+                        Text("Lên \(hangTiepTheo): ngày 1 tháng sau nhận \(formatXu(xu))")
+                            .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
+                    }
                     if hienGhiChuHang {
                         Text("Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
                             .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
@@ -348,6 +366,8 @@ struct SettingsView: View {
                 Text("🎉 Hạng cao nhất")
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
+
+            thuongHangDong(vi)
 
             // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá điểm. Với app
             // khách điều này KHÔNG xảy ra: DatHangService.GetViAsync luôn coi khách là được nhận voucher

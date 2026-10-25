@@ -38,6 +38,8 @@ struct MenuView: View {
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
     @State private var giaRiengMap: [String: Double] = [:]
+    /// Màn chúc mừng thưởng hạng đầu tháng — hiện 1 lần cho mỗi lần cộng (ChucMungHang).
+    @State private var chucMung: ThuongHangThang?
 
 
     /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
@@ -272,6 +274,12 @@ struct MenuView: View {
             }
         }
         .task { if sanPhams.isEmpty { await load() } }
+        .fullScreenCover(item: $chucMung) { t in
+            ChucMungHangView(thuong: t) {
+                ChucMungHang.danhDauDaXem(t)
+                chucMung = nil
+            }
+        }
         .sheet(item: $picking) { sp in
             ProductPickerSheet(
                 sanPham: sp,
@@ -580,6 +588,7 @@ struct MenuView: View {
         giaRiengMap = giaRieng
         yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        if chucMung == nil, ChucMungHang.canHien(vi?.thuongHangThang) { chucMung = vi?.thuongHangThang }
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
         // hoặc network thật thất bại sau khi đã hiện snapshot đĩa thì giữ NGUYÊN danh sách đang hiện,
         // không ghi đè bằng mảng rỗng chỉ vì 1 lần mất mạng thoáng qua.

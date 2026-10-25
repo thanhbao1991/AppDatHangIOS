@@ -586,6 +586,21 @@ struct KhachHangVi: Decodable {
     // SanPhamId khách TỰ CHỌN yêu thích (nút tim ở MenuView) — thay cho cách cũ tính động theo món
     // mua nhiều nhất.
     var yeuThichSanPhamIds: [String] = []
+    // Thưởng hạng bằng Xu (từ 11/2026): giữ hạng tới cuối tháng → ngày 1 nhận thuongXuHangHienTai; lên
+    // hangTiepTheo → nhận thuongXuHangTiepTheo. Optional để không vỡ decode với backend cũ.
+    var thuongXuHangHienTai: Double? = nil
+    var thuongXuHangTiepTheo: Double? = nil
+    // Lần cộng Xu thưởng hạng của tháng này — màn chúc mừng (ChucMungHangView) + dòng hạn dùng.
+    var thuongHangThang: ThuongHangThang? = nil
+}
+
+struct ThuongHangThang: Decodable, Equatable, Identifiable {
+    let id: String
+    let hang: String
+    let thangDat: String
+    let soXu: Double
+    let conLai: Double
+    let hetHan: String
 }
 
 struct ViGiaoDich: Decodable, Identifiable {
