@@ -21,8 +21,15 @@ struct OrderDetailView: View {
     @State private var qrImage: UIImage?
     @State private var qrFailed = false
 
-    private let steps: [TrangThaiDon] = [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat]
-    private var currentStep: Int { steps.firstIndex(of: order.trangThai) ?? 0 }
+    /// Đơn nhận tại quán không có bước "Đang giao" — trước đây vẫn hiện 4 bước, nhân viên lỡ bấm giao
+    /// sau khi đã thu tiền thì thành "Đang giao 08:38" nằm SAU "Hoàn tất 08:35" (ảnh thật 25/10).
+    private var steps: [TrangThaiDon] {
+        order.laGiaoHangCoDiaChi ? [.choXacNhan, .daXacNhan, .dangGiao, .hoanTat] : [.choXacNhan, .daXacNhan, .hoanTat]
+    }
+    private var currentStep: Int {
+        let tt = (order.trangThai == .dangGiao && !steps.contains(.dangGiao)) ? .daXacNhan : order.trangThai
+        return steps.firstIndex(of: tt) ?? 0
+    }
 
     var body: some View {
         ScrollView {
@@ -237,9 +244,11 @@ struct OrderDetailView: View {
     /// nil, phần "Hình thức thanh toán" tự ẩn, chỉ hiện ghiChu thô như cũ.
     private static let hinhThucThanhToanPrefixes = ["🟡 Đã thanh toán bằng Xu", "💵 Thanh toán khi nhận hàng", "📱 Chuyển khoản QR"]
 
+    /// So khớp KHÔNG phân biệt hoa thường: backend chuẩn hoá GhiChu viết hoa đầu mỗi chữ ("🟡 Đã Thanh
+    /// Toán Bằng Xu") nên so đúng chữ hoa trượt hết, tiền tố rơi xuống dòng "Ghi chú" (ảnh thật 25/10).
     private var hinhThucThanhToanText: String? {
-        guard let ghiChu = order.ghiChu else { return nil }
-        return Self.hinhThucThanhToanPrefixes.first { ghiChu.hasPrefix($0) }
+        guard let ghiChu = order.ghiChu?.lowercased() else { return nil }
+        return Self.hinhThucThanhToanPrefixes.first { ghiChu.hasPrefix($0.lowercased()) }
     }
 
     private var ghiChuRieng: String? {
@@ -259,6 +268,11 @@ struct OrderDetailView: View {
     /// dự định ban đầu của khách.
     private var hinhThucThanhToanHienThi: String? {
         if let daCK = order.daThuBangChuyenKhoan {
+            // Dòng Xu không phải chuyển khoản → daCK = false; phải tách riêng phần Xu, không thì đơn trả
+            // bằng Xu hiện nhầm "Tiền mặt" (ảnh thật 25/10)
+            let xu = order.daThuBangXu ?? 0
+            if xu > 0 && xu >= order.daThu { return "Xu" }
+            if xu > 0 { return daCK ? "Xu + Chuyển khoản" : "Xu + Tiền mặt" }
             return daCK ? "Chuyển khoản" : "Tiền mặt"
         }
         return hinhThucThanhToanText
@@ -267,6 +281,7 @@ struct OrderDetailView: View {
     /// Icon minh hoạ cho mục "Hình thức thanh toán" — ưu tiên đọc theo sự thật đã thu
     /// (daThuBangChuyenKhoan), rơi về đoán theo chuỗi tự khai (chứa "QR"/"Xu") nếu chưa thu đồng nào.
     private var hinhThucThanhToanIcon: String {
+        if let xu = order.daThuBangXu, xu > 0, xu >= order.daThu { return "circle.fill" }
         if let daCK = order.daThuBangChuyenKhoan { return daCK ? "qrcode" : "banknote.fill" }
         if let text = hinhThucThanhToanText {
             if text.contains("QR") { return "qrcode" }
@@ -351,13 +366,13 @@ struct OrderDetailView: View {
 
     /// Mốc thời gian từng bước — nil nghĩa đơn chưa tới bước đó (backend chỉ trả giá trị khi bước đã
     /// xảy ra, xem NgayXacNhanOnline/NgayShip/NgayHoanTat trong DatHangService.GetDonCuaToiAsync).
-    private func stepTime(_ i: Int) -> String? {
-        switch i {
-        case 0: return order.ngayGio
-        case 1: return order.ngayXacNhanOnline
-        case 2: return order.ngayShip
-        case 3: return order.ngayHoanTat
-        default: return nil
+    private func stepTime(_ step: TrangThaiDon) -> String? {
+        switch step {
+        case .choXacNhan: return order.ngayGio
+        case .daXacNhan: return order.ngayXacNhanOnline
+        case .dangGiao: return order.ngayShip
+        case .hoanTat: return order.ngayHoanTat
+        case .huy: return nil
         }
     }
 
@@ -436,7 +451,7 @@ struct OrderDetailView: View {
                             .foregroundColor(i <= currentStep ? .primary : Theme.textFaint)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                        if let raw = stepTime(i) {
+                        if let raw = stepTime(step) {
                             Text(stepTimeDisplay(raw))
                                 .font(.system(size: 9)).foregroundColor(Theme.textFaint)
                                 .multilineTextAlignment(.center)
