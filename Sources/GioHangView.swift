@@ -224,9 +224,8 @@ struct GioHangView: View {
             .disabled(cart.soDuXu <= 0)
 
             // Bật Xu thì nói rõ trừ bao nhiêu, còn lại bao nhiêu (feedback 26/10: "bật toggle chưa rõ ràng").
-            if cart.dungXu && xuGiam > 0 {
-                let conLai = cart.soDuXu - xuGiam
-                Text("Dùng \(formatXu(xuGiam)) cho đơn này" + (conLai > 0 ? " · còn lại \(formatXu(conLai))" : ""))
+            if cart.dungXu && cart.soDuXu - xuGiam > 0 {
+                Text("Còn lại \(formatXu(cart.soDuXu - xuGiam))")
                     .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 30)
