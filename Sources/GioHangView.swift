@@ -216,7 +216,7 @@ struct GioHangView: View {
                     // 1 Xu = 1đ (quy đổi thẳng) — hiện cả 2 đơn vị để khách thấy rõ Xu quy ra tiền thật
                     // bao nhiêu, khớp yêu cầu "xu ~ đ". Không chèn khoảng trắng trước "đ" (feedback
                     // 2026-09-27) — formatTien đã tự ghép liền số+đ.
-                    Text("Đổi \(formatXu(cart.soDuXu)) (~\(formatTien(cart.soDuXu)))")
+                    Text("Đổi \(formatXu(cart.soDuXu))")
                         .font(.system(size: 14)).foregroundColor(.primary)
                 }
             }
