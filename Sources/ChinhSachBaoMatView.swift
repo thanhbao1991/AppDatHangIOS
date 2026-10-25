@@ -14,3 +14,19 @@ struct ChinhSachBaoMatView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+/// Thể lệ Xu — trang backend dựng ĐỘNG từ cấu hình đang chạy (gói nạp, thưởng điểm danh, tỉ lệ hộp quà,
+/// xem TheLeController), nên đổi gói/tỉ lệ không phải nộp lại app. Mở từ: Bảo mật & Tài khoản, màn Nạp
+/// Xu, card Hộp quà may mắn (công khai tỉ lệ trúng).
+struct TheLeXuView: View {
+    @State private var loading = true
+
+    var body: some View {
+        ZStack {
+            WebView(url: URL(string: "https://api.denncoffee.com/the-le/xu")!) { loading = false }
+            if loading { ProgressView().tint(Theme.primary) }
+        }
+        .navigationTitle("Thể lệ Xu")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

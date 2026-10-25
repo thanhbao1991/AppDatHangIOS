@@ -28,6 +28,7 @@ struct UuDaiView: View {
 
     @State private var soDuXu: Double?
     @State private var showLichSuVi = false
+    @State private var showTheLe = false
 
     @State private var boxScale: CGFloat = 1
     @State private var boxRotation: Double = 0
@@ -56,6 +57,7 @@ struct UuDaiView: View {
         }
         .task { await load() }
         .navigationDestination(isPresented: $showLichSuVi) { LichSuViView() }
+        .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
                 Button("OK") {}
@@ -244,6 +246,14 @@ struct UuDaiView: View {
                 .font(.system(size: 10, weight: .medium)).foregroundColor(Theme.textFaint)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, alignment: .center)
+
+            // Công khai tỉ lệ trúng (hộp quà có yếu tố ngẫu nhiên) — bảng tỉ lệ nằm trong trang Thể lệ Xu.
+            Button { showTheLe = true } label: {
+                Text("Tỉ lệ trúng · Thể lệ Xu")
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 

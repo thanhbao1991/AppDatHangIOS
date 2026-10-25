@@ -28,6 +28,9 @@ struct TaiKhoanBaoMatView: View {
                     NavigationLink { ChinhSachBaoMatView() } label: {
                         Label("Chính sách bảo mật", systemImage: "hand.raised.fill")
                     }
+                    NavigationLink { TheLeXuView() } label: {
+                        Label("Thể lệ Xu", systemImage: "doc.text.fill")
+                    }
                     NavigationLink { XoaTaiKhoanView(isLoggedIn: $isLoggedIn) } label: {
                         Text("Xoá tài khoản").foregroundColor(Theme.textFaint)
                     }

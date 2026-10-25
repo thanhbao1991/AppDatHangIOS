@@ -36,9 +36,14 @@ struct NapXuView: View {
                                 .buttonStyle(.plain)
                         }
                     } footer: {
-                        Text("Xu dùng để thanh toán đồ uống tại quán và trên app, 1 Xu = 1đ. Xu đã nạp không quy đổi lại thành tiền mặt.")
-                            .font(.system(size: 12))
-                            .foregroundColor(Theme.textFaint)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Xu dùng để thanh toán đồ uống tại quán và trên app, 1 Xu = 1đ. Xu đã nạp không quy đổi lại thành tiền mặt.")
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.textFaint)
+                            NavigationLink { TheLeXuView() } label: {
+                                Text("Xem thể lệ Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                            }
+                        }
                     }
                 }
                 .listStyle(.insetGrouped)
