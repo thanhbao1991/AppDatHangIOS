@@ -357,7 +357,7 @@ struct SettingsView: View {
                             .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
                     }
                     if hienGhiChuHang {
-                        Text("Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
+                        Text("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
                             .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
                             .transition(.opacity)
                     }
