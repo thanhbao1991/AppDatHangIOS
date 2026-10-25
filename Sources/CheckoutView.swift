@@ -181,7 +181,9 @@ struct CheckoutView: View {
                 }
         }
         .task {
-            if muaHo { nhanTaiQuan = true }
+            // Shipper mặc định "Nhận tại quán" (26/10) — địa chỉ mặc định của shipper là nhãn "App Shipping"
+            // vô nghĩa, trước đây shipper để nguyên mà bấm đặt giao tận nơi. Vẫn đổi sang giao được.
+            if muaHo || cart.laShipper { nhanTaiQuan = true }
             async let gioMoBanTask: GioMoBanDto? = APIClient.shared.getGioMoBan()
             await loadDiaChi()
             await loadTenDuong()
