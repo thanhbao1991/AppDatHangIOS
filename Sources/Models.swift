@@ -458,6 +458,8 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     // Phần đã thu trả bằng Xu (nil với backend cũ chưa trả field này). Dòng Xu không phải chuyển khoản
     // nên daThuBangChuyenKhoan = false → trước đây đơn trả bằng Xu hiện nhầm "Tiền mặt" (25/10).
     let daThuBangXu: Double?
+    // Đơn được tính vào hạng/điểm (chỉ đơn đặt qua app, 26/10) — nil với backend cũ.
+    let tinhHang: Bool?
 
     /// Nhãn trạng thái hiển thị — "Hoàn tất" nhưng còn ghi nợ (conLai > 0) thì đổi thành "Ghi nợ" để
     /// biết ngay đơn đã giao xong nhưng CHƯA thu đủ tiền (feedback 2026-09-28). Chỉ áp dụng đúng

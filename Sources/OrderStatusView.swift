@@ -114,6 +114,18 @@ struct OrderStatusView: View {
                     + Text("#\(item.maHoaDon)").foregroundColor(Theme.primary))
                     .font(.system(size: 13))
                     .lineLimit(1)
+                // Icon huy chương sau mã đơn (26/10): đơn đặt qua app được tính hạng; bấm xem giải thích.
+                if item.tinhHang == true {
+                    Button {
+                        alertMessage = ("Đơn được tính hạng",
+                                        "Chỉ đơn bạn tự đặt qua app mới được tính vào hạng thành viên. Nước lon, ăn vặt và món không pha chế không được tính.")
+                    } label: {
+                        Image(systemName: "medal.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(red: 0.85, green: 0.6, blue: 0.15))
+                    }
+                    .buttonStyle(.borderless)
+                }
                 Spacer()
                 // trangThaiNhan/trangThaiMau (Models.swift) tự đổi "Hoàn tất" -> "Ghi nợ" (đỏ) khi
                 // conLai > 0 — khớp màu số tiền đỏ ở dưới (feedback 2026-09-28).
