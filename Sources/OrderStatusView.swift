@@ -120,9 +120,7 @@ struct OrderStatusView: View {
                         alertMessage = ("Đơn được tính hạng",
                                         "Chỉ đơn bạn tự đặt qua app mới được tính vào hạng thành viên. Nước lon, ăn vặt và món không pha chế không được tính.")
                     } label: {
-                        Image(systemName: "medal.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(red: 0.85, green: 0.6, blue: 0.15))
+                        Text("🏅").font(.system(size: 13))
                     }
                     .buttonStyle(.borderless)
                 }
