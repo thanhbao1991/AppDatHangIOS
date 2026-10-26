@@ -323,30 +323,6 @@ struct SettingsView: View {
         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
     }
 
-    /// Top shipper tháng này (2026-10-26, chỉ tài khoản shipper): vị trí + Xu nếu giữ được tới cuối tháng,
-    /// và còn bao nhiêu để lên vị trí trên (ngoài top 3 thì để vào top 3). Cùng chi tiêu tính hạng với thanh trên.
-    private func topShipperBox(_ top: TopShipperThang) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(top.viTri <= 3
-                 ? "🏆 Top \(top.viTri) shipper tháng này" + (top.thuongXu > 0 ? " · \(formatXu(top.thuongXu))" : "")
-                 : "🏆 Hạng \(top.viTri)/\(top.soShipper) shipper tháng này")
-                .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
-            Group {
-                if top.conLaiDeLenHang > 0 {
-                    Text("Thêm \(formatTien(top.conLaiDeLenHang)) để lên Top \(top.viTriTiepTheo)"
-                         + (top.thuongXuViTriTiepTheo > 0 ? " (\(formatXu(top.thuongXuViTriTiepTheo)))" : ""))
-                } else {
-                    Text("Đang dẫn đầu — giữ vững đến hết tháng!")
-                }
-            }
-            .font(.system(size: 12, weight: .medium)).foregroundColor(.white.opacity(0.85))
-        }
-        .padding(.horizontal, 12).padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
@@ -360,6 +336,14 @@ struct SettingsView: View {
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
                 Spacer()
+                // Xếp hạng shipper tháng này theo chi tiêu tính hạng (2026-10-26, chỉ tài khoản shipper).
+                if let top = vi.topShipper {
+                    Text("Top \(top.viTri)")
+                        .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Color.white.opacity(0.18))
+                        .clipShape(Capsule())
+                }
             }
 
             if let hangTiepTheo = vi.hangTiepTheo {
@@ -400,8 +384,6 @@ struct SettingsView: View {
             }
 
             thuongHangDong(vi)
-
-            if let top = vi.topShipper { topShipperBox(top) }
 
             // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá điểm. Với app
             // khách điều này KHÔNG xảy ra: DatHangService.GetViAsync luôn coi khách là được nhận voucher
