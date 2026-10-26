@@ -758,7 +758,7 @@ enum XemTruocNgay1 {
     static func qua(_ v: KhachHangVi) -> [QuaChucMung] {
         var json: [String: Any] = [
             "soDu": 0, "diemThangNay": 0, "diemThangTruoc": 0, "duocNhanVoucher": false, "daNhanVoucher": false,
-            "tongNo": 0, "tongChiTieuThangNay": 0, "hang": "Thành Viên", "conLaiDeLenHang": 0, "phanTramTienDoLenHang": 0,
+            "tongNo": 0, "tongChiTieuThangNay": 0, "hang": "Thành Viên", "hangThangTruoc": "", "yeuThichSanPhamIds": [String](), "conLaiDeLenHang": 0, "phanTramTienDoLenHang": 0,
         ]
         if let h = choNhanHang(v) { json["thuongHangThang"] = h }
         if let t = v.topShipper, t.thuongXu > 0 {

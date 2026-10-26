@@ -15,7 +15,7 @@ final class ChucMungHangTests: XCTestCase {
         hang += hangDaNhan.map { #","daNhan":\#($0)}"# } ?? "}"
         var top = #""thuongTopShipper":{"viTri":2,"thangDat":"10/2026","soXu":20000"#
         top += topDaNhan.map { #","daNhan":\#($0)}"# } ?? "}"
-        let json = #"{"soDu":0,"diemThangNay":0,"diemThangTruoc":0,"duocNhanVoucher":false,"daNhanVoucher":false,"tongNo":0,"tongChiTieuThangNay":0,"hang":"Thành Viên","conLaiDeLenHang":0,"phanTramTienDoLenHang":0,"#
+        let json = #"{"soDu":0,"diemThangNay":0,"diemThangTruoc":0,"duocNhanVoucher":false,"daNhanVoucher":false,"tongNo":0,"tongChiTieuThangNay":0,"hang":"Thành Viên","hangThangTruoc":"","yeuThichSanPhamIds":[],"conLaiDeLenHang":0,"phanTramTienDoLenHang":0,"#
             + hang + "," + top + "}"
         return try JSONDecoder().decode(KhachHangVi.self, from: Data(json.utf8))
     }
