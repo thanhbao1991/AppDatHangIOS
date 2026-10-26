@@ -236,7 +236,7 @@ struct CheckoutView: View {
                     Image(systemName: "bag.fill").foregroundColor(Theme.primary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Mua hộ — nhận tại quán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
-                        Text("Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!")
+                        Text(NoiDung.text("muaHoGiam"))
                             .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     }
                 }
@@ -267,7 +267,7 @@ struct CheckoutView: View {
     /// đây bấm mở luôn lúc đặt, nay chỉ báo trước để khách biết, quà thật sự mở sau khi đơn hoàn
     /// thành — tránh khách "ăn quà" xong huỷ đơn/không tới lấy).
     private var pickupContent: some View {
-        Text("🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn")
+        Text(NoiDung.text("tangLuotQuaKhiHoanThanh"))
             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
     }
 
@@ -507,7 +507,7 @@ struct CheckoutView: View {
                 chiTietRow("Giảm Mua hộ 5%", "-" + formatTien(muaHoGiam), color: Theme.danger)
             }
             if muaHo && voucherGiamChon > 0 && !dungVoucher {
-                Text("Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.")
+                Text(NoiDung.text("muaHoGiuVoucher"))
                     .font(.system(size: 11)).foregroundColor(Theme.textMuted)
             }
             if voucherGiam > 0 {
@@ -531,7 +531,7 @@ struct CheckoutView: View {
                         }
                     }
                 }
-                Text("Đơn 2 ly hoặc hạng Bạc trở lên miễn phí ship")
+                Text(NoiDung.text("shipMienPhiGhiChu"))
                     .font(.system(size: 11)).foregroundColor(phiShip > 0 ? Theme.danger : Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

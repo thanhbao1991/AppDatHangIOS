@@ -22,8 +22,8 @@ struct NapXuView: View {
                             HStack(spacing: 10) {
                                 Text("🎁").font(.system(size: 26))
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Nạp lần đầu: nhân đôi Xu tặng").font(.system(size: 15, weight: .bold))
-                                    Text("Số Xu tặng bên dưới đã gồm phần nhân đôi.")
+                                    Text(NoiDung.text("napLanDauTieuDe")).font(.system(size: 15, weight: .bold))
+                                    Text(NoiDung.text("napLanDauMoTa"))
                                         .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                                 }
                             }
@@ -205,7 +205,7 @@ struct NapXuQrView: View {
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(Theme.success)
 
-        Text("Giữ nguyên số tiền và nội dung \"\(noiDung)\" để Xu được cộng tự động.")
+        Text(NoiDung.text("napXuGiuNoiDung").replacingOccurrences(of: "{noiDung}", with: noiDung))
             .font(.system(size: 12))
             .foregroundColor(Theme.textFaint)
             .multilineTextAlignment(.center)

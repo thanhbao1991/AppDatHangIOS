@@ -14,7 +14,7 @@ import Photos
 /// BankQrConfig.NhacGiuNoiDungCk bên backend/Desktop. SePay tự thu/tự cộng Xu nhờ mã trong nội dung CK.
 struct NhacGiuNoiDungCk: View {
     var body: some View {
-        Text("Quý khách vui lòng không thay đổi nội dung chuyển khoản (ghi chú)!")
+        Text(NoiDung.text("qrNhacNoiDung"))
             .font(.system(size: 13, weight: .semibold))
             .foregroundColor(Theme.danger)
             .multilineTextAlignment(.center)

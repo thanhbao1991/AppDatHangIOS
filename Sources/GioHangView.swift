@@ -205,7 +205,7 @@ struct GioHangView: View {
             .buttonStyle(.plain)
 
             if cart.coMonKhongApDungVoucher {
-                Text("Nước lon, ăn vặt và món không pha chế không áp dụng voucher.")
+                Text(NoiDung.text("voucherKhongApDung"))
                     .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

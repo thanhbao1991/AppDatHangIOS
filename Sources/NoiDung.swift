@@ -12,6 +12,19 @@ enum NoiDung {
         "hangGhiChu": "Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.\n\nChương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
         "hopQuaTaiTro": "Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
         "chucMungCamOn": "Cảm ơn bạn đã đồng hành cùng Đenn!",
+        "shipMienPhiGhiChu": "Đơn 2 ly hoặc hạng Bạc trở lên miễn phí ship",
+        "muaHoGiam": "Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!",
+        "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",
+        "tangLuotQuaKhiHoanThanh": "🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn",
+        "napLanDauTieuDe": "Nạp lần đầu: nhân đôi Xu tặng",
+        "napLanDauMoTa": "Số Xu tặng bên dưới đã gồm phần nhân đôi.",
+        "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
+        "donTinhHangGiaiThich": "Chỉ đơn bạn tự đặt qua app mới được tính vào hạng thành viên. Nước lon, ăn vặt và món không pha chế không được tính.",
+        "sinhNhatDaNhan": "Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.",
+        "otpGhiChu": "Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.",
+        "otpNhapMa": "Nhập mã OTP đã gửi qua Zalo",
+        "qrNhacNoiDung": "Quý khách vui lòng không thay đổi nội dung chuyển khoản (ghi chú)!",
+        "napXuGiuNoiDung": "Giữ nguyên số tiền và nội dung \"{noiDung}\" để Xu được cộng tự động.",
     ]
 
     private static var daLuu: [String: String] =

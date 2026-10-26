@@ -123,7 +123,7 @@ struct LoginView: View {
             }
             // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
             // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
-            Text("Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.")
+            Text(NoiDung.text("otpGhiChu"))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(Theme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)

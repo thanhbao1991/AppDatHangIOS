@@ -494,7 +494,7 @@ struct SettingsView: View {
             } else if let ns = ngaySinhInfo?.ngaySinh, ngaySinhInfo?.coTheSua == false {
                 Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                     .font(.system(size: 13)).foregroundColor(Theme.success)
-                Text("Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.")
+                Text(NoiDung.text("sinhNhatDaNhan"))
                     .font(.system(size: 12)).foregroundColor(Theme.textFaint)
             } else if !showDobPicker {
                 // Thu gọn mặc định — wheel chiếm rất nhiều chỗ dọc, chỉ bung ra khi bấm (feedback

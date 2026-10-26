@@ -34,7 +34,7 @@ struct XoaTaiKhoanView: View {
 
             if step == .nhapOtp {
                 Section("Mã xác nhận") {
-                    TextField("Nhập mã OTP đã gửi qua Zalo", text: $otp)
+                    TextField(NoiDung.text("otpNhapMa"), text: $otp)
                         .keyboardType(.numberPad)
                         .tint(Theme.primary)
                 }
