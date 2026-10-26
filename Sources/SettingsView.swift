@@ -310,7 +310,7 @@ struct SettingsView: View {
     private func thuongHangDong(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             if let xu = vi.thuongXuHangHienTai, xu > 0 {
-                Text("🎁 Giữ hạng \(vi.hang) đến cuối tháng: ngày 1 nhận \(formatXu(xu))")
+                Text("🎁 \(formatXu(xu))")
             }
             if let t = vi.thuongHangThang, t.conLai > 0 {
                 Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
