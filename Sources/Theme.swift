@@ -247,6 +247,62 @@ func cardBox<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         .cardBoxStyle()
 }
 
+/// Card số lớn + chú thích bên trái, nút viên thuốc bên phải — DÙNG CHUNG cho card Xu (tab Ưu đãi + Tài khoản)
+/// và card Công nợ (2026-10-26: đồng bộ theo card Xu tab Ưu đãi, tách Công nợ ra card riêng).
+struct SoDuCard: View {
+    var icon: AnyView? = nil
+    let giaTri: String
+    var mauGiaTri: Color = .primary
+    let chuThich: String
+    /// Link nhỏ cạnh chú thích (vd "Lịch sử") — nil thì không hiện
+    var link: (text: String, action: () -> Void)? = nil
+    let nut: String
+    let onNut: () -> Void
+
+    var body: some View {
+        cardBox {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        if let icon { icon }
+                        Text(giaTri).font(.system(size: 30, weight: .bold)).foregroundColor(mauGiaTri)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                    HStack(spacing: 6) {
+                        Text(chuThich).font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                        if let link {
+                            Button(action: link.action) {
+                                Text("· \(link.text)").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                Spacer()
+                Button(action: onNut) {
+                    HStack(spacing: 4) {
+                        Text(nut).font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Theme.primaryGradient).clipShape(Capsule())
+                }
+                .buttonStyle(.plain) // nhiều Button trong 1 row List — xem chú thích xuCongNoCard cũ ở SettingsView
+            }
+        }
+    }
+
+    /// 1234567 → "1.234.567" (số Xu không kèm chữ "Xu" — đã có icon đồng xu)
+    static func so(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.groupingSeparator = "."
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+    }
+}
+
 /// Bọc 1 card thành Section của List — topExtra CHỈ dùng cho card ĐẦU TIÊN của mỗi tab (thêm 6pt để
 /// khoảng cách với TitleBar bằng đúng khoảng cách giữa 2 card liền nhau: 6pt padding riêng của mỗi
 /// card cộng lại thành 12, còn card đầu chỉ có 6 từ chính nó nên thiếu 6pt so với các card sau).

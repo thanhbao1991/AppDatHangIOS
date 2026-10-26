@@ -76,29 +76,8 @@ struct UuDaiView: View {
     /// Tổng Xu hiện có + lối vào Nạp Xu (Lịch sử Xu vẫn ở tab Tài khoản) — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
     /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
     private var xuBanner: some View {
-        cardBox {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        xuIcon(36)
-                        Text(soNgan(soDuXu ?? 0)).font(.system(size: 30, weight: .bold)).foregroundColor(.primary)
-                    }
-                    Text("Số dư Xu hiện tại").font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                }
-                Spacer()
-                Button {
-                    showNapXu = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("Nạp Xu").font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Theme.primaryGradient).clipShape(Capsule())
-                }
-            }
-        }
+        SoDuCard(icon: AnyView(xuIcon(36)), giaTri: SoDuCard.so(soDuXu ?? 0), chuThich: "Số dư Xu hiện tại",
+                 nut: "Nạp Xu", onNut: { showNapXu = true })
     }
 
     /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
