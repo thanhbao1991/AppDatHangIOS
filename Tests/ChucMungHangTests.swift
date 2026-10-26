@@ -24,7 +24,7 @@ final class ChucMungHangTests: XCTestCase {
     func test_quaCho_chiQuaChuaNhan_hangTruocTopSau() throws {
         let ca2 = ChucMungHang.quaCho(try vi(hangDaNhan: false, topDaNhan: false))
         XCTAssertEqual(ca2.map(\.loai), [.hang, .top])
-        XCTAssertEqual(ca2[1].tieuDe, "Top 2 shipper\ntháng 10")
+        XCTAssertEqual(ca2[1].tieuDe, "Top 2 người dùng\ntháng 10")
         XCTAssertEqual(ca2[1].soXu, 20000)
         XCTAssertEqual(ChucMungHang.quaCho(try vi(hangDaNhan: true, topDaNhan: false)).map(\.loai), [.top])
         // Backend cũ không gửi daNhan (đã tự cộng) → không hiện

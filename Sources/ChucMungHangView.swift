@@ -28,7 +28,7 @@ enum ChucMungHang {
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .top, icon: "🏆",
-                tieuDe: "Top \(t.viTri) shipper\n\(tenThang(t.thangDat))",
+                tieuDe: "Top \(t.viTri) người dùng\n\(tenThang(t.thangDat))",
                 mauHang: "Kim Cương", soXu: t.soXu, ghiChu: nil))
         }
         return ds
