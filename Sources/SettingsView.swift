@@ -326,7 +326,8 @@ struct SettingsView: View {
     private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
         var dong: [String] = []
         if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
-            dong.append("Hạng \(hangTiepTheo): \(formatXu(xu)) mỗi tháng.")
+            // Thưởng theo hạng THÁNG TRƯỚC, cộng ngày 1, hết tháng thu lại (ThuongHangThangService).
+            dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)), dùng đến hết tháng đó.")
         }
         dong.append("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
         dong.append("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
