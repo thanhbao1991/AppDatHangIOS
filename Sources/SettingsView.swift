@@ -157,20 +157,11 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 // 19/10/2026: icon bút chì trơn sau tên khó nhận ra là "sửa tên" → nút viên thuốc có chữ.
                 // Khách chưa đặt tên (tên trống / chỉ là SĐT) thì ghi "Đặt tên" để mời đặt.
+                // 26/10/2026: tên dài bị "Nguyễn Ng..." vì chung hàng với nút → tên 1 hàng riêng (tối đa 2
+                // dòng), nút "Sửa tên" xuống hàng dưới địa chỉ.
                 Button { showEditTen = true } label: {
-                    HStack(spacing: 8) {
-                        Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                            .lineLimit(1)
-                        HStack(spacing: 3) {
-                            Image(systemName: "pencil").font(.system(size: 10, weight: .semibold))
-                            Text(chuaDatTen ? "Đặt tên" : "Sửa tên").font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(Color.white.opacity(0.22)))
-                        .fixedSize()
-                    }
+                    Text(Prefs.tenKhachHang ?? "Khách").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                        .lineLimit(2).multilineTextAlignment(.leading)
                 }
                 .buttonStyle(.plain)
                 HStack(spacing: 4) {
@@ -178,6 +169,19 @@ struct SettingsView: View {
                     Text(diaChiMacDinhText).font(.system(size: 12)).lineLimit(1)
                 }
                 .foregroundColor(.white.opacity(0.85))
+                Button { showEditTen = true } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "pencil").font(.system(size: 10, weight: .semibold))
+                        Text(chuaDatTen ? "Đặt tên" : "Sửa tên").font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.white.opacity(0.22)))
+                    .fixedSize()
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
             }
             Spacer()
             notificationBell
@@ -352,7 +356,7 @@ struct SettingsView: View {
                             .multilineTextAlignment(.leading)
                     }
                     .buttonStyle(.plain)
-                    if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
+                    if hienGhiChuHang, let xu = vi.thuongXuHangTiepTheo, xu > 0 {
                         Text("Lên \(hangTiepTheo): ngày 1 tháng sau nhận \(formatXu(xu))")
                             .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
                     }
