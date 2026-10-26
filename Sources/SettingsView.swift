@@ -20,6 +20,10 @@ struct SettingsView: View {
     private var diaChiHienThi: [DiaChiKhachHang] { diaChiList }
     @State private var vi: KhachHangVi?
     @State private var loading = true
+    #if DEV_LOGIN
+    @State private var xemTruocNgay1 = false
+    @State private var chucMungXemTruoc: ThuongHangThang?
+    #endif
 
     @State private var alertMessage: (title: String, message: String)?
     @State private var diaChiChoXoa: DiaChiKhachHang?
@@ -77,6 +81,11 @@ struct SettingsView: View {
         // congNoContent), không phải ở navigationDestination — giữ nguyên 2 modifier tách theo subview
         // (fix 2026-09-23 lần 2) vì đúng hướng, chỉ thiếu buttonStyle (fix 2026-09-23 lần 3, ĐÃ XONG).
         .task { await load() }
+        #if DEV_LOGIN
+        .fullScreenCover(item: $chucMungXemTruoc) { t in
+            ChucMungHangView(thuong: t) { chucMungXemTruoc = nil }
+        }
+        #endif
         .popupHost { host in
             host
                 .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -130,7 +139,18 @@ struct SettingsView: View {
         } else {
             List {
                 if let vi {
+                    #if DEV_LOGIN
+                    cardRow(topExtra: 6) { diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi) }
+                    cardRow {
+                        Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
+                            xemTruocNgay1.toggle()
+                            if xemTruocNgay1 { chucMungXemTruoc = XemTruocNgay1.vi(vi).thuongHangThang }
+                        }
+                        .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
+                    }
+                    #else
                     cardRow(topExtra: 6) { diemHangCard(vi) }
+                    #endif
                     cardRow { xuCongNoCard(vi) }
                 }
 
@@ -308,12 +328,14 @@ struct SettingsView: View {
     @ViewBuilder
     private func thuongHangDong(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let xu = vi.thuongXuHangHienTai, xu > 0 {
-                Text("🎁 \(formatXu(xu))")
-            }
-            // Freeship: hạng Bạc trở lên tháng này HOẶC tháng trước — cùng luật DuocMienShipTheoHangAsync (Backend).
-            if [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
-                Text("🛵 Freeship")
+            HStack(spacing: 14) {
+                if let xu = vi.thuongXuHangHienTai, xu > 0 {
+                    Text("🎁 \(formatXu(xu))")
+                }
+                // Freeship: hạng Bạc trở lên tháng này HOẶC tháng trước — cùng luật DuocMienShipTheoHangAsync (Backend).
+                if [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
+                    Text("🛵 Freeship")
+                }
             }
             if let t = vi.thuongHangThang, t.conLai > 0 {
                 Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
@@ -716,3 +738,38 @@ struct SettingsView: View {
         }
     }
 }
+
+#if DEV_LOGIN
+/// CHỈ bản dev (9.9.0): giả lập thẻ hạng + màn chúc mừng như khách sẽ thấy ngày 1 tháng sau — chi tiêu
+/// tháng mới về 0 (hạng Thành Viên), hạng tháng này thành "hạng tháng trước", nhận Xu thưởng theo hạng đó
+/// (khớp GetViAsync + ThuongHangThangService bên Backend). Dựng qua JSON vì KhachHangVi toàn `let`.
+enum XemTruocNgay1 {
+    static func vi(_ v: KhachHangVi) -> KhachHangVi {
+        let cal = Calendar(identifier: .gregorian)
+        let dauThangSau = cal.date(byAdding: .month, value: 1, to: cal.date(from: cal.dateComponents([.year, .month], from: Date()))!)!
+        let cuoiThangSau = cal.date(byAdding: DateComponents(month: 1, day: -1), to: dauThangSau)!
+        let c = cal.dateComponents([.year, .month, .day], from: cuoiThangSau)
+        let homNay = cal.dateComponents([.year, .month], from: Date())
+        let xu = v.thuongXuHangHienTai ?? 0
+        var json: [String: Any] = [
+            "soDu": v.soDu + xu, "diemThangNay": 0, "diemThangTruoc": v.diemThangNay,
+            "duocNhanVoucher": v.duocNhanVoucher, "daNhanVoucher": v.daNhanVoucher, "tongNo": v.tongNo,
+            "laShipper": v.laShipper ?? false, "tongChiTieuThangNay": 0,
+            "hang": "Thành Viên", "hangThangTruoc": v.hang, "hangTiepTheo": "Bạc",
+            "conLaiDeLenHang": 300000, "phanTramTienDoLenHang": 0,
+            "thuongXuHangHienTai": 0, "thuongXuHangTiepTheo": 10000,
+            "yeuThichSanPhamIds": v.yeuThichSanPhamIds,
+        ]
+        if xu > 0 {
+            json["thuongHangThang"] = [
+                "id": "xem-truoc-\(UUID().uuidString)", "hang": v.hang,
+                "thangDat": "\(homNay.month!)/\(homNay.year!)", "soXu": xu, "conLai": xu,
+                "hetHan": String(format: "%04d-%02d-%02dT00:00:00", c.year!, c.month!, c.day!),
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: json),
+              let gia = try? JSONDecoder().decode(KhachHangVi.self, from: data) else { return v }
+        return gia
+    }
+}
+#endif
