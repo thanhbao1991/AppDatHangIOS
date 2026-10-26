@@ -594,6 +594,18 @@ struct KhachHangVi: Decodable {
     var thuongXuHangTiepTheo: Double? = nil
     // Lần cộng Xu thưởng hạng của tháng này — màn chúc mừng (ChucMungHangView) + dòng hạn dùng.
     var thuongHangThang: ThuongHangThang? = nil
+    // Xếp hạng shipper tháng này (chỉ có khi laShipper) — top 3 cuối tháng nhận Xu.
+    var topShipper: TopShipperThang? = nil
+}
+
+struct TopShipperThang: Decodable {
+    let viTri: Int
+    let soShipper: Int
+    let thuongXu: Double
+    // Chi tiêu thêm để lên viTriTiepTheo; 0 = đang đứng đầu
+    let conLaiDeLenHang: Double
+    let viTriTiepTheo: Int
+    let thuongXuViTriTiepTheo: Double
 }
 
 struct ThuongHangThang: Decodable, Equatable, Identifiable {
