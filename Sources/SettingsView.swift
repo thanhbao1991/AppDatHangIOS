@@ -67,7 +67,7 @@ struct SettingsView: View {
         Theme.hangColors.mapValues { [$0.primary, $0.dark] }
     }
     private let hangIcon: [String: String] = [
-        "Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈", "Thành Viên": "🌱",
+        "Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐", "Thành Viên": "🌱",
     ]
 
     var body: some View {

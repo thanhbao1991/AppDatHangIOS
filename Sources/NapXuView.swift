@@ -91,7 +91,7 @@ struct NapXuView: View {
             .foregroundColor(.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(Capsule().fill(Theme.success))
+            .background(Capsule().fill(Theme.primary)) // màu chủ đạo theo hạng (26/10: xanh lá lệch tông)
             .fixedSize() // không cho xuống dòng "+5.000 / Xu" (24/10 user: badge lệch)
             .layoutPriority(1)
             Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
@@ -118,7 +118,7 @@ private struct NhapNhayX2: View {
     var body: some View {
         Text("x2")
             .font(.system(size: 12, weight: .heavy))
-            .foregroundColor(Theme.success)
+            .foregroundColor(Theme.primary)
             .padding(.horizontal, 5)
             .padding(.vertical, 1)
             .background(Capsule().fill(Color.yellow))

@@ -15,21 +15,23 @@ struct QuaChucMung: Identifiable, Equatable {
 }
 
 enum ChucMungHang {
+    static let camOn = "Cảm ơn bạn đã đồng hành cùng Đenn!"
+
     /// Các quà đang chờ nhận, hạng trước rồi tới Top.
     static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {
         var ds: [QuaChucMung] = []
         if let t = vi?.thuongHangThang, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .hang,
-                icon: ["Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈"][t.hang] ?? "🎉",
+                icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉",
                 tieuDe: "Bạn đạt hạng \(t.hang)\n\(tenThang(t.thangDat))",
-                mauHang: t.hang, soXu: t.soXu, ghiChu: nil))
+                mauHang: t.hang, soXu: t.soXu, ghiChu: ChucMungHang.camOn))
         }
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .top, icon: "🏆",
                 tieuDe: "Top \(t.viTri) người dùng\n\(tenThang(t.thangDat))",
-                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: nil))
+                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: ChucMungHang.camOn))
         }
         return ds
     }
