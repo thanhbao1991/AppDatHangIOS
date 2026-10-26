@@ -19,7 +19,6 @@ struct SettingsView: View {
     // sửa/xoá được địa chỉ không phải do mình tạo.
     private var diaChiHienThi: [DiaChiKhachHang] { diaChiList }
     @State private var vi: KhachHangVi?
-    @State private var hienGhiChuHang = false
     @State private var loading = true
 
     @State private var alertMessage: (title: String, message: String)?
@@ -323,6 +322,17 @@ struct SettingsView: View {
         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
     }
 
+    /// Nội dung popup ⓘ trên thẻ hạng.
+    private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
+        var dong: [String] = []
+        if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
+            dong.append("Hạng \(hangTiepTheo): \(formatXu(xu)) mỗi tháng.")
+        }
+        dong.append("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
+        dong.append("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
+        return dong.joined(separator: "\n\n")
+    }
+
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
@@ -359,24 +369,16 @@ struct SettingsView: View {
                     // Câu đơn giản thay hẳn cặp nhãn voucher 2 đầu thanh (feedback 2026-09-23 lần 3:
                     // "hơi khó hiểu và nhiều icon quá") — bỏ luôn 2 voucherEndpoint ở đây, chỉ còn
                     // đúng 1 câu số tiền + tên hạng, dễ hiểu ngay không cần suy luận qua vị trí.
-                    // Icon ⓘ cuối câu (2026-10-21): bấm hiện/ẩn ghi chú món không tính vào hạng — cùng
-                    // danh sách món không áp dụng voucher bên Backend (TongChiTieuTinhHangAsync).
-                    Button { withAnimation(.easeInOut(duration: 0.15)) { hienGhiChuHang.toggle() } } label: {
+                    // Icon ⓘ cuối câu: bấm hiện popup giống ⓘ Hộp quà (2026-10-26) — ghi chú món không
+                    // tính vào hạng (cùng danh sách TongChiTieuTinhHangAsync bên Backend) + câu Apple không
+                    // tài trợ (Guideline 5.3.2, thưởng hạng trả bằng Xu).
+                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi, hangTiepTheo: hangTiepTheo)) } label: {
                         (Text("Bạn cần chi tiêu thêm \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo) ")
                          + Text(Image(systemName: "info.circle")))
                             .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.leading)
                     }
                     .buttonStyle(.plain)
-                    if hienGhiChuHang, let xu = vi.thuongXuHangTiepTheo, xu > 0 {
-                        Text("Hạng \(hangTiepTheo): \(formatXu(xu))")
-                            .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
-                    }
-                    if hienGhiChuHang {
-                        Text("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
-                            .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
-                            .transition(.opacity)
-                    }
                 }
             } else {
                 Text("🎉 Hạng cao nhất")
