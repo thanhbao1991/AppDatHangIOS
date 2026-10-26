@@ -216,9 +216,16 @@ struct UuDaiView: View {
 
     private var vongQuayCard: some View {
         cardBox {
-            Text("Hộp quà may mắn")
-                .font(.system(size: 16, weight: .bold))
-                .frame(maxWidth: .infinity, alignment: .center)
+            // App Store Review Guideline 5.3.2: chương trình quà tặng phải ghi rõ Apple không tài trợ — câu
+            // này nằm trong icon ⓘ sau tiêu đề (26/10/2026, trước là dòng chữ nhỏ cố định dưới hộp quà).
+            Button {
+                alertMessage = ("Hộp quà may mắn", "Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
+            } label: {
+                (Text("Hộp quà may mắn ") + Text(Image(systemName: "info.circle")).foregroundColor(Theme.textMuted))
+                    .font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
             Divider()
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
@@ -243,12 +250,6 @@ struct UuDaiView: View {
                     .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            // App Store Review Guideline 5.3.2: chương trình quà tặng phải ghi rõ Apple không tài trợ.
-            Text("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
-                .font(.system(size: 10, weight: .medium)).foregroundColor(Theme.textFaint)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, alignment: .center)
 
             // Công khai tỉ lệ trúng (hộp quà có yếu tố ngẫu nhiên) — bảng tỉ lệ nằm trong trang Thể lệ Xu.
             Button { showTheLe = true } label: {
