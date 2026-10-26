@@ -540,6 +540,12 @@ actor APIClient {
         return env.isSuccess ? env.data : nil
     }
 
+    /// Câu chữ giải thích trong app (NoiDung.swift) — công khai, không cần đăng nhập.
+    func getNoiDung() async -> [String: String]? {
+        let env: ApiEnvelope<[String: String]> = await decode("/dat-hang/noi-dung?nenTang=ios")
+        return env.isSuccess ? env.data : nil
+    }
+
     func getNapXuInfo() async -> ApiEnvelope<NapXuInfoDto> {
         await decode("/dat-hang/nap-xu")
     }

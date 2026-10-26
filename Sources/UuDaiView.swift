@@ -198,7 +198,7 @@ struct UuDaiView: View {
             // App Store Review Guideline 5.3.2: chương trình quà tặng phải ghi rõ Apple không tài trợ — câu
             // này nằm trong icon ⓘ sau tiêu đề (26/10/2026, trước là dòng chữ nhỏ cố định dưới hộp quà).
             Button {
-                alertMessage = ("Hộp quà may mắn", "Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
+                alertMessage = ("Hộp quà may mắn", NoiDung.hopQuaTaiTro)
             } label: {
                 (Text("Hộp quà may mắn ") + Text(Image(systemName: "info.circle")).foregroundColor(Theme.textMuted))
                     .font(.system(size: 16, weight: .bold)).foregroundColor(.primary)

@@ -15,7 +15,7 @@ struct QuaChucMung: Identifiable, Equatable {
 }
 
 enum ChucMungHang {
-    static let camOn = "Cảm ơn bạn đã đồng hành cùng Đenn!"
+    static var camOn: String { NoiDung.chucMungCamOn }
 
     /// Các quà đang chờ nhận, hạng trước rồi tới Top.
     static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {

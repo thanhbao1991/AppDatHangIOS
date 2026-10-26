@@ -37,7 +37,7 @@ struct NapXuView: View {
                         }
                     } footer: {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Xu dùng để thanh toán đơn đặt trên app (không dùng tại quầy), 1 Xu = 1đ. Xu đã nạp không quy đổi lại thành tiền mặt.")
+                            Text(NoiDung.napXuGhiChu)
                                 .font(.system(size: 12))
                                 .foregroundColor(Theme.textFaint)
                             NavigationLink { TheLeXuView() } label: {

@@ -20,6 +20,7 @@ struct ContentView: View {
             if let policy = batBuocCapNhat { ForceUpdateView(policy: policy) }
         }
         .task { await kiemTraPhienBan() }
+        .task { await NoiDung.taiLai() }
         .onChange(of: scenePhase) { phase in
             if phase == .active { Task { await kiemTraPhienBan() } }
         }

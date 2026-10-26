@@ -309,8 +309,7 @@ struct SettingsView: View {
             // Quà theo hạng THÁNG TRƯỚC, nhận từ ngày 1 (ThuongHangThangService). Xu không hết hạn.
             dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)).")
         }
-        dong.append("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
-        dong.append("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")
+        dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
     }
 
