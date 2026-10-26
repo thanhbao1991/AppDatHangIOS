@@ -91,6 +91,7 @@ struct SettingsView: View {
                     chucMungXemTruoc = quaXemTruocConLai.removeFirst()
                 }
             }
+            .id(t.id)
         }
         #endif
         .popupHost { host in
@@ -334,7 +335,7 @@ struct SettingsView: View {
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
     /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
     /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
-    /// Thưởng hạng bằng Xu (từ 11/2026): quà đang giữ được + Xu thưởng tháng này còn lại, hết hạn ngày nào.
+    /// Thưởng hạng bằng Xu (từ 11/2026): quà đang giữ được + Freeship.
     @ViewBuilder
     private func thuongHangDong(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -347,9 +348,6 @@ struct SettingsView: View {
                     Text("🛵 Freeship")
                 }
             }
-            if let t = vi.thuongHangThang, t.daNhan != false, t.conLai > 0 {
-                Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
-            }
         }
         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
     }
@@ -358,8 +356,8 @@ struct SettingsView: View {
     private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
         var dong: [String] = []
         if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
-            // Thưởng theo hạng THÁNG TRƯỚC, cộng ngày 1, hết tháng thu lại (ThuongHangThangService).
-            dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)), dùng đến hết tháng đó.")
+            // Quà theo hạng THÁNG TRƯỚC, nhận từ ngày 1 (ThuongHangThangService). Xu không hết hạn.
+            dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)).")
         }
         dong.append("Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.")
         dong.append("Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.")

@@ -285,6 +285,7 @@ struct MenuView: View {
                     chucMung = quaConLai.removeFirst()
                 }
             }
+            .id(q.id) // mỗi quà 1 màn mới — không mang trạng thái "đang nhận" của màn trước
         }
         .sheet(item: $picking) { sp in
             ProductPickerSheet(

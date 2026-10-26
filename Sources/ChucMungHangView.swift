@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Màn chúc mừng đầu tháng (2026-10-26): từ ngày 1 khách có quà CHỜ NHẬN theo hạng tháng trước (Bạc 10k /
-/// Vàng 30k / Kim Cương 60k, dùng đến hết tháng) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k).
+/// Vàng 30k / Kim Cương 60k) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k). Xu không hết hạn.
 /// KHÔNG tự cộng: bấm "Nhận ngay" mới cộng vào ví; chưa bấm thì lần sau mở app lại hiện. Mỗi quà 1 màn riêng.
 struct QuaChucMung: Identifiable, Equatable {
     enum Loai { case hang, top }
@@ -23,8 +23,7 @@ enum ChucMungHang {
                 loai: .hang,
                 icon: ["Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈"][t.hang] ?? "🎉",
                 tieuDe: "Bạn đạt hạng \(t.hang)\n\(tenThang(t.thangDat))",
-                mauHang: t.hang, soXu: t.soXu,
-                ghiChu: "Dùng đến hết \(ngayHetHan(t.hetHan))"))
+                mauHang: t.hang, soXu: t.soXu, ghiChu: nil))
         }
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
@@ -141,6 +140,7 @@ struct ChucMungHangView: View {
             }
         }
         .onAppear {
+            dangNhan = false
             hien = true
             demSo()
         }
