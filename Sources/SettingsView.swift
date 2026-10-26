@@ -357,7 +357,7 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                     if hienGhiChuHang, let xu = vi.thuongXuHangTiepTheo, xu > 0 {
-                        Text("Lên \(hangTiepTheo): ngày 1 tháng sau nhận \(formatXu(xu))")
+                        Text("Hạng \(hangTiepTheo): \(formatXu(xu))")
                             .font(.system(size: 11, weight: .medium)).foregroundColor(.white.opacity(0.78))
                     }
                     if hienGhiChuHang {
