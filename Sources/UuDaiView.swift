@@ -27,7 +27,7 @@ struct UuDaiView: View {
     @State private var dangDiemDanh = false
 
     @State private var soDuXu: Double?
-    @State private var showLichSuVi = false
+    @State private var showNapXu = false
     @State private var showTheLe = false
 
     @State private var boxScale: CGFloat = 1
@@ -56,7 +56,10 @@ struct UuDaiView: View {
             .background(Theme.bg)
         }
         .task { await load() }
-        .navigationDestination(isPresented: $showLichSuVi) { LichSuViView() }
+        .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
+        .onChange(of: showNapXu) { dangMo in
+            if !dangMo { Task { await load() } }
+        }
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -70,7 +73,7 @@ struct UuDaiView: View {
     /// Icon Xu dùng chung — xem xuIcon(_:) trong Theme.swift.
     private func xuIcon(_ size: CGFloat) -> some View { Theme.xuIcon(size) }
 
-    /// Tổng Xu hiện có + lối vào Lịch sử ví — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
+    /// Tổng Xu hiện có + lối vào Nạp Xu (Lịch sử Xu vẫn ở tab Tài khoản) — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
     /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
     private var xuBanner: some View {
         cardBox {
@@ -84,10 +87,10 @@ struct UuDaiView: View {
                 }
                 Spacer()
                 Button {
-                    showLichSuVi = true
+                    showNapXu = true
                 } label: {
                     HStack(spacing: 4) {
-                        Text("Lịch sử").font(.system(size: 13, weight: .semibold))
+                        Text("Nạp Xu").font(.system(size: 13, weight: .semibold))
                         Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundColor(.white)
