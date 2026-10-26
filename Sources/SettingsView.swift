@@ -312,6 +312,10 @@ struct SettingsView: View {
             if let xu = vi.thuongXuHangHienTai, xu > 0 {
                 Text("🎁 \(formatXu(xu))")
             }
+            // Freeship: hạng Bạc trở lên tháng này HOẶC tháng trước — cùng luật DuocMienShipTheoHangAsync (Backend).
+            if [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
+                Text("🛵 Freeship")
+            }
             if let t = vi.thuongHangThang, t.conLai > 0 {
                 Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
             }
