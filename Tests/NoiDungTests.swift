@@ -4,7 +4,7 @@ import XCTest
 final class NoiDungTests: XCTestCase {
     // Chưa tải được từ backend vẫn phải có câu mặc định (không để màn trống).
     func test_coCauMacDinh() {
-        for k in ["napXuGhiChu", "xoaTaiKhoanMoTa", "hangGhiChu", "hopQuaTaiTro", "chucMungCamOn",
+        for k in ["napXuGhiChu", "xoaTaiKhoanMoTa", "hangGhiChu", "hopQuaTaiTro", "chucMungHangTieuDe", "chucMungHangPhu", "chucMungTopTieuDe", "chucMungTopPhu",
                   "shipMienPhiGhiChu", "muaHoGiam", "muaHoGiuVoucher", "tangLuotQuaKhiHoanThanh", "napLanDauTieuDe",
                   "napLanDauMoTa", "voucherKhongApDung", "donTinhHangGiaiThich", "sinhNhatDaNhan", "otpGhiChu",
                   "otpNhapMa", "qrNhacNoiDung", "napXuGiuNoiDung"] {

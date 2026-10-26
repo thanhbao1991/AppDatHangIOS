@@ -15,7 +15,10 @@ struct QuaChucMung: Identifiable, Equatable {
 }
 
 enum ChucMungHang {
-    static var camOn: String { NoiDung.chucMungCamOn }
+    /// Câu chữ màn chúc mừng lấy từ backend (NoiDung) — {hang} {viTri} {thang} thay bằng giá trị thật.
+    static func dien(_ mau: String, _ giaTri: [String: String]) -> String {
+        giaTri.reduce(mau) { $0.replacingOccurrences(of: "{\($1.key)}", with: $1.value) }
+    }
 
     /// Các quà đang chờ nhận, hạng trước rồi tới Top.
     static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {
@@ -24,14 +27,14 @@ enum ChucMungHang {
             ds.append(QuaChucMung(
                 loai: .hang,
                 icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉",
-                tieuDe: "Bạn đạt hạng \(t.hang)\n\(tenThang(t.thangDat))",
-                mauHang: t.hang, soXu: t.soXu, ghiChu: ChucMungHang.camOn))
+                tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hang, "thang": tenThang(t.thangDat)]),
+                mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu")))
         }
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .top, icon: "🏆",
-                tieuDe: "Top \(t.viTri) người dùng\n\(tenThang(t.thangDat))",
-                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: ChucMungHang.camOn))
+                tieuDe: dien(NoiDung.text("chucMungTopTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
+                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopPhu")))
         }
         return ds
     }
