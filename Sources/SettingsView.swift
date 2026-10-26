@@ -22,7 +22,8 @@ struct SettingsView: View {
     @State private var loading = true
     #if DEV_LOGIN
     @State private var xemTruocNgay1 = false
-    @State private var chucMungXemTruoc: ThuongHangThang?
+    @State private var chucMungXemTruoc: QuaChucMung?
+    @State private var quaXemTruocConLai: [QuaChucMung] = []
     #endif
 
     @State private var alertMessage: (title: String, message: String)?
@@ -83,7 +84,13 @@ struct SettingsView: View {
         .task { await load() }
         #if DEV_LOGIN
         .fullScreenCover(item: $chucMungXemTruoc) { t in
-            ChucMungHangView(thuong: t) { chucMungXemTruoc = nil }
+            ChucMungHangView(qua: t) {
+                chucMungXemTruoc = nil
+                if !quaXemTruocConLai.isEmpty {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    chucMungXemTruoc = quaXemTruocConLai.removeFirst()
+                }
+            }
         }
         #endif
         .popupHost { host in
@@ -144,7 +151,10 @@ struct SettingsView: View {
                     cardRow {
                         Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
                             xemTruocNgay1.toggle()
-                            if xemTruocNgay1 { chucMungXemTruoc = XemTruocNgay1.vi(vi).thuongHangThang }
+                            if xemTruocNgay1 {
+                                quaXemTruocConLai = XemTruocNgay1.qua(vi)
+                                if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
+                            }
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                     }
@@ -337,7 +347,7 @@ struct SettingsView: View {
                     Text("🛵 Freeship")
                 }
             }
-            if let t = vi.thuongHangThang, t.conLai > 0 {
+            if let t = vi.thuongHangThang, t.daNhan != false, t.conLai > 0 {
                 Text("⏳ Còn \(formatXu(t.conLai)) thưởng hạng, dùng đến hết \(ChucMungHang.ngayHetHan(t.hetHan))")
             }
         }
@@ -744,6 +754,31 @@ struct SettingsView: View {
 /// tháng mới về 0 (hạng Thành Viên), hạng tháng này thành "hạng tháng trước", nhận Xu thưởng theo hạng đó
 /// (khớp GetViAsync + ThuongHangThangService bên Backend). Dựng qua JSON vì KhachHangVi toàn `let`.
 enum XemTruocNgay1 {
+    /// Màn chúc mừng như ngày 1: quà hạng theo hạng hiện tại + (shipper) quà Top theo vị trí hiện tại.
+    static func qua(_ v: KhachHangVi) -> [QuaChucMung] {
+        var json: [String: Any] = [
+            "soDu": 0, "diemThangNay": 0, "diemThangTruoc": 0, "duocNhanVoucher": false, "daNhanVoucher": false,
+            "tongNo": 0, "tongChiTieuThangNay": 0, "hang": "Thành Viên", "conLaiDeLenHang": 0, "phanTramTienDoLenHang": 0,
+        ]
+        if let h = choNhanHang(v) { json["thuongHangThang"] = h }
+        if let t = v.topShipper, t.thuongXu > 0 {
+            json["thuongTopShipper"] = ["viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu, "daNhan": false] as [String: Any]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: json),
+              let gia = try? JSONDecoder().decode(KhachHangVi.self, from: data) else { return [] }
+        return ChucMungHang.quaCho(gia)
+    }
+
+    private static func thangNay() -> String {
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date())
+        return "\(c.month!)/\(c.year!)"
+    }
+
+    private static func choNhanHang(_ v: KhachHangVi) -> [String: Any]? {
+        guard let xu = v.thuongXuHangHienTai, xu > 0, let t = vi(v).thuongHangThang else { return nil }
+        return ["id": t.id, "hang": t.hang, "thangDat": t.thangDat, "soXu": xu, "conLai": xu, "hetHan": t.hetHan, "daNhan": false]
+    }
+
     static func vi(_ v: KhachHangVi) -> KhachHangVi {
         let cal = Calendar(identifier: .gregorian)
         let dauThangSau = cal.date(byAdding: .month, value: 1, to: cal.date(from: cal.dateComponents([.year, .month], from: Date()))!)!

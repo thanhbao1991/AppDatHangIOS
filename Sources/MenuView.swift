@@ -38,8 +38,9 @@ struct MenuView: View {
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
     @State private var giaRiengMap: [String: Double] = [:]
-    /// Màn chúc mừng thưởng hạng đầu tháng — hiện 1 lần cho mỗi lần cộng (ChucMungHang).
-    @State private var chucMung: ThuongHangThang?
+    /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
+    @State private var chucMung: QuaChucMung?
+    @State private var quaConLai: [QuaChucMung] = []
 
 
     /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
@@ -274,10 +275,15 @@ struct MenuView: View {
             }
         }
         .task { if sanPhams.isEmpty { await load() } }
-        .fullScreenCover(item: $chucMung) { t in
-            ChucMungHangView(thuong: t) {
-                ChucMungHang.danhDauDaXem(t)
+        .fullScreenCover(item: $chucMung) { q in
+            ChucMungHangView(qua: q) {
+                _ = await ChucMungHang.nhan(q)
                 chucMung = nil
+                // Quà kế tiếp (hạng xong tới Top) — đợi màn cũ đóng hẳn rồi mới mở
+                if !quaConLai.isEmpty {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    chucMung = quaConLai.removeFirst()
+                }
             }
         }
         .sheet(item: $picking) { sp in
@@ -588,7 +594,10 @@ struct MenuView: View {
         giaRiengMap = giaRieng
         yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
-        if chucMung == nil, ChucMungHang.canHien(vi?.thuongHangThang) { chucMung = vi?.thuongHangThang }
+        if chucMung == nil {
+            quaConLai = ChucMungHang.quaCho(vi)
+            if !quaConLai.isEmpty { chucMung = quaConLai.removeFirst() }
+        }
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
         // hoặc network thật thất bại sau khi đã hiện snapshot đĩa thì giữ NGUYÊN danh sách đang hiện,
         // không ghi đè bằng mảng rỗng chỉ vì 1 lần mất mạng thoáng qua.

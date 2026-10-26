@@ -592,10 +592,11 @@ struct KhachHangVi: Decodable {
     // hangTiepTheo → nhận thuongXuHangTiepTheo. Optional để không vỡ decode với backend cũ.
     var thuongXuHangHienTai: Double? = nil
     var thuongXuHangTiepTheo: Double? = nil
-    // Lần cộng Xu thưởng hạng của tháng này — màn chúc mừng (ChucMungHangView) + dòng hạn dùng.
+    // Quà hạng tháng này (chờ nhận hoặc đã nhận) — màn chúc mừng (ChucMungHangView) + dòng hạn dùng.
     var thuongHangThang: ThuongHangThang? = nil
     // Xếp hạng shipper tháng này (chỉ có khi laShipper) — top 3 cuối tháng nhận Xu.
     var topShipper: TopShipperThang? = nil
+    var thuongTopShipper: ThuongTopShipper? = nil
 }
 
 struct TopShipperThang: Decodable {
@@ -615,6 +616,16 @@ struct ThuongHangThang: Decodable, Equatable, Identifiable {
     let soXu: Double
     let conLai: Double
     let hetHan: String
+    // false = đang chờ khách bấm "Nhận ngay" (chưa cộng ví). Nil = backend cũ (đã tự cộng).
+    var daNhan: Bool? = nil
+}
+
+// Quà Top shipper tháng trước — chỉ tài khoản shipper; màn chúc mừng riêng, bấm "Nhận ngay" mới cộng.
+struct ThuongTopShipper: Decodable, Equatable {
+    let viTri: Int
+    let thangDat: String
+    let soXu: Double
+    var daNhan: Bool? = nil
 }
 
 struct ViGiaoDich: Decodable, Identifiable {

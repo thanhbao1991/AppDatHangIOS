@@ -1,18 +1,46 @@
 import SwiftUI
 
-/// Màn chúc mừng đầu tháng (2026-10-25): ngày 1 backend cộng Xu thưởng theo hạng tháng trước
-/// (Bạc 10k / Vàng 30k / Kim Cương 60k, dùng đến hết tháng). Mở app lần đầu sau khi được cộng thì hiện
-/// màn này đúng 1 lần (nhớ theo Id lần cộng — ChucMungHang.daXem).
-enum ChucMungHang {
-    private static let key = "chucMungHang.daXem"
+/// Màn chúc mừng đầu tháng (2026-10-26): từ ngày 1 khách có quà CHỜ NHẬN theo hạng tháng trước (Bạc 10k /
+/// Vàng 30k / Kim Cương 60k, dùng đến hết tháng) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k).
+/// KHÔNG tự cộng: bấm "Nhận ngay" mới cộng vào ví; chưa bấm thì lần sau mở app lại hiện. Mỗi quà 1 màn riêng.
+struct QuaChucMung: Identifiable, Equatable {
+    enum Loai { case hang, top }
+    let loai: Loai
+    let icon: String
+    let tieuDe: String
+    let mauHang: String
+    let soXu: Double
+    let ghiChu: String?
+    var id: String { loai == .hang ? "hang" : "top" }
+}
 
-    static func canHien(_ t: ThuongHangThang?) -> Bool {
-        guard let t, t.soXu > 0 else { return false }
-        return UserDefaults.standard.string(forKey: key) != t.id
+enum ChucMungHang {
+    /// Các quà đang chờ nhận, hạng trước rồi tới Top.
+    static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {
+        var ds: [QuaChucMung] = []
+        if let t = vi?.thuongHangThang, t.daNhan == false, t.soXu > 0 {
+            ds.append(QuaChucMung(
+                loai: .hang,
+                icon: ["Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈"][t.hang] ?? "🎉",
+                tieuDe: "Bạn đạt hạng \(t.hang)\n\(tenThang(t.thangDat))",
+                mauHang: t.hang, soXu: t.soXu,
+                ghiChu: "Dùng đến hết \(ngayHetHan(t.hetHan))"))
+        }
+        if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
+            ds.append(QuaChucMung(
+                loai: .top, icon: "🏆",
+                tieuDe: "Top \(t.viTri) shipper\n\(tenThang(t.thangDat))",
+                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: nil))
+        }
+        return ds
     }
 
-    static func danhDauDaXem(_ t: ThuongHangThang) {
-        UserDefaults.standard.set(t.id, forKey: key)
+    /// Gọi API nhận quà. Lỗi mạng thì thôi — màn sẽ hiện lại lần sau.
+    static func nhan(_ qua: QuaChucMung) async -> Bool {
+        switch qua.loai {
+        case .hang: return await APIClient.shared.nhanThuongHang().success
+        case .top: return await APIClient.shared.nhanThuongTop().success
+        }
     }
 
     /// "2026-11-30T00:00:00" → "30/11"
@@ -29,17 +57,15 @@ enum ChucMungHang {
 }
 
 struct ChucMungHangView: View {
-    let thuong: ThuongHangThang
-    let onXong: () -> Void
+    let qua: QuaChucMung
+    let nhan: () async -> Void
 
     @State private var hien = false
     @State private var soDem: Double = 0
+    @State private var dangNhan = false
 
     private var mau: (primary: Color, dark: Color) {
-        Theme.hangColors[thuong.hang] ?? Theme.hangColors["Thành Viên"]!
-    }
-    private var icon: String {
-        ["Kim Cương": "💎", "Vàng": "🥇", "Bạc": "🥈"][thuong.hang] ?? "🎉"
+        Theme.hangColors[qua.mauHang] ?? Theme.hangColors["Thành Viên"]!
     }
 
     var body: some View {
@@ -55,7 +81,7 @@ struct ChucMungHangView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Text(icon)
+                Text(qua.icon)
                     .font(.system(size: 110))
                     .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
                     .scaleEffect(hien ? 1 : 0.2)
@@ -67,20 +93,20 @@ struct ChucMungHangView: View {
                     .foregroundColor(.white.opacity(0.85))
                     .padding(.top, 24)
 
-                Text("Bạn đạt hạng \(thuong.hang)\n\(ChucMungHang.tenThang(thuong.thangDat))")
+                Text(qua.tieuDe)
                     .font(.system(size: 30, weight: .heavy))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
                     .padding(.top, 6)
 
                 VStack(spacing: 6) {
-                    Text("Quà tháng này")
-                        .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.8))
                     Text("+\(formatXu(soDem))")
                         .font(.system(size: 40, weight: .heavy)).monospacedDigit()
                         .foregroundColor(.white)
-                    Text("Đã cộng vào ví · dùng đến hết \(ChucMungHang.ngayHetHan(thuong.hetHan))")
-                        .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+                    if let ghiChu = qua.ghiChu {
+                        Text(ghiChu)
+                            .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+                    }
                 }
                 .padding(.vertical, 22)
                 .frame(maxWidth: .infinity)
@@ -93,27 +119,23 @@ struct ChucMungHangView: View {
                 .offset(y: hien ? 0 : 30)
                 .animation(.easeOut(duration: 0.5).delay(0.25), value: hien)
 
-                Text("Tiếp tục giữ hạng để nhận quà vào ngày 1 tháng sau nhé!")
-                    .font(.system(size: 13)).foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-                    .padding(.top, 16)
-                    .opacity(hien ? 1 : 0)
-                    .animation(.easeOut(duration: 0.5).delay(0.45), value: hien)
-
                 Spacer()
 
                 Button {
-                    onXong()
+                    dangNhan = true
+                    Task { await nhan() }
                 } label: {
-                    Text("Tuyệt vời!")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(mau.dark)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(.white)
-                        .clipShape(Capsule())
+                    Group {
+                        if dangNhan { ProgressView().tint(mau.dark) } else { Text("Nhận ngay") }
+                    }
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(mau.dark)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(.white)
+                    .clipShape(Capsule())
                 }
+                .disabled(dangNhan)
                 .padding(.horizontal, 28)
                 .padding(.bottom, 24)
             }
@@ -129,8 +151,8 @@ struct ChucMungHangView: View {
         let buoc = 30
         for i in 1...buoc {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35 + Double(i) * 0.03) {
-                soDem = (thuong.soXu * Double(i) / Double(buoc) / 1000).rounded() * 1000
-                if i == buoc { soDem = thuong.soXu }
+                soDem = (qua.soXu * Double(i) / Double(buoc) / 1000).rounded() * 1000
+                if i == buoc { soDem = qua.soXu }
             }
         }
     }

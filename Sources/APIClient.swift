@@ -511,6 +511,16 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    func nhanThuongHang() async -> ActionResult {
+        let env: ApiEnvelope<Double> = await decode("/dat-hang/thuong-hang/nhan", method: "POST")
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
+    func nhanThuongTop() async -> ActionResult {
+        let env: ApiEnvelope<Double> = await decode("/dat-hang/thuong-top/nhan", method: "POST")
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     func xoaYeuThich(_ sanPhamId: String) async -> ActionResult {
         let env: ApiEnvelope<Bool> = await decode("/dat-hang/yeu-thich/\(sanPhamId)", method: "DELETE")
         return ActionResult(success: env.isSuccess, message: env.message)
