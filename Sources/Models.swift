@@ -506,6 +506,27 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
         default: return tenBan.map { "Tại quán — Bàn \($0)" } ?? "Tại quán"
         }
     }
+
+    /// Card danh sách đơn: phân loại hiện bằng ICON thay chữ (feedback 27/10), chỉ giữ phần chi tiết
+    /// (tên bàn / địa chỉ giao). Cùng nhánh với hinhThucNhanHangText.
+    var phanLoaiIcon: String {
+        if laGiaoHangCoDiaChi { return "shippingbox.fill" }
+        switch phanLoai {
+        case "Ship": return "shippingbox.fill"
+        case "Mv": return "takeoutbag.and.cup.and.straw.fill"
+        case "Mh": return "cart.fill"
+        default: return "storefront.fill"
+        }
+    }
+
+    var phanLoaiChiTiet: String? {
+        if laGiaoHangCoDiaChi { return diaChiText?.trimmingCharacters(in: .whitespaces) }
+        switch phanLoai {
+        case "Ship", "Mv": return nil
+        case "Mh": return "Mua hộ"
+        default: return tenBan.map { "Bàn \($0)" }
+        }
+    }
 }
 
 // ---- Địa chỉ ----
