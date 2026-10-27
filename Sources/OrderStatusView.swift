@@ -149,8 +149,12 @@ struct OrderStatusView: View {
                         Spacer(minLength: 8)
                         // Đỏ khi còn ghi nợ (conLai > 0, vd đơn giao xong nhưng chưa thu đủ tiền) —
                         // khớp màu cảnh báo "CÒN LẠI" ở OrderDetailView (Theme.danger).
-                        Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
-                            .foregroundColor(item.conLai > 0 ? Theme.danger : .primary)
+                        // Icon Xu/QR/tiền mặt trước số tiền (feedback 27/10); đơn Desktop chưa thu không rõ → bỏ trống
+                        HStack(spacing: 5) {
+                            if let loai = item.loaiThanhToan { ThanhToanIcon(loai: loai, size: 18) }
+                            Text(formatTien(item.thanhTien)).font(.system(size: 16, weight: .bold))
+                                .foregroundColor(item.conLai > 0 ? Theme.danger : .primary)
+                        }
                     }
                 }
                 Spacer(minLength: 0)

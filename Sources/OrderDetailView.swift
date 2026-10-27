@@ -88,8 +88,7 @@ struct OrderDetailView: View {
                             }
                         }
                         HStack(spacing: 10) {
-                            Image(systemName: hinhThucThanhToanIcon)
-                                .font(.system(size: 18)).foregroundColor(Theme.primary)
+                            ThanhToanIcon(loai: order.loaiThanhToan, size: 24)
                                 .frame(width: 40, height: 40)
                                 .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 10))
                             Text(httt).font(.system(size: 14, weight: .medium))
@@ -242,14 +241,9 @@ struct OrderDetailView: View {
     /// hiện riêng "Hình thức thanh toán" thay vì gộp chung 1 dòng "Ghi chú: ..." khó đọc. Đơn tạo qua
     /// Desktop (Tại Chỗ/Mv) không đi qua quy ước này nên không có tiền tố — hinhThucThanhToanText trả
     /// nil, phần "Hình thức thanh toán" tự ẩn, chỉ hiện ghiChu thô như cũ.
-    private static let hinhThucThanhToanPrefixes = ["🟡 Đã thanh toán bằng Xu", "💵 Thanh toán khi nhận hàng", "📱 Chuyển khoản QR"]
+    private static let hinhThucThanhToanPrefixes = DonHangKhach.hinhThucThanhToanPrefixes
 
-    /// So khớp KHÔNG phân biệt hoa thường: backend chuẩn hoá GhiChu viết hoa đầu mỗi chữ ("🟡 Đã Thanh
-    /// Toán Bằng Xu") nên so đúng chữ hoa trượt hết, tiền tố rơi xuống dòng "Ghi chú" (ảnh thật 25/10).
-    private var hinhThucThanhToanText: String? {
-        guard let ghiChu = order.ghiChu?.lowercased() else { return nil }
-        return Self.hinhThucThanhToanPrefixes.first { ghiChu.hasPrefix($0.lowercased()) }
-    }
+    private var hinhThucThanhToanText: String? { order.hinhThucThanhToanText }
 
     private var ghiChuRieng: String? {
         guard let ghiChu = order.ghiChu, !ghiChu.isEmpty else { return nil }
@@ -278,17 +272,6 @@ struct OrderDetailView: View {
         return hinhThucThanhToanText
     }
 
-    /// Icon minh hoạ cho mục "Hình thức thanh toán" — ưu tiên đọc theo sự thật đã thu
-    /// (daThuBangChuyenKhoan), rơi về đoán theo chuỗi tự khai (chứa "QR"/"Xu") nếu chưa thu đồng nào.
-    private var hinhThucThanhToanIcon: String {
-        if let xu = order.daThuBangXu, xu > 0, xu >= order.daThu { return "circle.fill" }
-        if let daCK = order.daThuBangChuyenKhoan { return daCK ? "qrcode" : "banknote.fill" }
-        if let text = hinhThucThanhToanText {
-            if text.contains("QR") { return "qrcode" }
-            if text.contains("Xu") { return "circle.fill" }
-        }
-        return "creditcard.fill"
-    }
 
     /// Đơn còn tiền chưa thu VÀ khách khai lúc đặt là chuyển khoản QR (hinhThucThanhToanText, không
     /// dùng hinhThucThanhToanHienThi/daThuBangChuyenKhoan vì đó là SỰ THẬT ĐÃ THU — đơn chưa thu đồng
@@ -479,5 +462,53 @@ struct OrderDetailView: View {
         cart.markDatLai()
         cartPath = []
         selectedTab = .cart
+    }
+}
+
+/// Hình thức thanh toán của đơn — dùng chung cho mục "Hình thức thanh toán" (OrderDetailView) và icon
+/// trước số tiền ở danh sách đơn (OrderStatusView). Ưu tiên sự thật đã thu (daThuBangChuyenKhoan/
+/// daThuBangXu), chưa thu đồng nào thì đoán theo tiền tố khách tự khai trong GhiChu.
+enum LoaiThanhToan { case xu, chuyenKhoan, tienMat }
+
+extension DonHangKhach {
+    /// GhiChu backend chỉ có 1 field free-text — hình thức thanh toán là TIỀN TỐ gắn lúc đặt đơn (xem
+    /// CheckoutView.datHang). Đơn tạo qua Desktop không có tiền tố → nil.
+    static let hinhThucThanhToanPrefixes = ["🟡 Đã thanh toán bằng Xu", "💵 Thanh toán khi nhận hàng", "📱 Chuyển khoản QR"]
+
+    /// So khớp KHÔNG phân biệt hoa thường: backend chuẩn hoá GhiChu viết hoa đầu mỗi chữ ("🟡 Đã Thanh
+    /// Toán Bằng Xu") nên so đúng chữ hoa trượt hết, tiền tố rơi xuống dòng "Ghi chú" (ảnh thật 25/10).
+    var hinhThucThanhToanText: String? {
+        guard let g = ghiChu?.lowercased() else { return nil }
+        return Self.hinhThucThanhToanPrefixes.first { g.hasPrefix($0.lowercased()) }
+    }
+
+    var loaiThanhToan: LoaiThanhToan? {
+        if let xu = daThuBangXu, xu > 0, xu >= daThu { return .xu }
+        if let daCK = daThuBangChuyenKhoan { return daCK ? .chuyenKhoan : .tienMat }
+        switch hinhThucThanhToanText {
+        case Self.hinhThucThanhToanPrefixes[0]: return .xu
+        case Self.hinhThucThanhToanPrefixes[1]: return .tienMat
+        case Self.hinhThucThanhToanPrefixes[2]: return .chuyenKhoan
+        default: return nil
+        }
+    }
+}
+
+/// Xu = ảnh đồng xu thật (SF Symbol circle.fill từng ra chấm đen, ảnh thật 27/10); QR/tiền mặt = SF Symbol.
+struct ThanhToanIcon: View {
+    let loai: LoaiThanhToan?
+    var size: CGFloat = 18
+
+    var body: some View {
+        switch loai {
+        case .xu:
+            Theme.xuIcon(size)
+        case .chuyenKhoan:
+            Image(systemName: "qrcode").font(.system(size: size * 0.75)).foregroundColor(Theme.primary)
+        case .tienMat:
+            Image(systemName: "banknote.fill").font(.system(size: size * 0.75)).foregroundColor(Theme.success)
+        case nil:
+            Image(systemName: "creditcard.fill").font(.system(size: size * 0.75)).foregroundColor(Theme.primary)
+        }
     }
 }
