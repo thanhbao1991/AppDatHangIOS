@@ -293,8 +293,9 @@ struct SettingsView: View {
                 if let xu = vi.thuongXuHangHienTai, xu > 0 {
                     Text("🎁 \(formatXu(xu))")
                 }
-                // Freeship: hạng Bạc trở lên tháng này HOẶC tháng trước — cùng luật DuocMienShipTheoHangAsync (Backend).
-                if [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
+                // Freeship theo cờ backend mienShip (2026-10-28, luật tính cả đơn ngoài app — DuocMienShipTheoHangAsync);
+                // backend cũ chưa có cờ thì suy từ hạng như trước.
+                if vi.mienShip ?? [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
                     Text("🛵 Freeship")
                 }
             }
@@ -365,26 +366,9 @@ struct SettingsView: View {
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
             }
 
+            // 2 ô "Điểm tháng này" + "Hạng tháng trước" đã bỏ (chủ quán 2026-10-28) — freeship giờ tính
+            // riêng (cả đơn ngoài app), hiện ở dòng thưởng bên dưới theo cờ mienShip.
             thuongHangDong(vi)
-
-            // Backend trả -1 (sentinel, xem HoaDonCustomerInfoService) khi khách bị khoá điểm. Với app
-            // khách điều này KHÔNG xảy ra: DatHangService.GetViAsync luôn coi khách là được nhận voucher
-            // (cờ KhachHangs.DuocNhanVoucher chỉ dành cho Desktop/staff). Giữ nhánh ẩn này làm phòng
-            // thủ — ẩn hẳn 2 ô điểm thay vì hiện "-1" gây hiểu lầm (phát hiện 2026-09-18 qua ảnh chụp thật).
-            // Bỏ icon hạng ở 2 ô điểm (feedback 2026-09-23: "hơi khó hiểu và nhiều icon quá") — card
-            // đã có 2 icon hạng ở dòng tiến độ ngay trên rồi, thêm nữa ở đây gây rối không cần thiết.
-            if vi.diemThangNay >= 0 {
-                HStack(spacing: 12) {
-                    statBoxDark(String(format: "%.0f", vi.diemThangNay / 10), "Điểm tháng này")
-                    // Hạng THÁNG TRƯỚC thay vì điểm — đây là hạng THẬT dùng tính ưu đãi ship
-                    // (ShippingFeeHelper.TinhPhiShip dùng hạng tháng trước, không phải vi.hang đang
-                    // xét dở tháng này), khách cần thấy đúng hạng này để hiểu vì sao popup phí ship
-                    // (CheckoutView) nói tới 1 hạng có thể khác hạng lớn ở đầu card (phát hiện
-                    // 2026-10-01 qua ảnh chụp thật gây hiểu lầm). Icon + màu riêng theo đúng hạng đó,
-                    // không dùng icon/màu của vi.hang (hạng tháng này).
-                    hangBoxDark(vi.hangThangTruoc.isEmpty ? vi.hang : vi.hangThangTruoc)
-                }
-            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -577,42 +561,6 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity)
         .padding(10)
         .background(Theme.bg)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-
-    /// Biến thể statBox cho nền tối (diemHangCard) — chữ trắng thay vì Theme.primary/textMuted vốn
-    /// chỉ đọc được trên nền sáng. `icon` = icon hạng tháng tương ứng (hangIcon[...]), đặt SAU điểm
-    /// cho gọn thay vì thêm hẳn 1 dòng chữ hạng riêng.
-    private func statBoxDark(_ value: String, _ label: String, icon: String? = nil) -> some View {
-        VStack {
-            HStack(spacing: 4) {
-                Text(value).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
-                if let icon { Text(icon).font(.system(size: 13)) }
-            }
-            Text(label).font(.system(size: 11)).foregroundColor(.white.opacity(0.8))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(10)
-        .background(Color.white.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-
-    /// Ô "Hạng tháng trước" — nền tint theo ĐÚNG màu hạng đó (hangGradient), khác hẳn nền trắng mờ
-    /// của statBoxDark để nổi bật hạng rõ ràng, tránh khách tưởng nhầm đây cũng chỉ là 1 con số.
-    private func hangBoxDark(_ hang: String) -> some View {
-        VStack(spacing: 2) {
-            Text("\(hangIcon[hang] ?? "🌱") \(hang)")
-                .font(.system(size: 15, weight: .bold)).foregroundColor(.white)
-                .lineLimit(1).minimumScaleFactor(0.7)
-            Text("Hạng tháng trước").font(.system(size: 11)).foregroundColor(.white.opacity(0.8))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(10)
-        .background(
-            LinearGradient(
-                colors: hangGradient[hang] ?? [Theme.primary, Theme.primaryDark],
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
