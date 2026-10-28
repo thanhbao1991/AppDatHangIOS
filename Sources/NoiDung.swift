@@ -15,7 +15,7 @@ enum NoiDung {
         "chucMungHangPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
         "chucMungTopTieuDe": "Top {viTri} người dùng\n{thang}",
         "chucMungTopPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
-        "shipMienPhiGhiChu": "Đơn 2 ly hoặc hạng Bạc trở lên miễn phí ship",
+        "shipMienPhiGhiChu": "Đơn từ 2 ly, hoặc khách chi từ 300.000đ/tháng, miễn phí ship",
         "muaHoGiam": "Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!",
         "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",
         "tangLuotQuaKhiHoanThanh": "🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn",
