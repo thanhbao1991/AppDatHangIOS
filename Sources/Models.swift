@@ -597,6 +597,8 @@ struct KhachHangVi: Decodable {
     var hangThangTruoc: String = ""
     /// Được freeship theo chi tiêu (backend 2026-10-28, tính cả đơn ngoài app). Nil = backend cũ chưa có cờ.
     var mienShip: Bool? = nil
+    /// Ngày 1 tháng sau có freeship không (chi tiêu tháng này đủ ngưỡng) — chỉ màn "Xem trước ngày 1" dùng.
+    var mienShipThangSau: Bool? = nil
     // Null nếu đã ở hạng cao nhất (Kim Cương) trong tháng này.
     let hangTiepTheo: String?
     let conLaiDeLenHang: Double

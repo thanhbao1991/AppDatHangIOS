@@ -690,6 +690,7 @@ enum XemTruocNgay1 {
             "thuongXuHangHienTai": 0, "thuongXuHangTiepTheo": 10000,
             "yeuThichSanPhamIds": v.yeuThichSanPhamIds,
         ]
+        if let mienShip = v.mienShipThangSau { json["mienShip"] = mienShip }
         if xu > 0 {
             json["thuongHangThang"] = [
                 "id": "xem-truoc-\(UUID().uuidString)", "hang": v.hang,
