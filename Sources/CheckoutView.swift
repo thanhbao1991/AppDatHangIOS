@@ -731,6 +731,7 @@ struct CheckoutView: View {
         if result.isSuccess, let data = result.data {
             clientOrderId = nil
             cart.clear()
+            QuyenThongBao.xinSauKhiDatDon()
             let navigate: () -> Void = {
                 if !xuTraDu && hinhThucThanhToan == .chuyenKhoanQR {
                     path.append(.thanhToan(hoaDonId: data.id))

@@ -31,4 +31,18 @@ final class ChucMungHangTests: XCTestCase {
         XCTAssertTrue(ChucMungHang.quaCho(try vi(hangDaNhan: nil, topDaNhan: nil)).isEmpty)
         XCTAssertTrue(ChucMungHang.quaCho(nil).isEmpty)
     }
+
+    // Điểm quầy đã đổi thành Xu (30/10/2026): hiện 1 lần trước quà hạng, bấm "Tuyệt vời" thì lần sau không hiện nữa.
+    func test_quaCho_chuyenDiemQuay_hienMotLan() async throws {
+        UserDefaults.standard.removeObject(forKey: "chucMung.chuyenDiem.daXem")
+        let json = #"{"soDu":30000,"diemThangNay":0,"diemThangTruoc":0,"duocNhanVoucher":false,"daNhanVoucher":false,"tongNo":0,"tongChiTieuThangNay":0,"hang":"Thành Viên","hangThangTruoc":"","yeuThichSanPhamIds":[],"conLaiDeLenHang":0,"phanTramTienDoLenHang":0,"quaChuyenDiemQuay":{"id":"g1","soXu":30000},"hangDayDu":"Bạc II","capTiepTheo":"Vàng","conLaiDeLenCap":50000,"phanTramTienDoCap":0.8,"thuongXuCapTiepTheo":30000}"#
+        let v = try JSONDecoder().decode(KhachHangVi.self, from: Data(json.utf8))
+        XCTAssertEqual(v.hangDayDu, "Bạc II")
+        let ds = ChucMungHang.quaCho(v)
+        XCTAssertEqual(ds.map(\.loai), [.chuyenDiem])
+        XCTAssertEqual(ds[0].nutBam, "Tuyệt vời")
+        let daDong = await ChucMungHang.nhan(ds[0])
+        XCTAssertTrue(daDong)
+        XCTAssertTrue(ChucMungHang.quaCho(v).isEmpty)
+    }
 }

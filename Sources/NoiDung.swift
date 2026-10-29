@@ -15,6 +15,8 @@ enum NoiDung {
         "chucMungHangPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
         "chucMungTopTieuDe": "Top {viTri} người dùng\n{thang}",
         "chucMungTopPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
+        "chucMungChuyenDiemTieuDe": "Điểm tích ở quầy\nđã thành Xu",
+        "chucMungChuyenDiemPhu": "Đã cộng vào ví. Từ nay mỗi 300.000đ đặt qua app nhận 10.000 Xu.",
         "shipMienPhiGhiChu": "Đơn từ 2 ly, hoặc chi tiêu từ 300k/tháng freeship",
         "muaHoGiam": "Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!",
         "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",

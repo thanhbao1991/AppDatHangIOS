@@ -306,7 +306,7 @@ struct SettingsView: View {
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
         var dong: [String] = []
-        if let xu = vi.thuongXuHangTiepTheo, xu > 0 {
+        if let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo, xu > 0 {
             // Quà theo hạng THÁNG TRƯỚC, nhận từ ngày 1 (ThuongHangThangService). Xu không hết hạn.
             dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)).")
         }
@@ -323,7 +323,7 @@ struct SettingsView: View {
                         // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
                         // — chữ nhỏ 10pt cần độ tương phản cao hơn văn bản thường để vẫn đọc rõ.
                         .foregroundColor(.white.opacity(0.78))
-                    Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hang)")
+                    Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hangDayDu ?? vi.hang)")
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
                 Spacer()
@@ -337,13 +337,13 @@ struct SettingsView: View {
                 }
             }
 
-            if let hangTiepTheo = vi.hangTiepTheo {
+            if let hangTiepTheo = vi.capTiepTheo ?? vi.hangTiepTheo {
                 VStack(alignment: .leading, spacing: 6) {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Color.white.opacity(0.2))
                             Capsule().fill(Color.white)
-                                .frame(width: max(8, geo.size.width * vi.phanTramTienDoLenHang))
+                                .frame(width: max(8, geo.size.width * (vi.phanTramTienDoCap ?? vi.phanTramTienDoLenHang)))
                         }
                     }
                     .frame(height: 6)
@@ -354,7 +354,7 @@ struct SettingsView: View {
                     // tính vào hạng (cùng danh sách TongChiTieuTinhHangAsync bên Backend) + câu Apple không
                     // tài trợ (Guideline 5.3.2, thưởng hạng trả bằng Xu).
                     Button { alertMessage = ("Hạng thành viên", thongTinHang(vi, hangTiepTheo: hangTiepTheo)) } label: {
-                        (Text("Bạn cần chi tiêu thêm \(formatTien(vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo) ")
+                        (Text("Bạn cần chi tiêu thêm \(formatTien(vi.conLaiDeLenCap ?? vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo) ")
                          + Text(Image(systemName: "info.circle")))
                             .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.leading)

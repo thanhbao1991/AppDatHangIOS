@@ -4,14 +4,22 @@ import SwiftUI
 /// Vàng 30k / Kim Cương 60k) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k). Xu không hết hạn.
 /// KHÔNG tự cộng: bấm "Nhận ngay" mới cộng vào ví; chưa bấm thì lần sau mở app lại hiện. Mỗi quà 1 màn riêng.
 struct QuaChucMung: Identifiable, Equatable {
-    enum Loai { case hang, top }
+    enum Loai { case hang, top, chuyenDiem }
     let loai: Loai
     let icon: String
     let tieuDe: String
     let mauHang: String
     let soXu: Double
     let ghiChu: String?
-    var id: String { loai == .hang ? "hang" : "top" }
+    var id: String {
+        switch loai {
+        case .hang: return "hang"
+        case .top: return "top"
+        case .chuyenDiem: return "chuyenDiem"
+        }
+    }
+    /// Quà đổi điểm quầy: Xu đã cộng sẵn — nút chỉ để đóng màn.
+    var nutBam: String { loai == .chuyenDiem ? "Tuyệt vời" : "Nhận ngay" }
 }
 
 enum ChucMungHang {
@@ -20,14 +28,25 @@ enum ChucMungHang {
         giaTri.reduce(mau) { $0.replacingOccurrences(of: "{\($1.key)}", with: $1.value) }
     }
 
-    /// Các quà đang chờ nhận, hạng trước rồi tới Top.
+    /// Id quà đổi điểm quầy đã xem (lưu trên máy) — màn chỉ hiện 1 lần.
+    private static let khoaDaXemChuyenDiem = "chucMung.chuyenDiem.daXem"
+
+    /// Các quà đang chờ nhận: đổi điểm quầy (đã cộng sẵn) → hạng → Top.
     static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {
         var ds: [QuaChucMung] = []
+        if let q = vi?.quaChuyenDiemQuay, q.soXu > 0,
+           UserDefaults.standard.string(forKey: khoaDaXemChuyenDiem) != q.id {
+            ds.append(QuaChucMung(
+                loai: .chuyenDiem, icon: "🎁",
+                tieuDe: NoiDung.text("chucMungChuyenDiemTieuDe"),
+                mauHang: "Vàng", soXu: q.soXu, ghiChu: NoiDung.text("chucMungChuyenDiemPhu")))
+            daXemChuyenDiemId = q.id
+        }
         if let t = vi?.thuongHangThang, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .hang,
                 icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉",
-                tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hang, "thang": tenThang(t.thangDat)]),
+                tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hangDayDu ?? t.hang, "thang": tenThang(t.thangDat)]),
                 mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu")))
         }
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
@@ -44,8 +63,13 @@ enum ChucMungHang {
         switch qua.loai {
         case .hang: return await APIClient.shared.nhanThuongHang().success
         case .top: return await APIClient.shared.nhanThuongTop().success
+        case .chuyenDiem:
+            if let id = daXemChuyenDiemId { UserDefaults.standard.set(id, forKey: khoaDaXemChuyenDiem) }
+            return true
         }
     }
+
+    private static var daXemChuyenDiemId: String?
 
     /// "2026-11-30T00:00:00" → "30/11"
     static func ngayHetHan(_ iso: String) -> String {
@@ -130,7 +154,7 @@ struct ChucMungHangView: View {
                     Task { await nhan() }
                 } label: {
                     Group {
-                        if dangNhan { ProgressView().tint(mau.dark) } else { Text("Nhận ngay") }
+                        if dangNhan { ProgressView().tint(mau.dark) } else { Text(qua.nutBam) }
                     }
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(mau.dark)

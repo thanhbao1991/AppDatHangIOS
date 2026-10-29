@@ -19,12 +19,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            guard granted else { return }
-            DispatchQueue.main.async {
-                application.registerForRemoteNotifications()
-            }
-        }
+        // Không xin quyền lúc mới mở app nữa (30/10/2026 — khách chưa biết app để làm gì, hay từ chối); xin sau khi đặt
+        // đơn thành công (QuyenThongBao.xinSauKhiDatDon). Đã cho phép từ trước thì vẫn đăng ký nhận push như cũ.
+        QuyenThongBao.dangKyNeuDaChoPhep()
         return true
     }
 
@@ -52,5 +49,53 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             DeepLinkRouter.shared.pendingHoaDonId = hoaDonId
         }
         completionHandler()
+    }
+}
+
+/// Xin quyền thông báo ĐÚNG LÚC (30/10/2026): sau khi khách đặt đơn thành công, giải thích trước rồi mới hiện hộp xin
+/// quyền của hệ thống (hộp này chỉ hiện được 1 lần trong đời app). "Để sau" thì 7 ngày sau (đơn kế tiếp) mới hỏi lại.
+enum QuyenThongBao {
+    private static let khoaLanHoi = "push.lanHoiQuyen"
+    private static let cachHoiLai: TimeInterval = 7 * 24 * 3600
+
+    static func dangKyNeuDaChoPhep() {
+        UNUserNotificationCenter.current().getNotificationSettings { s in
+            let daChoPhep: [UNAuthorizationStatus] = [.authorized, .provisional, .ephemeral]
+            guard daChoPhep.contains(s.authorizationStatus) else { return }
+            DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() }
+        }
+    }
+
+    static func xinSauKhiDatDon() {
+        UNUserNotificationCenter.current().getNotificationSettings { s in
+            guard s.authorizationStatus == .notDetermined else { return }
+            let lanTruoc = UserDefaults.standard.double(forKey: khoaLanHoi)
+            guard Date().timeIntervalSince1970 - lanTruoc >= cachHoiLai else { return }
+            // Chờ màn chuyển xong (sang Thanh toán/Đơn hàng) rồi mới hỏi.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                guard let top = manHinhTrenCung(), !(top is UIAlertController) else { return }
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: khoaLanHoi)
+                let a = UIAlertController(title: "Bật thông báo?",
+                                          message: "Để biết khi nào đơn đang được giao và khi nhận Xu thưởng.",
+                                          preferredStyle: .alert)
+                a.addAction(UIAlertAction(title: "Để sau", style: .cancel))
+                a.addAction(UIAlertAction(title: "Bật thông báo", style: .default) { _ in
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { ok, _ in
+                        guard ok else { return }
+                        DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() }
+                    }
+                })
+                top.present(a, animated: true)
+            }
+        }
+    }
+
+    private static func manHinhTrenCung() -> UIViewController? {
+        let goc = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.windows.first { $0.isKeyWindow } }
+            .first?.rootViewController
+        var top = goc
+        while let p = top?.presentedViewController { top = p }
+        return top
     }
 }

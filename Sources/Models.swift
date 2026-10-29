@@ -617,11 +617,25 @@ struct KhachHangVi: Decodable {
     // hangTiepTheo → nhận thuongXuHangTiepTheo. Optional để không vỡ decode với backend cũ.
     var thuongXuHangHienTai: Double? = nil
     var thuongXuHangTiepTheo: Double? = nil
+    // Cấp trong hạng (30/10/2026): "Bạc II", "Vàng III"… — hiện tên này; màu thẻ/biểu tượng vẫn theo `hang`.
+    // Cấp kế tiếp = mốc 300k kế tiếp (mỗi cấp thêm 10k Xu). Backend cũ không có thì dùng hạng như trước.
+    var hangDayDu: String? = nil
+    var capTiepTheo: String? = nil
+    var conLaiDeLenCap: Double? = nil
+    var phanTramTienDoCap: Double? = nil
+    var thuongXuCapTiepTheo: Double? = nil
     // Quà hạng tháng này (chờ nhận hoặc đã nhận) — màn chúc mừng (ChucMungHangView) + dòng hạn dùng.
     var thuongHangThang: ThuongHangThang? = nil
     // Xếp hạng shipper tháng này (chỉ có khi laShipper) — top 3 cuối tháng nhận Xu.
     var topShipper: TopShipperThang? = nil
     var thuongTopShipper: ThuongTopShipper? = nil
+    // Điểm tích ở quầy đã đổi thành Xu lúc đăng nhập app lần đầu (30/10/2026) — Xu đã cộng sẵn, chỉ hiện màn chúc mừng 1 lần.
+    var quaChuyenDiemQuay: QuaChuyenDiemQuay? = nil
+}
+
+struct QuaChuyenDiemQuay: Decodable, Equatable {
+    let id: String
+    let soXu: Double
 }
 
 struct TopShipperThang: Decodable {
@@ -637,6 +651,8 @@ struct TopShipperThang: Decodable {
 struct ThuongHangThang: Decodable, Equatable, Identifiable {
     let id: String
     let hang: String
+    /// "Vàng II" — tên có cấp cho tiêu đề màn chúc mừng (30/10/2026); `hang` vẫn chọn màu/biểu tượng.
+    var hangDayDu: String? = nil
     let thangDat: String
     let soXu: Double
     let conLai: Double
