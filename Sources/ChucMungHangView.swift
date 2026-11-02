@@ -134,6 +134,8 @@ struct ChucMungHangView: View {
                     if let ghiChu = qua.ghiChu {
                         Text(ghiChu)
                             .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 18)
                     }
                 }
                 .padding(.vertical, 22)
