@@ -699,8 +699,8 @@ struct CheckoutView: View {
         await applyCoord(location.coordinate)
     }
 
-    /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend, chỉ gắn tiền tố vào
-    /// GhiChu cho nhân viên biết trước, cộng thêm dungVi/hinhThucThanhToan để server tự trừ ví
+    /// Đặt hàng — hình thức thanh toán KHÔNG có field trạng thái riêng ở backend: server tự gắn tiền tố
+    /// vào GhiChu từ dungVi/hinhThucThanhToan cho nhân viên biết trước, đồng thời tự trừ ví
     /// (best-effort) và biết PhuongThucThanhToanId nào khi ghi dòng trừ ví. Điều hướng sau khi đặt:
     /// Xu trả đủ hoặc chọn COD → về thẳng tab Đơn hàng; chọn QR (còn tiền phải chuyển khoản) → sang
     /// trang quét mã (ThanhToanView) NGAY — quay lại đổi 2026-09-28 sau khi thử bỏ hẳn bước này
@@ -715,13 +715,12 @@ struct CheckoutView: View {
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
         let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
-        let ghiChuPrefix = xuTraDu
-            ? "🟡 Đã thanh toán bằng Xu"
-            : (hinhThucThanhToan == .codTraKhiNhanHang ? "💵 Thanh toán khi nhận hàng" : "📱 Chuyển khoản QR")
-        let ghiChuTrimmed = cart.ghiChuDon.trimmingCharacters(in: .whitespaces)
-        let ghiChuFull = ghiChuTrimmed.isEmpty ? ghiChuPrefix : "\(ghiChuPrefix) — \(ghiChuTrimmed)"
+        // Chỉ gửi ghi chú thật của khách — tiền tố hình thức thanh toán server tự gắn từ hinhThucThanhToan/
+        // dungVi (02/11/2026, xem GhiChuThanhToanApp bên Backend), API trả về vẫn kèm emoji như cũ nên
+        // DonHangKhach.hinhThucThanhToanPrefixes không đổi.
+        let ghiChuKhach = cart.ghiChuDon.trimmingCharacters(in: .whitespaces)
         let result = await APIClient.shared.datMon(
-            items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuFull,
+            items: items, diaChiText: nhanTaiQuan ? "" : diaChi.trimmingCharacters(in: .whitespaces), ghiChu: ghiChuKhach,
             soDienThoaiText: nil, deliveryLat: nhanTaiQuan ? nil : coord?.latitude, deliveryLong: nhanTaiQuan ? nil : coord?.longitude, ghimDoKhachChinh: !nhanTaiQuan && ghimDoKhach,
             clientOrderId: clientOrderId, nhanTaiQuan: nhanTaiQuan,
             // Mua hộ mà 5% đã lớn hơn voucher thì không gửi voucher — để dành, khỏi bị server cảnh báo.
