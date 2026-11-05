@@ -324,16 +324,11 @@ struct MenuView: View {
     }
 
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
-    /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh.
-    /// Dịp lễ (SeasonalEvent.active) tint xen kẽ theo màu dịp thay vì trắng/xám hệ thống — đây là
-    /// phần CHIẾM PHẦN LỚN diện tích màn hình (list món), mỗi dòng tự vẽ nền ĐỤC nên outer
-    /// SeasonalBackgroundPattern phía sau gần như không lộ ra được ở đây nếu không đổi hàm này. Khắc
-    /// phục feedback 2026-11-05 "toàn trắng" — tint nhẹ chứ không đậm để chữ/ảnh món vẫn rõ.
+    /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh. CỐ Ý KHÔNG
+    /// tint theo dịp lễ nữa (thử 2026-11-05, bị chê "mờ ảnh/chữ món") — dòng món luôn giữ trắng/xám hệ
+    /// thống để đảm bảo đọc rõ, trang trí dịp lễ chỉ còn ở banner/nav bar/nút CTA.
     private func sectionBackground(_ index: Int) -> Color {
-        if let theme = SeasonalEvent.active {
-            return index % 2 == 0 ? theme.primary.opacity(0.05) : theme.primary.opacity(0.10)
-        }
-        return index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
+        index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
     }
 
     /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
@@ -419,7 +414,7 @@ struct MenuView: View {
                 }
             }
             .frame(width: 84)
-            .background(SeasonalEvent.active.map { $0.primary.opacity(0.08) } ?? Color(.secondarySystemGroupedBackground))
+            .background(Color(.secondarySystemGroupedBackground))
             // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
             // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
             .onChange(of: selectedNhomId) { id in
@@ -612,7 +607,7 @@ struct MenuView: View {
             .frame(height: 90 + 6 + 16 + 4 + 15)
         }
         .padding(.vertical, 10)
-        .background(SeasonalEvent.active.map { $0.primary.opacity(0.06) } ?? Color(.secondarySystemGroupedBackground).opacity(0.5))
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
     }
 
     /// Gộp món "Nổi bật" (chọn tay qua AppQuanLyIOS) VÀ top bán chạy 30 ngày (tự động, banChayIds) —

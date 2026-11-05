@@ -39,6 +39,11 @@ enum SeasonalTheme: CaseIterable, Equatable {
 
     /// Màu CHỦ ĐẠO tạm thời ghi đè Theme.primary/primaryDark (nav bar, nút CTA, tab đang chọn...)
     /// suốt những ngày dịp lễ diễn ra — chủ quán đồng ý đè cả màu hạng cho những ngày này (2026-11-05).
+    /// primary/primaryDark CỐ Ý luôn CÙNG 1 TÔNG MÀU (chỉ khác độ sáng/tối), KHÔNG pha 2 màu bổ sung
+    /// khác hẳn nhau (vd đỏ+xanh lá) — bài học 2026-11-05: gradient đỏ→xanh lá trải dài toàn màn hình
+    /// cho ra khoảng giữa xám/nâu bẩn (2 màu bổ sung luôn trộn ra màu trung tính khi gradient đủ dài),
+    /// hỏng hết. Xanh lá/vàng... của dịp đó chỉ xuất hiện qua emoji (leadingEmoji/trailingEmoji), KHÔNG
+    /// còn trộn vào nền.
     var primary: Color {
         switch self {
         case .tet: return Color(red: 0.80, green: 0.08, blue: 0.1)
@@ -50,33 +55,21 @@ enum SeasonalTheme: CaseIterable, Equatable {
 
     var primaryDark: Color {
         switch self {
-        case .tet: return Color(red: 0.93, green: 0.65, blue: 0.1)
-        case .valentine: return Color(red: 0.98, green: 0.55, blue: 0.65)
-        case .noel: return Color(red: 0.12, green: 0.47, blue: 0.24)
-        case .quocKhanh, .thongNhat: return Color(red: 0.55, green: 0.04, blue: 0.06)
+        case .tet: return Color(red: 0.50, green: 0.04, blue: 0.06)
+        case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
+        case .noel: return Color(red: 0.45, green: 0.04, blue: 0.07)
+        case .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         }
     }
 
-    /// Vài emoji rải TĨNH (không rơi) làm hoạ tiết nền kiểu "giấy gói quà" — xem
-    /// SeasonalBackgroundPattern. Khác leading/trailingEmoji (dùng cho banner, 1 biểu tượng/bên).
+    /// Vài emoji dùng cho hoạ tiết rải trong banner (seasonalBanner) — KHÔNG còn dùng cho nền toàn màn
+    /// (SeasonalBackgroundPattern bỏ hẳn lớp hoạ tiết sau khi làm lại 2026-11-05, xem comment ở đó).
     var patternSymbols: [String] {
         switch self {
         case .tet: return ["🌸", "🧧", "🏮"]
         case .valentine: return ["💕", "💘", "🌹"]
         case .noel: return ["❄️", "🎄", "🎁"]
         case .quocKhanh, .thongNhat: return ["⭐", "🇻🇳"]
-        }
-    }
-
-    /// Màu nền BÃO HOÀ RÕ (không phải pastel nhạt) phủ TOÀN MÀN hình phía sau các card trắng — khớp
-    /// phong cách tham khảo user gửi 2026-11-05 (nền đỏ/xanh lá đậm thật, card/nội dung trắng nổi lên
-    /// trên, không phải nền trắng ám màu nhẹ). Đậm hơn hẳn washColors bản cũ (pastel ~90-100% sáng).
-    var washColors: [Color] {
-        switch self {
-        case .tet: return [Color(red: 0.85, green: 0.18, blue: 0.14), Color(red: 0.95, green: 0.55, blue: 0.10)]
-        case .valentine: return [Color(red: 0.90, green: 0.35, blue: 0.55), Color(red: 0.97, green: 0.62, blue: 0.70)]
-        case .noel: return [Color(red: 0.73, green: 0.09, blue: 0.13), Color(red: 0.12, green: 0.47, blue: 0.24)]
-        case .quocKhanh, .thongNhat: return [Color(red: 0.80, green: 0.08, blue: 0.1), Color(red: 0.55, green: 0.04, blue: 0.06)]
         }
     }
 
@@ -179,47 +172,16 @@ enum AppIconSwitcher {
     }
 }
 
-/// Nền trang trí dịp lễ kiểu "giấy gói quà" — gradient bão hoà (washColors) PHỦ KÍN màn hình + lưới
-/// emoji rải dày đặc, vị trí CỐ ĐỊNH (Canvas vẽ 1 lần, KHÔNG TimelineView/animation — không phải hạt
-/// rơi, user đã yêu cầu bỏ hiệu ứng rơi). nil (không dịp nào) thì chỉ là Theme.bg phẳng như cũ.
-/// Feedback 2026-11-05 "sao ko thấy background giáng sinh hẳn luôn" sau 2 lần tint nhẹ không đủ —
-/// đổi hẳn sang màu nền thật + hoạ tiết rõ mắt thay vì chỉ tint %.
+/// Nền trang trí dịp lễ — gradient 2 sắc độ CÙNG TÔNG (primary → primaryDark, xem comment ở đó), ĐƠN
+/// GIẢN, không hoạ tiết rải. Làm lại hoàn toàn 2026-11-05 sau khi bản "giấy gói quà" (gradient 2 tông
+/// khác hẳn + lưới emoji dày) bị chê xám/bẩn + rối mắt ở MỌI màn hình — bài học: nền toàn màn hình
+/// cao/rộng cần ĐƠN GIẢN (1 tông màu, không hoạ tiết) để không đè lên nội dung/card bên trên; hoạ tiết
+/// phong phú chỉ còn ở banner (seasonalBanner, diện tích nhỏ, kiểm soát được). nil (không dịp nào) thì
+/// vẫn Theme.bg phẳng xám trung tính như cũ.
 struct SeasonalBackgroundPattern: View {
     var body: some View {
         if let theme = SeasonalEvent.active {
-            LinearGradient(colors: theme.washColors, startPoint: .topLeading, endPoint: .bottomTrailing)
-                .overlay {
-                    Canvas { context, size in
-                        var seed: UInt64 = 1_442_695_040
-                        func rand() -> CGFloat {
-                            seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
-                            return CGFloat(seed >> 33) / CGFloat(1 << 31)
-                        }
-                        let symbols = theme.patternSymbols
-                        // Lưới thô (không random thuần) + jitter nhẹ mỗi ô — đều khắp màn hình kiểu hoạ
-                        // tiết giấy gói, không tụ/thưa chỗ như random thuần với mật độ thấp.
-                        let cols = 5, rows = 9
-                        let cellW = size.width / CGFloat(cols)
-                        let cellH = size.height / CGFloat(rows)
-                        context.opacity = 0.30
-                        for row in 0..<rows {
-                            for col in 0..<cols {
-                                let jitterX = (rand() - 0.5) * cellW * 0.5
-                                let jitterY = (rand() - 0.5) * cellH * 0.5
-                                let x = (CGFloat(col) + 0.5) * cellW + jitterX
-                                let y = (CGFloat(row) + 0.5) * cellH + jitterY
-                                let symbol = symbols[Int(rand() * CGFloat(symbols.count)) % symbols.count]
-                                let fontSize: CGFloat = 20 + rand() * 14
-                                let rotation = Angle(degrees: Double(rand() * 40 - 20))
-                                let resolved = context.resolve(Text(symbol).font(.system(size: fontSize)))
-                                var rotated = context
-                                rotated.translateBy(x: x, y: y)
-                                rotated.rotate(by: rotation)
-                                rotated.draw(resolved, at: .zero, anchor: .center)
-                            }
-                        }
-                    }
-                }
+            LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .top, endPoint: .bottom)
         } else {
             Theme.bg
         }

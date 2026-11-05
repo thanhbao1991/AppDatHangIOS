@@ -160,17 +160,23 @@ struct SettingsView: View {
                 if let vi {
                     #if DEV_LOGIN
                     cardRow(topExtra: 6) { diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi) }
+                    // Bọc cardBox (nền trắng đục) thay vì để Button trần trên nền List — nền List giờ
+                    // đổi màu theo dịp lễ (SeasonalBackgroundPattern), chữ nút mặc định (màu tint) sẽ
+                    // khó đọc nếu không có nền trắng cố định bên dưới (phát hiện 2026-11-05).
                     cardRow {
-                        Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
-                            xemTruocNgay1.toggle()
-                            if xemTruocNgay1 {
-                                quaXemTruocConLai = XemTruocNgay1.qua(vi)
-                                if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
+                        cardBox {
+                            Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
+                                xemTruocNgay1.toggle()
+                                if xemTruocNgay1 {
+                                    quaXemTruocConLai = XemTruocNgay1.qua(vi)
+                                    if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
+                                }
                             }
+                            .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                         }
-                        .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                     }
                     cardRow {
+                        cardBox {
                         Button(seasonalPreviewLabel) {
                             // Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp 5 dịp vào 1 nút thay vì 5
                             // nút riêng, đỡ chật danh sách.
@@ -189,6 +195,7 @@ struct SettingsView: View {
                             NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
+                        }
                     }
                     #else
                     cardRow(topExtra: 6) { diemHangCard(vi) }
