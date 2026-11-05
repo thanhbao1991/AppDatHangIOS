@@ -189,7 +189,6 @@ struct SettingsView: View {
                                 SeasonalEvent.previewOverride = nil
                             }
                             Theme.applyNavBarAppearance()
-                            AppIconSwitcher.apply(SeasonalEvent.active)
                             seasonalPreviewTick += 1
                             NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
                         }

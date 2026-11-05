@@ -202,7 +202,10 @@ enum SeasonalEvent {
         self.dipLe = dipLe
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
-        AppIconSwitcher.apply(active)
+        // Icon theo dịp THẬT (theme), KHÔNG theo previewOverride: mỗi lần đổi icon iOS bắt buộc hiện
+        // popup "You have changed the icon…" — bấm xem trước ở bản dev sẽ bị popup liên tục (user chê
+        // 2026-11-05). Xem trước chỉ đổi màu/banner/header.
+        AppIconSwitcher.apply(theme)
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
     }
 }
