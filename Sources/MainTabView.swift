@@ -26,9 +26,9 @@ struct MainTabView: View {
     @State private var showLogin = false
     @StateObject private var deepLinkRouter = DeepLinkRouter.shared
     #if DEV_LOGIN
-    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại lớp tuyết khi SettingsView bắn
-    /// .christmasPreviewToggled (Theme.isChristmasSeason là computed property, không tự kích hoạt lại).
-    @State private var christmasPreviewTick = 0
+    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại lớp hạt rơi khi SettingsView bắn
+    /// .christmasPreviewToggled (SeasonalEvent.active() là hàm tính lại mỗi lần gọi, không tự kích hoạt lại body).
+    @State private var seasonalPreviewTick = 0
     #endif
 
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
@@ -123,10 +123,16 @@ struct MainTabView: View {
                 tabBar
             }
         }
-        // Tuyết rơi phủ TOÀN APP (mọi tab, kể cả tab bar) — khác christmasBanner (chỉ ở MenuView),
-        // đặt ở tầng ngoài cùng này thay vì riêng từng tab để không phải nhân bản ở 5 tab.
-        if Theme.isChristmasSeason {
-            SnowfallView().allowsHitTesting(false)
+        // Hạt rơi theo dịp lễ phủ TOÀN APP (mọi tab, kể cả tab bar) — khác seasonalBanner (chỉ ở
+        // MenuView), đặt ở tầng ngoài cùng này thay vì riêng từng tab để không phải nhân bản ở 5 tab.
+        // Giáng sinh dùng SnowfallView riêng (hình tròn viền xanh); các dịp khác dùng FallingEmojiView
+        // theo SeasonalEvent.particleSymbol (nil = không có hạt rơi, vd 2/9, 30/4-1/5).
+        if let seasonalEvent = SeasonalEvent.active() {
+            if seasonalEvent == .christmas {
+                SnowfallView().allowsHitTesting(false)
+            } else if let symbol = seasonalEvent.particleSymbol {
+                FallingEmojiView(symbol: symbol).allowsHitTesting(false)
+            }
         }
         }
         .tint(Theme.primary)
@@ -136,7 +142,7 @@ struct MainTabView: View {
         }
         #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
-            christmasPreviewTick += 1
+            seasonalPreviewTick += 1
         }
         #endif
         .onChange(of: isLoggedIn) { loggedIn in

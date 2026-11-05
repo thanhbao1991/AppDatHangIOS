@@ -39,9 +39,9 @@ struct MenuView: View {
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
     @State private var giaRiengMap: [String: Double] = [:]
     #if DEV_LOGIN
-    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại khi SettingsView bắn
-    /// .christmasPreviewToggled (Theme.isChristmasSeason là computed property, không tự kích hoạt lại).
-    @State private var christmasPreviewTick = 0
+    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại khi SettingsView bắn .christmasPreviewToggled
+    /// (SeasonalEvent.active() là hàm tính lại mỗi lần gọi, không tự kích hoạt lại body).
+    @State private var seasonalPreviewTick = 0
     #endif
     /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
     @State private var chucMung: QuaChucMung?
@@ -179,10 +179,10 @@ struct MenuView: View {
             // dưới navigationTitle).
             SearchBar(text: $query, placeholder: "Tìm món...", trailing: notificationBell)
 
-            // Banner Giáng sinh — chỉ hiện 24-25/12 (giờ VN), ẩn lúc đang tìm kiếm giống dải đề xuất
-            // bên dưới (xem Theme.isChristmasSeason).
-            if Theme.isChristmasSeason && !isSearching {
-                christmasBanner
+            // Banner dịp lễ đang hiệu lực (Tết/Valentine/Giáng sinh/2-9/30-4-1-5) — ẩn lúc đang tìm
+            // kiếm giống dải đề xuất bên dưới (xem SeasonalEvent.active).
+            if let seasonalEvent = SeasonalEvent.active(), !isSearching {
+                seasonalBanner(seasonalEvent)
             }
 
             // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
@@ -288,7 +288,7 @@ struct MenuView: View {
         .task { if sanPhams.isEmpty { await load() } }
         #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
-            christmasPreviewTick += 1
+            seasonalPreviewTick += 1
         }
         #endif
         .fullScreenCover(item: $chucMung) { q in
@@ -501,24 +501,24 @@ struct MenuView: View {
     private static let noiBatCarouselSpacing: CGFloat = 12
     private static let noiBatCarouselPadding: CGFloat = 16
 
-    /// Banner trang trí Giáng sinh — chỉ hiện 24-25/12 (Theme.isChristmasSeason), không đổi màu chủ
-    /// đạo toàn app (giữ nguyên màu theo hạng khách), chỉ 1 card trang trí nhẹ ngay đầu Home.
-    private var christmasBanner: some View {
+    /// Banner trang trí theo dịp lễ đang hiệu lực (Tết/Valentine/Giáng sinh/2-9/30-4-1-5) — không đổi
+    /// màu chủ đạo toàn app (giữ nguyên màu theo hạng khách), chỉ 1 card trang trí nhẹ ngay đầu Home.
+    private func seasonalBanner(_ event: SeasonalEvent) -> some View {
         HStack(spacing: 10) {
-            Text("🎄").font(.system(size: 26))
+            Text(event.leadingEmoji).font(.system(size: 26))
             VStack(alignment: .leading, spacing: 1) {
-                Text("Chúc Mừng Giáng Sinh!")
+                Text(event.bannerTitle)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
-                Text("Đenn Coffee chúc bạn một mùa lễ ấm áp 🎁")
+                Text(event.bannerSubtitle)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.9))
             }
             Spacer()
-            Text("❄️").font(.system(size: 22))
+            Text(event.trailingEmoji).font(.system(size: 22))
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(LinearGradient(colors: [Color(red: 0.73, green: 0.09, blue: 0.13), Color(red: 0.12, green: 0.47, blue: 0.24)], startPoint: .leading, endPoint: .trailing))
+        .background(LinearGradient(colors: event.gradientColors, startPoint: .leading, endPoint: .trailing))
         .padding(.horizontal, 16).padding(.top, 8)
     }
 

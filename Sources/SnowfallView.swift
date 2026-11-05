@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Hiệu ứng tuyết rơi nhẹ cho dịp Giáng sinh (Theme.isChristmasSeason) — TimelineView(.animation) vẽ
+/// Hiệu ứng tuyết rơi nhẹ cho dịp Giáng sinh (SeasonalEvent.active() == .christmas) — TimelineView(.animation) vẽ
 /// lại vị trí bông tuyết theo thời gian trôi (hàm xác định của t, không giữ @State per-frame) nên rẻ,
 /// không ảnh hưởng hiệu năng cuộn menu bên dưới. Đặt .allowsHitTesting(false) ở call site để không
 /// chặn chạm vào món/nút phía dưới.
