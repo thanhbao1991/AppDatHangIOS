@@ -388,11 +388,11 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
-    /// Dịp lễ đang trang trí hôm nay — nil nếu không dịp nào (kể cả khi lỗi mạng, an toàn: app chỉ
-    /// mất trang trí, không hỏng gì khác). AllowAnonymous ở Backend nên gọi được cả khi chưa đăng nhập.
-    func getDipLe() async -> DipLe? {
-        let env: ApiEnvelope<DipLe?> = await cachedDecode("/dat-hang/dip-le")
-        return env.isSuccess ? (env.data ?? nil) : nil
+    /// Dịp lễ đang trang trí hôm nay (data nil = không dịp nào). Trả cả envelope để SeasonalEvent phân
+    /// biệt "không có dịp" với "lỗi mạng" (lỗi mạng thì giữ nguyên icon, không đổi qua lại vô cớ).
+    /// AllowAnonymous ở Backend nên gọi được cả khi chưa đăng nhập.
+    func getDipLe() async -> ApiEnvelope<DipLe?> {
+        await cachedDecode("/dat-hang/dip-le")
     }
 
     /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback

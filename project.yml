@@ -32,18 +32,22 @@ targets:
         UIRequiresFullScreen: true
         NSLocationWhenInUseUsageDescription: Đenn Coffee cần vị trí của bạn để tính phí ship theo khoảng cách thật và hiển thị bản đồ giao hàng.
         NSPhotoLibraryAddUsageDescription: Đenn Coffee cần lưu ảnh để tải mã QR chuyển khoản về máy bạn.
-        # Icon đổi theo dịp lễ (SeasonalEvent, xem AppIconSwitcher.swift) — mỗi dịp là 1 AppIcon-*.appiconset
-        # riêng trong Assets.xcassets, bật qua ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS bên dưới.
+        # Icon theo dịp lễ: icon CHÍNH do CI chọn lúc build (scripts/chon-icon-dip-le.sh, không popup);
+        # các icon phụ dưới đây chỉ dùng khi tới ngày lễ mà máy khách chưa cập nhật (có popup iOS) — xem
+        # AppIconSwitcher. Thêm dịp: tạo Assets.xcassets/AppIcon-<MA voucher>.appiconset + khai ở đây +
+        # thêm MA vào AppIconSwitcher.maCoIcon + NhacDipLeService.MaCoIconApp (Backend).
         CFBundleIcons:
           CFBundlePrimaryIcon:
             CFBundleIconName: AppIcon
           CFBundleAlternateIcons:
-            AppIcon-Noel:
-              CFBundleIconName: AppIcon-Noel
-            AppIcon-Valentine:
-              CFBundleIconName: AppIcon-Valentine
-            AppIcon-Tet:
-              CFBundleIconName: AppIcon-Tet
+            AppIcon-NOEL:
+              CFBundleIconName: AppIcon-NOEL
+            AppIcon-VALENTINE:
+              CFBundleIconName: AppIcon-VALENTINE
+            AppIcon-TETAL:
+              CFBundleIconName: AppIcon-TETAL
+        # CI ghi đè (scripts/chon-icon-dip-le.sh): MA dịp của icon chính đang đóng gói (rỗng = icon quán).
+        DennIconDip: ""
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.denncoffee.appdathang

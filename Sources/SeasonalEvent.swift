@@ -5,7 +5,7 @@ import UIKit
 /// DatHangService.MaDipLeTrangTri). Thêm dịp mới thì thêm Ma vào Backend VÀ 1 case ở đây — câu chúc
 /// (title/subtitle) KHÔNG nằm ở đây, luôn lấy thẳng ten/moTa của voucher qua SeasonalEvent.
 enum SeasonalTheme: CaseIterable, Equatable {
-    case tetDuong, tet, valentine, phuNu, gioTo, thongNhat, thieuNhi, quocKhanh, trungThu, nhaGiao, noel
+    case tetDuong, tet, valentine, phuNu, gioTo, thongNhat, thieuNhi, doanNgo, thuongBinh, vuLan, quocKhanh, trungThu, nhaGiao, noel
 
     init?(ma: String) {
         switch ma {
@@ -14,6 +14,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case "VALENTINE": self = .valentine
         case "QTPHUNU", "PHUNUVN": self = .phuNu
         case "GIOTO": self = .gioTo
+        case "DOANNGO": self = .doanNgo
+        case "THUONGBINH": self = .thuongBinh
+        case "VULAN": self = .vuLan
         case "GIAIPHONG": self = .thongNhat
         case "THIEUNHI": self = .thieuNhi
         case "QUOCKHANH": self = .quocKhanh
@@ -31,7 +34,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .valentine: return "💘"
         case .phuNu: return "💐"
         case .thieuNhi: return "🎈"
-        case .quocKhanh, .thongNhat, .gioTo: return "🇻🇳"
+        case .quocKhanh, .thongNhat, .gioTo, .thuongBinh: return "🇻🇳"
+        case .doanNgo: return "🍑"
+        case .vuLan: return "🌹"
         case .trungThu: return "🏮"
         case .nhaGiao: return "📚"
         case .noel: return "🎄"
@@ -45,6 +50,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .valentine: return "💖"
         case .phuNu: return "🌷"
         case .gioTo: return "🌾"
+        case .doanNgo: return "🍉"
+        case .thuongBinh: return "🕯️"
+        case .vuLan: return "🏮"
         case .thieuNhi: return "🧸"
         case .quocKhanh, .thongNhat: return "⭐"
         case .trungThu: return "🌕"
@@ -67,7 +75,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
         case .phuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
-        case .gioTo: return Color(red: 0.62, green: 0.13, blue: 0.08)
+        case .gioTo, .thuongBinh: return Color(red: 0.62, green: 0.13, blue: 0.08)
+        case .doanNgo: return Color(red: 0.13, green: 0.48, blue: 0.25)
+        case .vuLan: return Color(red: 0.60, green: 0.16, blue: 0.30)
         case .thieuNhi: return Color(red: 0.90, green: 0.42, blue: 0.08)
         case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
         case .nhaGiao: return Color(red: 0.10, green: 0.40, blue: 0.72)
@@ -81,7 +91,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
         case .phuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
-        case .gioTo: return Color(red: 0.38, green: 0.07, blue: 0.03)
+        case .gioTo, .thuongBinh: return Color(red: 0.38, green: 0.07, blue: 0.03)
+        case .doanNgo: return Color(red: 0.06, green: 0.28, blue: 0.14)
+        case .vuLan: return Color(red: 0.36, green: 0.08, blue: 0.18)
         case .thieuNhi: return Color(red: 0.66, green: 0.25, blue: 0.03)
         case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
         case .nhaGiao: return Color(red: 0.05, green: 0.22, blue: 0.46)
@@ -97,6 +109,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .valentine: return ["💕", "💘", "🌹"]
         case .phuNu: return ["🌷", "🌸", "💐"]
         case .gioTo: return ["🌾", "⭐"]
+        case .doanNgo: return ["🍑", "🍉", "☀️"]
+        case .thuongBinh: return ["⭐", "🕯️"]
+        case .vuLan: return ["🌹", "🏮"]
         case .thieuNhi: return ["🎈", "⭐", "🍭"]
         case .quocKhanh, .thongNhat: return ["⭐", "🇻🇳"]
         case .trungThu: return ["🌕", "🏮", "⭐"]
@@ -105,16 +120,23 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
-    /// Tên App Icon thay thế khớp AppIcon-*.appiconset trong Assets.xcassets (xem AppIconSwitcher) —
-    /// nil = CHƯA có ảnh icon riêng cho dịp này (vd Quốc khánh/30-4-1-5, user nói "thêm sau"), app
-    /// vẫn dùng icon mặc định, không lỗi gì. Cập nhật khi có thêm ảnh: thêm appiconset mới, khai ở
-    /// project.yml (CFBundleAlternateIcons) RỒI mới trả tên ở đây.
-    var alternateIconName: String? {
+    /// Ma voucher đại diện — dùng cho nút xem trước bản dev (cần Ma để tìm icon AppIcon-<MA>).
+    var maDaiDien: String {
         switch self {
-        case .noel: return "AppIcon-Noel"
-        case .valentine: return "AppIcon-Valentine"
-        case .tet: return "AppIcon-Tet"
-        case .tetDuong, .phuNu, .gioTo, .thongNhat, .thieuNhi, .quocKhanh, .trungThu, .nhaGiao: return nil
+        case .tetDuong: return "TETDUONG"
+        case .tet: return "TETAL"
+        case .valentine: return "VALENTINE"
+        case .phuNu: return "PHUNUVN"
+        case .gioTo: return "GIOTO"
+        case .doanNgo: return "DOANNGO"
+        case .thuongBinh: return "THUONGBINH"
+        case .vuLan: return "VULAN"
+        case .thongNhat: return "GIAIPHONG"
+        case .thieuNhi: return "THIEUNHI"
+        case .quocKhanh: return "QUOCKHANH"
+        case .trungThu: return "TRUNGTHU"
+        case .nhaGiao: return "NHAGIAO"
+        case .noel: return "NOEL"
         }
     }
 
@@ -129,6 +151,9 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .valentine: return "Valentine"
         case .phuNu: return "Phụ nữ Việt Nam 20/10"
         case .gioTo: return "Giỗ Tổ Hùng Vương"
+        case .doanNgo: return "Tết Đoan Ngọ"
+        case .thuongBinh: return "Thương binh - Liệt sĩ 27/7"
+        case .vuLan: return "Lễ Vu Lan & Rằm tháng Bảy"
         case .thongNhat: return "30/4 - 1/5"
         case .thieuNhi: return "Quốc tế Thiếu nhi"
         case .quocKhanh: return "Quốc khánh 2/9"
@@ -198,24 +223,52 @@ enum SeasonalEvent {
     /// là UIKit thuần, không tự vẽ lại theo SwiftUI diffing như Theme.primary ở các View khác.
     @MainActor
     static func load() async {
-        let dipLe = await APIClient.shared.getDipLe()
+        let env = await APIClient.shared.getDipLe()
+        // Lỗi mạng: giữ nguyên trạng thái cũ — nhất là KHÔNG đổi icon (hiểu nhầm "hết dịp" → 2 popup vô cớ).
+        guard env.isSuccess else { return }
+        let dipLe = env.data ?? nil
         self.dipLe = dipLe
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
-        AppIconSwitcher.apply(active)
+        capNhatIcon()
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+    }
+
+    @MainActor
+    static func capNhatIcon() {
+        var ma = dipLe?.ma
+        #if DEV_LOGIN
+        if let previewOverride { ma = previewOverride.maDaiDien }
+        #endif
+        AppIconSwitcher.capNhat(maDangDienRa: ma)
     }
 }
 
-/// Đổi App Icon trên màn hình chính theo dịp lễ (UIApplication.setAlternateIconName) — nil (không
-/// dịp nào, hoặc dịp chưa có ảnh icon riêng) thì quay về icon mặc định. Gọi từ SeasonalEvent.load()
-/// nên tự chạy cùng lúc với banner/màu, không cần gọi tay chỗ khác.
+/// Icon theo dịp lễ, kiểu Shopee: icon CHÍNH đổi bằng BẢN CẬP NHẬT (CI chọn icon dịp sắp tới lúc build,
+/// scripts/chon-icon-dip-le.sh) → khách cập nhật đều đặn KHÔNG bao giờ thấy popup "You have changed the
+/// icon…" (iOS bắt buộc hiện mỗi lần app tự đổi icon). Ở đây chỉ là lưới an toàn cho máy CHƯA cập nhật:
+/// tới ngày lễ có icon mà icon chính bản đang cài không phải icon dịp đó → tự đổi, CÓ popup (user chấp
+/// nhận 2026-11-05). Hết dịp không đổi gì — icon cứ giữ đến dịp có icon tiếp theo.
 enum AppIconSwitcher {
+    /// Ma có bộ AppIcon-<MA>.appiconset — phải khớp CFBundleAlternateIcons trong project.yml VÀ
+    /// NhacDipLeService.MaCoIconApp (Backend, nhắc nộp cập nhật trước dịp).
+    static let maCoIcon: Set<String> = ["NOEL", "TETAL", "VALENTINE"]
+
+    /// Icon phụ cần đặt: nil = icon chính của bản đang cài. Ngoài dịp có icon thì GIỮ NGUYÊN icon đang
+    /// hiện (user 2026-11-05: "không cần quay lại icon chính, cứ để im đến đợt lễ tiếp theo") — chỉ đổi
+    /// đúng lúc vào dịp có icon, nên máy chưa cập nhật gặp tối đa 1 popup/dịp.
+    static func iconMucTieu(maDangDienRa: String?, maDongGoi: String, iconHienTai: String?) -> String? {
+        guard let ma = maDangDienRa, maCoIcon.contains(ma) else { return iconHienTai }
+        return ma == maDongGoi ? nil : "AppIcon-\(ma)"
+    }
+
     @MainActor
-    static func apply(_ theme: SeasonalTheme?) {
+    static func capNhat(maDangDienRa: String?) {
         guard UIApplication.shared.supportsAlternateIcons else { return }
-        let targetName = theme?.alternateIconName
-        guard UIApplication.shared.alternateIconName != targetName else { return }
+        let maDongGoi = Bundle.main.infoDictionary?["DennIconDip"] as? String ?? ""
+        let iconHienTai = UIApplication.shared.alternateIconName
+        let targetName = iconMucTieu(maDangDienRa: maDangDienRa, maDongGoi: maDongGoi, iconHienTai: iconHienTai)
+        guard iconHienTai != targetName else { return }
         #if DEV_LOGIN
         // Bản dev: đổi icon KHÔNG hiện popup "You have changed the icon…" (bấm xem trước liên tục bị
         // popup — user 2026-11-05). Dùng selector NỘI BỘ của UIKit, nên CHỈ có ở DEV_LOGIN — bản App
@@ -252,8 +305,9 @@ extension SeasonalTheme {
     /// (alpha chồng lên nền khác nhau ở mỗi màn ra mỗi chỗ 1 màu khác nhau).
     var surface: Color {
         switch self {
-        case .tet, .thieuNhi, .trungThu, .gioTo: return Color(red: 1.0, green: 0.97, blue: 0.91)
-        case .valentine: return Color(red: 1.0, green: 0.945, blue: 0.955)
+        case .tet, .thieuNhi, .trungThu, .gioTo, .thuongBinh: return Color(red: 1.0, green: 0.97, blue: 0.91)
+        case .doanNgo: return Color(red: 0.95, green: 0.985, blue: 0.95)
+        case .valentine, .vuLan: return Color(red: 1.0, green: 0.945, blue: 0.955)
         case .phuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
         case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
         case .nhaGiao: return Color(red: 0.95, green: 0.97, blue: 1.0)
@@ -264,8 +318,8 @@ extension SeasonalTheme {
     var garlandWire: Color {
         switch self {
         case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
-        case .tet, .tetDuong, .trungThu, .gioTo: return Color(red: 0.93, green: 0.76, blue: 0.38)
-        case .valentine, .phuNu, .nhaGiao, .thieuNhi: return Color.white.opacity(0.75)
+        case .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
+        case .valentine, .phuNu, .nhaGiao, .thieuNhi, .doanNgo, .vuLan: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
         }
     }
@@ -285,7 +339,7 @@ extension SeasonalTheme {
                            Color(red: 0.45, green: 0.78, blue: 1.0), Color(red: 1.0, green: 0.97, blue: 0.85)])
         case .tetDuong:
             return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 1.0, green: 0.97, blue: 0.85)])
-        case .gioTo:
+        case .gioTo, .thuongBinh:
             // Ngày tưởng niệm — chỉ cờ vàng/kem trang nghiêm, không đèn/tim/hình vui nhộn.
             return .flags([Color(red: 1.0, green: 0.85, blue: 0.2), Color(red: 1.0, green: 0.95, blue: 0.8)])
         case .quocKhanh, .thongNhat:
@@ -298,6 +352,8 @@ extension SeasonalTheme {
         case .phuNu: return .emoji(["🌷", "🌸"])
         case .trungThu: return .emoji(["🏮", "⭐"])
         case .nhaGiao: return .emoji(["🌹", "🌼"])
+        case .doanNgo: return .emoji(["🍑", "🍉"])
+        case .vuLan: return .emoji(["🌹", "🏮"])
         }
     }
 }
