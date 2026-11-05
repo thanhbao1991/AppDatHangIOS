@@ -230,9 +230,15 @@ enum SeasonalEvent {
         self.dipLe = dipLe
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
+        // Lỗi mạng ở đây → giữ danh sách cũ (rỗng lúc mở app) = không trả icon về, an toàn hơn đổi nhầm.
+        let daTat = await APIClient.shared.getDipLeDaTat()
+        if daTat.isSuccess { maDaTat = Set(daTat.data ?? []) }
         capNhatIcon()
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
     }
+
+    /// Ma các dịp có voucher đang tắt (GET /dat-hang/dip-le/da-tat) — icon dịp đó phải về icon quán.
+    private(set) static var maDaTat: Set<String> = []
 
     @MainActor
     static func capNhatIcon() {
@@ -240,7 +246,7 @@ enum SeasonalEvent {
         #if DEV_LOGIN
         if let previewOverride { ma = previewOverride.maDaiDien }
         #endif
-        AppIconSwitcher.capNhat(maDangDienRa: ma)
+        AppIconSwitcher.capNhat(maDangDienRa: ma, maDaTat: maDaTat)
     }
 }
 
@@ -257,17 +263,30 @@ enum AppIconSwitcher {
     /// Icon phụ cần đặt: nil = icon chính của bản đang cài. Ngoài dịp có icon thì GIỮ NGUYÊN icon đang
     /// hiện (user 2026-11-05: "không cần quay lại icon chính, cứ để im đến đợt lễ tiếp theo") — chỉ đổi
     /// đúng lúc vào dịp có icon, nên máy chưa cập nhật gặp tối đa 1 popup/dịp.
-    static func iconMucTieu(maDangDienRa: String?, maDongGoi: String, iconHienTai: String?) -> String? {
-        guard let ma = maDangDienRa, maCoIcon.contains(ma) else { return iconHienTai }
-        return ma == maDongGoi ? nil : "AppIcon-\(ma)"
+    ///
+    /// Ngoại lệ: voucher của dịp mà icon đang hiện bị TẮT (`maDaTat`, user 2026-11-05 "voucher dịp nào tắt
+    /// thì tắt icon") → về icon quán: nil nếu icon chính bản cài là icon quán, "AppIcon-QUAN" nếu icon
+    /// chính đã bị CI chép đè thành icon dịp.
+    static func iconMucTieu(maDangDienRa: String?, maDongGoi: String, iconHienTai: String?,
+                            maDaTat: Set<String> = []) -> String? {
+        if let ma = maDangDienRa, maCoIcon.contains(ma) {
+            return ma == maDongGoi ? nil : "AppIcon-\(ma)"
+        }
+        // Dịp của icon đang hiện: icon phụ "AppIcon-<MA>", hoặc không đặt icon phụ thì là icon chính bản cài.
+        let maDangHien = iconHienTai.map { String($0.dropFirst("AppIcon-".count)) } ?? maDongGoi
+        if !maDangHien.isEmpty, maDaTat.contains(maDangHien) {
+            return maDongGoi.isEmpty ? nil : "AppIcon-QUAN"
+        }
+        return iconHienTai
     }
 
     @MainActor
-    static func capNhat(maDangDienRa: String?) {
+    static func capNhat(maDangDienRa: String?, maDaTat: Set<String> = []) {
         guard UIApplication.shared.supportsAlternateIcons else { return }
         let maDongGoi = Bundle.main.infoDictionary?["DennIconDip"] as? String ?? ""
         let iconHienTai = UIApplication.shared.alternateIconName
-        let targetName = iconMucTieu(maDangDienRa: maDangDienRa, maDongGoi: maDongGoi, iconHienTai: iconHienTai)
+        let targetName = iconMucTieu(maDangDienRa: maDangDienRa, maDongGoi: maDongGoi, iconHienTai: iconHienTai,
+                                     maDaTat: maDaTat)
         guard iconHienTai != targetName else { return }
         #if DEV_LOGIN
         // Bản dev: đổi icon KHÔNG hiện popup "You have changed the icon…" (bấm xem trước liên tục bị

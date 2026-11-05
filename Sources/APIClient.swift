@@ -395,6 +395,11 @@ actor APIClient {
         await cachedDecode("/dat-hang/dip-le")
     }
 
+    /// Ma các dịp lễ có voucher đang tắt — xem AppIconSwitcher.iconMucTieu.
+    func getDipLeDaTat() async -> ApiEnvelope<[String]> {
+        await cachedDecode("/dat-hang/dip-le/da-tat")
+    }
+
     /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback
     /// 2026-09-29 "áp giá riêng vào app". Server đã áp ĐÚNG giá này lúc DatMon tính tiền thật
     /// (DatHangService.DatMonAsync), gọi đây chỉ để HIỂN THỊ đúng giá trên menu/giỏ hàng, tránh
