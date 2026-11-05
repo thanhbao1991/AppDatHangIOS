@@ -50,6 +50,7 @@ struct GioHangView: View {
             if cart.items.isEmpty {
                 Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .background(SeasonalBackgroundPattern())
             } else {
                 // 2026-09-26: đổi sang dạng PHẲNG (List(.plain) + đường kẻ mặc định) giống Đơn hàng/
                 // Lịch sử Xu/Voucher — bỏ cardBox/cardRow/cardListBackground (Theme.swift) riêng cho
@@ -65,6 +66,12 @@ struct GioHangView: View {
                         .listRowSeparator(.hidden, edges: .bottom)
                 }
                 .listStyle(.plain)
+                // .scrollContentBackground(.hidden) + nền riêng — CHỈ đổi NỀN (để lộ trang trí dịp lễ,
+                // feedback 2026-11-05 "ko đủ cho giáng sinh" khi giỏ ít món để lộ mảng trắng rất lớn
+                // phía dưới), KHÔNG đụng tới kiểu dòng/đường kẻ phẳng đã chọn riêng cho màn này (xem
+                // comment phía trên — đó là quyết định khác, về cardBox/cardRow, không phải về màu nền).
+                .scrollContentBackground(.hidden)
+                .background(SeasonalBackgroundPattern())
                 bottomBar
             }
         }

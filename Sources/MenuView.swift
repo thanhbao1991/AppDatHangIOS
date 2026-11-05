@@ -517,21 +517,44 @@ struct MenuView: View {
     /// (SeasonalEvent.bannerTitle/bannerSubtitle) lấy thẳng ten/moTa của voucher lễ tết tương ứng ở
     /// Backend, KHÔNG hardcode ở app (xem SeasonalEvent.swift).
     private func seasonalBanner(_ theme: SeasonalTheme) -> some View {
-        HStack(spacing: 10) {
-            Text(theme.leadingEmoji).font(.system(size: 26))
-            VStack(alignment: .leading, spacing: 1) {
+        HStack(spacing: 12) {
+            Text(theme.leadingEmoji).font(.system(size: 36))
+            VStack(alignment: .leading, spacing: 2) {
                 Text(SeasonalEvent.bannerTitle)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white)
                 Text(SeasonalEvent.bannerSubtitle)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.9))
+                    .lineLimit(2)
             }
             Spacer()
-            Text(theme.trailingEmoji).font(.system(size: 22))
+            Text(theme.trailingEmoji).font(.system(size: 30))
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .leading, endPoint: .trailing))
+        .padding(.horizontal, 18).padding(.vertical, 16)
+        .background {
+            LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .leading, endPoint: .trailing)
+                .overlay {
+                    // Hoạ tiết TĨNH ngay trong banner cho cảm giác "hero" đậm đà như app/Dribbble
+                    // tham khảo (2026-11-05) — thưa hơn SeasonalBackgroundPattern vì banner nhỏ.
+                    Canvas { context, size in
+                        var seed: UInt64 = 777
+                        func rand() -> CGFloat {
+                            seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                            return CGFloat(seed >> 33) / CGFloat(1 << 31)
+                        }
+                        context.opacity = 0.20
+                        for _ in 0..<8 {
+                            let x = rand() * size.width
+                            let y = rand() * size.height
+                            let fontSize: CGFloat = 16 + rand() * 14
+                            let resolved = context.resolve(Text(theme.patternSymbols.randomElement() ?? "").font(.system(size: fontSize)))
+                            context.draw(resolved, at: CGPoint(x: x, y: y), anchor: .center)
+                        }
+                    }
+                }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.horizontal, 16).padding(.top, 8)
     }
 
