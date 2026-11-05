@@ -5,7 +5,7 @@ import UIKit
 /// DatHangService.MaDipLeTrangTri). Thêm dịp mới thì thêm Ma vào Backend VÀ 1 case ở đây — câu chúc
 /// (title/subtitle) KHÔNG nằm ở đây, luôn lấy thẳng ten/moTa của voucher qua SeasonalEvent.
 enum SeasonalTheme: CaseIterable, Equatable {
-    case tetDuong, tet, valentine, phuNu, thongNhat, thieuNhi, quocKhanh, trungThu, nhaGiao, noel
+    case tetDuong, tet, valentine, phuNu, gioTo, thongNhat, thieuNhi, quocKhanh, trungThu, nhaGiao, noel
 
     init?(ma: String) {
         switch ma {
@@ -13,6 +13,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case "TETAL": self = .tet
         case "VALENTINE": self = .valentine
         case "QTPHUNU", "PHUNUVN": self = .phuNu
+        case "GIOTO": self = .gioTo
         case "GIAIPHONG": self = .thongNhat
         case "THIEUNHI": self = .thieuNhi
         case "QUOCKHANH": self = .quocKhanh
@@ -30,7 +31,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .valentine: return "💘"
         case .phuNu: return "💐"
         case .thieuNhi: return "🎈"
-        case .quocKhanh, .thongNhat: return "🇻🇳"
+        case .quocKhanh, .thongNhat, .gioTo: return "🇻🇳"
         case .trungThu: return "🏮"
         case .nhaGiao: return "📚"
         case .noel: return "🎄"
@@ -43,6 +44,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet: return "🌸"
         case .valentine: return "💖"
         case .phuNu: return "🌷"
+        case .gioTo: return "🌾"
         case .thieuNhi: return "🧸"
         case .quocKhanh, .thongNhat: return "⭐"
         case .trungThu: return "🌕"
@@ -65,6 +67,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
         case .phuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .gioTo: return Color(red: 0.62, green: 0.13, blue: 0.08)
         case .thieuNhi: return Color(red: 0.90, green: 0.42, blue: 0.08)
         case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
         case .nhaGiao: return Color(red: 0.10, green: 0.40, blue: 0.72)
@@ -78,6 +81,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
         case .phuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .gioTo: return Color(red: 0.38, green: 0.07, blue: 0.03)
         case .thieuNhi: return Color(red: 0.66, green: 0.25, blue: 0.03)
         case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
         case .nhaGiao: return Color(red: 0.05, green: 0.22, blue: 0.46)
@@ -92,6 +96,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet: return ["🌸", "🧧", "🏮"]
         case .valentine: return ["💕", "💘", "🌹"]
         case .phuNu: return ["🌷", "🌸", "💐"]
+        case .gioTo: return ["🌾", "⭐"]
         case .thieuNhi: return ["🎈", "⭐", "🍭"]
         case .quocKhanh, .thongNhat: return ["⭐", "🇻🇳"]
         case .trungThu: return ["🌕", "🏮", "⭐"]
@@ -109,7 +114,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .noel: return "AppIcon-Noel"
         case .valentine: return "AppIcon-Valentine"
         case .tet: return "AppIcon-Tet"
-        case .tetDuong, .phuNu, .thongNhat, .thieuNhi, .quocKhanh, .trungThu, .nhaGiao: return nil
+        case .tetDuong, .phuNu, .gioTo, .thongNhat, .thieuNhi, .quocKhanh, .trungThu, .nhaGiao: return nil
         }
     }
 
@@ -123,6 +128,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tet: return "Tết Nguyên Đán"
         case .valentine: return "Valentine"
         case .phuNu: return "Phụ nữ Việt Nam 20/10"
+        case .gioTo: return "Giỗ Tổ Hùng Vương"
         case .thongNhat: return "30/4 - 1/5"
         case .thieuNhi: return "Quốc tế Thiếu nhi"
         case .quocKhanh: return "Quốc khánh 2/9"
@@ -233,7 +239,7 @@ extension SeasonalTheme {
     /// (alpha chồng lên nền khác nhau ở mỗi màn ra mỗi chỗ 1 màu khác nhau).
     var surface: Color {
         switch self {
-        case .tet, .thieuNhi, .trungThu: return Color(red: 1.0, green: 0.97, blue: 0.91)
+        case .tet, .thieuNhi, .trungThu, .gioTo: return Color(red: 1.0, green: 0.97, blue: 0.91)
         case .valentine: return Color(red: 1.0, green: 0.945, blue: 0.955)
         case .phuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
         case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
@@ -245,7 +251,7 @@ extension SeasonalTheme {
     var garlandWire: Color {
         switch self {
         case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
-        case .tet, .tetDuong, .trungThu: return Color(red: 0.93, green: 0.76, blue: 0.38)
+        case .tet, .tetDuong, .trungThu, .gioTo: return Color(red: 0.93, green: 0.76, blue: 0.38)
         case .valentine, .phuNu, .nhaGiao, .thieuNhi: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
         }
@@ -266,6 +272,9 @@ extension SeasonalTheme {
                            Color(red: 0.45, green: 0.78, blue: 1.0), Color(red: 1.0, green: 0.97, blue: 0.85)])
         case .tetDuong:
             return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 1.0, green: 0.97, blue: 0.85)])
+        case .gioTo:
+            // Ngày tưởng niệm — chỉ cờ vàng/kem trang nghiêm, không đèn/tim/hình vui nhộn.
+            return .flags([Color(red: 1.0, green: 0.85, blue: 0.2), Color(red: 1.0, green: 0.95, blue: 0.8)])
         case .quocKhanh, .thongNhat:
             return .flags([Color(red: 1.0, green: 0.85, blue: 0.2), .white])
         case .thieuNhi:
