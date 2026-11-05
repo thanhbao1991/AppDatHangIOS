@@ -192,6 +192,7 @@ struct SettingsView: View {
                             SeasonalEvent.capNhatIcon()
                             seasonalPreviewTick += 1
                             NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+                            Task { await SeasonalEvent.taiXemTruoc() }
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                         }

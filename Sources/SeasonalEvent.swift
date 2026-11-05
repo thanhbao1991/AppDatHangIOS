@@ -180,7 +180,20 @@ enum SeasonalEvent {
     #if DEV_LOGIN
     /// Công tắc xem thử — CHỈ có ở bản dev (DEV_LOGIN), bật ở SettingsView khu "🧪 Xem trước...".
     /// nil = không ghi đè (dùng dữ liệu thật từ Backend).
-    static var previewOverride: SeasonalTheme?
+    static var previewOverride: SeasonalTheme? {
+        didSet { previewDipLe = nil }
+    }
+    /// Voucher thật của dịp đang xem trước (GET /dat-hang/dip-le?xemTruoc=MA) — để thấy câu chúc thật.
+    private(set) static var previewDipLe: DipLe?
+
+    @MainActor
+    static func taiXemTruoc() async {
+        guard let ma = previewOverride?.maDaiDien else { return }
+        let env = await APIClient.shared.getDipLe(xemTruoc: ma)
+        guard env.isSuccess, previewOverride?.maDaiDien == ma else { return }
+        previewDipLe = env.data ?? nil
+        NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+    }
     #endif
 
     static var active: SeasonalTheme? {
@@ -199,7 +212,11 @@ enum SeasonalEvent {
 
     static var bannerSubtitle: String {
         #if DEV_LOGIN
-        if let previewOverride { return previewOverride.previewMoTa }
+        if let previewOverride {
+            // Câu chúc THẬT của voucher dịp đó (taiXemTruoc); chưa tải xong/lỗi mạng thì câu mẫu.
+            if let moTa = previewDipLe?.moTa, previewDipLe?.ma == previewOverride.maDaiDien { return "🧪 \(moTa)" }
+            return previewOverride.previewMoTa
+        }
         #endif
         guard let dipLe else { return "" }
         let moTa = dipLe.moTa ?? ""

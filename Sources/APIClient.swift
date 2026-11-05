@@ -395,6 +395,13 @@ actor APIClient {
         await cachedDecode("/dat-hang/dip-le")
     }
 
+    #if DEV_LOGIN
+    /// Nút xem trước dịp lễ (bản dev): lấy voucher của đúng 1 dịp bất kể ngày.
+    func getDipLe(xemTruoc ma: String) async -> ApiEnvelope<DipLe?> {
+        await cachedDecode("/dat-hang/dip-le?xemTruoc=\(ma)")
+    }
+    #endif
+
     /// Ma các dịp lễ có voucher đang tắt — xem AppIconSwitcher.iconMucTieu.
     func getDipLeDaTat() async -> ApiEnvelope<[String]> {
         await cachedDecode("/dat-hang/dip-le/da-tat")
