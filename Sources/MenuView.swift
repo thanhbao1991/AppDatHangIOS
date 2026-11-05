@@ -44,8 +44,6 @@ struct MenuView: View {
     @State private var seasonalPreviewTick = 0
     #endif
     /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
-    @State private var chucMung: QuaChucMung?
-    @State private var quaConLai: [QuaChucMung] = []
 
 
     /// true khi đang gõ tìm kiếm — chuyển sang danh sách phẳng xuyên nhóm, ẩn sidebar (kết quả
@@ -292,18 +290,7 @@ struct MenuView: View {
             seasonalPreviewTick += 1
         }
         #endif
-        .fullScreenCover(item: $chucMung) { q in
-            ChucMungHangView(qua: q) {
-                _ = await ChucMungHang.nhan(q)
-                chucMung = nil
-                // Quà kế tiếp (hạng xong tới Top) — đợi màn cũ đóng hẳn rồi mới mở
-                if !quaConLai.isEmpty {
-                    try? await Task.sleep(nanoseconds: 500_000_000)
-                    chucMung = quaConLai.removeFirst()
-                }
-            }
-            .id(q.id) // mỗi quà 1 màn mới — không mang trạng thái "đang nhận" của màn trước
-        }
+        // Màn chúc mừng quà đầu tháng đã chuyển lên ContentView (06/11/2026) — hiện ở mọi tab.
         .sheet(item: $picking) { sp in
             ProductPickerSheet(
                 sanPham: sp,
@@ -659,10 +646,6 @@ struct MenuView: View {
         giaRiengMap = giaRieng
         yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
-        if chucMung == nil {
-            quaConLai = ChucMungHang.quaCho(vi)
-            if !quaConLai.isEmpty { chucMung = quaConLai.removeFirst() }
-        }
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
         // hoặc network thật thất bại sau khi đã hiện snapshot đĩa thì giữ NGUYÊN danh sách đang hiện,
         // không ghi đè bằng mảng rỗng chỉ vì 1 lần mất mạng thoáng qua.

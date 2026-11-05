@@ -21,9 +21,39 @@ struct ContentView: View {
         }
         .task { await kiemTraPhienBan() }
         .task { await NoiDung.taiLai() }
+        .task { await kiemTraQua() }
         .onChange(of: scenePhase) { phase in
-            if phase == .active { Task { await kiemTraPhienBan() } }
+            if phase == .active { Task { await kiemTraPhienBan(); await kiemTraQua() } }
         }
+        .onChange(of: isLoggedIn) { v in
+            if v { Task { await kiemTraQua() } }
+        }
+        // Màn chúc mừng quà đầu tháng — ở cấp toàn app (06/11/2026): trước đây chỉ MenuView kiểm, khách hay mở
+        // thẳng tab Đơn hàng bấm "Đặt lại" (app còn sống nền) nên không bao giờ thấy màn "Nhận ngay" → lỡ quà.
+        .fullScreenCover(item: $chucMung) { q in
+            ChucMungHangView(qua: q) {
+                _ = await ChucMungHang.nhan(q)
+                chucMung = nil
+                // Quà kế tiếp (hạng xong tới Top) — đợi màn cũ đóng hẳn rồi mới mở
+                if !quaConLai.isEmpty {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    chucMung = quaConLai.removeFirst()
+                }
+            }
+            .id(q.id) // mỗi quà 1 màn mới — không mang trạng thái "đang nhận" của màn trước
+        }
+    }
+
+    @State private var chucMung: QuaChucMung?
+    @State private var quaConLai: [QuaChucMung] = []
+
+    /// Gọi lúc mở app, mỗi lần quay lại từ nền và khi vừa đăng nhập. Đang hiện màn quà thì thôi.
+    private func kiemTraQua() async {
+        guard isLoggedIn, chucMung == nil, batBuocCapNhat == nil else { return }
+        guard let vi = await APIClient.shared.getVi() else { return }
+        guard chucMung == nil else { return }
+        quaConLai = ChucMungHang.quaCho(vi)
+        if !quaConLai.isEmpty { chucMung = quaConLai.removeFirst() }
     }
 
     /// Lỗi mạng/server → fetchPolicy trả nil → giữ nguyên trạng thái hiện tại (fail-open).
