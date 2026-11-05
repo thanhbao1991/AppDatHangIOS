@@ -22,6 +22,10 @@ struct AppDatHangIOSApp: App {
         // không đợi getVi() trả về mới đổi màu (xem KhachHangSession.swift).
         Theme.applyNavBarAppearance()
 
+        // Dịp lễ (màu/câu chúc) — tải ngay lúc khởi động để nav bar/nút CTA lên đúng màu dịp sớm
+        // nhất có thể, không chỉ đợi tới khi MenuView xuất hiện. Xem SeasonalEvent.load().
+        Task { await SeasonalEvent.load() }
+
         // .preferredColorScheme(.light) bên dưới chỉ ép SwiftUI view, KHÔNG ép được UIAlertController
         // (.alert()) — trên máy đang bật Dark Mode hệ thống, alert vẫn tự vẽ theo dark (nền xám tối,
         // chữ nút trắng) trong khi mọi thứ khác trong app đã sáng, tạo cảm giác "chữ nút mờ/nhạt" do

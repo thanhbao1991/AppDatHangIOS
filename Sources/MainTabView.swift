@@ -26,8 +26,9 @@ struct MainTabView: View {
     @State private var showLogin = false
     @StateObject private var deepLinkRouter = DeepLinkRouter.shared
     #if DEV_LOGIN
-    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại lớp hạt rơi khi SettingsView bắn
-    /// .christmasPreviewToggled (SeasonalEvent.active() là hàm tính lại mỗi lần gọi, không tự kích hoạt lại body).
+    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại theo màu dịp lễ (Theme.primary) khi
+    /// SettingsView bắn .christmasPreviewToggled — SeasonalEvent.active là static var, không tự kích
+    /// hoạt lại body.
     @State private var seasonalPreviewTick = 0
     #endif
 
@@ -49,7 +50,6 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        ZStack {
         VStack(spacing: 0) {
             Group {
                 switch selectedTab {
@@ -122,18 +122,6 @@ struct MainTabView: View {
                 Divider()
                 tabBar
             }
-        }
-        // Hạt rơi theo dịp lễ phủ TOÀN APP (mọi tab, kể cả tab bar) — khác seasonalBanner (chỉ ở
-        // MenuView), đặt ở tầng ngoài cùng này thay vì riêng từng tab để không phải nhân bản ở 5 tab.
-        // Giáng sinh dùng SnowfallView riêng (hình tròn viền xanh); các dịp khác dùng FallingEmojiView
-        // theo SeasonalEvent.particleSymbol (nil = không có hạt rơi, vd 2/9, 30/4-1/5).
-        if let seasonalEvent = SeasonalEvent.active() {
-            if seasonalEvent == .christmas {
-                SnowfallView().allowsHitTesting(false)
-            } else if let symbol = seasonalEvent.particleSymbol {
-                FallingEmojiView(symbol: symbol).allowsHitTesting(false)
-            }
-        }
         }
         .tint(Theme.primary)
         .environmentObject(cart)

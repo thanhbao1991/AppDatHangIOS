@@ -41,8 +41,11 @@ enum Theme {
     private static func hex(_ r: UInt8, _ g: UInt8, _ b: UInt8) -> Color {
         Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
     }
-    static var primary: Color { hangColors[KhachHangSession.shared.hang]?.primary ?? hangColors["Thành Viên"]!.primary }
-    static var primaryDark: Color { hangColors[KhachHangSession.shared.hang]?.dark ?? hangColors["Thành Viên"]!.dark }
+    /// Dịp lễ đang diễn ra (SeasonalEvent.active) tạm thời ĐÈ màu hạng mấy ngày đó — chủ quán đồng ý
+    /// đánh đổi (2026-11-05): ưu tiên không khí lễ hơn giữ nguyên màu hạng trong khoảng thời gian rất
+    /// ngắn (1-3 ngày/dịp). Hết dịp tự quay lại màu hạng như cũ, không cần build lại app.
+    static var primary: Color { SeasonalEvent.active?.primary ?? hangColors[KhachHangSession.shared.hang]?.primary ?? hangColors["Thành Viên"]!.primary }
+    static var primaryDark: Color { SeasonalEvent.active?.primaryDark ?? hangColors[KhachHangSession.shared.hang]?.dark ?? hangColors["Thành Viên"]!.dark }
     /// Trước là hex cố định #EAF1FA (navy nhạt) — giờ tính theo primary hiện tại để lên tông tự động
     /// khi đổi hạng, xấp xỉ đúng độ nhạt của tông cũ khi hang == "Thành Viên" (opacity 0.12 trên nền trắng).
     static var primaryTint: Color { primary.opacity(0.12) }
@@ -58,7 +61,12 @@ enum Theme {
     static let textMuted = Color(red: 0x66 / 255, green: 0x66 / 255, blue: 0x66 / 255)
     static let textFaint = Color(red: 0x99 / 255, green: 0x99 / 255, blue: 0x99 / 255)
     static let divider = Color(red: 0xEE / 255, green: 0xEE / 255, blue: 0xEE / 255)
-    static let bg = Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
+    /// Nền xám trung tính như cũ — trừ khi đang dịp lễ (SeasonalEvent.active) thì tint nhẹ theo màu
+    /// dịp đó, thay cho hạt rơi đã bỏ (feedback 2026-11-05 "bỏ hiệu ứng rơi, thay bằng màu/background").
+    static var bg: Color {
+        if let theme = SeasonalEvent.active { return theme.primary.opacity(0.08) }
+        return Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
+    }
 
 
     /// Emoji dự phòng cho từng nhóm — dùng khi món chưa có ảnh thật (MenuView.productRow,

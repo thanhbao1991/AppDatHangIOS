@@ -388,6 +388,13 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Dịp lễ đang trang trí hôm nay — nil nếu không dịp nào (kể cả khi lỗi mạng, an toàn: app chỉ
+    /// mất trang trí, không hỏng gì khác). AllowAnonymous ở Backend nên gọi được cả khi chưa đăng nhập.
+    func getDipLe() async -> DipLe? {
+        let env: ApiEnvelope<DipLe?> = await cachedDecode("/dat-hang/dip-le")
+        return env.isSuccess ? (env.data ?? nil) : nil
+    }
+
     /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback
     /// 2026-09-29 "áp giá riêng vào app". Server đã áp ĐÚNG giá này lúc DatMon tính tiền thật
     /// (DatHangService.DatMonAsync), gọi đây chỉ để HIỂN THỊ đúng giá trên menu/giỏ hàng, tránh

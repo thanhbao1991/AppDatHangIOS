@@ -77,7 +77,7 @@ struct SettingsView: View {
     private var seasonalPreviewLabel: String {
         _ = seasonalPreviewTick // buộc đọc lại mỗi lần body vẽ lại do tick đổi
         guard let event = SeasonalEvent.previewOverride else { return "🧪 Xem trước dịp lễ" }
-        return "🧪 Đang xem: \(event.bannerTitle) (bấm để đổi/tắt)"
+        return "🧪 Đang xem: \(event.previewTen) (bấm để đổi/tắt)"
     }
     #endif
 
@@ -175,14 +175,15 @@ struct SettingsView: View {
                             // Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp 5 dịp vào 1 nút thay vì 5
                             // nút riêng, đỡ chật danh sách.
                             if let current = SeasonalEvent.previewOverride,
-                               let idx = SeasonalEvent.allCases.firstIndex(of: current),
-                               idx + 1 < SeasonalEvent.allCases.count {
-                                SeasonalEvent.previewOverride = SeasonalEvent.allCases[idx + 1]
+                               let idx = SeasonalTheme.allCases.firstIndex(of: current),
+                               idx + 1 < SeasonalTheme.allCases.count {
+                                SeasonalEvent.previewOverride = SeasonalTheme.allCases[idx + 1]
                             } else if SeasonalEvent.previewOverride == nil {
-                                SeasonalEvent.previewOverride = SeasonalEvent.allCases.first
+                                SeasonalEvent.previewOverride = SeasonalTheme.allCases.first
                             } else {
                                 SeasonalEvent.previewOverride = nil
                             }
+                            Theme.applyNavBarAppearance()
                             seasonalPreviewTick += 1
                             NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
                         }

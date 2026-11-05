@@ -40,7 +40,7 @@ struct MenuView: View {
     @State private var giaRiengMap: [String: Double] = [:]
     #if DEV_LOGIN
     /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại khi SettingsView bắn .christmasPreviewToggled
-    /// (SeasonalEvent.active() là hàm tính lại mỗi lần gọi, không tự kích hoạt lại body).
+    /// (SeasonalEvent.active là static var, không tự kích hoạt lại body).
     @State private var seasonalPreviewTick = 0
     #endif
     /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
@@ -181,8 +181,8 @@ struct MenuView: View {
 
             // Banner dịp lễ đang hiệu lực (Tết/Valentine/Giáng sinh/2-9/30-4-1-5) — ẩn lúc đang tìm
             // kiếm giống dải đề xuất bên dưới (xem SeasonalEvent.active).
-            if let seasonalEvent = SeasonalEvent.active(), !isSearching {
-                seasonalBanner(seasonalEvent)
+            if let seasonalTheme = SeasonalEvent.active, !isSearching {
+                seasonalBanner(seasonalTheme)
             }
 
             // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
@@ -286,6 +286,7 @@ struct MenuView: View {
             }
         }
         .task { if sanPhams.isEmpty { await load() } }
+        .task { await SeasonalEvent.load() }
         #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
             seasonalPreviewTick += 1
@@ -501,24 +502,25 @@ struct MenuView: View {
     private static let noiBatCarouselSpacing: CGFloat = 12
     private static let noiBatCarouselPadding: CGFloat = 16
 
-    /// Banner trang trí theo dịp lễ đang hiệu lực (Tết/Valentine/Giáng sinh/2-9/30-4-1-5) — không đổi
-    /// màu chủ đạo toàn app (giữ nguyên màu theo hạng khách), chỉ 1 card trang trí nhẹ ngay đầu Home.
-    private func seasonalBanner(_ event: SeasonalEvent) -> some View {
+    /// Banner trang trí theo dịp lễ đang hiệu lực (Tết/Valentine/Giáng sinh/2-9/30-4-1-5) — câu chúc
+    /// (SeasonalEvent.bannerTitle/bannerSubtitle) lấy thẳng ten/moTa của voucher lễ tết tương ứng ở
+    /// Backend, KHÔNG hardcode ở app (xem SeasonalEvent.swift).
+    private func seasonalBanner(_ theme: SeasonalTheme) -> some View {
         HStack(spacing: 10) {
-            Text(event.leadingEmoji).font(.system(size: 26))
+            Text(theme.leadingEmoji).font(.system(size: 26))
             VStack(alignment: .leading, spacing: 1) {
-                Text(event.bannerTitle)
+                Text(SeasonalEvent.bannerTitle)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
-                Text(event.bannerSubtitle)
+                Text(SeasonalEvent.bannerSubtitle)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.9))
             }
             Spacer()
-            Text(event.trailingEmoji).font(.system(size: 22))
+            Text(theme.trailingEmoji).font(.system(size: 22))
         }
         .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(LinearGradient(colors: event.gradientColors, startPoint: .leading, endPoint: .trailing))
+        .background(LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .leading, endPoint: .trailing))
         .padding(.horizontal, 16).padding(.top, 8)
     }
 

@@ -93,6 +93,16 @@ struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
 struct ToaDoDiaChi: Decodable { let lat: Double; let long: Double }
 struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
 
+/// Dịp lễ đang trang trí app (màu/câu chúc) — nguồn DUY NHẤT là voucher lễ tết tương ứng ở Backend
+/// (DipLeDto), KHÔNG tự tính ngày ở client nữa (tránh lệch ngày giữa app trang trí và voucher giảm
+/// giá thật). ma quyết định màu/emoji (xem SeasonalTheme), ten/moTa dùng làm câu chúc banner — sửa ở
+/// AppQuanLyIOS (Voucher) là app tự đổi theo. Xem APIClient.getDipLe.
+struct DipLe: Decodable, Equatable {
+    let ma: String
+    let ten: String
+    let moTa: String?
+}
+
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem
 /// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
 struct Voucher: Decodable, Identifiable, Equatable {
