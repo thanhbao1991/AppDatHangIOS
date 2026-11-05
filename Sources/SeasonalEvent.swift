@@ -56,6 +56,17 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
+    /// Emoji rải TĨNH (không rơi) làm hoạ tiết nền — xem SeasonalBackgroundPattern. Khác
+    /// leading/trailingEmoji (dùng cho banner, 1 biểu tượng/bên).
+    var patternSymbol: String {
+        switch self {
+        case .tet: return "🌸"
+        case .valentine: return "💕"
+        case .noel: return "❄️"
+        case .quocKhanh, .thongNhat: return "⭐"
+        }
+    }
+
     #if DEV_LOGIN
     /// Câu chúc MẪU chỉ dùng khi bấm "🧪 Xem trước" (chưa có voucher thật đang hiệu lực để lấy
     /// ten/moTa) — khớp đúng chữ đang lưu ở voucher tương ứng (Ma ở trên) tại thời điểm viết, sửa ở
@@ -121,5 +132,33 @@ enum SeasonalEvent {
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+    }
+}
+
+/// Nền trang trí dịp lễ — Theme.bg (tint màu phẳng) + rải thêm vài emoji mờ ở vị trí CỐ ĐỊNH (Canvas
+/// vẽ 1 lần, KHÔNG TimelineView/animation — không phải hạt rơi) để rõ "không khí lễ" hơn hẳn chỉ tint
+/// màu nhạt. nil (không dịp nào) thì chỉ là Theme.bg phẳng như cũ, không vẽ gì thêm. Dùng thay
+/// Theme.bg trần ở các màn hình "nền chính" (cardListBackground, VoucherCuaToiView, UuDaiView...).
+struct SeasonalBackgroundPattern: View {
+    var body: some View {
+        Theme.bg.overlay {
+            if let theme = SeasonalEvent.active {
+                Canvas { context, size in
+                    var seed: UInt64 = 1_442_695_040
+                    func rand() -> CGFloat {
+                        seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                        return CGFloat(seed >> 33) / CGFloat(1 << 31)
+                    }
+                    context.opacity = 0.16
+                    for _ in 0..<22 {
+                        let x = rand() * size.width
+                        let y = rand() * size.height
+                        let fontSize: CGFloat = 14 + rand() * 16
+                        let resolved = context.resolve(Text(theme.patternSymbol).font(.system(size: fontSize)))
+                        context.draw(resolved, at: CGPoint(x: x, y: y), anchor: .center)
+                    }
+                }
+            }
+        }
     }
 }

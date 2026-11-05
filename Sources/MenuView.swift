@@ -174,6 +174,9 @@ struct MenuView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Nền trang trí dịp lễ (tint + hoạ tiết tĩnh) — trước đây tab này không có background nào
+            // riêng (lộ nền trắng hệ thống mặc định), nên Theme.bg đổi theo dịp lễ không hề lộ ra ở
+            // chính tab khách mở đầu tiên. Feedback 2026-11-05 "toàn trắng" phát hiện đúng lỗ hổng này.
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
             // dưới navigationTitle).
@@ -285,6 +288,7 @@ struct MenuView: View {
                 }
             }
         }
+        .background(SeasonalBackgroundPattern().ignoresSafeArea())
         .task { if sanPhams.isEmpty { await load() } }
         .task { await SeasonalEvent.load() }
         #if DEV_LOGIN
@@ -321,8 +325,15 @@ struct MenuView: View {
 
     /// Màu nền xen kẽ giữa 2 nhóm liền kề trong menu — chỉ khác biệt nhẹ (không phải màu sắc rực) để
     /// không cạnh tranh với ảnh/tên món, chỉ đủ giúp mắt nhận ra ranh giới khi cuộn nhanh.
+    /// Dịp lễ (SeasonalEvent.active) tint xen kẽ theo màu dịp thay vì trắng/xám hệ thống — đây là
+    /// phần CHIẾM PHẦN LỚN diện tích màn hình (list món), mỗi dòng tự vẽ nền ĐỤC nên outer
+    /// SeasonalBackgroundPattern phía sau gần như không lộ ra được ở đây nếu không đổi hàm này. Khắc
+    /// phục feedback 2026-11-05 "toàn trắng" — tint nhẹ chứ không đậm để chữ/ảnh món vẫn rõ.
     private func sectionBackground(_ index: Int) -> Color {
-        index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
+        if let theme = SeasonalEvent.active {
+            return index % 2 == 0 ? theme.primary.opacity(0.05) : theme.primary.opacity(0.10)
+        }
+        return index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
     }
 
     /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
@@ -408,7 +419,7 @@ struct MenuView: View {
                 }
             }
             .frame(width: 84)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(SeasonalEvent.active.map { $0.primary.opacity(0.08) } ?? Color(.secondarySystemGroupedBackground))
             // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
             // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
             .onChange(of: selectedNhomId) { id in
@@ -578,7 +589,7 @@ struct MenuView: View {
             .frame(height: 90 + 6 + 16 + 4 + 15)
         }
         .padding(.vertical, 10)
-        .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
+        .background(SeasonalEvent.active.map { $0.primary.opacity(0.06) } ?? Color(.secondarySystemGroupedBackground).opacity(0.5))
     }
 
     /// Gộp món "Nổi bật" (chọn tay qua AppQuanLyIOS) VÀ top bán chạy 30 ngày (tự động, banChayIds) —

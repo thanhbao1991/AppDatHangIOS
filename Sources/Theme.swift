@@ -64,7 +64,7 @@ enum Theme {
     /// Nền xám trung tính như cũ — trừ khi đang dịp lễ (SeasonalEvent.active) thì tint nhẹ theo màu
     /// dịp đó, thay cho hạt rơi đã bỏ (feedback 2026-11-05 "bỏ hiệu ứng rơi, thay bằng màu/background").
     static var bg: Color {
-        if let theme = SeasonalEvent.active { return theme.primary.opacity(0.08) }
+        if let theme = SeasonalEvent.active { return theme.primary.opacity(0.12) }
         return Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
     }
 
@@ -230,12 +230,14 @@ extension View {
     }
 
     /// Nền xám Theme.bg thống nhất cho List(.plain) ở mọi tab card-based — .plain tự thân nền trắng,
-    /// cần lật nền hệ thống mới lộ ra Theme.bg phía dưới để card trắng nổi lên.
+    /// cần lật nền hệ thống mới lộ ra Theme.bg phía dưới để card trắng nổi lên. Dùng
+    /// SeasonalBackgroundPattern thay Color trần — rải thêm hoạ tiết TĨNH (không rơi) khi đang dịp lễ,
+    /// theo feedback 2026-11-05 "toàn trắng, chưa cảm nhận được lễ tết" (chỉ tint màu nhạt chưa đủ).
     func cardListBackground() -> some View {
         self
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.bg)
+            .background(SeasonalBackgroundPattern())
     }
 }
 
