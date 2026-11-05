@@ -214,7 +214,7 @@ enum SeasonalEvent {
         #if DEV_LOGIN
         if let previewOverride {
             // Câu chúc THẬT của voucher dịp đó (taiXemTruoc); chưa tải xong/lỗi mạng thì câu mẫu.
-            if let moTa = previewDipLe?.moTa, previewDipLe?.ma == previewOverride.maDaiDien { return "🧪 \(moTa)" }
+            if let moTa = previewDipLe?.moTa, previewDipLe?.ma == previewOverride.maDaiDien { return moTa }
             return previewOverride.previewMoTa
         }
         #endif
