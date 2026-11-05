@@ -61,11 +61,9 @@ enum Theme {
     static let textMuted = Color(red: 0x66 / 255, green: 0x66 / 255, blue: 0x66 / 255)
     static let textFaint = Color(red: 0x99 / 255, green: 0x99 / 255, blue: 0x99 / 255)
     static let divider = Color(red: 0xEE / 255, green: 0xEE / 255, blue: 0xEE / 255)
-    /// Nền xám trung tính như cũ — trừ khi đang dịp lễ (SeasonalEvent.active) thì tint nhẹ theo màu
-    /// dịp đó, thay cho hạt rơi đã bỏ (feedback 2026-11-05 "bỏ hiệu ứng rơi, thay bằng màu/background").
+    /// Nền xám trung tính như cũ — dịp lễ thì đổi sang tông kem ấm của dịp (SeasonalTheme.surface).
     static var bg: Color {
-        if let theme = SeasonalEvent.active { return theme.primary.opacity(0.12) }
-        return Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
+        SeasonalEvent.active?.surface ?? Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
     }
 
 
@@ -230,14 +228,12 @@ extension View {
     }
 
     /// Nền xám Theme.bg thống nhất cho List(.plain) ở mọi tab card-based — .plain tự thân nền trắng,
-    /// cần lật nền hệ thống mới lộ ra Theme.bg phía dưới để card trắng nổi lên. Dùng
-    /// SeasonalBackgroundPattern thay Color trần — rải thêm hoạ tiết TĨNH (không rơi) khi đang dịp lễ,
-    /// theo feedback 2026-11-05 "toàn trắng, chưa cảm nhận được lễ tết" (chỉ tint màu nhạt chưa đủ).
+    /// cần lật nền hệ thống mới lộ ra Theme.bg phía dưới để card trắng nổi lên.
     func cardListBackground() -> some View {
         self
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(SeasonalBackgroundPattern())
+            .background(Theme.bg)
     }
 }
 

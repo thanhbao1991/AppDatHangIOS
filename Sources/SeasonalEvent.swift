@@ -62,8 +62,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
-    /// Vài emoji dùng cho hoạ tiết rải trong banner (seasonalBanner) — KHÔNG còn dùng cho nền toàn màn
-    /// (SeasonalBackgroundPattern bỏ hẳn lớp hoạ tiết sau khi làm lại 2026-11-05, xem comment ở đó).
+    /// Vài emoji rải mờ trong banner (seasonalBanner) và header (SeasonalHeaderScatter).
     var patternSymbols: [String] {
         switch self {
         case .tet: return ["🌸", "🧧", "🏮"]
@@ -172,18 +171,147 @@ enum AppIconSwitcher {
     }
 }
 
-/// Nền trang trí dịp lễ — gradient 2 sắc độ CÙNG TÔNG (primary → primaryDark, xem comment ở đó), ĐƠN
-/// GIẢN, không hoạ tiết rải. Làm lại hoàn toàn 2026-11-05 sau khi bản "giấy gói quà" (gradient 2 tông
-/// khác hẳn + lưới emoji dày) bị chê xám/bẩn + rối mắt ở MỌI màn hình — bài học: nền toàn màn hình
-/// cao/rộng cần ĐƠN GIẢN (1 tông màu, không hoạ tiết) để không đè lên nội dung/card bên trên; hoạ tiết
-/// phong phú chỉ còn ở banner (seasonalBanner, diện tích nhỏ, kiểm soát được). nil (không dịp nào) thì
-/// vẫn Theme.bg phẳng xám trung tính như cũ.
-struct SeasonalBackgroundPattern: View {
+// Hệ thống trang trí dịp lễ (làm lại lần cuối 2026-11-05 sau 3 vòng bị chê "toàn trắng" → "xám bẩn"
+// → "rời rạc"): KHÔNG tô màu thân từng màn nữa (mỗi màn cấu trúc khác nhau — card/List phẳng/khoảng
+// trống — tô thân màn ra mỗi chỗ 1 kiểu, khối đỏ lớn, ô màu chồng ô màu → rời rạc). Chất lễ hội dồn vào
+// đúng những thứ MỌI MÀN dùng chung nên tự đồng bộ:
+//   1. Header (HeaderBackground — SearchBar/TitleBar/header Tài khoản): màu dịp + dây trang trí treo dọc
+//      mép dưới (SeasonalGarland) + vài hoạ tiết mờ.
+//   2. Màu chủ đạo (Theme.primary): nút CTA, giá, tab đang chọn, thẻ hạng.
+//   3. Theme.bg (nền sau card) đổi sang tông kem ấm (surface) — nhẹ, đồng nhất.
+//   4. Banner dịp lễ ở tab Thực đơn + App Icon.
+
+extension SeasonalTheme {
+    /// Nền sau card (thay xám #F5F5F5 của Theme.bg) — màu ĐỤC sáng ấm, không phải primary.opacity(...)
+    /// (alpha chồng lên nền khác nhau ở mỗi màn ra mỗi chỗ 1 màu khác nhau).
+    var surface: Color {
+        switch self {
+        case .tet: return Color(red: 1.0, green: 0.97, blue: 0.90)
+        case .valentine: return Color(red: 1.0, green: 0.945, blue: 0.955)
+        case .noel, .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
+        }
+    }
+
+    var garlandWire: Color {
+        switch self {
+        case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
+        case .tet: return Color(red: 0.93, green: 0.74, blue: 0.32)
+        case .valentine: return Color.white.opacity(0.75)
+        case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
+        }
+    }
+}
+
+/// Nền header dùng chung cho MỌI tab — gradient màu chủ đạo, dịp lễ thì thêm hoạ tiết mờ + dây trang
+/// trí ở mép dưới. Header phải cộng thêm SeasonalGarland.extraBottom vào padding dưới để dây nằm GỌN
+/// trong header, không đè lên nội dung bên dưới.
+struct HeaderBackground: View {
     var body: some View {
-        if let theme = SeasonalEvent.active {
-            LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .top, endPoint: .bottom)
-        } else {
-            Theme.bg
+        ZStack(alignment: .bottom) {
+            Theme.primaryGradient.ignoresSafeArea(edges: .top)
+            if let theme = SeasonalEvent.active {
+                SeasonalHeaderScatter(theme: theme).ignoresSafeArea(edges: .top)
+                SeasonalGarland(theme: theme).frame(height: SeasonalGarland.height)
+            }
+        }
+    }
+}
+
+/// Vài biểu tượng dịp lễ mờ rải trong header (vị trí cố định theo seed, không chuyển động).
+private struct SeasonalHeaderScatter: View {
+    let theme: SeasonalTheme
+
+    var body: some View {
+        Canvas { context, size in
+            var seed: UInt64 = 2_024
+            func rand() -> CGFloat {
+                seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                return CGFloat(seed >> 33) / CGFloat(1 << 31)
+            }
+            let symbols = theme.patternSymbols
+            let count = 6
+            context.opacity = 0.16
+            for i in 0..<count {
+                // Chia đều theo chiều ngang rồi lệch nhẹ — không dồn cụm 1 bên.
+                let x = (CGFloat(i) + 0.2 + rand() * 0.6) * size.width / CGFloat(count)
+                let y = size.height * (0.15 + rand() * 0.55)
+                let resolved = context.resolve(Text(symbols[i % symbols.count]).font(.system(size: 16 + rand() * 10)))
+                context.draw(resolved, at: CGPoint(x: x, y: y), anchor: .center)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// Dây trang trí võng dọc mép dưới header: Noel = dây đèn nhiều màu phát sáng, Tết = đèn lồng + hoa
+/// mai, Valentine = tim, 2/9 & 30/4 = cờ đuôi nheo vàng. Vẽ bằng Canvas 1 lần, không chuyển động.
+struct SeasonalGarland: View {
+    static let height: CGFloat = 24
+    /// Cộng vào padding dưới của header khi đang dịp lễ — 0 ngoài dịp để header giữ nguyên chiều cao cũ.
+    static var extraBottom: CGFloat { SeasonalEvent.active == nil ? 0 : height - 4 }
+
+    let theme: SeasonalTheme
+
+    private static let bulbColors: [Color] = [
+        Color(red: 1.0, green: 0.84, blue: 0.30),
+        Color(red: 0.40, green: 0.85, blue: 0.45),
+        Color(red: 0.45, green: 0.78, blue: 1.0),
+        Color(red: 1.0, green: 0.97, blue: 0.85),
+    ]
+
+    var body: some View {
+        Canvas { context, size in
+            let swags = max(4, Int((size.width / 72).rounded()))
+            let swagW = size.width / CGFloat(swags)
+            let topY: CGFloat = 2
+            let sag: CGFloat = 16 // điểm điều khiển — độ võng thật ~ sag/2
+
+            var wire = Path()
+            for i in 0..<swags {
+                let x0 = CGFloat(i) * swagW
+                wire.move(to: CGPoint(x: x0, y: topY))
+                wire.addQuadCurve(to: CGPoint(x: x0 + swagW, y: topY),
+                                  control: CGPoint(x: x0 + swagW / 2, y: topY + sag))
+            }
+            context.stroke(wire, with: .color(theme.garlandWire), lineWidth: 1.3)
+
+            var index = 0
+            for i in 0..<swags {
+                let x0 = CGFloat(i) * swagW
+                for t in [0.2, 0.5, 0.8] as [CGFloat] {
+                    let mt = 1 - t
+                    let x = mt * mt * x0 + 2 * mt * t * (x0 + swagW / 2) + t * t * (x0 + swagW)
+                    let y = mt * mt * topY + 2 * mt * t * (topY + sag) + t * t * topY
+                    drawItem(in: context, at: CGPoint(x: x, y: y), index: index)
+                    index += 1
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func drawItem(in context: GraphicsContext, at p: CGPoint, index: Int) {
+        switch theme {
+        case .noel:
+            let color = Self.bulbColors[index % Self.bulbColors.count]
+            // Quầng sáng mờ phía sau bóng đèn
+            context.fill(Path(ellipseIn: CGRect(x: p.x - 6, y: p.y - 1, width: 12, height: 14)),
+                         with: .color(color.opacity(0.35)))
+            context.fill(Path(CGRect(x: p.x - 1.5, y: p.y - 1, width: 3, height: 3)),
+                         with: .color(Color(red: 0.12, green: 0.2, blue: 0.14)))
+            context.fill(Path(ellipseIn: CGRect(x: p.x - 3, y: p.y + 1.5, width: 6, height: 9)),
+                         with: .color(color))
+        case .quocKhanh, .thongNhat:
+            var flag = Path()
+            flag.move(to: CGPoint(x: p.x - 5, y: p.y))
+            flag.addLine(to: CGPoint(x: p.x + 5, y: p.y))
+            flag.addLine(to: CGPoint(x: p.x, y: p.y + 10))
+            flag.closeSubpath()
+            context.fill(flag, with: .color(index % 2 == 0 ? Color(red: 1.0, green: 0.85, blue: 0.2) : .white))
+        case .tet, .valentine:
+            let symbols = theme == .tet ? ["🏮", "🌼"] : ["🤍", "💖"]
+            let resolved = context.resolve(Text(symbols[index % symbols.count]).font(.system(size: 11)))
+            context.draw(resolved, at: CGPoint(x: p.x, y: p.y - 1), anchor: .top)
         }
     }
 }

@@ -23,15 +23,13 @@ struct SearchBar: View {
         }
         .frame(height: HeaderBarMetrics.rowHeight)
         .padding(.horizontal)
-        .padding(.vertical, HeaderBarMetrics.verticalPadding)
+        .padding(.top, HeaderBarMetrics.verticalPadding)
+        .padding(.bottom, HeaderBarMetrics.verticalPadding + (tinted ? SeasonalGarland.extraBottom : 0))
         .background(
             Group {
                 if tinted {
-                    // Trước dùng [primary, primary.opacity(0.85)] — cùng 1 màu chỉ khác độ mờ nên
-                    // nhìn gần như phẳng. Đổi sang Theme.primaryGradient (primary→primaryDark, khớp
-                    // nút CTA/voucher/card hạng) để thấy rõ 2 tông như mọi nơi khác trong app.
-                    Theme.primaryGradient
-                        .ignoresSafeArea(edges: .top)
+                    // Theme.primaryGradient (primary→primaryDark) + trang trí dịp lễ, xem HeaderBackground.
+                    HeaderBackground()
                 }
             }
         )
@@ -82,15 +80,12 @@ struct TitleBar: View {
         }
         .frame(height: HeaderBarMetrics.rowHeight)
         .padding(.horizontal)
-        .padding(.vertical, HeaderBarMetrics.verticalPadding)
+        .padding(.top, HeaderBarMetrics.verticalPadding)
+        .padding(.bottom, HeaderBarMetrics.verticalPadding + (tinted ? SeasonalGarland.extraBottom : 0))
         .background(
             Group {
                 if tinted {
-                    // Trước dùng [primary, primary.opacity(0.85)] — cùng 1 màu chỉ khác độ mờ nên
-                    // nhìn gần như phẳng. Đổi sang Theme.primaryGradient (primary→primaryDark, khớp
-                    // nút CTA/voucher/card hạng) để thấy rõ 2 tông như mọi nơi khác trong app.
-                    Theme.primaryGradient
-                        .ignoresSafeArea(edges: .top)
+                    HeaderBackground()
                 }
             }
         )

@@ -53,7 +53,7 @@ struct UuDaiView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(SeasonalBackgroundPattern())
+            .background(Theme.bg)
         }
         .task { await load() }
         .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }

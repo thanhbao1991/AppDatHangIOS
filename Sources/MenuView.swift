@@ -174,9 +174,6 @@ struct MenuView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Nền trang trí dịp lễ (tint + hoạ tiết tĩnh) — trước đây tab này không có background nào
-            // riêng (lộ nền trắng hệ thống mặc định), nên Theme.bg đổi theo dịp lễ không hề lộ ra ở
-            // chính tab khách mở đầu tiên. Feedback 2026-11-05 "toàn trắng" phát hiện đúng lỗ hổng này.
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
             // dưới navigationTitle).
@@ -288,7 +285,6 @@ struct MenuView: View {
                 }
             }
         }
-        .background(SeasonalBackgroundPattern().ignoresSafeArea())
         .task { if sanPhams.isEmpty { await load() } }
         .task { await SeasonalEvent.load() }
         #if DEV_LOGIN
@@ -531,7 +527,7 @@ struct MenuView: View {
             LinearGradient(colors: [theme.primary, theme.primaryDark], startPoint: .leading, endPoint: .trailing)
                 .overlay {
                     // Hoạ tiết TĨNH ngay trong banner cho cảm giác "hero" đậm đà như app/Dribbble
-                    // tham khảo (2026-11-05) — thưa hơn SeasonalBackgroundPattern vì banner nhỏ.
+                    // tham khảo (2026-11-05).
                     Canvas { context, size in
                         var seed: UInt64 = 777
                         func rand() -> CGFloat {

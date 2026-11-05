@@ -160,9 +160,8 @@ struct SettingsView: View {
                 if let vi {
                     #if DEV_LOGIN
                     cardRow(topExtra: 6) { diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi) }
-                    // Bọc cardBox (nền trắng đục) thay vì để Button trần trên nền List — nền List giờ
-                    // đổi màu theo dịp lễ (SeasonalBackgroundPattern), chữ nút mặc định (màu tint) sẽ
-                    // khó đọc nếu không có nền trắng cố định bên dưới (phát hiện 2026-11-05).
+                    // Bọc cardBox (nền trắng) cho đồng bộ với các card khác — Button trần nằm thẳng trên
+                    // nền List lạc nhịp.
                     cardRow {
                         cardBox {
                             Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
@@ -257,9 +256,10 @@ struct SettingsView: View {
             accountSettingsGear
         }
         .padding(.horizontal)
-        .padding(.vertical, HeaderBarMetrics.verticalPadding)
+        .padding(.top, HeaderBarMetrics.verticalPadding)
+        .padding(.bottom, HeaderBarMetrics.verticalPadding + SeasonalGarland.extraBottom)
         .frame(minHeight: HeaderBarMetrics.rowHeight)
-        .background(Theme.primaryGradient.ignoresSafeArea(edges: .top))
+        .background(HeaderBackground())
     }
 
     private var chuaDatTen: Bool {
@@ -412,7 +412,9 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark],
+                // Dịp lễ: thẻ hạng theo màu dịp như mọi chỗ khác (thẻ xanh navy giữa app đỏ bị rời rạc).
+                colors: SeasonalEvent.active != nil ? [Theme.primary, Theme.primaryDark]
+                    : (hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark]),
                 startPoint: .topLeading, endPoint: .bottomTrailing)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))

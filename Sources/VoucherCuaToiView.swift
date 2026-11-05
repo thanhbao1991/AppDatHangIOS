@@ -109,7 +109,7 @@ struct VoucherCuaToiView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(SeasonalBackgroundPattern())
+            .background(Theme.bg)
         }
         .task { await load() }
     }
