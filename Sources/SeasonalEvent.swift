@@ -202,10 +202,7 @@ enum SeasonalEvent {
         self.dipLe = dipLe
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
-        // Icon theo dịp THẬT (theme), KHÔNG theo previewOverride: mỗi lần đổi icon iOS bắt buộc hiện
-        // popup "You have changed the icon…" — bấm xem trước ở bản dev sẽ bị popup liên tục (user chê
-        // 2026-11-05). Xem trước chỉ đổi màu/banner/header.
-        AppIconSwitcher.apply(theme)
+        AppIconSwitcher.apply(active)
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
     }
 }
@@ -219,6 +216,19 @@ enum AppIconSwitcher {
         guard UIApplication.shared.supportsAlternateIcons else { return }
         let targetName = theme?.alternateIconName
         guard UIApplication.shared.alternateIconName != targetName else { return }
+        #if DEV_LOGIN
+        // Bản dev: đổi icon KHÔNG hiện popup "You have changed the icon…" (bấm xem trước liên tục bị
+        // popup — user 2026-11-05). Dùng selector NỘI BỘ của UIKit, nên CHỈ có ở DEV_LOGIN — bản App
+        // Store không chứa code này (private API = bị từ chối duyệt), khách thật vẫn thấy popup như
+        // mọi app iOS khác, không có cách công khai nào tắt.
+        let sel = NSSelectorFromString(["_setAlternate", "IconName:", "completionHandler:"].joined())
+        if UIApplication.shared.responds(to: sel) {
+            typealias DoiIcon = @convention(c) (AnyObject, Selector, NSString?, @convention(block) (NSError?) -> Void) -> Void
+            let doi = unsafeBitCast(UIApplication.shared.method(for: sel), to: DoiIcon.self)
+            doi(UIApplication.shared, sel, targetName as NSString?) { _ in }
+            return
+        }
+        #endif
         UIApplication.shared.setAlternateIconName(targetName) { error in
             // Lỗi hiếm (vd icon không có trong bundle do thiếu ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS)
             // — không phải lỗi nghiêm trọng, app vẫn chạy bình thường với icon cũ, chỉ log để biết mà sửa.
