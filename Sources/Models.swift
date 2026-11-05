@@ -101,6 +101,8 @@ struct DipLe: Decodable, Equatable {
     let ma: String
     let ten: String
     let moTa: String?
+    /// Hạng tối thiểu để dùng voucher của dịp (vd "Bạc") — xem SeasonalEvent.bannerSubtitle.
+    var hangToiThieu: String?
 }
 
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem

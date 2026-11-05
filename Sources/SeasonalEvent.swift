@@ -1,39 +1,53 @@
 import SwiftUI
 import UIKit
 
-/// Màu/emoji trang trí theo dịp lễ — khoá theo Ma của voucher lễ tết tương ứng ở Backend (tập cố
-/// định NOEL/VALENTINE/TETAL/QUOCKHANH/GIAIPHONG, xem DatHangService.MaDipLeTrangTri). Thêm dịp mới
-/// thì thêm Ma vào Backend VÀ 1 case màu ở đây — câu chúc (title/subtitle) KHÔNG nằm ở đây, luôn lấy
-/// thẳng ten/moTa của voucher qua SeasonalEvent (1 nguồn duy nhất, sửa ở AppQuanLyIOS là tự đổi).
+/// Màu/emoji trang trí theo dịp lễ — khoá theo Ma của voucher lễ tết tương ứng ở Backend (xem
+/// DatHangService.MaDipLeTrangTri). Thêm dịp mới thì thêm Ma vào Backend VÀ 1 case ở đây — câu chúc
+/// (title/subtitle) KHÔNG nằm ở đây, luôn lấy thẳng ten/moTa của voucher qua SeasonalEvent.
 enum SeasonalTheme: CaseIterable, Equatable {
-    case noel, valentine, tet, quocKhanh, thongNhat
+    case tetDuong, tet, valentine, phuNu, thongNhat, thieuNhi, quocKhanh, trungThu, nhaGiao, noel
 
     init?(ma: String) {
         switch ma {
-        case "NOEL": self = .noel
-        case "VALENTINE": self = .valentine
+        case "TETDUONG": self = .tetDuong
         case "TETAL": self = .tet
-        case "QUOCKHANH": self = .quocKhanh
+        case "VALENTINE": self = .valentine
+        case "QTPHUNU", "PHUNUVN": self = .phuNu
         case "GIAIPHONG": self = .thongNhat
+        case "THIEUNHI": self = .thieuNhi
+        case "QUOCKHANH": self = .quocKhanh
+        case "TRUNGTHU": self = .trungThu
+        case "NHAGIAO": self = .nhaGiao
+        case "NOEL": self = .noel
         default: return nil
         }
     }
 
     var leadingEmoji: String {
         switch self {
+        case .tetDuong: return "🎆"
         case .tet: return "🧧"
         case .valentine: return "💘"
-        case .noel: return "🎄"
+        case .phuNu: return "💐"
+        case .thieuNhi: return "🎈"
         case .quocKhanh, .thongNhat: return "🇻🇳"
+        case .trungThu: return "🏮"
+        case .nhaGiao: return "📚"
+        case .noel: return "🎄"
         }
     }
 
     var trailingEmoji: String {
         switch self {
+        case .tetDuong: return "🥂"
         case .tet: return "🌸"
         case .valentine: return "💖"
-        case .noel: return "❄️"
+        case .phuNu: return "🌷"
+        case .thieuNhi: return "🧸"
         case .quocKhanh, .thongNhat: return "⭐"
+        case .trungThu: return "🌕"
+        case .nhaGiao: return "💐"
+        case .noel: return "❄️"
         }
     }
 
@@ -44,31 +58,45 @@ enum SeasonalTheme: CaseIterable, Equatable {
     /// cho ra khoảng giữa xám/nâu bẩn (2 màu bổ sung luôn trộn ra màu trung tính khi gradient đủ dài),
     /// hỏng hết. Xanh lá/vàng... của dịp đó chỉ xuất hiện qua emoji (leadingEmoji/trailingEmoji), KHÔNG
     /// còn trộn vào nền.
+    /// Màu đủ đậm để chữ trắng trên header/nút CTA đọc rõ.
     var primary: Color {
         switch self {
-        case .tet: return Color(red: 0.80, green: 0.08, blue: 0.1)
+        case .tetDuong: return Color(red: 0.30, green: 0.24, blue: 0.62)
+        case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
+        case .phuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .thieuNhi: return Color(red: 0.90, green: 0.42, blue: 0.08)
+        case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
+        case .nhaGiao: return Color(red: 0.10, green: 0.40, blue: 0.72)
         case .noel: return Color(red: 0.73, green: 0.09, blue: 0.13)
-        case .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         }
     }
 
     var primaryDark: Color {
         switch self {
-        case .tet: return Color(red: 0.50, green: 0.04, blue: 0.06)
+        case .tetDuong: return Color(red: 0.15, green: 0.11, blue: 0.38)
+        case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
+        case .phuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .thieuNhi: return Color(red: 0.66, green: 0.25, blue: 0.03)
+        case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
+        case .nhaGiao: return Color(red: 0.05, green: 0.22, blue: 0.46)
         case .noel: return Color(red: 0.45, green: 0.04, blue: 0.07)
-        case .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         }
     }
 
     /// Vài emoji rải mờ trong banner (seasonalBanner) và header (SeasonalHeaderScatter).
     var patternSymbols: [String] {
         switch self {
+        case .tetDuong: return ["✨", "🎉", "🎆"]
         case .tet: return ["🌸", "🧧", "🏮"]
         case .valentine: return ["💕", "💘", "🌹"]
-        case .noel: return ["❄️", "🎄", "🎁"]
+        case .phuNu: return ["🌷", "🌸", "💐"]
+        case .thieuNhi: return ["🎈", "⭐", "🍭"]
         case .quocKhanh, .thongNhat: return ["⭐", "🇻🇳"]
+        case .trungThu: return ["🌕", "🏮", "⭐"]
+        case .nhaGiao: return ["📚", "🌹", "✏️"]
+        case .noel: return ["❄️", "🎄", "🎁"]
         }
     }
 
@@ -81,7 +109,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .noel: return "AppIcon-Noel"
         case .valentine: return "AppIcon-Valentine"
         case .tet: return "AppIcon-Tet"
-        case .quocKhanh, .thongNhat: return nil
+        case .tetDuong, .phuNu, .thongNhat, .thieuNhi, .quocKhanh, .trungThu, .nhaGiao: return nil
         }
     }
 
@@ -91,11 +119,16 @@ enum SeasonalTheme: CaseIterable, Equatable {
     /// AppQuanLyIOS không tự đổi được bản xem trước này (chỉ ảnh hưởng câu chúc THẬT ngoài preview).
     var previewTen: String {
         switch self {
+        case .tetDuong: return "Tết Dương lịch"
         case .tet: return "Tết Nguyên Đán"
         case .valentine: return "Valentine"
-        case .noel: return "Giáng sinh"
-        case .quocKhanh: return "Quốc khánh 2/9"
+        case .phuNu: return "Phụ nữ Việt Nam 20/10"
         case .thongNhat: return "30/4 - 1/5"
+        case .thieuNhi: return "Quốc tế Thiếu nhi"
+        case .quocKhanh: return "Quốc khánh 2/9"
+        case .trungThu: return "Tết Trung Thu"
+        case .nhaGiao: return "Nhà giáo Việt Nam 20/11"
+        case .noel: return "Giáng sinh"
         }
     }
     var previewMoTa: String {
@@ -137,7 +170,21 @@ enum SeasonalEvent {
         #if DEV_LOGIN
         if let previewOverride { return previewOverride.previewMoTa }
         #endif
-        return dipLe?.moTa ?? ""
+        guard let dipLe else { return "" }
+        let moTa = dipLe.moTa ?? ""
+        // Voucher lễ yêu cầu hạng (hiện đều là Bạc) — trang trí thì ai cũng thấy, nhưng câu "Giảm 10%..."
+        // chỉ hiện như lời hứa khi khách ĐỦ hạng; chưa đủ (kể cả khách chưa đăng nhập) thì ghi rõ điều
+        // kiện, tránh khách tưởng ai cũng được giảm rồi đặt đơn mới biết không áp dụng.
+        guard let hang = dipLe.hangToiThieu, !duHang(KhachHangSession.shared.hang, toiThieu: hang) else { return moTa }
+        return moTa.isEmpty ? "🏅 Ưu đãi dành cho hạng \(hang) trở lên" : "🏅 Hạng \(hang) trở lên: \(moTa)"
+    }
+
+    private static let thuTuHang = ["Thành Viên", "Bạc", "Vàng", "Kim Cương"]
+
+    /// Hạng lạ (không có trong danh sách) coi như chưa đủ — thà ghi điều kiện thừa còn hơn hứa sai.
+    static func duHang(_ hang: String, toiThieu: String) -> Bool {
+        guard let a = thuTuHang.firstIndex(of: hang), let b = thuTuHang.firstIndex(of: toiThieu) else { return false }
+        return a >= b
     }
 
     /// Tải dịp lễ từ Backend — gọi lúc khởi động app (AppDatHangIOSApp) và mỗi lần mở lại tab Thực
@@ -186,8 +233,11 @@ extension SeasonalTheme {
     /// (alpha chồng lên nền khác nhau ở mỗi màn ra mỗi chỗ 1 màu khác nhau).
     var surface: Color {
         switch self {
-        case .tet: return Color(red: 1.0, green: 0.97, blue: 0.90)
+        case .tet, .thieuNhi, .trungThu: return Color(red: 1.0, green: 0.97, blue: 0.91)
         case .valentine: return Color(red: 1.0, green: 0.945, blue: 0.955)
+        case .phuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
+        case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
+        case .nhaGiao: return Color(red: 0.95, green: 0.97, blue: 1.0)
         case .noel, .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
         }
     }
@@ -195,9 +245,37 @@ extension SeasonalTheme {
     var garlandWire: Color {
         switch self {
         case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
-        case .tet: return Color(red: 0.93, green: 0.74, blue: 0.32)
-        case .valentine: return Color.white.opacity(0.75)
+        case .tet, .tetDuong, .trungThu: return Color(red: 0.93, green: 0.76, blue: 0.38)
+        case .valentine, .phuNu, .nhaGiao, .thieuNhi: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
+        }
+    }
+
+    enum GarlandItems {
+        /// Bóng đèn vẽ tay có quầng sáng, xoay vòng các màu.
+        case bulbs([Color])
+        /// Cờ đuôi nheo tam giác, xoay vòng các màu.
+        case flags([Color])
+        case emoji([String])
+    }
+
+    var garlandItems: GarlandItems {
+        switch self {
+        case .noel:
+            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 0.40, green: 0.85, blue: 0.45),
+                           Color(red: 0.45, green: 0.78, blue: 1.0), Color(red: 1.0, green: 0.97, blue: 0.85)])
+        case .tetDuong:
+            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 1.0, green: 0.97, blue: 0.85)])
+        case .quocKhanh, .thongNhat:
+            return .flags([Color(red: 1.0, green: 0.85, blue: 0.2), .white])
+        case .thieuNhi:
+            return .flags([Color(red: 0.30, green: 0.65, blue: 1.0), Color(red: 1.0, green: 0.88, blue: 0.25),
+                           Color(red: 0.40, green: 0.85, blue: 0.45), .white])
+        case .tet: return .emoji(["🏮", "🌼"])
+        case .valentine: return .emoji(["🤍", "💖"])
+        case .phuNu: return .emoji(["🌷", "🌸"])
+        case .trungThu: return .emoji(["🏮", "⭐"])
+        case .nhaGiao: return .emoji(["🌹", "🌼"])
         }
     }
 }
@@ -252,13 +330,6 @@ struct SeasonalGarland: View {
 
     let theme: SeasonalTheme
 
-    private static let bulbColors: [Color] = [
-        Color(red: 1.0, green: 0.84, blue: 0.30),
-        Color(red: 0.40, green: 0.85, blue: 0.45),
-        Color(red: 0.45, green: 0.78, blue: 1.0),
-        Color(red: 1.0, green: 0.97, blue: 0.85),
-    ]
-
     var body: some View {
         Canvas { context, size in
             let swags = max(4, Int((size.width / 72).rounded()))
@@ -291,9 +362,9 @@ struct SeasonalGarland: View {
     }
 
     private func drawItem(in context: GraphicsContext, at p: CGPoint, index: Int) {
-        switch theme {
-        case .noel:
-            let color = Self.bulbColors[index % Self.bulbColors.count]
+        switch theme.garlandItems {
+        case .bulbs(let colors):
+            let color = colors[index % colors.count]
             // Quầng sáng mờ phía sau bóng đèn
             context.fill(Path(ellipseIn: CGRect(x: p.x - 6, y: p.y - 1, width: 12, height: 14)),
                          with: .color(color.opacity(0.35)))
@@ -301,15 +372,14 @@ struct SeasonalGarland: View {
                          with: .color(Color(red: 0.12, green: 0.2, blue: 0.14)))
             context.fill(Path(ellipseIn: CGRect(x: p.x - 3, y: p.y + 1.5, width: 6, height: 9)),
                          with: .color(color))
-        case .quocKhanh, .thongNhat:
+        case .flags(let colors):
             var flag = Path()
             flag.move(to: CGPoint(x: p.x - 5, y: p.y))
             flag.addLine(to: CGPoint(x: p.x + 5, y: p.y))
             flag.addLine(to: CGPoint(x: p.x, y: p.y + 10))
             flag.closeSubpath()
-            context.fill(flag, with: .color(index % 2 == 0 ? Color(red: 1.0, green: 0.85, blue: 0.2) : .white))
-        case .tet, .valentine:
-            let symbols = theme == .tet ? ["🏮", "🌼"] : ["🤍", "💖"]
+            context.fill(flag, with: .color(colors[index % colors.count]))
+        case .emoji(let symbols):
             let resolved = context.resolve(Text(symbols[index % symbols.count]).font(.system(size: 11)))
             context.draw(resolved, at: CGPoint(x: p.x, y: p.y - 1), anchor: .top)
         }
