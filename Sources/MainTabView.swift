@@ -25,6 +25,11 @@ struct MainTabView: View {
     @State private var showTaiKhoanBaoMat = false
     @State private var showLogin = false
     @StateObject private var deepLinkRouter = DeepLinkRouter.shared
+    #if DEV_LOGIN
+    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại lớp tuyết khi SettingsView bắn
+    /// .christmasPreviewToggled (Theme.isChristmasSeason là computed property, không tự kích hoạt lại).
+    @State private var christmasPreviewTick = 0
+    #endif
 
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
     /// có thể push route .checkout, xem navigationDestination bên dưới) — dùng để ẩn tabBar dưới cùng.
@@ -44,6 +49,7 @@ struct MainTabView: View {
     }
 
     var body: some View {
+        ZStack {
         VStack(spacing: 0) {
             Group {
                 switch selectedTab {
@@ -117,11 +123,22 @@ struct MainTabView: View {
                 tabBar
             }
         }
+        // Tuyết rơi phủ TOÀN APP (mọi tab, kể cả tab bar) — khác christmasBanner (chỉ ở MenuView),
+        // đặt ở tầng ngoài cùng này thay vì riêng từng tab để không phải nhân bản ở 5 tab.
+        if Theme.isChristmasSeason {
+            SnowfallView().allowsHitTesting(false)
+        }
+        }
         .tint(Theme.primary)
         .environmentObject(cart)
         .onReceive(NotificationCenter.default.publisher(for: .yeuCauDangNhap)) { _ in
             if !isLoggedIn { showLogin = true }
         }
+        #if DEV_LOGIN
+        .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
+            christmasPreviewTick += 1
+        }
+        #endif
         .onChange(of: isLoggedIn) { loggedIn in
             if loggedIn {
                 showLogin = false

@@ -173,7 +173,6 @@ struct MenuView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
         VStack(spacing: 0) {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
@@ -285,10 +284,6 @@ struct MenuView: View {
                     }
                 }
             }
-        }
-        if Theme.isChristmasSeason {
-            SnowfallView().allowsHitTesting(false)
-        }
         }
         .task { if sanPhams.isEmpty { await load() } }
         #if DEV_LOGIN
