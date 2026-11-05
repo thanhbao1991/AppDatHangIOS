@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Màu/emoji trang trí theo dịp lễ — khoá theo Ma của voucher lễ tết tương ứng ở Backend (tập cố
 /// định NOEL/VALENTINE/TETAL/QUOCKHANH/GIAIPHONG, xem DatHangService.MaDipLeTrangTri). Thêm dịp mới
@@ -79,6 +80,19 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
+    /// Tên App Icon thay thế khớp AppIcon-*.appiconset trong Assets.xcassets (xem AppIconSwitcher) —
+    /// nil = CHƯA có ảnh icon riêng cho dịp này (vd Quốc khánh/30-4-1-5, user nói "thêm sau"), app
+    /// vẫn dùng icon mặc định, không lỗi gì. Cập nhật khi có thêm ảnh: thêm appiconset mới, khai ở
+    /// project.yml (CFBundleAlternateIcons) RỒI mới trả tên ở đây.
+    var alternateIconName: String? {
+        switch self {
+        case .noel: return "AppIcon-Noel"
+        case .valentine: return "AppIcon-Valentine"
+        case .tet: return "AppIcon-Tet"
+        case .quocKhanh, .thongNhat: return nil
+        }
+    }
+
     #if DEV_LOGIN
     /// Câu chúc MẪU chỉ dùng khi bấm "🧪 Xem trước" (chưa có voucher thật đang hiệu lực để lấy
     /// ten/moTa) — khớp đúng chữ đang lưu ở voucher tương ứng (Ma ở trên) tại thời điểm viết, sửa ở
@@ -143,7 +157,25 @@ enum SeasonalEvent {
         self.dipLe = dipLe
         theme = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
         Theme.applyNavBarAppearance()
+        AppIconSwitcher.apply(active)
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+    }
+}
+
+/// Đổi App Icon trên màn hình chính theo dịp lễ (UIApplication.setAlternateIconName) — nil (không
+/// dịp nào, hoặc dịp chưa có ảnh icon riêng) thì quay về icon mặc định. Gọi từ SeasonalEvent.load()
+/// nên tự chạy cùng lúc với banner/màu, không cần gọi tay chỗ khác.
+enum AppIconSwitcher {
+    @MainActor
+    static func apply(_ theme: SeasonalTheme?) {
+        guard UIApplication.shared.supportsAlternateIcons else { return }
+        let targetName = theme?.alternateIconName
+        guard UIApplication.shared.alternateIconName != targetName else { return }
+        UIApplication.shared.setAlternateIconName(targetName) { error in
+            // Lỗi hiếm (vd icon không có trong bundle do thiếu ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS)
+            // — không phải lỗi nghiêm trọng, app vẫn chạy bình thường với icon cũ, chỉ log để biết mà sửa.
+            if let error { print("[AppIconSwitcher] setAlternateIconName(\(targetName ?? "nil")) lỗi: \(error)") }
+        }
     }
 }
 
