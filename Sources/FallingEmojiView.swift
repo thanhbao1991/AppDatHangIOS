@@ -27,13 +27,11 @@ struct FallingEmojiView: View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let t = CGFloat(timeline.date.timeIntervalSinceReferenceDate)
-                let text = Text(symbol)
                 for flake in flakes {
                     let travel = (t * flake.speed + flake.phase).truncatingRemainder(dividingBy: size.height + flake.size * 2)
                     let y = travel - flake.size
                     let x = flake.xRatio * size.width + sin(t * 0.8 + flake.phase) * flake.drift
-                    var resolved = context.resolve(text.font(.system(size: flake.size)))
-                    resolved.shadow = .init(color: .black.opacity(0.15), radius: 1.5)
+                    let resolved = context.resolve(Text(symbol).font(.system(size: flake.size)))
                     context.draw(resolved, at: CGPoint(x: x, y: y), anchor: .center)
                 }
             }
