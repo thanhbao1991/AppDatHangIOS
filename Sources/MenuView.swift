@@ -38,6 +38,11 @@ struct MenuView: View {
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
     @State private var giaRiengMap: [String: Double] = [:]
+    #if DEV_LOGIN
+    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại khi SettingsView bắn
+    /// .christmasPreviewToggled (Theme.isChristmasSeason là computed property, không tự kích hoạt lại).
+    @State private var christmasPreviewTick = 0
+    #endif
     /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
     @State private var chucMung: QuaChucMung?
     @State private var quaConLai: [QuaChucMung] = []
@@ -168,11 +173,18 @@ struct MenuView: View {
     }
 
     var body: some View {
+        ZStack(alignment: .top) {
         VStack(spacing: 0) {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
             // dưới navigationTitle).
             SearchBar(text: $query, placeholder: "Tìm món...", trailing: notificationBell)
+
+            // Banner Giáng sinh — chỉ hiện 24-25/12 (giờ VN), ẩn lúc đang tìm kiếm giống dải đề xuất
+            // bên dưới (xem Theme.isChristmasSeason).
+            if Theme.isChristmasSeason && !isSearching {
+                christmasBanner
+            }
 
             // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
             // khách mở ra đầu tiên và thấy 100% lượt vào app. Ẩn lúc đang tìm kiếm (kết quả tìm nên
@@ -274,7 +286,16 @@ struct MenuView: View {
                 }
             }
         }
+        if Theme.isChristmasSeason {
+            SnowfallView().allowsHitTesting(false)
+        }
+        }
         .task { if sanPhams.isEmpty { await load() } }
+        #if DEV_LOGIN
+        .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
+            christmasPreviewTick += 1
+        }
+        #endif
         .fullScreenCover(item: $chucMung) { q in
             ChucMungHangView(qua: q) {
                 _ = await ChucMungHang.nhan(q)
@@ -484,6 +505,27 @@ struct MenuView: View {
     private static let noiBatCarouselVisibleCount: CGFloat = 3.4
     private static let noiBatCarouselSpacing: CGFloat = 12
     private static let noiBatCarouselPadding: CGFloat = 16
+
+    /// Banner trang trí Giáng sinh — chỉ hiện 24-25/12 (Theme.isChristmasSeason), không đổi màu chủ
+    /// đạo toàn app (giữ nguyên màu theo hạng khách), chỉ 1 card trang trí nhẹ ngay đầu Home.
+    private var christmasBanner: some View {
+        HStack(spacing: 10) {
+            Text("🎄").font(.system(size: 26))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Chúc Mừng Giáng Sinh!")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Đenn Coffee chúc bạn một mùa lễ ấm áp 🎁")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            Spacer()
+            Text("❄️").font(.system(size: 22))
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(LinearGradient(colors: [Color(red: 0.73, green: 0.09, blue: 0.13), Color(red: 0.12, green: 0.47, blue: 0.24)], startPoint: .leading, endPoint: .trailing))
+        .padding(.horizontal, 16).padding(.top, 8)
+    }
 
     /// Dải card cuộn ngang cho món "Nổi bật" (SanPham.noiBat, nhân viên tự bật qua Desktop) — xem
     /// noiBatSanPhams. Card gọn hơn productRow (dọc, ảnh lớn hơn) để tách biệt rõ với List món bên

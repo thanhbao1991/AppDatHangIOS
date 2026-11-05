@@ -7,6 +7,9 @@ extension Notification.Name {
     static let sessionExpired = Notification.Name("sessionExpired")
     /// Khách chưa đăng nhập bấm tính năng cần tài khoản (vd "Đặt hàng") — MainTabView mở màn đăng nhập.
     static let yeuCauDangNhap = Notification.Name("yeuCauDangNhap")
+    /// DEV_LOGIN only — bắn khi bật/tắt Theme.previewChristmas ở SettingsView để MenuView tự vẽ lại
+    /// banner/tuyết ngay (computed property không tự kích hoạt lại body nếu không có @State đổi).
+    static let christmasPreviewToggled = Notification.Name("christmasPreviewToggled")
 }
 
 /// Host app THẬT được khởi động khi chạy unit test — xem giải thích chi tiết ở Prefs.swift của

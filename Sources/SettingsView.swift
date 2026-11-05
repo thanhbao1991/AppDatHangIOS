@@ -24,6 +24,7 @@ struct SettingsView: View {
     @State private var xemTruocNgay1 = false
     @State private var chucMungXemTruoc: QuaChucMung?
     @State private var quaXemTruocConLai: [QuaChucMung] = []
+    @State private var xemTruocGiangSinh = Theme.previewChristmas
     #endif
 
     @State private var alertMessage: (title: String, message: String)?
@@ -156,6 +157,14 @@ struct SettingsView: View {
                                 quaXemTruocConLai = XemTruocNgay1.qua(vi)
                                 if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
                             }
+                        }
+                        .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
+                    }
+                    cardRow {
+                        Button(xemTruocGiangSinh ? "🧪 Tắt xem trước Giáng sinh" : "🎄 Xem trước Giáng sinh") {
+                            xemTruocGiangSinh.toggle()
+                            Theme.previewChristmas = xemTruocGiangSinh
+                            NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                     }

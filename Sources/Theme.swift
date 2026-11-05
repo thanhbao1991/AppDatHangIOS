@@ -60,6 +60,24 @@ enum Theme {
     static let divider = Color(red: 0xEE / 255, green: 0xEE / 255, blue: 0xEE / 255)
     static let bg = Color(red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF5 / 255)
 
+    #if DEV_LOGIN
+    /// Công tắc xem thử giao diện Giáng sinh bất kể ngày thật — CHỈ có ở bản dev (DEV_LOGIN), cùng khu
+    /// "🧪 Xem trước..." với nút xem trước ngày 1 tháng sau ở SettingsView, bật qua Theme.previewChristmas.
+    static var previewChristmas = false
+    #endif
+
+    /// Chỉ hiện trang trí Giáng sinh (banner + tuyết rơi ở MenuView) đúng 2 ngày 24-25/12 theo giờ VN
+    /// — không theo giờ hệ thống máy khách, tự tắt qua ngày 26/12 mà không cần phát hành bản mới.
+    static var isChristmasSeason: Bool {
+        #if DEV_LOGIN
+        if previewChristmas { return true }
+        #endif
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        let c = cal.dateComponents([.month, .day], from: Date())
+        return c.month == 12 && (c.day == 24 || c.day == 25)
+    }
+
     /// Emoji dự phòng cho từng nhóm — dùng khi món chưa có ảnh thật (MenuView.productRow,
     /// CheckoutView.itemThumbnail). Gom về đây (trước ở riêng MenuView) để CheckoutView dùng chung
     /// được, không phải tách bản riêng. Chọn theo đúng nghĩa đồ uống của từng nhóm.
