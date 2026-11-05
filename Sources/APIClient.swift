@@ -149,7 +149,7 @@ actor APIClient {
     private struct DevLoginRequest: Encodable { let soDienThoai: String; let key: String; let thietBi: String?; let nenTang: String?; let thietBiId: String? }
     private struct DevLoginKeyFile: Decodable { let key: String }
 
-    struct DevKhach: Decodable, Identifiable { let ten: String; let soDienThoai: String; var id: String { soDienThoai } }
+    struct DevKhach: Decodable, Identifiable { let ten: String; let tenKhachDat: String?; let soDienThoai: String; var id: String { soDienThoai } }
     // thietBiId: backend chỉ cho máy nằm trong DevLogin:ThietBiIds (bản dev có lên TestFlight).
     private struct DevTimKhachRequest: Encodable { let key: String; let tuKhoa: String; let thietBiId: String }
 

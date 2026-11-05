@@ -160,7 +160,12 @@ struct LoginView: View {
                     Task { await continuePhone() }
                 } label: {
                     HStack {
-                        Text(k.ten).fontWeight(.semibold)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(k.ten).fontWeight(.semibold)
+                            if let tenDat = k.tenKhachDat, !tenDat.isEmpty, tenDat != k.ten {
+                                Text("Khách đặt: \(tenDat)").font(.caption).foregroundColor(Theme.textMuted)
+                            }
+                        }
                         Spacer()
                         Text(k.soDienThoai).foregroundColor(Theme.textMuted)
                     }
