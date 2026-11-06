@@ -5,14 +5,15 @@ import UIKit
 /// DatHangService.MaDipLeTrangTri). Thêm dịp mới thì thêm Ma vào Backend VÀ 1 case ở đây — câu chúc
 /// (title/subtitle) KHÔNG nằm ở đây, luôn lấy thẳng ten/moTa của voucher qua SeasonalEvent.
 enum SeasonalTheme: CaseIterable, Equatable {
-    case tetDuong, tet, valentine, phuNu, gioTo, thongNhat, thieuNhi, doanNgo, thuongBinh, vuLan, quocKhanh, trungThu, nhaGiao, noel
+    case tetDuong, tet, valentine, quocTePhuNu, phuNuVietNam, gioTo, thongNhat, thieuNhi, doanNgo, thuongBinh, vuLan, quocKhanh, trungThu, nhaGiao, noel
 
     init?(ma: String) {
         switch ma {
         case "TETDUONG": self = .tetDuong
         case "TETAL": self = .tet
         case "VALENTINE": self = .valentine
-        case "QTPHUNU", "PHUNUVN": self = .phuNu
+        case "QTPHUNU": self = .quocTePhuNu
+        case "PHUNUVN": self = .phuNuVietNam
         case "GIOTO": self = .gioTo
         case "DOANNGO": self = .doanNgo
         case "THUONGBINH": self = .thuongBinh
@@ -32,7 +33,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return "🎆"
         case .tet: return "🧧"
         case .valentine: return "💘"
-        case .phuNu: return "💐"
+        case .quocTePhuNu, .phuNuVietNam: return "💐"
         case .thieuNhi: return "🎈"
         case .quocKhanh, .thongNhat, .gioTo, .thuongBinh: return "🇻🇳"
         case .doanNgo: return "🍑"
@@ -48,7 +49,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return "🥂"
         case .tet: return "🌸"
         case .valentine: return "💖"
-        case .phuNu: return "🌷"
+        case .quocTePhuNu, .phuNuVietNam: return "🌷"
         case .gioTo: return "🌾"
         case .doanNgo: return "🍉"
         case .thuongBinh: return "🕯️"
@@ -74,7 +75,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return Color(red: 0.30, green: 0.24, blue: 0.62)
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
-        case .phuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.66, green: 0.24, blue: 0.62)
         case .gioTo, .thuongBinh: return Color(red: 0.62, green: 0.13, blue: 0.08)
         case .doanNgo: return Color(red: 0.13, green: 0.48, blue: 0.25)
         case .vuLan: return Color(red: 0.60, green: 0.16, blue: 0.30)
@@ -90,7 +91,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return Color(red: 0.15, green: 0.11, blue: 0.38)
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
-        case .phuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.40, green: 0.12, blue: 0.40)
         case .gioTo, .thuongBinh: return Color(red: 0.38, green: 0.07, blue: 0.03)
         case .doanNgo: return Color(red: 0.06, green: 0.28, blue: 0.14)
         case .vuLan: return Color(red: 0.36, green: 0.08, blue: 0.18)
@@ -107,7 +108,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return ["✨", "🎉", "🎆"]
         case .tet: return ["🌸", "🧧", "🏮"]
         case .valentine: return ["💕", "💘", "🌹"]
-        case .phuNu: return ["🌷", "🌸", "💐"]
+        case .quocTePhuNu, .phuNuVietNam: return ["🌷", "🌸", "💐"]
         case .gioTo: return ["🌾", "⭐"]
         case .doanNgo: return ["🍑", "🍉", "☀️"]
         case .thuongBinh: return ["⭐", "🕯️"]
@@ -126,7 +127,8 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return "TETDUONG"
         case .tet: return "TETAL"
         case .valentine: return "VALENTINE"
-        case .phuNu: return "PHUNUVN"
+        case .quocTePhuNu: return "QTPHUNU"
+        case .phuNuVietNam: return "PHUNUVN"
         case .gioTo: return "GIOTO"
         case .doanNgo: return "DOANNGO"
         case .thuongBinh: return "THUONGBINH"
@@ -149,7 +151,8 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return "Tết Dương lịch"
         case .tet: return "Tết Nguyên Đán"
         case .valentine: return "Valentine"
-        case .phuNu: return "Phụ nữ Việt Nam 20/10"
+        case .quocTePhuNu: return "Quốc tế Phụ nữ 8/3"
+        case .phuNuVietNam: return "Phụ nữ Việt Nam 20/10"
         case .gioTo: return "Giỗ Tổ Hùng Vương"
         case .doanNgo: return "Tết Đoan Ngọ"
         case .thuongBinh: return "Thương binh - Liệt sĩ 27/7"
@@ -275,7 +278,10 @@ enum SeasonalEvent {
 enum AppIconSwitcher {
     /// Ma có bộ AppIcon-<MA>.appiconset — phải khớp CFBundleAlternateIcons trong project.yml VÀ
     /// NhacDipLeService.MaCoIconApp (Backend, nhắc nộp cập nhật trước dịp).
-    static let maCoIcon: Set<String> = ["NOEL", "TETAL", "VALENTINE"]
+    static let maCoIcon: Set<String> = [
+        "NOEL", "TETAL", "VALENTINE", "TETDUONG", "QTPHUNU", "PHUNUVN", "GIOTO", "GIAIPHONG",
+        "THIEUNHI", "DOANNGO", "THUONGBINH", "VULAN", "QUOCKHANH", "TRUNGTHU", "NHAGIAO",
+    ]
 
     /// Icon phụ cần đặt: nil = icon chính của bản đang cài. Ngoài dịp có icon thì GIỮ NGUYÊN icon đang
     /// hiện (user 2026-11-05: "không cần quay lại icon chính, cứ để im đến đợt lễ tiếp theo") — chỉ đổi
@@ -344,7 +350,7 @@ extension SeasonalTheme {
         case .tet, .thieuNhi, .trungThu, .gioTo, .thuongBinh: return Color(red: 1.0, green: 0.97, blue: 0.91)
         case .doanNgo: return Color(red: 0.95, green: 0.985, blue: 0.95)
         case .valentine, .vuLan: return Color(red: 1.0, green: 0.945, blue: 0.955)
-        case .phuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
+        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.985, green: 0.95, blue: 0.985)
         case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
         case .nhaGiao: return Color(red: 0.95, green: 0.97, blue: 1.0)
         case .noel, .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
@@ -355,7 +361,7 @@ extension SeasonalTheme {
         switch self {
         case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
         case .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
-        case .valentine, .phuNu, .nhaGiao, .thieuNhi, .doanNgo, .vuLan: return Color.white.opacity(0.75)
+        case .valentine, .quocTePhuNu, .phuNuVietNam, .nhaGiao, .thieuNhi, .doanNgo, .vuLan: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
         }
     }
@@ -385,7 +391,7 @@ extension SeasonalTheme {
                            Color(red: 0.40, green: 0.85, blue: 0.45), .white])
         case .tet: return .emoji(["🏮", "🌼"])
         case .valentine: return .emoji(["🤍", "💖"])
-        case .phuNu: return .emoji(["🌷", "🌸"])
+        case .quocTePhuNu, .phuNuVietNam: return .emoji(["🌷", "🌸"])
         case .trungThu: return .emoji(["🏮", "⭐"])
         case .nhaGiao: return .emoji(["🌹", "🌼"])
         case .doanNgo: return .emoji(["🍑", "🍉"])

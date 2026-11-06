@@ -46,6 +46,30 @@ targets:
               CFBundleIconName: AppIcon-VALENTINE
             AppIcon-TETAL:
               CFBundleIconName: AppIcon-TETAL
+            AppIcon-TETDUONG:
+              CFBundleIconName: AppIcon-TETDUONG
+            AppIcon-QTPHUNU:
+              CFBundleIconName: AppIcon-QTPHUNU
+            AppIcon-PHUNUVN:
+              CFBundleIconName: AppIcon-PHUNUVN
+            AppIcon-GIOTO:
+              CFBundleIconName: AppIcon-GIOTO
+            AppIcon-GIAIPHONG:
+              CFBundleIconName: AppIcon-GIAIPHONG
+            AppIcon-THIEUNHI:
+              CFBundleIconName: AppIcon-THIEUNHI
+            AppIcon-DOANNGO:
+              CFBundleIconName: AppIcon-DOANNGO
+            AppIcon-THUONGBINH:
+              CFBundleIconName: AppIcon-THUONGBINH
+            AppIcon-VULAN:
+              CFBundleIconName: AppIcon-VULAN
+            AppIcon-QUOCKHANH:
+              CFBundleIconName: AppIcon-QUOCKHANH
+            AppIcon-TRUNGTHU:
+              CFBundleIconName: AppIcon-TRUNGTHU
+            AppIcon-NHAGIAO:
+              CFBundleIconName: AppIcon-NHAGIAO
             # Bản sao icon quán: icon chính của bản cài đang là icon dịp (CI chép đè) mà voucher dịp đó
             # bị TẮT thì app đổi sang đây — xem AppIconSwitcher.iconMucTieu.
             AppIcon-QUAN:

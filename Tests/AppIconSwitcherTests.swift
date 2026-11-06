@@ -32,6 +32,6 @@ final class AppIconSwitcherTests: XCTestCase {
     }
 
     func testDipKhongCoIcon_GiuNguyen() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: "GIOTO", maDongGoi: "VALENTINE", iconHienTai: nil), nil)
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: "KHONGCO", maDongGoi: "VALENTINE", iconHienTai: nil), nil)
     }
 }
