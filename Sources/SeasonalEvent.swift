@@ -432,10 +432,15 @@ extension SeasonalTheme {
 /// trí ở mép dưới. Header phải cộng thêm SeasonalGarland.extraBottom vào padding dưới để dây nằm GỌN
 /// trong header, không đè lên nội dung bên dưới.
 struct HeaderBackground: View {
+    // Chụp màu/dịp lúc DỰNG view thành thuộc tính: view không có thuộc tính nào thì SwiftUI coi như không đổi và
+    // bỏ qua body khi cha vẽ lại → header kẹt màu dịp cũ khi bấm xem trước (2026-11-07). Màu/dịp là static var.
+    private let theme = SeasonalEvent.active
+    private let mau = [Theme.primary, Theme.primaryDark]
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            Theme.primaryGradient.ignoresSafeArea(edges: .top)
-            if let theme = SeasonalEvent.active {
+            LinearGradient(colors: mau, startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea(edges: .top)
+            if let theme {
                 SeasonalHeaderScatter(theme: theme).ignoresSafeArea(edges: .top)
                 SeasonalGarland(theme: theme).frame(height: SeasonalGarland.height)
             }
