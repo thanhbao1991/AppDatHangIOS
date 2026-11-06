@@ -6,6 +6,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var isLoggedIn = Prefs.isLoggedIn
     @State private var batBuocCapNhat: AppVersionPolicy?
+    @State private var seasonalSplash: SeasonalTheme?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -19,9 +20,26 @@ struct ContentView: View {
         .overlay {
             if let policy = batBuocCapNhat { ForceUpdateView(policy: policy) }
         }
+        // Màn thoáng qua dịp lễ (kiểu banner sale Shopee) — chỉ lúc mở app (cold launch), không lặp lại
+        // mỗi lần quay lại từ nền (xem onChange scenePhase bên dưới, không gọi hàm này). 1 lần/ngày/dịp,
+        // xem SeasonalEvent.canHienSplash. zIndex cao hơn ForceUpdateView phòng cả 2 cùng true lúc khởi
+        // động (hiếm, nhưng không nên để splash kẹt dưới cổng chặn không đóng được).
+        .overlay {
+            if let theme = seasonalSplash {
+                SeasonalSplashView(theme: theme) {
+                    SeasonalEvent.danhDauDaHienSplash()
+                    seasonalSplash = nil
+                }
+                .zIndex(10)
+            }
+        }
         .task { await kiemTraPhienBan() }
         .task { await NoiDung.taiLai() }
         .task { await kiemTraQua() }
+        .task {
+            await SeasonalEvent.load()
+            if SeasonalEvent.canHienSplash() { seasonalSplash = SeasonalEvent.active }
+        }
         .onChange(of: scenePhase) { phase in
             // SeasonalEvent.load: iOS chỉ cho đổi icon khi app đang mở → kiểm mỗi lần quay lại app.
             if phase == .active { Task { await kiemTraPhienBan(); await kiemTraQua(); await SeasonalEvent.load() } }

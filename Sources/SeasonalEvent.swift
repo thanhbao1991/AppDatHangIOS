@@ -261,6 +261,27 @@ enum SeasonalEvent {
     private(set) static var maIcon: String?
     private(set) static var giuIcon = false
 
+    /// Màn thoáng qua lúc mở app (kiểu banner sale Shopee) — chỉ hiện 1 lần/ngày cho mỗi dịp, tránh
+    /// phiền khi khách mở app nhiều lần trong ngày. Key ghép Ma + ngày hôm nay (giờ máy khách, chỉ ảnh
+    /// hưởng hiển thị, không phải mốc nghiệp vụ nên không cần VietnamTime).
+    private static let khoaSplashDaXem = "seasonalSplash.daXemKey"
+
+    private static func homNay() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
+    static func canHienSplash() -> Bool {
+        guard let theme = active else { return false }
+        return UserDefaults.standard.string(forKey: khoaSplashDaXem) != "\(theme.maDaiDien)|\(homNay())"
+    }
+
+    static func danhDauDaHienSplash() {
+        guard let theme = active else { return }
+        UserDefaults.standard.set("\(theme.maDaiDien)|\(homNay())", forKey: khoaSplashDaXem)
+    }
+
     @MainActor
     static func capNhatIcon() {
         #if DEV_LOGIN
