@@ -391,8 +391,8 @@ actor APIClient {
     /// Dịp lễ đang trang trí hôm nay (data nil = không dịp nào). Trả cả envelope để SeasonalEvent phân
     /// biệt "không có dịp" với "lỗi mạng" (lỗi mạng thì giữ nguyên icon, không đổi qua lại vô cớ).
     /// AllowAnonymous ở Backend nên gọi được cả khi chưa đăng nhập.
-    func getDipLe() async -> ApiEnvelope<DipLe?> {
-        await cachedDecode("/dat-hang/dip-le")
+    func getDipLeHienThi() async -> ApiEnvelope<DipLeHienThi> {
+        await cachedDecode("/dat-hang/dip-le/hien-thi")
     }
 
     #if DEV_LOGIN
@@ -401,11 +401,6 @@ actor APIClient {
         await cachedDecode("/dat-hang/dip-le?xemTruoc=\(ma)")
     }
     #endif
-
-    /// Ma các dịp lễ có voucher đang tắt — xem AppIconSwitcher.iconMucTieu.
-    func getDipLeDaTat() async -> ApiEnvelope<[String]> {
-        await cachedDecode("/dat-hang/dip-le/da-tat")
-    }
 
     /// Giá riêng của khách đang đăng nhập (KhachHangGiaBans, key sanPhamBienTheId) — feedback
     /// 2026-09-29 "áp giá riêng vào app". Server đã áp ĐÚNG giá này lúc DatMon tính tiền thật

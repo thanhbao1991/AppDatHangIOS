@@ -1,37 +1,32 @@
 import XCTest
 @testable import AppDatHangIOS
 
-/// Lưới an toàn icon dịp lễ — xem AppIconSwitcher.iconMucTieu.
+/// Icon dịp lễ do server quyết định + giãn cách popup — xem AppIconSwitcher.iconMucTieu.
 final class AppIconSwitcherTests: XCTestCase {
-    func testDaCapNhat_IconChinhDungDip_KhongDoi() {
-        XCTAssertNil(AppIconSwitcher.iconMucTieu(maDangDienRa: "NOEL", maDongGoi: "NOEL", iconHienTai: nil))
+    private let bayGio = Date(timeIntervalSince1970: 1_800_000_000)
+    private func truoc(_ ngay: Double) -> Date { bayGio.addingTimeInterval(-ngay * 86_400) }
+
+    func testChuaTungDoi_DoiNgay() {
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maIcon: "NOEL", iconHienTai: nil, lanDoiCuoi: nil, bayGio: bayGio), "AppIcon-NOEL")
     }
 
-    func testToiNgayLeMaChuaCapNhat_DoiSangIconDip() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: "NOEL", maDongGoi: "", iconHienTai: nil), "AppIcon-NOEL")
+    func testServerBaoHetDip_VeIconQuan() {
+        XCTAssertNil(AppIconSwitcher.iconMucTieu(maIcon: nil, iconHienTai: "AppIcon-NOEL", lanDoiCuoi: truoc(20), bayGio: bayGio))
     }
 
-    func testHetDip_GiuNguyenIconDangHien() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: nil, maDongGoi: "", iconHienTai: "AppIcon-TETAL"), "AppIcon-TETAL")
+    func testDangDungIcon_KhongDoi() {
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maIcon: "NOEL", iconHienTai: "AppIcon-NOEL", lanDoiCuoi: truoc(1), bayGio: bayGio), "AppIcon-NOEL")
     }
 
-    func testTatVoucher_IconPhu_VeIconChinhLaIconQuan() {
-        XCTAssertNil(AppIconSwitcher.iconMucTieu(maDangDienRa: nil, maDongGoi: "", iconHienTai: "AppIcon-NOEL", maDaTat: ["NOEL"]))
+    func testDoiChuaDu7Ngay_HoanLai() {
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maIcon: "TETDUONG", iconHienTai: "AppIcon-NOEL", lanDoiCuoi: truoc(6.9), bayGio: bayGio), "AppIcon-NOEL")
     }
 
-    func testTatVoucher_IconChinhLaIconDip_DoiSangIconQuan() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: nil, maDongGoi: "NOEL", iconHienTai: nil, maDaTat: ["NOEL"]), "AppIcon-QUAN")
+    func testDoiDu7Ngay_DoiTiep() {
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maIcon: "TETDUONG", iconHienTai: "AppIcon-NOEL", lanDoiCuoi: truoc(7), bayGio: bayGio), "AppIcon-TETDUONG")
     }
 
-    func testTatVoucherDipKhac_GiuNguyen() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: nil, maDongGoi: "", iconHienTai: "AppIcon-TETAL", maDaTat: ["NOEL"]), "AppIcon-TETAL")
-    }
-
-    func testDaVeIconQuan_KhongDoiNua() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: nil, maDongGoi: "NOEL", iconHienTai: "AppIcon-QUAN", maDaTat: ["NOEL"]), "AppIcon-QUAN")
-    }
-
-    func testDipKhongCoIcon_GiuNguyen() {
-        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maDangDienRa: "KHONGCO", maDongGoi: "VALENTINE", iconHienTai: nil), nil)
+    func testMaChuaCoIconTrongBanNay_IconQuan() {
+        XCTAssertNil(AppIconSwitcher.iconMucTieu(maIcon: "KHONGCO", iconHienTai: nil, lanDoiCuoi: nil, bayGio: bayGio))
     }
 }

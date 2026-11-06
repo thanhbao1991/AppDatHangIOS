@@ -105,6 +105,23 @@ struct DipLe: Decodable, Equatable {
     var hangToiThieu: String?
 }
 
+/// Server quyết định icon + giao diện dịp lễ hôm nay (DipLeLich ở Backend, cửa sổ trước/sau lễ khác nhau
+/// nên 2 thứ có thể là 2 dịp khác nhau). maIcon nil = icon quán, trừ khi giuIcon (khoảng trống ngắn giữa 2
+/// dịp) — khi đó máy đang hiện icon nào cứ giữ.
+struct DipLeHienThi: Decodable, Equatable {
+    let maIcon: String?
+    var giuIcon: Bool = false
+    let giaoDien: DipLe?
+
+    private enum CodingKeys: String, CodingKey { case maIcon, giuIcon, giaoDien }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        maIcon = try c.decodeIfPresent(String.self, forKey: .maIcon)
+        giuIcon = try c.decodeIfPresent(Bool.self, forKey: .giuIcon) ?? false
+        giaoDien = try c.decodeIfPresent(DipLe.self, forKey: .giaoDien)
+    }
+}
+
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem
 /// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
 struct Voucher: Decodable, Identifiable, Equatable {

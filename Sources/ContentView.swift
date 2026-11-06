@@ -23,7 +23,8 @@ struct ContentView: View {
         .task { await NoiDung.taiLai() }
         .task { await kiemTraQua() }
         .onChange(of: scenePhase) { phase in
-            if phase == .active { Task { await kiemTraPhienBan(); await kiemTraQua() } }
+            // SeasonalEvent.load: iOS chỉ cho đổi icon khi app đang mở → kiểm mỗi lần quay lại app.
+            if phase == .active { Task { await kiemTraPhienBan(); await kiemTraQua(); await SeasonalEvent.load() } }
         }
         .onChange(of: isLoggedIn) { v in
             if v { Task { await kiemTraQua() } }

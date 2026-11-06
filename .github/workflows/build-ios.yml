@@ -199,10 +199,6 @@ jobs:
             /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 9.9.0" Sources/Info.plist
           fi
 
-      # Icon chinh theo dip le sap toi (cach Shopee, khong popup) — xem scripts/chon-icon-dip-le.sh.
-      - name: Choose seasonal app icon
-        run: bash scripts/chon-icon-dip-le.sh
-
       # Theo huong dan chinh thuc cua GitHub cho macOS runner:
       # https://docs.github.com/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
       - name: Import signing certificate + provisioning profile
