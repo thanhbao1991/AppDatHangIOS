@@ -37,7 +37,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .thieuNhi: return "🎈"
         case .quocKhanh, .thongNhat, .gioTo, .thuongBinh: return "🇻🇳"
         case .doanNgo: return "🍑"
-        case .vuLan: return "🌹"
+        case .vuLan: return "🪷"
         case .trungThu: return "🏮"
         case .nhaGiao: return "📚"
         case .noel: return "🎄"
@@ -53,7 +53,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .gioTo: return "🌾"
         case .doanNgo: return "🍉"
         case .thuongBinh: return "🕯️"
-        case .vuLan: return "🏮"
+        case .vuLan: return "🕯️"
         case .thieuNhi: return "🧸"
         case .quocKhanh, .thongNhat: return "⭐"
         case .trungThu: return "🌕"
@@ -75,14 +75,15 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return Color(red: 0.30, green: 0.24, blue: 0.62)
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
-        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .quocTePhuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .phuNuVietNam: return Color(red: 0.78, green: 0.27, blue: 0.33)
         case .gioTo, .thuongBinh: return Color(red: 0.62, green: 0.13, blue: 0.08)
         case .doanNgo: return Color(red: 0.13, green: 0.48, blue: 0.25)
         case .vuLan: return Color(red: 0.60, green: 0.16, blue: 0.30)
-        case .thieuNhi: return Color(red: 0.90, green: 0.42, blue: 0.08)
+        case .thieuNhi: return Color(red: 0.12, green: 0.42, blue: 0.78)
         case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
-        case .nhaGiao: return Color(red: 0.10, green: 0.40, blue: 0.72)
-        case .noel: return Color(red: 0.73, green: 0.09, blue: 0.13)
+        case .nhaGiao: return Color(red: 0.09, green: 0.42, blue: 0.40)
+        case .noel: return Color(red: 0.09, green: 0.18, blue: 0.38)
         }
     }
 
@@ -91,14 +92,15 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .tetDuong: return Color(red: 0.15, green: 0.11, blue: 0.38)
         case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
-        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .quocTePhuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .phuNuVietNam: return Color(red: 0.50, green: 0.12, blue: 0.17)
         case .gioTo, .thuongBinh: return Color(red: 0.38, green: 0.07, blue: 0.03)
         case .doanNgo: return Color(red: 0.06, green: 0.28, blue: 0.14)
         case .vuLan: return Color(red: 0.36, green: 0.08, blue: 0.18)
-        case .thieuNhi: return Color(red: 0.66, green: 0.25, blue: 0.03)
+        case .thieuNhi: return Color(red: 0.05, green: 0.24, blue: 0.52)
         case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
-        case .nhaGiao: return Color(red: 0.05, green: 0.22, blue: 0.46)
-        case .noel: return Color(red: 0.45, green: 0.04, blue: 0.07)
+        case .nhaGiao: return Color(red: 0.04, green: 0.25, blue: 0.24)
+        case .noel: return Color(red: 0.04, green: 0.09, blue: 0.22)
         }
     }
 
@@ -112,7 +114,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .gioTo: return ["🌾", "⭐"]
         case .doanNgo: return ["🍑", "🍉", "☀️"]
         case .thuongBinh: return ["⭐", "🕯️"]
-        case .vuLan: return ["🌹", "🏮"]
+        case .vuLan: return ["🪷", "🕯️"]
         case .thieuNhi: return ["🎈", "⭐", "🍭"]
         case .quocKhanh, .thongNhat: return ["⭐", "🇻🇳"]
         case .trungThu: return ["🌕", "🏮", "⭐"]
@@ -347,20 +349,20 @@ extension SeasonalTheme {
     /// (alpha chồng lên nền khác nhau ở mỗi màn ra mỗi chỗ 1 màu khác nhau).
     var surface: Color {
         switch self {
-        case .tet, .thieuNhi, .trungThu, .gioTo, .thuongBinh: return Color(red: 1.0, green: 0.97, blue: 0.91)
+        case .tet, .trungThu, .gioTo, .thuongBinh: return Color(red: 1.0, green: 0.97, blue: 0.91)
         case .doanNgo: return Color(red: 0.95, green: 0.985, blue: 0.95)
-        case .valentine, .vuLan: return Color(red: 1.0, green: 0.945, blue: 0.955)
-        case .quocTePhuNu, .phuNuVietNam: return Color(red: 0.985, green: 0.95, blue: 0.985)
+        case .valentine, .vuLan, .phuNuVietNam: return Color(red: 1.0, green: 0.945, blue: 0.955)
+        case .quocTePhuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
         case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
-        case .nhaGiao: return Color(red: 0.95, green: 0.97, blue: 1.0)
-        case .noel, .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
+        case .thieuNhi, .noel: return Color(red: 0.95, green: 0.97, blue: 1.0)
+        case .nhaGiao: return Color(red: 0.94, green: 0.98, blue: 0.97)
+        case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
         }
     }
 
     var garlandWire: Color {
         switch self {
-        case .noel: return Color(red: 0.13, green: 0.33, blue: 0.18)
-        case .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
+        case .noel, .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
         case .valentine, .quocTePhuNu, .phuNuVietNam, .nhaGiao, .thieuNhi, .doanNgo, .vuLan: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
         }
@@ -377,8 +379,8 @@ extension SeasonalTheme {
     var garlandItems: GarlandItems {
         switch self {
         case .noel:
-            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 0.40, green: 0.85, blue: 0.45),
-                           Color(red: 0.45, green: 0.78, blue: 1.0), Color(red: 1.0, green: 0.97, blue: 0.85)])
+            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 0.95, green: 0.25, blue: 0.25),
+                           Color(red: 0.40, green: 0.85, blue: 0.45), Color(red: 1.0, green: 0.97, blue: 0.85)])
         case .tetDuong:
             return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 1.0, green: 0.97, blue: 0.85)])
         case .gioTo, .thuongBinh:
@@ -387,7 +389,7 @@ extension SeasonalTheme {
         case .quocKhanh, .thongNhat:
             return .flags([Color(red: 1.0, green: 0.85, blue: 0.2), .white])
         case .thieuNhi:
-            return .flags([Color(red: 0.30, green: 0.65, blue: 1.0), Color(red: 1.0, green: 0.88, blue: 0.25),
+            return .flags([Color(red: 0.95, green: 0.30, blue: 0.30), Color(red: 1.0, green: 0.88, blue: 0.25),
                            Color(red: 0.40, green: 0.85, blue: 0.45), .white])
         case .tet: return .emoji(["🏮", "🌼"])
         case .valentine: return .emoji(["🤍", "💖"])
@@ -395,7 +397,7 @@ extension SeasonalTheme {
         case .trungThu: return .emoji(["🏮", "⭐"])
         case .nhaGiao: return .emoji(["🌹", "🌼"])
         case .doanNgo: return .emoji(["🍑", "🍉"])
-        case .vuLan: return .emoji(["🌹", "🏮"])
+        case .vuLan: return .emoji(["🪷", "🕯️"])
         }
     }
 }
