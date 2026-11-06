@@ -28,6 +28,10 @@ struct SettingsView: View {
     /// là static var, không tự kích hoạt lại body).
     @State private var seasonalPreviewTick = 0
     #endif
+    /// Màu dịp lễ (Theme.primary/bg) là static var — đổi dịp (load() hoặc nút xem trước bắn .christmasPreviewToggled)
+    /// thì tăng tick để vẽ lại card hạng + nền ngay, không phải đổi tab rồi quay lại (feedback 2026-11-07).
+    @State private var themeTick = 0
+    @State private var themeDangVe: SeasonalTheme? = SeasonalEvent.active
 
     @State private var alertMessage: (title: String, message: String)?
     @State private var diaChiChoXoa: DiaChiKhachHang?
@@ -82,9 +86,15 @@ struct SettingsView: View {
     #endif
 
     var body: some View {
+        let _ = themeTick
         VStack(spacing: 0) {
             accountHeader
             settingsList
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
+            guard SeasonalEvent.active != themeDangVe else { return }
+            themeDangVe = SeasonalEvent.active
+            themeTick += 1
         }
         // (Lịch sử) Xu và Công nợ từng nằm CHUNG 1 row của List (2 Button sibling trong xuCongNoCard). ROOT CAUSE
         // THẬT SỰ (sau 2 lần sửa sai hướng ở tầng navigationDestination/state): List coi row có nhiều
@@ -215,6 +225,9 @@ struct SettingsView: View {
                 cardRow { danhGiaCard }
             }
             .cardListBackground()
+            // Dựng lại cả List khi dịp đổi (card hạng, nút Nạp Xu… đều lấy màu dịp) — chỉ khi dịp THẬT SỰ đổi nên
+            // mở lại app cùng dịp không bị nhảy vị trí cuộn.
+            .id(themeTick)
             .refreshable { await load() }
         }
     }
