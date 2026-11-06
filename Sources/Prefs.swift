@@ -10,6 +10,8 @@ extension Notification.Name {
     /// DEV_LOGIN only — bắn khi bật/tắt SeasonalEvent.previewOverride ở SettingsView để MenuView/
     /// MainTabView tự vẽ lại banner/hạt rơi ngay (không tự kích hoạt lại body nếu không có @State đổi).
     static let christmasPreviewToggled = Notification.Name("christmasPreviewToggled")
+    /// DEV_LOGIN only — nút xem trước dịp lễ mở luôn màn chào (SeasonalSplashView, bình thường chỉ hiện lúc mở app).
+    static let xemTruocSplash = Notification.Name("xemTruocSplash")
 }
 
 /// Host app THẬT được khởi động khi chạy unit test — xem giải thích chi tiết ở Prefs.swift của

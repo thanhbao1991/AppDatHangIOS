@@ -40,6 +40,11 @@ struct ContentView: View {
             await SeasonalEvent.load()
             if SeasonalEvent.canHienSplash() { seasonalSplash = SeasonalEvent.active }
         }
+        #if DEV_LOGIN
+        .onReceive(NotificationCenter.default.publisher(for: .xemTruocSplash)) { _ in
+            seasonalSplash = SeasonalEvent.active
+        }
+        #endif
         .onChange(of: scenePhase) { phase in
             // SeasonalEvent.load: iOS chỉ cho đổi icon khi app đang mở → kiểm mỗi lần quay lại app.
             if phase == .active { Task { await kiemTraPhienBan(); await kiemTraQua(); await SeasonalEvent.load() } }

@@ -192,7 +192,13 @@ struct SettingsView: View {
                             SeasonalEvent.capNhatIcon()
                             seasonalPreviewTick += 1
                             NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
-                            Task { await SeasonalEvent.taiXemTruoc() }
+                            Task {
+                                await SeasonalEvent.taiXemTruoc()
+                                // Màn chào của dịp vừa chọn (sau khi có câu chúc thật) — để xem trước, không đợi tới dịp.
+                                if SeasonalEvent.previewOverride != nil {
+                                    NotificationCenter.default.post(name: .xemTruocSplash, object: nil)
+                                }
+                            }
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
                         }
