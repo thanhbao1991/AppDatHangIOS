@@ -35,7 +35,7 @@ struct SeasonalSplashView: View {
                 .frame(width: geo.size.width, height: geo.size.height).clipped()
             chuChuc
                 .frame(width: geo.size.width)
-                .position(x: geo.size.width / 2, y: geo.size.height * 0.53)
+                .position(x: geo.size.width / 2, y: geo.size.height * theme.manChaoChuY)
         }
         .ignoresSafeArea()
     }
@@ -63,20 +63,22 @@ struct SeasonalSplashView: View {
     }
 
     private var chuChuc: some View {
-        VStack(spacing: 10) {
+        let toi = theme.manChaoChuToi
+        let mau: Color = toi ? theme.primaryDark : .white
+        return VStack(spacing: 10) {
             Text(SeasonalEvent.bannerTitle)
                 .font(.system(size: 28, weight: .heavy))
-                .foregroundColor(.white)
+                .foregroundColor(mau)
                 .multilineTextAlignment(.center)
             if !SeasonalEvent.bannerSubtitle.isEmpty {
                 Text(SeasonalEvent.bannerSubtitle)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundColor(mau.opacity(0.95))
                     .multilineTextAlignment(.center)
             }
         }
         .padding(.horizontal, 36)
-        .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+        .shadow(color: toi ? .white.opacity(0.5) : .black.opacity(0.4), radius: 8, y: toi ? 0 : 2)
     }
 
     private var hoaTiet: some View {
@@ -107,7 +109,8 @@ struct SeasonalSplashView: View {
                     Image(uiImage: anh)
                         .resizable().scaledToFit()
                         .frame(maxWidth: 240)
-                        // Vuông, không bo góc (chủ quán 2026-11-07: "không nên bo góc").
+                        // Bộ dự phòng chủ quán chọn 2026-11-07: icon bo góc trên nền nhoè (dịp có ảnh riêng thì dùng ảnh riêng).
+                        .clipShape(RoundedRectangle(cornerRadius: 44, style: .continuous))
                         .shadow(color: .black.opacity(0.35), radius: 22, y: 10)
                         .padding(.bottom, 10)
                 } else {

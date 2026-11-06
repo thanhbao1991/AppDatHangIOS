@@ -144,6 +144,31 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
+    /// Màn chào ảnh riêng (ManChao-<MA>): tâm khối chữ chúc theo chiều cao màn hình — nằm giữa logo (mỗi ảnh logo một
+    /// độ cao) và đồ trang trí dưới. Chỉnh theo ảnh thật, thêm dịp mới nhớ chỉnh dòng này.
+    var manChaoChuY: CGFloat {
+        switch self {
+        case .noel: return 0.53
+        case .tetDuong: return 0.50
+        case .tet: return 0.68
+        case .valentine: return 0.52
+        case .quocTePhuNu: return 0.50
+        case .gioTo: return 0.68
+        case .thongNhat: return 0.56
+        case .doanNgo: return 0.54
+        case .thieuNhi: return 0.70
+        case .thuongBinh: return 0.55
+        case .vuLan: return 0.50
+        case .quocKhanh: return 0.57
+        case .trungThu: return 0.66
+        case .phuNuVietNam: return 0.56
+        case .nhaGiao: return 0.55
+        }
+    }
+
+    /// Ảnh nền SÁNG (hồng) — chữ chúc dùng màu đậm của dịp thay vì trắng.
+    var manChaoChuToi: Bool { self == .valentine }
+
     #if DEV_LOGIN
     /// Câu chúc MẪU chỉ dùng khi bấm "🧪 Xem trước" (chưa có voucher thật đang hiệu lực để lấy
     /// ten/moTa) — khớp đúng chữ đang lưu ở voucher tương ứng (Ma ở trên) tại thời điểm viết, sửa ở
