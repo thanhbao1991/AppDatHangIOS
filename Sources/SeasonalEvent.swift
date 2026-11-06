@@ -168,7 +168,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
     var previewMoTa: String {
-        "🧪 Xem trước — Giảm 10%, tối đa 10.000đ nhân dịp \(previewTen)"
+        "🧪 Xem trước — Giảm 15%, tối đa 10.000đ nhân dịp \(previewTen)"
     }
     #endif
 }
@@ -225,7 +225,7 @@ enum SeasonalEvent {
         #endif
         guard let dipLe else { return "" }
         let moTa = dipLe.moTa ?? ""
-        // Voucher lễ yêu cầu hạng (hiện đều là Bạc) — trang trí thì ai cũng thấy, nhưng câu "Giảm 10%..."
+        // Voucher lễ yêu cầu hạng (hiện đều là Bạc) — trang trí thì ai cũng thấy, nhưng câu "Giảm 15%..."
         // chỉ hiện như lời hứa khi khách ĐỦ hạng; chưa đủ (kể cả khách chưa đăng nhập) thì ghi rõ điều
         // kiện, tránh khách tưởng ai cũng được giảm rồi đặt đơn mới biết không áp dụng.
         guard let hang = dipLe.hangToiThieu, !duHang(KhachHangSession.shared.hang, toiThieu: hang) else { return moTa }
