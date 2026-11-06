@@ -325,27 +325,44 @@ struct SettingsView: View {
     /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
     /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
     /// Thưởng hạng bằng Xu (từ 11/2026): quà đang giữ được + Freeship.
+    private static let hangCoFreeship = ["Bạc", "Vàng", "Kim Cương"]
+
+    // Freeship theo cờ backend mienShip (2026-10-28, luật tính cả đơn ngoài app — DuocMienShipTheoHangAsync);
+    // backend cũ chưa có cờ thì suy từ hạng như trước.
+    private func coFreeship(_ vi: KhachHangVi) -> Bool {
+        vi.mienShip ?? [vi.hang, vi.hangThangTruoc].contains(where: { Self.hangCoFreeship.contains($0) })
+    }
+
+    /// Bên trái dưới thanh tiến độ: quà ĐÃ ĐẠT của hạng hiện tại.
     @ViewBuilder
     private func thuongHangDong(_ vi: KhachHangVi) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 14) {
-                if let xu = vi.thuongXuHangHienTai, xu > 0 {
-                    Text("🎁 \(formatXu(xu))")
-                }
-                // Freeship theo cờ backend mienShip (2026-10-28, luật tính cả đơn ngoài app — DuocMienShipTheoHangAsync);
-                // backend cũ chưa có cờ thì suy từ hạng như trước.
-                if vi.mienShip ?? [vi.hang, vi.hangThangTruoc].contains(where: { ["Bạc", "Vàng", "Kim Cương"].contains($0) }) {
-                    Text("🛵 Freeship")
-                }
+        HStack(spacing: 14) {
+            if let xu = vi.thuongXuHangHienTai, xu > 0 {
+                Text("🎁 \(formatXu(xu))")
+            }
+            if coFreeship(vi) {
+                Text("🛵 Freeship")
             }
         }
         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
     }
 
+    /// Bên phải: quà SẮP ĐẠT ở hạng kế tiếp — chỉ phần hạng đó thêm so với hiện tại (Freeship đã có thì không lặp).
+    private func thuongSapDat(_ vi: KhachHangVi, hangTiepTheo: String) -> some View {
+        let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo
+        let shipMoi = !coFreeship(vi) && Self.hangCoFreeship.contains(where: { hangTiepTheo.hasPrefix($0) })
+        return HStack(spacing: 10) {
+            Text(hangTiepTheo).fontWeight(.heavy)
+            if let xu, xu > 0 { Text("🎁 \(formatXu(xu))") }
+            if shipMoi { Text("🛵 Freeship") }
+        }
+        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white)
+    }
+
     /// Nội dung popup ⓘ trên thẻ hạng.
-    private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String) -> String {
+    private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String?) -> String {
         var dong: [String] = []
-        if let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo, xu > 0 {
+        if let hangTiepTheo, let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo, xu > 0 {
             // Quà theo hạng THÁNG TRƯỚC, nhận từ ngày 1 (ThuongHangThangService). Xu không hết hạn.
             dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)).")
         }
@@ -357,11 +374,16 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("HẠNG THÀNH VIÊN")
-                        .font(.system(size: 10, weight: .bold)).tracking(1.2)
-                        // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
-                        // — chữ nhỏ 10pt cần độ tương phản cao hơn văn bản thường để vẫn đọc rõ.
-                        .foregroundColor(.white.opacity(0.78))
+                    // ⓘ (ghi chú món không tính hạng + câu Apple không tài trợ, Guideline 5.3.2) dời lên đây khi bỏ
+                    // dòng "Bạn cần chi tiêu thêm…" (chủ quán 2026-11-07: đơn giản card).
+                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi, hangTiepTheo: vi.capTiepTheo ?? vi.hangTiepTheo)) } label: {
+                        (Text("HẠNG THÀNH VIÊN ") + Text(Image(systemName: "info.circle")))
+                            .font(.system(size: 10, weight: .bold)).tracking(1.2)
+                            // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
+                            // — chữ nhỏ 10pt cần độ tương phản cao hơn văn bản thường để vẫn đọc rõ.
+                            .foregroundColor(.white.opacity(0.78))
+                    }
+                    .buttonStyle(.plain)
                     Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hangDayDu ?? vi.hang)")
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
@@ -376,38 +398,34 @@ struct SettingsView: View {
                 }
             }
 
+            // Thanh tiến độ + 2 đầu: trái = quà đã đạt, phải = quà hạng kế tiếp, mờ 50% rồi rõ dần theo tiến độ
+            // (chủ quán 2026-11-07, thay câu "Bạn cần chi tiêu thêm Xđ để lên hạng Y").
             if let hangTiepTheo = vi.capTiepTheo ?? vi.hangTiepTheo {
-                VStack(alignment: .leading, spacing: 6) {
+                let tienDo = min(max(vi.phanTramTienDoCap ?? vi.phanTramTienDoLenHang, 0), 1)
+                VStack(alignment: .leading, spacing: 8) {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Color.white.opacity(0.2))
                             Capsule().fill(Color.white)
-                                .frame(width: max(8, geo.size.width * (vi.phanTramTienDoCap ?? vi.phanTramTienDoLenHang)))
+                                .frame(width: max(8, geo.size.width * tienDo))
                         }
                     }
                     .frame(height: 6)
-                    // Câu đơn giản thay hẳn cặp nhãn voucher 2 đầu thanh (feedback 2026-09-23 lần 3:
-                    // "hơi khó hiểu và nhiều icon quá") — bỏ luôn 2 voucherEndpoint ở đây, chỉ còn
-                    // đúng 1 câu số tiền + tên hạng, dễ hiểu ngay không cần suy luận qua vị trí.
-                    // Icon ⓘ cuối câu: bấm hiện popup giống ⓘ Hộp quà (2026-10-26) — ghi chú món không
-                    // tính vào hạng (cùng danh sách TongChiTieuTinhHangAsync bên Backend) + câu Apple không
-                    // tài trợ (Guideline 5.3.2, thưởng hạng trả bằng Xu).
-                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi, hangTiepTheo: hangTiepTheo)) } label: {
-                        (Text("Bạn cần chi tiêu thêm \(formatTien(vi.conLaiDeLenCap ?? vi.conLaiDeLenHang)) để lên hạng \(hangTiepTheo) ")
-                         + Text(Image(systemName: "info.circle")))
-                            .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
-                            .multilineTextAlignment(.leading)
+                    HStack(alignment: .firstTextBaseline) {
+                        thuongHangDong(vi)
+                        Spacer(minLength: 8)
+                        thuongSapDat(vi, hangTiepTheo: hangTiepTheo)
+                            .opacity(0.5 + 0.5 * tienDo)
                     }
-                    .buttonStyle(.plain)
                 }
             } else {
-                Text("🎉 Hạng cao nhất")
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                HStack(alignment: .firstTextBaseline) {
+                    thuongHangDong(vi)
+                    Spacer(minLength: 8)
+                    Text("🎉 Hạng cao nhất")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                }
             }
-
-            // 2 ô "Điểm tháng này" + "Hạng tháng trước" đã bỏ (chủ quán 2026-10-28) — freeship giờ tính
-            // riêng (cả đơn ngoài app), hiện ở dòng thưởng bên dưới theo cờ mienShip.
-            thuongHangDong(vi)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
