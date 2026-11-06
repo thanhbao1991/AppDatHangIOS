@@ -83,7 +83,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .thieuNhi: return Color(red: 0.12, green: 0.42, blue: 0.78)
         case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
         case .nhaGiao: return Color(red: 0.09, green: 0.42, blue: 0.40)
-        case .noel: return Color(red: 0.09, green: 0.18, blue: 0.38)
+        case .noel: return Color(red: 0.70, green: 0.07, blue: 0.11)
         }
     }
 
@@ -100,7 +100,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .thieuNhi: return Color(red: 0.05, green: 0.24, blue: 0.52)
         case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
         case .nhaGiao: return Color(red: 0.04, green: 0.25, blue: 0.24)
-        case .noel: return Color(red: 0.04, green: 0.09, blue: 0.22)
+        case .noel: return Color(red: 0.42, green: 0.03, blue: 0.06)
         }
     }
 
@@ -376,7 +376,8 @@ extension SeasonalTheme {
         case .valentine, .vuLan, .phuNuVietNam: return Color(red: 1.0, green: 0.945, blue: 0.955)
         case .quocTePhuNu: return Color(red: 0.985, green: 0.95, blue: 0.985)
         case .tetDuong: return Color(red: 0.965, green: 0.96, blue: 1.0)
-        case .thieuNhi, .noel: return Color(red: 0.95, green: 0.97, blue: 1.0)
+        case .thieuNhi: return Color(red: 0.95, green: 0.97, blue: 1.0)
+        case .noel: return Color(red: 1.0, green: 0.962, blue: 0.94)
         case .nhaGiao: return Color(red: 0.94, green: 0.98, blue: 0.97)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.962, blue: 0.94)
         }
@@ -384,7 +385,9 @@ extension SeasonalTheme {
 
     var garlandWire: Color {
         switch self {
-        case .noel, .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
+        // Noel: dây xanh lá cây thông như icon (nền đỏ) — đủ sáng để không chìm vào header đỏ đậm.
+        case .noel: return Color(red: 0.30, green: 0.62, blue: 0.36)
+        case .tet, .tetDuong, .trungThu, .gioTo, .thuongBinh: return Color(red: 0.93, green: 0.76, blue: 0.38)
         case .valentine, .quocTePhuNu, .phuNuVietNam, .nhaGiao, .thieuNhi, .doanNgo, .vuLan: return Color.white.opacity(0.75)
         case .quocKhanh, .thongNhat: return Color(red: 1.0, green: 0.86, blue: 0.3).opacity(0.8)
         }
@@ -401,7 +404,8 @@ extension SeasonalTheme {
     var garlandItems: GarlandItems {
         switch self {
         case .noel:
-            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 0.95, green: 0.25, blue: 0.25),
+            // Quả châu vàng/trắng + đèn kem như icon Noel (bỏ bóng đỏ — chìm trên nền đỏ).
+            return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), .white,
                            Color(red: 0.40, green: 0.85, blue: 0.45), Color(red: 1.0, green: 0.97, blue: 0.85)])
         case .tetDuong:
             return .bulbs([Color(red: 1.0, green: 0.84, blue: 0.30), Color(red: 1.0, green: 0.97, blue: 0.85)])
