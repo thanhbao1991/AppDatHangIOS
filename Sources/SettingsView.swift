@@ -324,37 +324,22 @@ struct SettingsView: View {
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
     /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
     /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
-    /// Thưởng hạng bằng Xu (từ 11/2026): quà đang giữ được + Freeship.
-    private static let hangCoFreeship = ["Bạc", "Vàng", "Kim Cương"]
-
-    // Freeship theo cờ backend mienShip (2026-10-28, luật tính cả đơn ngoài app — DuocMienShipTheoHangAsync);
-    // backend cũ chưa có cờ thì suy từ hạng như trước.
-    private func coFreeship(_ vi: KhachHangVi) -> Bool {
-        vi.mienShip ?? [vi.hang, vi.hangThangTruoc].contains(where: { Self.hangCoFreeship.contains($0) })
-    }
-
+    /// Thưởng hạng bằng Xu (từ 11/2026). Freeship KHÔNG hiện trên thẻ (chủ quán 2026-11-07).
     /// Bên trái dưới thanh tiến độ: quà ĐÃ ĐẠT của hạng hiện tại.
     @ViewBuilder
     private func thuongHangDong(_ vi: KhachHangVi) -> some View {
-        HStack(spacing: 14) {
-            if let xu = vi.thuongXuHangHienTai, xu > 0 {
-                Text("🎁 \(formatXu(xu))")
-            }
-            if coFreeship(vi) {
-                Text("🛵 Freeship")
-            }
+        if let xu = vi.thuongXuHangHienTai, xu > 0 {
+            Text("🎁 \(formatXu(xu))")
+                .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
         }
-        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
     }
 
-    /// Bên phải: quà SẮP ĐẠT ở hạng kế tiếp — chỉ phần hạng đó thêm so với hiện tại (Freeship đã có thì không lặp).
+    /// Bên phải: quà SẮP ĐẠT ở hạng kế tiếp.
     private func thuongSapDat(_ vi: KhachHangVi, hangTiepTheo: String) -> some View {
         let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo
-        let shipMoi = !coFreeship(vi) && Self.hangCoFreeship.contains(where: { hangTiepTheo.hasPrefix($0) })
         return HStack(spacing: 10) {
             Text(hangTiepTheo).fontWeight(.heavy)
             if let xu, xu > 0 { Text("🎁 \(formatXu(xu))") }
-            if shipMoi { Text("🛵 Freeship") }
         }
         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white)
     }
