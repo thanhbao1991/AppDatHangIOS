@@ -33,9 +33,20 @@ struct SeasonalSplashView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 14) {
-                HStack(spacing: 12) {
-                    Text(theme.leadingEmoji).font(.system(size: 44))
-                    Text(theme.trailingEmoji).font(.system(size: 44))
+                // Ảnh icon dịp (Assets DipLe-<MA>, bản 600px của AppIcon-<MA>) — chủ quán 2026-11-07. Thiếu ảnh
+                // (dịp thêm sau) thì về 2 emoji như cũ.
+                if let anh = UIImage(named: "DipLe-\(theme.maDaiDien)") {
+                    Image(uiImage: anh)
+                        .resizable().scaledToFit()
+                        .frame(maxWidth: 240)
+                        .clipShape(RoundedRectangle(cornerRadius: 44, style: .continuous))
+                        .shadow(color: .black.opacity(0.3), radius: 18, y: 8)
+                        .padding(.bottom, 10)
+                } else {
+                    HStack(spacing: 12) {
+                        Text(theme.leadingEmoji).font(.system(size: 44))
+                        Text(theme.trailingEmoji).font(.system(size: 44))
+                    }
                 }
                 Text(SeasonalEvent.bannerTitle)
                     .font(.system(size: 26, weight: .heavy))
