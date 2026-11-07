@@ -280,8 +280,17 @@ struct SoDuCard: View {
         cardBox {
             if let tieuDe {
                 // Canh TRÁI như tiêu đề card Địa chỉ giao hàng / Ngày sinh ở tab Tài khoản.
-                Text(tieuDe).font(.system(size: 16, weight: .bold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                // Link (vd "Lịch sử") nằm bên PHẢI hàng tiêu đề (chủ quán 2026-11-08).
+                HStack {
+                    Text(tieuDe).font(.system(size: 16, weight: .bold))
+                    Spacer()
+                    if let link {
+                        Button(action: link.action) {
+                            Text(link.text).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 Divider()
             }
             HStack(alignment: .center, spacing: 12) {
@@ -293,12 +302,12 @@ struct SoDuCard: View {
                     }
                     // chuThich rỗng (chủ quán 2026-11-08 bỏ dòng "Số dư hiện tại"/"Số tiền đang nợ") → không hiện chữ; còn link
                     // (Lịch sử) thì hiện riêng, bỏ dấu "·" đầu.
-                    if !chuThich.isEmpty || link != nil {
+                    if !chuThich.isEmpty || (link != nil && tieuDe == nil) {
                         HStack(spacing: 6) {
                             if !chuThich.isEmpty {
                                 Text(chuThich).font(.system(size: 12)).foregroundColor(Theme.textMuted)
                             }
-                            if let link {
+                            if let link, tieuDe == nil {
                                 Button(action: link.action) {
                                     Text(chuThich.isEmpty ? link.text : "· \(link.text)").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
                                 }
