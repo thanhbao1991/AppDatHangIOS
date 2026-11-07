@@ -322,7 +322,9 @@ struct SoDuCard: View {
                 }
                 Spacer()
                 Button(action: onNut) {
-                    VStack(spacing: -6) {
+                    // alignment .trailing: nút luôn sát MÉP PHẢI card (nhãn vàng rộng hơn nút cũng không đẩy nút vào giữa) — Nạp Xu và
+                    // Xem chi tiết canh phải thẳng hàng (chủ quán 2026-11-08).
+                    VStack(alignment: .trailing, spacing: -6) {
                         // Nhãn nằm TRÊN nút, đè nhẹ mép trên (spacing âm) — không dùng overlay để nhãn dài hơn nút
                         // vẫn chiếm chỗ thật, không tràn ra ngoài card (07/11/2026).
                         if let nhanNut { NhanKhuyenMaiNut(text: nhanNut).zIndex(1) }
