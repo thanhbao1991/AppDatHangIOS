@@ -257,7 +257,7 @@ struct UuDaiView: View {
 
     // ===== Hộp quà may mắn (thay bánh xe — yêu cầu 2026-09-24 "làm hộp quà cho đơn giản") =====
 
-    /// Còn lượt mà chưa mở: hộp rung lắc nhẹ định kỳ gợi khách chạm (chủ quán 2026-11-07).
+    /// Còn lượt mà chưa mở: hộp lắc liên tục gợi khách chạm (chủ quán 2026-11-07).
     private var hopQuaCho: Bool { !dangQuay && !quaMo && soLuotConLai > 0 && !loading }
 
     @ViewBuilder
@@ -288,28 +288,27 @@ struct UuDaiView: View {
         .saturation(soLuotConLai == 0 && !quaMo ? 0.3 : 1)
         .contentShape(Rectangle())
         .onTapGesture { onBoxTap() }
-        .task(id: hopQuaCho) {
-            guard hopQuaCho else { wobble = 0; return }
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_600_000_000)
-                if Task.isCancelled { break }
-                withAnimation(.easeInOut(duration: 0.07).repeatCount(7, autoreverses: true)) { wobble = 7 }
-                try? await Task.sleep(nanoseconds: 600_000_000)
-                withAnimation(.easeOut(duration: 0.15)) { wobble = 0 }
-            }
-            wobble = 0
+        .onChange(of: hopQuaCho) { cho in
+            if cho { batDauLac() } else { dungLac() }
         }
+        .onAppear { if hopQuaCho { batDauLac() } }
+    }
+
+    /// Lắc liên tục khi chưa mở và còn lượt (chủ quán 2026-11-07); chạm vào thì dừng lắc rồi mở quà.
+    private func batDauLac() {
+        wobble = -5
+        withAnimation(.easeInOut(duration: 0.16).repeatForever(autoreverses: true)) { wobble = 5 }
+    }
+
+    private func dungLac() {
+        withAnimation(.easeOut(duration: 0.12)) { wobble = 0 }
     }
 
     private func onBoxTap() {
         guard !dangQuay, soLuotConLai != 0 else { return }
-        // Rung lắc mạnh + phồng nhẹ trong lúc chờ server trả kết quả, cho cảm giác "đang mở quà".
-        withAnimation(.easeInOut(duration: 0.06).repeatCount(10, autoreverses: true)) {
-            boxRotation = 14
-        }
-        withAnimation(.easeInOut(duration: 0.15).repeatCount(4, autoreverses: true)) {
-            boxScale = 1.08
-        }
+        // Chạm: dừng lắc ngay (spin() đặt dangQuay → hopQuaCho false), hộp nhún nhẹ trong lúc chờ server rồi bung mở.
+        dungLac()
+        withAnimation(.spring(response: 0.18, dampingFraction: 0.6)) { boxScale = 0.9 }
         Task {
             await spin()
             if ketQuaQuay != nil {
@@ -336,10 +335,10 @@ struct UuDaiView: View {
         guard !dangQuay, !quaMo else { return }
         dangQuay = true
         ketQuaQuay = nil
-        withAnimation(.easeInOut(duration: 0.06).repeatCount(10, autoreverses: true)) { boxRotation = 14 }
-        withAnimation(.easeInOut(duration: 0.15).repeatCount(4, autoreverses: true)) { boxScale = 1.08 }
+        dungLac()
+        withAnimation(.spring(response: 0.18, dampingFraction: 0.6)) { boxScale = 0.9 }
         Task {
-            try? await Task.sleep(nanoseconds: 900_000_000)
+            try? await Task.sleep(nanoseconds: 700_000_000)
             dangQuay = false
             ketQuaQuay = "Xem thử: bạn nhận +500 Xu"
             withAnimation(.spring(response: 0.42, dampingFraction: 0.55)) {
