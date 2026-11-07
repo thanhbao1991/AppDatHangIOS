@@ -72,35 +72,39 @@ enum SeasonalTheme: CaseIterable, Equatable {
     /// Màu đủ đậm để chữ trắng trên header/nút CTA đọc rõ.
     var primary: Color {
         switch self {
-        case .tetDuong: return Color(red: 0.30, green: 0.24, blue: 0.62)
-        case .tet, .quocKhanh, .thongNhat: return Color(red: 0.80, green: 0.08, blue: 0.1)
+        case .tetDuong: return Color(red: 0.09, green: 0.15, blue: 0.35)
+        case .tet, .quocKhanh: return Color(red: 0.80, green: 0.08, blue: 0.1)
         case .valentine: return Color(red: 0.87, green: 0.18, blue: 0.42)
-        case .quocTePhuNu: return Color(red: 0.66, green: 0.24, blue: 0.62)
+        case .quocTePhuNu: return Color(red: 0.45, green: 0.22, blue: 0.66)
         case .phuNuVietNam: return Color(red: 0.78, green: 0.27, blue: 0.33)
-        case .gioTo, .thuongBinh: return Color(red: 0.62, green: 0.13, blue: 0.08)
+        case .gioTo: return Color(red: 0.62, green: 0.13, blue: 0.08)
         case .doanNgo: return Color(red: 0.13, green: 0.48, blue: 0.25)
-        case .vuLan: return Color(red: 0.60, green: 0.16, blue: 0.30)
-        case .thieuNhi: return Color(red: 0.12, green: 0.42, blue: 0.78)
+        case .vuLan: return Color(red: 0.08, green: 0.32, blue: 0.38)
+        case .thieuNhi: return Color(red: 0.10, green: 0.50, blue: 0.85)
         case .trungThu: return Color(red: 0.11, green: 0.25, blue: 0.44)
         case .nhaGiao: return Color(red: 0.09, green: 0.42, blue: 0.40)
         case .noel: return Color(red: 0.70, green: 0.07, blue: 0.11)
+        case .thuongBinh: return Color(red: 0.22, green: 0.27, blue: 0.34)
+        case .thongNhat: return Color(red: 0.86, green: 0.28, blue: 0.10)
         }
     }
 
     var primaryDark: Color {
         switch self {
-        case .tetDuong: return Color(red: 0.15, green: 0.11, blue: 0.38)
-        case .tet, .quocKhanh, .thongNhat: return Color(red: 0.50, green: 0.04, blue: 0.06)
+        case .tetDuong: return Color(red: 0.04, green: 0.07, blue: 0.22)
+        case .tet, .quocKhanh: return Color(red: 0.50, green: 0.04, blue: 0.06)
         case .valentine: return Color(red: 0.55, green: 0.09, blue: 0.26)
-        case .quocTePhuNu: return Color(red: 0.40, green: 0.12, blue: 0.40)
+        case .quocTePhuNu: return Color(red: 0.26, green: 0.11, blue: 0.42)
         case .phuNuVietNam: return Color(red: 0.50, green: 0.12, blue: 0.17)
-        case .gioTo, .thuongBinh: return Color(red: 0.38, green: 0.07, blue: 0.03)
+        case .gioTo: return Color(red: 0.38, green: 0.07, blue: 0.03)
         case .doanNgo: return Color(red: 0.06, green: 0.28, blue: 0.14)
-        case .vuLan: return Color(red: 0.36, green: 0.08, blue: 0.18)
-        case .thieuNhi: return Color(red: 0.05, green: 0.24, blue: 0.52)
+        case .vuLan: return Color(red: 0.03, green: 0.19, blue: 0.24)
+        case .thieuNhi: return Color(red: 0.04, green: 0.30, blue: 0.60)
         case .trungThu: return Color(red: 0.05, green: 0.12, blue: 0.26)
         case .nhaGiao: return Color(red: 0.04, green: 0.25, blue: 0.24)
         case .noel: return Color(red: 0.42, green: 0.03, blue: 0.06)
+        case .thuongBinh: return Color(red: 0.11, green: 0.14, blue: 0.19)
+        case .thongNhat: return Color(red: 0.58, green: 0.14, blue: 0.05)
         }
     }
 
