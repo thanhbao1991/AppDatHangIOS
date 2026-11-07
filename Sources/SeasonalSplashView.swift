@@ -12,7 +12,7 @@ struct SeasonalSplashView: View {
 
     var body: some View {
         ZStack {
-            if let toanMan = UIImage(named: "ManChao-\(theme.maDaiDien)") {
+            if let toanMan = ManChaoCache.anh(ma: theme.maDaiDien) {
                 manChaoAnhRieng(toanMan)
             } else {
                 manChaoTuIcon
@@ -27,8 +27,8 @@ struct SeasonalSplashView: View {
         }
     }
 
-    /// Ảnh màn chào vẽ riêng cho dịp (Assets ManChao-<MA>, dọc 9:16, logo ở 1/3 trên, giữa để trống) — phủ kín màn
-    /// hình, chữ đặt vào khoảng trống giữa (~53% chiều cao). Thêm dịp chỉ cần thêm ảnh, không sửa code.
+    /// Ảnh màn chào vẽ riêng cho dịp (tải từ server, xem ManChaoCache; dọc 9:16, logo ở 1/3 trên, giữa để trống) — phủ
+    /// kín màn hình, chữ đặt vào khoảng trống giữa. Thêm dịp chỉ cần thêm ảnh trên server, không sửa code.
     private func manChaoAnhRieng(_ anh: UIImage) -> some View {
         GeometryReader { geo in
             Image(uiImage: anh).resizable().scaledToFill()

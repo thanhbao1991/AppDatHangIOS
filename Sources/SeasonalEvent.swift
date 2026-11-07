@@ -144,7 +144,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
-    /// Màn chào ảnh riêng (ManChao-<MA>): tâm khối chữ chúc theo chiều cao màn hình — nằm giữa logo (mỗi ảnh logo một
+    /// Màn chào ảnh riêng (ManChaoCache, tải từ server): tâm khối chữ chúc theo chiều cao màn hình — nằm giữa logo (mỗi ảnh logo một
     /// độ cao) và đồ trang trí dưới. Chỉnh theo ảnh thật, thêm dịp mới nhớ chỉnh dòng này.
     var manChaoChuY: CGFloat {
         switch self {
@@ -280,6 +280,9 @@ enum SeasonalEvent {
         Theme.applyNavBarAppearance()
         capNhatIcon()
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+        // Ảnh màn chào tải ngầm khi dịp vào cửa sổ giao diện (xem ManChaoCache) — cold launch ngày đầu thì
+        // ContentView chờ tải xong (tối đa vài giây) rồi mới hiện màn chào.
+        if let gd = kq.giaoDien, gd.anhManChao != nil { await ManChaoCache.taiNeuCan(ma: gd.ma, duongDan: gd.anhManChao) }
     }
 
     /// Dịp server bảo hiện icon (cửa sổ icon rộng hơn cửa sổ giao diện, có thể khác dịp với `theme`).

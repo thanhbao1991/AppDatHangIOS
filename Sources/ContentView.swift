@@ -42,7 +42,11 @@ struct ContentView: View {
         }
         #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .xemTruocSplash)) { _ in
-            seasonalSplash = SeasonalEvent.active
+            // Xem trước: tải ảnh dịp (nếu chưa có) rồi mới mở màn chào.
+            Task {
+                if let t = SeasonalEvent.active { await ManChaoCache.taiNeuCan(ma: t.maDaiDien, duongDan: nil) }
+                seasonalSplash = SeasonalEvent.active
+            }
         }
         #endif
         .onChange(of: scenePhase) { phase in

@@ -103,6 +103,8 @@ struct DipLe: Decodable, Equatable {
     let moTa: String?
     /// Hạng tối thiểu để dùng voucher của dịp (vd "Bạc") — xem SeasonalEvent.bannerSubtitle.
     var hangToiThieu: String?
+    /// Đường dẫn ảnh màn chào (kèm ?v=hash) — xem ManChaoCache. Chỉ có ở /dip-le/hien-thi.
+    var anhManChao: String?
 }
 
 /// Server quyết định icon + giao diện dịp lễ hôm nay (DipLeLich ở Backend, cửa sổ trước/sau lễ khác nhau
