@@ -267,7 +267,7 @@ struct SoDuCard: View {
     var tieuDe: String? = nil
     let giaTri: String
     var mauGiaTri: Color = .primary
-    let chuThich: String
+    var chuThich: String = ""
     /// Link nhỏ cạnh chú thích (vd "Lịch sử") — nil thì không hiện
     var link: (text: String, action: () -> Void)? = nil
     let nut: String
@@ -291,13 +291,19 @@ struct SoDuCard: View {
                         Text(giaTri).font(.system(size: 30, weight: .bold)).foregroundColor(mauGiaTri)
                             .lineLimit(1).minimumScaleFactor(0.7)
                     }
-                    HStack(spacing: 6) {
-                        Text(chuThich).font(.system(size: 12)).foregroundColor(Theme.textMuted)
-                        if let link {
-                            Button(action: link.action) {
-                                Text("· \(link.text)").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                    // chuThich rỗng (chủ quán 2026-11-08 bỏ dòng "Số dư hiện tại"/"Số tiền đang nợ") → không hiện chữ; còn link
+                    // (Lịch sử) thì hiện riêng, bỏ dấu "·" đầu.
+                    if !chuThich.isEmpty || link != nil {
+                        HStack(spacing: 6) {
+                            if !chuThich.isEmpty {
+                                Text(chuThich).font(.system(size: 12)).foregroundColor(Theme.textMuted)
                             }
-                            .buttonStyle(.plain)
+                            if let link {
+                                Button(action: link.action) {
+                                    Text(chuThich.isEmpty ? link.text : "· \(link.text)").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
                 }
