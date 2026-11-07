@@ -27,6 +27,7 @@ struct UuDaiView: View {
     @State private var dangDiemDanh = false
 
     @State private var soDuXu: Double?
+    @State private var nhanNapXu: String?
     @State private var showNapXu = false
     @State private var showTheLe = false
 
@@ -77,7 +78,7 @@ struct UuDaiView: View {
     /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
     private var xuBanner: some View {
         SoDuCard(icon: AnyView(xuIcon(36)), giaTri: SoDuCard.so(soDuXu ?? 0), chuThich: "Số dư Xu hiện tại",
-                 nut: "Nạp Xu", onNut: { showNapXu = true })
+                 nut: "Nạp Xu", nhanNut: nhanNapXu, iconNut: "plus.circle.fill", onNut: { showNapXu = true })
     }
 
     /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
@@ -291,7 +292,9 @@ struct UuDaiView: View {
         async let viKq = APIClient.shared.getVi()
         soLuotConLai = await quay?.soLuotConLai ?? -1
         diemDanh = await diemDanhKq
-        soDuXu = await viKq?.soDu
+        let vi = await viKq
+        soDuXu = vi?.soDu
+        nhanNapXu = vi?.nhanNapXu
         loading = false
     }
 

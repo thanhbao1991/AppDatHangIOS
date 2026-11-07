@@ -116,8 +116,9 @@ private struct NhapNhayX2: View {
     @State private var sang = true
 
     var body: some View {
-        Text("x2")
-            .font(.system(size: 12, weight: .heavy))
+        // "Nhân đôi" thay "x2" (07/11/2026): "x2" đứng riêng dễ bị đọc là "chỉ được tặng 2 lần".
+        Text("Nhân đôi")
+            .font(.system(size: 11, weight: .heavy))
             .foregroundColor(Theme.primary)
             .padding(.horizontal, 5)
             .padding(.vertical, 1)

@@ -264,6 +264,9 @@ struct SoDuCard: View {
     /// Link nhỏ cạnh chú thích (vd "Lịch sử") — nil thì không hiện
     var link: (text: String, action: () -> Void)? = nil
     let nut: String
+    /// Nhãn khuyến mãi vàng gắn góc trên nút (vd "Lần đầu tặng x2" cho nút Nạp Xu) — nil thì nút như cũ.
+    var nhanNut: String? = nil
+    var iconNut: String? = nil
     let onNut: () -> Void
 
     var body: some View {
@@ -287,16 +290,44 @@ struct SoDuCard: View {
                 }
                 Spacer()
                 Button(action: onNut) {
-                    HStack(spacing: 4) {
-                        Text(nut).font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                    VStack(spacing: -6) {
+                        // Nhãn nằm TRÊN nút, đè nhẹ mép trên (spacing âm) — không dùng overlay để nhãn dài hơn nút
+                        // vẫn chiếm chỗ thật, không tràn ra ngoài card (07/11/2026).
+                        if let nhanNut { NhanKhuyenMaiNut(text: nhanNut).zIndex(1) }
+                        HStack(spacing: 4) {
+                            if let iconNut { Image(systemName: iconNut).font(.system(size: 13, weight: .bold)) }
+                            Text(nut).font(.system(size: nhanNut == nil ? 13 : 14, weight: nhanNut == nil ? .semibold : .bold))
+                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, nhanNut == nil ? 14 : 16).padding(.vertical, nhanNut == nil ? 8 : 10)
+                        .background(Theme.primaryGradient).clipShape(Capsule())
+                        .shadow(color: nhanNut == nil ? .clear : Theme.primary.opacity(0.35), radius: 6, y: 3)
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Theme.primaryGradient).clipShape(Capsule())
+                    .fixedSize()
                 }
                 .buttonStyle(.plain) // nhiều Button trong 1 row List — xem chú thích xuCongNoCard cũ ở SettingsView
             }
+        }
+    }
+
+    /// Nhãn vàng "🎁 …" trên nút — đập nhẹ (phóng 1 → 1,08) để mắt khách dừng lại ở nút Nạp Xu.
+    private struct NhanKhuyenMaiNut: View {
+        let text: String
+        @State private var phong = false
+
+        var body: some View {
+            Text("🎁 \(text)")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundColor(Color(red: 0.45, green: 0.25, blue: 0))
+                .lineLimit(1)
+                .padding(.horizontal, 7).padding(.vertical, 2)
+                .background(Capsule().fill(Color(red: 1, green: 0.84, blue: 0.2)))
+                .overlay(Capsule().stroke(Color.white, lineWidth: 1.5))
+                .scaleEffect(phong ? 1.08 : 1)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) { phong = true }
+                }
         }
     }
 

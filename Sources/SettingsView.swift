@@ -326,7 +326,8 @@ struct SettingsView: View {
     /// 1 card chia 2 cột). Công nợ chỉ hiện khi đang nợ.
     private func xuCard(_ vi: KhachHangVi) -> some View {
         SoDuCard(icon: AnyView(Theme.xuIcon(36)), giaTri: SoDuCard.so(vi.soDu), chuThich: "Số dư Xu hiện tại",
-                 link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", onNut: { showNapXu = true })
+                 link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", nhanNut: vi.nhanNapXu,
+                 iconNut: "plus.circle.fill", onNut: { showNapXu = true })
             .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
             .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
             .onChange(of: showNapXu) { dangMo in
