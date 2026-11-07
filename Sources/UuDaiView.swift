@@ -28,7 +28,6 @@ struct UuDaiView: View {
 
     @State private var soDuXu: Double?
     @State private var nhanNapXu: String?
-    @State private var showNapXu = false
     @State private var showTheLe = false
 
     @State private var boxScale: CGFloat = 1
@@ -46,7 +45,7 @@ struct UuDaiView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            xuBanner
+                            // Bỏ card số dư Xu + nút Nạp Xu ở tab Ưu đãi (chủ quán 2026-11-07) — Nạp Xu và số dư vẫn ở card Xu tab Tài khoản.
                             diemDanhCard
                             vongQuayCard
                         }
@@ -59,10 +58,6 @@ struct UuDaiView: View {
             .background(Theme.bg)
         }
         .task { await load() }
-        .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
-        .onChange(of: showNapXu) { dangMo in
-            if !dangMo { Task { await load() } }
-        }
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -75,13 +70,6 @@ struct UuDaiView: View {
 
     /// Icon Xu dùng chung — xem xuIcon(_:) trong Theme.swift.
     private func xuIcon(_ size: CGFloat) -> some View { Theme.xuIcon(size) }
-
-    /// Tổng Xu hiện có + lối vào Nạp Xu (Lịch sử Xu vẫn ở tab Tài khoản) — đặt đầu tab (kiểu Shopee) để khách thấy ngay "đang có
-    /// bao nhiêu" trước khi lướt xuống các cách kiếm thêm (điểm danh/vòng quay).
-    private var xuBanner: some View {
-        SoDuCard(icon: AnyView(xuIcon(36)), giaTri: SoDuCard.so(soDuXu ?? 0), chuThich: "Số dư Xu hiện tại",
-                 nut: "Nạp Xu", nhanNut: nhanNapXu, iconNut: "plus.circle.fill", onNut: { showNapXu = true })
-    }
 
     /// "Điểm danh nhận Xu" — chu kỳ 7 ngày LIÊN TIẾP, thưởng Xu THẲNG (không random như vòng quay).
     /// Bỏ lỡ 1 ngày là chuỗi reset về ngày 1 (khác vòng quay không quan tâm hôm qua) — xem
