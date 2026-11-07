@@ -234,6 +234,17 @@ struct UuDaiView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
+            #if DEV_LOGIN
+            // Phiên dev-login chỉ đọc (server chặn mọi thao tác ghi → không mở quà thật được): nút này chạy đúng hiệu ứng mở
+            // quà với kết quả mẫu, KHÔNG gọi server. Chỉ có ở bản dev.
+            Button { xemThuMoQua() } label: {
+                Text("🧪 Xem thử hiệu ứng mở quà")
+                    .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
+            #endif
+
             // Công khai tỉ lệ trúng (hộp quà có yếu tố ngẫu nhiên) — bảng tỉ lệ nằm trong trang Thể lệ Xu.
             Button { showTheLe = true } label: {
                 Text("Tỉ lệ trúng · Thể lệ Xu")
@@ -319,6 +330,28 @@ struct UuDaiView: View {
             }
         }
     }
+
+    #if DEV_LOGIN
+    private func xemThuMoQua() {
+        guard !dangQuay, !quaMo else { return }
+        dangQuay = true
+        ketQuaQuay = nil
+        withAnimation(.easeInOut(duration: 0.06).repeatCount(10, autoreverses: true)) { boxRotation = 14 }
+        withAnimation(.easeInOut(duration: 0.15).repeatCount(4, autoreverses: true)) { boxScale = 1.08 }
+        Task {
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            dangQuay = false
+            ketQuaQuay = "Xem thử: bạn nhận +500 Xu"
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.55)) {
+                boxRotation = 0
+                boxScale = 1
+                quaMo = true
+            }
+            try? await Task.sleep(nanoseconds: 2_800_000_000)
+            withAnimation(.easeInOut(duration: 0.4)) { quaMo = false }
+        }
+    }
+    #endif
 
     private func load() async {
         async let quay = APIClient.shared.getVongQuayInfo()
