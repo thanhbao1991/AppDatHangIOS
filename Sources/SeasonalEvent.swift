@@ -156,7 +156,7 @@ enum SeasonalTheme: CaseIterable, Equatable {
         case .gioTo: return 0.68
         case .thongNhat: return 0.56
         case .doanNgo: return 0.54
-        case .thieuNhi: return 0.70
+        case .thieuNhi: return 0.68
         case .thuongBinh: return 0.55
         case .vuLan: return 0.50
         case .quocKhanh: return 0.57
