@@ -33,7 +33,7 @@ struct UuDaiView: View {
 
     @State private var boxScale: CGFloat = 1
     @State private var boxRotation: Double = 0
-    // quaMo: hộp mở (ảnh QuaMo) hiện ngay khi chạm, giữ vài giây sau khi có kết quả rồi đóng lại.
+    // quaMo: hộp mở (nắp bật ra + ánh sáng + xu) ngay khi chạm, giữ vài giây sau khi có kết quả rồi đóng lại.
     @State private var quaMo = false
 
     var body: some View {
@@ -259,72 +259,98 @@ struct UuDaiView: View {
     /// Còn lượt mà chưa mở: hộp lắc liên tục gợi khách chạm (chủ quán 2026-11-07).
     private var hopQuaCho: Bool { !dangQuay && !quaMo && soLuotConLai > 0 && !loading }
 
-    // Ảnh hộp quà đã giải mã sẵn (byPreparingForDisplay) — lần đầu hiện ảnh hộp mở mà chưa giải mã gây khựng ngay lúc mở.
-    @State private var anhDong: UIImage?
-    @State private var anhMo: UIImage?
+    // Hộp quà ghép từ 3 lớp ảnh cùng khung (Gemini 2026-11-07, cùng một hộp): QuaThan = thân hộp rỗng, QuaNap = nắp + nơ,
+    // QuaNo = thân + ánh sáng + xu bay. Đóng: nắp úp lên thân. Mở: nắp BẬT văng lên nghiêng sang bên rồi mờ dần, ánh sáng + xu
+    // bung ra. Giải mã sẵn ảnh (byPreparingForDisplay) — lần đầu hiện ảnh chưa giải mã gây khựng ngay lúc mở.
+    @State private var anhNap: UIImage?
+    @State private var anhThan: UIImage?
+    @State private var anhNo: UIImage?
+    @State private var napHien = true
 
     private func chuanBiAnhHop() {
-        guard anhMo == nil else { return }
+        guard anhNo == nil else { return }
         Task.detached(priority: .userInitiated) {
-            let d = await UIImage(named: "QuaDong")?.byPreparingForDisplay()
-            let m = await UIImage(named: "QuaMo")?.byPreparingForDisplay()
-            await MainActor.run { anhDong = d; anhMo = m }
+            let n = await UIImage(named: "QuaNap")?.byPreparingForDisplay()
+            let t = await UIImage(named: "QuaThan")?.byPreparingForDisplay()
+            let o = await UIImage(named: "QuaNo")?.byPreparingForDisplay()
+            await MainActor.run { anhNap = n; anhThan = t; anhNo = o }
         }
     }
 
-    private static let moTiLe: CGFloat = 1.32   // thân hộp mở ≈ bằng thân hộp đóng (đo trên ảnh gốc: 636/444 = 1.43, lấy 1.32 cho vừa thẻ)
+    private static let hopS: CGFloat = 270            // cạnh khung vuông chung của 3 lớp
+    private static let napDong: CGFloat = 315.0 / 925.0 // nắp dịch xuống bấy nhiêu (theo cạnh khung) để úp khít lên thân
 
     @ViewBuilder
     private var giftBoxView: some View {
+        let S = Self.hopS
         ZStack {
-            // Vòng sáng vàng phía sau, sáng + nở ra khi hộp mở.
+            // Vòng sáng vàng phía sau thân hộp, sáng + nở ra khi hộp mở.
             Circle()
                 .fill(RadialGradient(
                     colors: [Color(red: 1, green: 0.84, blue: 0.40).opacity(quaMo ? 0.6 : 0.26), Color(red: 1, green: 0.84, blue: 0.40).opacity(0)],
                     center: .center, startRadius: 4, endRadius: 120))
                 .frame(width: 250, height: 250)
                 .scaleEffect(quaMo ? 1.18 : 1)
+                .offset(y: S * 0.22)
 
             // Lắc liên tục tính theo thời gian (TimelineView) — chắc chắn không bị animation khác cắt giữa chừng.
             TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !hopQuaCho)) { tl in
                 let goc: Double = hopQuaCho ? 5 * sin(tl.date.timeIntervalSinceReferenceDate * 2 * .pi * 3.2) : 0
-                // Hộp đóng và hộp mở cùng đáy; hộp mở phóng to quanh đáy để thân hộp bằng hộp đóng (nắp + xu bay lên trên).
-                ZStack(alignment: .bottom) {
-                    (anhDong.map { Image(uiImage: $0) } ?? Image("QuaDong")).resizable().scaledToFit()
-                        .frame(width: 176, height: 176)
+                ZStack {
+                    (anhThan.map { Image(uiImage: $0) } ?? Image("QuaThan")).resizable().scaledToFit()
                         .opacity(quaMo ? 0 : 1)
-                    (anhMo.map { Image(uiImage: $0) } ?? Image("QuaMo")).resizable().scaledToFit()
-                        .frame(width: 176, height: 176)
-                        .scaleEffect(Self.moTiLe * (quaMo ? 1 : 0.8), anchor: .bottom)
+                    (anhNo.map { Image(uiImage: $0) } ?? Image("QuaNo")).resizable().scaledToFit()
+                        .scaleEffect(quaMo ? 1 : 0.9, anchor: .bottom)
                         .opacity(quaMo ? 1 : 0)
+                    // Nắp: đóng = úp trên thân; mở = bật văng lên cao, nghiêng sang phải rồi mờ dần.
+                    (anhNap.map { Image(uiImage: $0) } ?? Image("QuaNap")).resizable().scaledToFit()
+                        .rotationEffect(.degrees(quaMo ? 34 : 0), anchor: .center)
+                        .offset(x: quaMo ? S * 0.26 : 0, y: quaMo ? -S * 0.2 : S * Self.napDong)
+                        .opacity(napHien ? 1 : 0)
                 }
-                .frame(width: 176, height: 232, alignment: .bottom)
+                .frame(width: S, height: S)
                 .scaleEffect(boxScale, anchor: .bottom)
                 .rotationEffect(.degrees(boxRotation + goc), anchor: .bottom)
             }
         }
-        .frame(height: 244)
+        .frame(height: S)
         .opacity(soLuotConLai == 0 && !quaMo ? 0.55 : 1)
         .contentShape(Rectangle())
         .onTapGesture { onBoxTap() }
         .onAppear { chuanBiAnhHop() }
     }
 
-    private func onBoxTap() {
-        guard !dangQuay, soLuotConLai != 0 else { return }
-        // Chạm: dừng lắc (spin() đặt dangQuay) và MỞ NGAY — không đợi server mới bung hộp, đỡ cảm giác trễ. Kết quả (dòng 🎉)
-        // hiện khi server trả; lỗi thì đóng hộp lại và báo alert.
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.58)) {
+    /// Mở hộp: nắp bật văng ra (lò xo), ánh sáng + xu bung; ~0,5s sau nắp mờ dần. Đóng lại: nắp bay về úp lên thân.
+    private func moHop() {
+        withAnimation(.interpolatingSpring(stiffness: 150, damping: 9)) {
             boxRotation = 0
             boxScale = 1
             quaMo = true
         }
         Task {
+            try? await Task.sleep(nanoseconds: 550_000_000)
+            withAnimation(.easeOut(duration: 0.35)) { napHien = false }
+        }
+    }
+
+    private func dongHop() {
+        withAnimation(.easeInOut(duration: 0.45)) {
+            quaMo = false
+            napHien = true
+        }
+    }
+
+    private func onBoxTap() {
+        guard !dangQuay, soLuotConLai != 0 else { return }
+        // Chạm: dừng lắc (spin() đặt dangQuay) và MỞ NGAY — không đợi server mới bật nắp, đỡ cảm giác trễ. Kết quả (dòng 🎉)
+        // hiện khi server trả; lỗi thì đóng hộp lại và báo alert.
+        moHop()
+        Task {
             await spin()
             if ketQuaQuay != nil {
                 try? await Task.sleep(nanoseconds: 2_800_000_000)
             }
-            withAnimation(.easeInOut(duration: 0.4)) { quaMo = false }
+            dongHop()
         }
     }
 
@@ -333,13 +359,13 @@ struct UuDaiView: View {
         guard !dangQuay, !quaMo else { return }
         dangQuay = true
         ketQuaQuay = nil
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.58)) { quaMo = true }
+        moHop()
         Task {
             try? await Task.sleep(nanoseconds: 600_000_000)
             dangQuay = false
             ketQuaQuay = "Xem thử: bạn nhận +500 Xu"
             try? await Task.sleep(nanoseconds: 2_800_000_000)
-            withAnimation(.easeInOut(duration: 0.4)) { quaMo = false }
+            dongHop()
         }
     }
     #endif
