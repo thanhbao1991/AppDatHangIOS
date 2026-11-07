@@ -299,20 +299,16 @@ struct SettingsView: View {
     /// cần App Store id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
     private var danhGiaCard: some View {
         cardBox {
-            HStack {
-                Text("⭐ Thích ứng dụng Đenn?").font(.system(size: 14, weight: .bold))
-                Spacer()
-            }
-            Text("Để lại vài dòng đánh giá giúp Đenn cải thiện app tốt hơn nhé!")
-                .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+            // Gọn 1 dòng (chủ quán 2026-11-08: "bớt chữ các card") — trước có tiêu đề + câu mời + link riêng.
             Button {
                 moDanhGia()
             } label: {
                 HStack {
-                    Text("Đánh giá trên App Store").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Text("⭐ Đánh giá Đenn trên App Store").font(.system(size: 14, weight: .semibold))
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 }
+                .foregroundColor(.primary)
             }
             .buttonStyle(.plain)
         }
@@ -325,7 +321,7 @@ struct SettingsView: View {
     /// Xu và Công nợ: 2 card riêng cùng kiểu SoDuCard với card Xu tab Ưu đãi (2026-10-26, trước gộp chung
     /// 1 card chia 2 cột). Công nợ chỉ hiện khi đang nợ.
     private func xuCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(icon: AnyView(Theme.xuIcon(36)), giaTri: SoDuCard.so(vi.soDu), chuThich: "Số dư Xu hiện tại",
+        SoDuCard(icon: AnyView(Theme.xuIcon(36)), tieuDe: "Ví Xu", giaTri: SoDuCard.so(vi.soDu), chuThich: "Số dư hiện tại",
                  link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", nhanNut: vi.nhanNapXu,
                  iconNut: "plus.circle.fill", onNut: { showNapXu = true })
             .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
@@ -470,7 +466,7 @@ struct SettingsView: View {
             // CheckoutView (chọn địa chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo
             // yêu cầu.
             if diaChiHienThi.isEmpty {
-                Text("Chưa có địa chỉ nào — bấm + để thêm, hoặc nhập ở bước đặt hàng sẽ tự lưu lại.")
+                Text("Chưa có địa chỉ — bấm + để thêm")
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiHienThi) { item in
@@ -552,7 +548,7 @@ struct SettingsView: View {
                         Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
                             .font(.system(size: 13)).foregroundColor(Theme.success)
                     } else {
-                        Text("Chưa có ngày sinh").font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                        Text("Chưa nhập").font(.system(size: 13)).foregroundColor(Theme.textFaint)
                     }
                     Spacer()
                     Button(ngaySinhInfo?.ngaySinh == nil ? "Nhập ngay" : "Sửa") { showDobPicker = true }

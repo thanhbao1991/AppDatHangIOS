@@ -263,6 +263,8 @@ func cardBox<Content: View>(@ViewBuilder content: () -> Content) -> some View {
 /// và card Công nợ (2026-10-26: đồng bộ theo card Xu tab Ưu đãi, tách Công nợ ra card riêng).
 struct SoDuCard: View {
     var icon: AnyView? = nil
+    /// Tiêu đề card (vd "Ví Xu") + đường kẻ — nil thì không hiện (card Công nợ).
+    var tieuDe: String? = nil
     let giaTri: String
     var mauGiaTri: Color = .primary
     let chuThich: String
@@ -276,6 +278,11 @@ struct SoDuCard: View {
 
     var body: some View {
         cardBox {
+            if let tieuDe {
+                Text(tieuDe).font(.system(size: 16, weight: .bold))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                Divider()
+            }
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
