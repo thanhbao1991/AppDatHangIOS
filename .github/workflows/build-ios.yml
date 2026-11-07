@@ -199,7 +199,7 @@ jobs:
             /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 9.9.0" Sources/Info.plist
           fi
 
-      # Icon chinh theo dip le (cach Shopee, doi bang ban cap nhat, khong popup) — xem scripts/chon-icon-dip-le.sh.
+      # Icon chinh theo dip le sap toi (cach Shopee, khi co ban cap nhat thi tien the doi, khong popup) — xem scripts/chon-icon-dip-le.sh.
       - name: Choose seasonal app icon
         run: bash scripts/chon-icon-dip-le.sh
 

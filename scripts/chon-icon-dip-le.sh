@@ -1,12 +1,14 @@
 #!/bin/bash
 # Chọn ICON CHÍNH cho bản build theo dịp lễ (cách Shopee: đổi icon bằng bản cập nhật → khách KHÔNG thấy popup
-# "You have changed the icon" của iOS). Chạy trên CI sau xcodegen, trước khi archive. (Chủ quán 2026-11-07: iOS icon
-# chỉ đổi theo bản cập nhật; Android vẫn đổi theo server vì không có popup.)
+# "You have changed the icon" của iOS). Chạy trên CI sau xcodegen, trước khi archive. (Chủ quán 2026-11-07: kết hợp
+# icon theo bản cập nhật khi tiện + đổi theo server có popup khi bản cài chưa kịp.)
 #
 # - Dịp đang trong cửa sổ icon của server (7 ngày trước → 14 ngày sau lễ, GET /dat-hang/dip-le/hien-thi → maIcon),
 #   hoặc dịp có icon sắp bắt đầu trong SO_NGAY_TRUOC ngày tới (GET /dip-le/sap-toi) → chép ảnh
 #   Assets.xcassets/AppIcon-<MA>.appiconset đè lên AppIcon.appiconset (cùng tên file).
-# - Xoá các bộ AppIcon-<MA> còn lại khỏi bản build (không đóng gói icon thừa → app nhẹ hơn).
+# - Ghi DennIconDip (<MA> hoặc rỗng) vào Info.plist — app đọc để biết icon chính đang đóng gói là dịp nào
+#   (xem AppIconSwitcher.iconMucTieu): server muốn đúng icon đó thì khỏi đổi (không popup), lệch thì app tự đổi
+#   bằng icon phụ (có popup, giãn ≥7 ngày). Vậy bản cập nhật nào ra cũng tiện tay mang icon dịp sắp tới.
 # - Lỗi mạng/không có dịp → giữ icon quán, KHÔNG làm hỏng build.
 set -uo pipefail
 
@@ -43,5 +45,6 @@ else
   echo "Icon chinh ban nay: icon quan (khong co dip co icon trong $SO_NGAY_TRUOC ngay toi)"
 fi
 
-rm -rf "$ICONS"/AppIcon-*.appiconset
+PLIST="Sources/Info.plist"
+/usr/libexec/PlistBuddy -c "Add :DennIconDip string $MA" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :DennIconDip $MA" "$PLIST"
 exit 0
