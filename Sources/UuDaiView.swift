@@ -275,7 +275,7 @@ struct UuDaiView: View {
 
             // Lắc liên tục tính theo thời gian (TimelineView) — chắc chắn không bị animation khác cắt giữa chừng.
             TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !hopQuaCho)) { tl in
-                let goc: Double = hopQuaCho ? 5 * sin(tl.date.timeIntervalSinceReferenceDate * 2 * .pi * 3.2) : 0
+                let goc: Double = hopQuaCho ? 5 * sin(tl.date.timeIntervalSinceReferenceDate * 2 * .pi * 2.2) : 0
                 ZStack(alignment: .bottom) {
                     (anhDong.map { Image(uiImage: $0) } ?? Image("QuaDong")).resizable().scaledToFit()
                         .frame(width: Self.dongRong)
