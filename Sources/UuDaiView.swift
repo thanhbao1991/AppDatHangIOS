@@ -90,11 +90,7 @@ struct UuDaiView: View {
         Group {
             if let dd = diemDanh {
                 cardBox {
-                    Text("Điểm danh nhận Xu")
-                        .font(.system(size: 16, weight: .bold))
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    Divider()
-
+                    // Bỏ tiêu đề "Điểm danh nhận Xu" (chủ quán thử 2026-11-07) — nút "Điểm danh nhận N Xu" dưới đã nói rõ.
                     HStack(spacing: 6) {
                         ForEach(1...7, id: \.self) { day in
                             diemDanhDayBox(day: day, info: dd)
@@ -198,17 +194,6 @@ struct UuDaiView: View {
 
     private var vongQuayCard: some View {
         cardBox {
-            // App Store Review Guideline 5.3.2: chương trình quà tặng phải ghi rõ Apple không tài trợ — câu
-            // này nằm trong icon ⓘ sau tiêu đề (26/10/2026, trước là dòng chữ nhỏ cố định dưới hộp quà).
-            Button {
-                alertMessage = ("Hộp quà may mắn", NoiDung.hopQuaTaiTro)
-            } label: {
-                (Text("Hộp quà may mắn ") + Text(Image(systemName: "info.circle")).foregroundColor(Theme.textMuted))
-                    .font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity, alignment: .center)
-            Divider()
             if let ketQuaQuay {
                 Text("🎉 " + ketQuaQuay)
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
@@ -251,6 +236,19 @@ struct UuDaiView: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, alignment: .center)
+        }
+        // Bỏ tiêu đề "Hộp quà may mắn" (chủ quán thử 2026-11-07) nhưng GIỮ nút ⓘ: App Store Review Guideline 5.3.2 —
+        // chương trình quà tặng phải ghi rõ Apple không tài trợ; câu này nằm trong ⓘ (26/10/2026).
+        .overlay(alignment: .topTrailing) {
+            Button {
+                alertMessage = ("Hộp quà may mắn", NoiDung.hopQuaTaiTro)
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 18))
+                    .foregroundColor(Theme.textMuted)
+                    .padding(.horizontal, 22).padding(.vertical, 20)
+            }
+            .buttonStyle(.plain)
         }
     }
 
