@@ -282,6 +282,10 @@ enum SeasonalEvent {
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
         // Ảnh màn chào tải ngầm khi dịp vào cửa sổ giao diện (xem ManChaoCache) — cold launch ngày đầu thì
         // ContentView chờ tải xong (tối đa vài giây) rồi mới hiện màn chào.
+        // Dịp đang có icon (sớm hơn giao diện ~5 ngày): tải sẵn ngầm, không chờ.
+        if let ma = kq.maIcon, let u = kq.anhManChaoIcon, ma != kq.giaoDien?.ma {
+            Task { await ManChaoCache.taiNeuCan(ma: ma, duongDan: u) }
+        }
         if let gd = kq.giaoDien, gd.anhManChao != nil { await ManChaoCache.taiNeuCan(ma: gd.ma, duongDan: gd.anhManChao) }
     }
 

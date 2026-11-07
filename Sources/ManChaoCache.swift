@@ -31,7 +31,7 @@ enum ManChaoCache {
         if coSan, phienBan == nil || ud.string(forKey: khoaPhienBan(ma)) == phienBan { return }
         guard let url = URL(string: path, relativeTo: goc)?.absoluteURL else { return }
         var req = URLRequest(url: url)
-        req.timeoutInterval = 8
+        req.timeoutInterval = 3
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
               (resp as? HTTPURLResponse)?.statusCode == 200,
               UIImage(data: data) != nil else { return }

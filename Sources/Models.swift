@@ -114,13 +114,16 @@ struct DipLeHienThi: Decodable, Equatable {
     let maIcon: String?
     var giuIcon: Bool = false
     let giaoDien: DipLe?
+    /// Ảnh màn chào của dịp đang có icon (tải sẵn trước ngày giao diện) — xem ManChaoCache.
+    var anhManChaoIcon: String?
 
-    private enum CodingKeys: String, CodingKey { case maIcon, giuIcon, giaoDien }
+    private enum CodingKeys: String, CodingKey { case maIcon, giuIcon, giaoDien, anhManChaoIcon }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         maIcon = try c.decodeIfPresent(String.self, forKey: .maIcon)
         giuIcon = try c.decodeIfPresent(Bool.self, forKey: .giuIcon) ?? false
         giaoDien = try c.decodeIfPresent(DipLe.self, forKey: .giaoDien)
+        anhManChaoIcon = try c.decodeIfPresent(String.self, forKey: .anhManChaoIcon)
     }
 }
 
