@@ -3,9 +3,10 @@
 # "You have changed the icon" của iOS). Chạy trên CI sau xcodegen, trước khi archive. (Chủ quán 2026-11-07: kết hợp
 # icon theo bản cập nhật khi tiện + đổi theo server có popup khi bản cài chưa kịp.)
 #
-# - Dịp đang trong cửa sổ icon của server (7 ngày trước → 14 ngày sau lễ, GET /dat-hang/dip-le/hien-thi → maIcon),
-#   hoặc dịp có icon sắp bắt đầu trong SO_NGAY_TRUOC (31) ngày tới — tức đẩy store tháng nào thì tranh thủ icon lễ của tháng đó (GET /dip-le/sap-toi) → chép ảnh
-#   Assets.xcassets/AppIcon-<MA>.appiconset đè lên AppIcon.appiconset (cùng tên file).
+# - Lấy DỊP CÓ ICON SẮP TỚI GẦN NHẤT (GET /dip-le/sap-toi) bắt đầu trong SO_NGAY_TRUOC (40) ngày tới → chép ảnh
+#   Assets.xcassets/AppIcon-<MA>.appiconset đè lên AppIcon.appiconset (cùng tên file). Không xét dịp "đang/vừa qua": bản
+#   nộp cuối tháng 11 phải sang icon Noel chứ không ở lại Nhà giáo (chủ quán 2026-11-07). Không có dịp nào trong 40 ngày
+#   → icon quán. Lỗi mạng → icon quán, KHÔNG làm hỏng build.
 # - Ghi DennIconDip (<MA> hoặc rỗng) vào Info.plist — app đọc để biết icon chính đang đóng gói là dịp nào
 #   (xem AppIconSwitcher.iconMucTieu): server muốn đúng icon đó thì khỏi đổi (không popup), lệch thì app tự đổi
 #   bằng icon phụ (có popup, giãn ≥7 ngày). Vậy bản cập nhật nào ra cũng tiện tay mang icon dịp sắp tới.
@@ -13,18 +14,13 @@
 set -uo pipefail
 
 API="https://api.denncoffee.com/api/dat-hang"
-SO_NGAY_TRUOC=31
+SO_NGAY_TRUOC=40
 ICONS="Assets.xcassets"
 export TZ="Asia/Ho_Chi_Minh"
 TODAY=$(date +%F)
 MA=""
 
-ma_hien=$(curl -fsS --max-time 15 "$API/dip-le/hien-thi" 2>/dev/null | grep -o '"maIcon":"[^"]*"' | head -1 | cut -d'"' -f4)
-if [ -n "$ma_hien" ] && [ -d "$ICONS/AppIcon-$ma_hien.appiconset" ]; then
-  MA="$ma_hien"
-fi
-
-if [ -z "$MA" ]; then
+if true; then
   sap_toi=$(curl -fsS --max-time 15 "$API/dip-le/sap-toi" 2>/dev/null \
     | grep -o '"ma":"[^"]*","ngayBatDau":"[^"]*"' \
     | sed -E 's/"ma":"([^"]*)","ngayBatDau":"([^"]*)"/\1 \2/')
