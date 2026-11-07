@@ -324,15 +324,14 @@ struct SoDuCard: View {
                         if let nhanNut { NhanKhuyenMaiNut(text: nhanNut).zIndex(1) }
                         HStack(spacing: 4) {
                             if let iconNut { Image(systemName: iconNut).font(.system(size: 13, weight: .bold)) }
-                            Text(nut).font(.system(size: 14, weight: .bold))
+                            Text(nut).font(.system(size: 13, weight: .semibold))
                             Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
                         }
                         .foregroundColor(.white)
-                        // Nút CÙNG kiểu cho mọi card (Nạp Xu / Xem chi tiết) — chủ quán 2026-11-08: trước nút không có nhãn nhỏ
-                        // hơn, không bóng, nhìn lệch nhau.
-                        .padding(.horizontal, 16).padding(.vertical, 10)
+                        // Nút CÙNG kiểu cho mọi card, lấy nút "Xem chi tiết" làm chuẩn (chủ quán 2026-11-08): chữ 13 semibold,
+                        // đệm 14 × 8, không bóng. Nhãn vàng (nếu có) chỉ nằm phía trên, không đổi kiểu nút.
+                        .padding(.horizontal, 14).padding(.vertical, 8)
                         .background(Theme.primaryGradient).clipShape(Capsule())
-                        .shadow(color: Theme.primary.opacity(0.35), radius: 6, y: 3)
                     }
                     .fixedSize()
                 }
