@@ -315,13 +315,15 @@ struct SoDuCard: View {
                         if let nhanNut { NhanKhuyenMaiNut(text: nhanNut).zIndex(1) }
                         HStack(spacing: 4) {
                             if let iconNut { Image(systemName: iconNut).font(.system(size: 13, weight: .bold)) }
-                            Text(nut).font(.system(size: nhanNut == nil ? 13 : 14, weight: nhanNut == nil ? .semibold : .bold))
+                            Text(nut).font(.system(size: 14, weight: .bold))
                             Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
                         }
                         .foregroundColor(.white)
-                        .padding(.horizontal, nhanNut == nil ? 14 : 16).padding(.vertical, nhanNut == nil ? 8 : 10)
+                        // Nút CÙNG kiểu cho mọi card (Nạp Xu / Xem chi tiết) — chủ quán 2026-11-08: trước nút không có nhãn nhỏ
+                        // hơn, không bóng, nhìn lệch nhau.
+                        .padding(.horizontal, 16).padding(.vertical, 10)
                         .background(Theme.primaryGradient).clipShape(Capsule())
-                        .shadow(color: nhanNut == nil ? .clear : Theme.primary.opacity(0.35), radius: 6, y: 3)
+                        .shadow(color: Theme.primary.opacity(0.35), radius: 6, y: 3)
                     }
                     .fixedSize()
                 }
