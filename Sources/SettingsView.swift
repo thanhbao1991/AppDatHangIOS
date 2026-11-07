@@ -332,7 +332,7 @@ struct SettingsView: View {
     }
 
     private func congNoCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(giaTri: formatTien(vi.tongNo), mauGiaTri: Theme.danger, chuThich: "Công nợ hiện tại",
+        SoDuCard(tieuDe: "Công nợ", giaTri: formatTien(vi.tongNo), mauGiaTri: Theme.danger, chuThich: "Số tiền đang nợ",
                  nut: "Xem chi tiết", onNut: { showCongNoHienTai = true })
             .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
     }
