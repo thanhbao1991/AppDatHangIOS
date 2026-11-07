@@ -323,7 +323,7 @@ struct SettingsView: View {
     private func xuCard(_ vi: KhachHangVi) -> some View {
         SoDuCard(icon: AnyView(Theme.xuIcon(36)), tieuDe: "Ví Xu", giaTri: SoDuCard.so(vi.soDu),
                  link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", nhanNut: vi.nhanNapXu,
-                 iconNut: "plus.circle.fill", onNut: { showNapXu = true })
+                 onNut: { showNapXu = true }) // không icon ⊕: nút Nạp Xu cùng kiểu nút Xem chi tiết (chủ quán 2026-11-08)
             .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
             .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
             .onChange(of: showNapXu) { dangMo in
