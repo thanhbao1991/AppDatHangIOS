@@ -33,6 +33,9 @@ struct UuDaiView: View {
 
     @State private var boxScale: CGFloat = 1
     @State private var boxRotation: Double = 0
+    // Hộp quà mở (ảnh QuaMo) hiện vài giây sau khi có kết quả; wobble = rung lắc nhẹ định kỳ khi chưa mở và còn lượt.
+    @State private var quaMo = false
+    @State private var wobble: Double = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -243,25 +246,48 @@ struct UuDaiView: View {
 
     // ===== Hộp quà may mắn (thay bánh xe — yêu cầu 2026-09-24 "làm hộp quà cho đơn giản") =====
 
+    /// Còn lượt mà chưa mở: hộp rung lắc nhẹ định kỳ gợi khách chạm (chủ quán 2026-11-07).
+    private var hopQuaCho: Bool { !dangQuay && !quaMo && soLuotConLai > 0 && !loading }
+
     @ViewBuilder
     private var giftBoxView: some View {
         ZStack {
-            // Nền phát sáng phía sau — chỉ 1 icon emoji trơ trên nền trắng nhìn "chìm", vòng sáng
-            // tạo điểm nhấn giống banner ưu đãi thật.
+            // Vòng sáng vàng phía sau, sáng + nở ra khi hộp mở.
             Circle()
                 .fill(RadialGradient(
-                    colors: [Theme.primaryTint, Theme.primaryTint.opacity(0)],
-                    center: .center, startRadius: 4, endRadius: 95))
-                .frame(width: 190, height: 190)
+                    colors: [Color(red: 1, green: 0.84, blue: 0.40).opacity(quaMo ? 0.6 : 0.26), Color(red: 1, green: 0.84, blue: 0.40).opacity(0)],
+                    center: .center, startRadius: 4, endRadius: 120))
+                .frame(width: 250, height: 250)
+                .scaleEffect(quaMo ? 1.18 : 1)
 
-            Text("🎁")
-                .font(.system(size: 92))
-                .scaleEffect(boxScale)
-                .rotationEffect(.degrees(boxRotation))
+            // Ảnh hộp quà vẽ riêng (Gemini 2026-11-07): đóng ↔ mở, đổi mờ dần + nảy nhẹ.
+            ZStack {
+                Image("QuaDong").resizable().scaledToFit()
+                    .opacity(quaMo ? 0 : 1)
+                Image("QuaMo").resizable().scaledToFit()
+                    .opacity(quaMo ? 1 : 0)
+                    .scaleEffect(quaMo ? 1 : 0.82)
+            }
+            .frame(width: 176, height: 176)
+            .scaleEffect(boxScale)
+            .rotationEffect(.degrees(boxRotation + wobble))
         }
-        .opacity(dangQuay || soLuotConLai == 0 ? 0.55 : 1)
-        .contentShape(Circle())
+        .frame(height: 220)
+        .opacity(dangQuay || (soLuotConLai == 0 && !quaMo) ? 0.55 : 1)
+        .saturation(soLuotConLai == 0 && !quaMo ? 0.3 : 1)
+        .contentShape(Rectangle())
         .onTapGesture { onBoxTap() }
+        .task(id: hopQuaCho) {
+            guard hopQuaCho else { wobble = 0; return }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 2_600_000_000)
+                if Task.isCancelled { break }
+                withAnimation(.easeInOut(duration: 0.07).repeatCount(7, autoreverses: true)) { wobble = 7 }
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                withAnimation(.easeOut(duration: 0.15)) { wobble = 0 }
+            }
+            wobble = 0
+        }
     }
 
     private func onBoxTap() {
@@ -275,13 +301,21 @@ struct UuDaiView: View {
         }
         Task {
             await spin()
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
-                boxRotation = 0
-                boxScale = 1.25
-            }
-            try? await Task.sleep(nanoseconds: 220_000_000)
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                boxScale = 1
+            if ketQuaQuay != nil {
+                // Có kết quả: hộp bung mở (ảnh hộp mở + ánh sáng + xu bay), giữ ~2,8s rồi đóng lại.
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.55)) {
+                    boxRotation = 0
+                    boxScale = 1
+                    quaMo = true
+                }
+                try? await Task.sleep(nanoseconds: 2_800_000_000)
+                withAnimation(.easeInOut(duration: 0.4)) { quaMo = false }
+            } else {
+                // Lỗi (đã báo alert): về trạng thái cũ.
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    boxRotation = 0
+                    boxScale = 1
+                }
             }
         }
     }
