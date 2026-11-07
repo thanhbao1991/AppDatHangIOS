@@ -22,7 +22,7 @@ enum NoiDung {
         "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",
         "tangLuotQuaKhiHoanThanh": "🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn",
         "napLanDauTieuDe": "Lần nạp đầu tiên: nhân đôi Xu tặng",
-        "napLanDauMoTa": "Lần đầu được tặng gấp đôi. Từ lần sau, mỗi lần nạp vẫn được tặng Xu theo gói, không giới hạn số lần.",
+        "napLanDauMoTa": "Lần sau nạp vẫn được tặng Xu, không giới hạn số lần.",
         "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
         "donTinhHangGiaiThich": "Chỉ đơn bạn tự đặt qua app mới được tính vào hạng thành viên. Nước lon, ăn vặt và món không pha chế không được tính.",
         "sinhNhatDaNhan": "Bạn đã nhận voucher mừng sinh nhật trong năm nay, phải đợi qua năm mới được sửa.",

@@ -13,8 +13,7 @@ struct NapXuView: View {
     @State private var errorMessage: String?
     @State private var goiChon: GoiNapXu?
 
-    // Lưới 2 cột thay List dọc (07/11/2026 user: "màn nạp cần gọn hơn và hấp dẫn hơn") — 6 gói vừa 1 màn,
-    // số Xu TẶNG là chữ nổi nhất mỗi ô (thứ khách quan tâm), số tiền nạp đứng trên.
+    // Lưới 2 cột thay List dọc (07/11/2026 user: "màn nạp cần gọn hơn và hấp dẫn hơn") — 6 gói vừa 1 màn.
     private let cot = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
     var body: some View {
@@ -29,15 +28,17 @@ struct NapXuView: View {
                                     .buttonStyle(.plain)
                             }
                         }
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(spacing: 6) {
                             Text(NoiDung.napXuGhiChu)
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
                                 .foregroundColor(Theme.textFaint)
                             NavigationLink { TheLeXuView() } label: {
-                                Text("Xem thể lệ Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                                Text("Thể lệ Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
                             }
                         }
-                        .padding(.horizontal, 4)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
                     }
                     .padding(16)
                 }
@@ -63,65 +64,37 @@ struct NapXuView: View {
         }
     }
 
-    private var lanDau: Bool { info?.lanDau == true }
-
-    /// Banner nền màu chủ đạo — câu chữ từ server (NoiDungApp napLanDau*).
+    /// Banner 1 dòng nền màu chủ đạo — câu chữ từ server (NoiDungApp napLanDau*).
     private var bannerLanDau: some View {
-        HStack(spacing: 12) {
-            Text("🎁").font(.system(size: 34))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(NoiDung.text("napLanDauTieuDe")).font(.system(size: 16, weight: .heavy))
-                Text(NoiDung.text("napLanDauMoTa")).font(.system(size: 12)).opacity(0.9)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+        VStack(spacing: 2) {
+            Text("🎁 " + NoiDung.text("napLanDauTieuDe")).font(.system(size: 16, weight: .heavy))
+            Text(NoiDung.text("napLanDauMoTa")).font(.system(size: 12)).opacity(0.85)
         }
+        .multilineTextAlignment(.center)
         .foregroundColor(.white)
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12).padding(.horizontal, 14)
+        .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 16).fill(Theme.primaryGradient))
     }
 
-    /// Gói 100k gắn "Phổ biến" — gói vừa túi đa số khách (chi ~240k/tháng), kéo khách khỏi gói 50k.
-    private func laPhoBien(_ goi: GoiNapXu) -> Bool { goi.soTien == 100_000 }
-
+    /// Ô gói tối giản (07/11/2026 user: "màn đơn giản, ít thông tin nhưng hấp dẫn"): chỉ số tiền + viên vàng
+    /// "+N Xu" (soXuTang backend đã gồm nhân đôi lần đầu — banner đã nói, ô không nhắc lại).
     private func goiO(_ goi: GoiNapXu) -> some View {
-        // Backend trả soXuTang ĐÃ nhân đôi khi lanDau → số gốc = /2 (gạch ngang cho thấy được nhân đôi).
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 10) {
             Text(formatTien(goi.soTien))
-                .font(.system(size: 19, weight: .heavy))
+                .font(.system(size: 20, weight: .heavy))
                 .lineLimit(1).minimumScaleFactor(0.7)
-            HStack(spacing: 4) {
-                Text("🎁").font(.system(size: 13))
-                Text("+\(formatXu(goi.soXuTang))")
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundColor(Color(red: 0.85, green: 0.45, blue: 0))
-                    .lineLimit(1).minimumScaleFactor(0.7)
-            }
-            if lanDau {
-                HStack(spacing: 5) {
-                    Text(formatXu(goi.soXuTang / 2)).strikethrough().foregroundColor(Theme.textFaint)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                    NhapNhayNhanDoi()
-                }
-                .font(.system(size: 11, weight: .semibold))
-            }
-            // Bỏ dòng nhỏ "Nhận … Xu" (07/11/2026 user) — tổng nhận vẫn hiện ở màn QR.
+            Text("+\(formatXu(goi.soXuTang))")
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundColor(Color(red: 0.45, green: 0.25, blue: 0))
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(Capsule().fill(Color(red: 1, green: 0.84, blue: 0.2)))
         }
-        .padding(.horizontal, 12).padding(.vertical, 12)
-        .padding(.top, laPhoBien(goi) ? 6 : 0)
-        .frame(maxWidth: .infinity, minHeight: lanDau ? 96 : 76, alignment: .topLeading)
+        .padding(.vertical, 18).padding(.horizontal, 10)
+        .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)))
-        .overlay(RoundedRectangle(cornerRadius: 16)
-            .stroke(laPhoBien(goi) ? Theme.primary : Theme.divider, lineWidth: laPhoBien(goi) ? 2 : 1))
-        .overlay(alignment: .topTrailing) {
-            if laPhoBien(goi) {
-                Text("Phổ biến")
-                    .font(.system(size: 10, weight: .heavy)).foregroundColor(.white)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.primary))
-                    .padding(6)
-            }
-        }
+        .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
         .contentShape(Rectangle())
     }
 
@@ -133,25 +106,6 @@ struct NapXuView: View {
             return
         }
         info = data
-    }
-}
-
-/// Chip "Nhân đôi" nhấp nháy khi khách nạp lần đầu. Không dùng "x2" (07/11/2026): "x2" đứng riêng dễ bị đọc
-/// là "chỉ được tặng 2 lần".
-private struct NhapNhayNhanDoi: View {
-    @State private var sang = true
-
-    var body: some View {
-        Text("Nhân đôi")
-            .font(.system(size: 10, weight: .heavy))
-            .foregroundColor(Color(red: 0.45, green: 0.25, blue: 0))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(Color(red: 1, green: 0.84, blue: 0.2)))
-            .opacity(sang ? 1 : 0.35)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { sang = false }
-            }
     }
 }
 
