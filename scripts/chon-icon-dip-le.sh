@@ -4,7 +4,7 @@
 # icon theo bản cập nhật khi tiện + đổi theo server có popup khi bản cài chưa kịp.)
 #
 # - Dịp đang trong cửa sổ icon của server (7 ngày trước → 14 ngày sau lễ, GET /dat-hang/dip-le/hien-thi → maIcon),
-#   hoặc dịp có icon sắp bắt đầu trong SO_NGAY_TRUOC ngày tới (GET /dip-le/sap-toi) → chép ảnh
+#   hoặc dịp có icon sắp bắt đầu trong SO_NGAY_TRUOC (31) ngày tới — tức đẩy store tháng nào thì tranh thủ icon lễ của tháng đó (GET /dip-le/sap-toi) → chép ảnh
 #   Assets.xcassets/AppIcon-<MA>.appiconset đè lên AppIcon.appiconset (cùng tên file).
 # - Ghi DennIconDip (<MA> hoặc rỗng) vào Info.plist — app đọc để biết icon chính đang đóng gói là dịp nào
 #   (xem AppIconSwitcher.iconMucTieu): server muốn đúng icon đó thì khỏi đổi (không popup), lệch thì app tự đổi
@@ -13,7 +13,7 @@
 set -uo pipefail
 
 API="https://api.denncoffee.com/api/dat-hang"
-SO_NGAY_TRUOC=30
+SO_NGAY_TRUOC=31
 ICONS="Assets.xcassets"
 export TZ="Asia/Ho_Chi_Minh"
 TODAY=$(date +%F)
