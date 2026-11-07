@@ -105,13 +105,11 @@ struct NapXuView: View {
                 }
                 .font(.system(size: 11, weight: .semibold))
             }
-            Text("Nhận \(formatXu(goi.tongXuNhan))")
-                .font(.system(size: 11)).foregroundColor(Theme.textMuted)
-                .lineLimit(1).minimumScaleFactor(0.7)
+            // Bỏ dòng nhỏ "Nhận … Xu" (07/11/2026 user) — tổng nhận vẫn hiện ở màn QR.
         }
         .padding(.horizontal, 12).padding(.vertical, 12)
         .padding(.top, laPhoBien(goi) ? 6 : 0)
-        .frame(maxWidth: .infinity, minHeight: lanDau ? 118 : 100, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: lanDau ? 96 : 76, alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)))
         .overlay(RoundedRectangle(cornerRadius: 16)
             .stroke(laPhoBien(goi) ? Theme.primary : Theme.divider, lineWidth: laPhoBien(goi) ? 2 : 1))
