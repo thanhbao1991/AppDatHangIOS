@@ -301,8 +301,9 @@ enum SeasonalEvent {
     }
 
     static func canHienSplash() -> Bool {
-        guard let theme = active else { return false }
-        return UserDefaults.standard.string(forKey: khoaSplashDaXem) != "\(theme.maDaiDien)|\(homNay())"
+        // Chủ quán 2026-11-07: đẹp thì cho hiện MỖI LẦN mở app (cold launch) suốt cửa sổ giao diện (~4 ngày), không
+        // giới hạn 1 lần/ngày nữa. Quay lại từ nền không hiện (ContentView chỉ gọi lúc khởi động).
+        return active != nil
     }
 
     static func danhDauDaHienSplash() {
