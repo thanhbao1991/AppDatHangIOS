@@ -151,8 +151,8 @@ enum SeasonalTheme: CaseIterable, Equatable {
     static let manChaoLogoRong: CGFloat = 0.58
     var manChaoChuY: CGFloat { 0.50 }
 
-    /// Ảnh nền SÁNG (hồng) — chữ chúc dùng màu đậm của dịp thay vì trắng.
-    var manChaoChuToi: Bool { self == .valentine }
+    /// Ảnh nền SÁNG — chữ chúc + logo dùng màu đậm của dịp thay vì trắng. Hiện chưa dịp nào cần (Valentine nền đã hồng đậm).
+    var manChaoChuToi: Bool { false }
 
     #if DEV_LOGIN
     /// Câu chúc MẪU chỉ dùng khi bấm "🧪 Xem trước" (chưa có voucher thật đang hiệu lực để lấy
