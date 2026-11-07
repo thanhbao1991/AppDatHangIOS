@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Màn thoáng qua lúc mở app khi đang dịp lễ, kiểu banner flash sale Shopee — tự tắt sau ~1.8s, chạm
+/// Màn thoáng qua lúc mở app khi đang dịp lễ, kiểu banner flash sale Shopee — tự tắt sau ~1.5s, chạm
 /// vào tắt ngay. Nội dung lấy thẳng SeasonalEvent.active/bannerTitle/bannerSubtitle (câu chúc dịp lễ
 /// có sẵn), KHÔNG phải banner khuyến mãi tự nhập riêng. Chỉ hiện 1 lần/ngày, xem
 /// SeasonalEvent.canHienSplash/danhDauDaHienSplash.
@@ -23,7 +23,7 @@ struct SeasonalSplashView: View {
         .onTapGesture { dismiss() }
         .onAppear {
             withAnimation(.easeOut(duration: 0.25)) { visible = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { dismiss() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
         }
     }
 
