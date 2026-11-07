@@ -21,7 +21,6 @@ struct NapXuView: View {
             if let info {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        if info.lanDau == true { bannerLanDau }
                         LazyVGrid(columns: cot, spacing: 12) {
                             ForEach(info.goi, id: \.self) { goi in
                                 Button { goiChon = goi } label: { goiO(goi) }
@@ -64,39 +63,44 @@ struct NapXuView: View {
         }
     }
 
-    /// Banner 1 dòng nền màu chủ đạo — câu chữ từ server (NoiDungApp napLanDau*).
-    private var bannerLanDau: some View {
-        VStack(spacing: 2) {
-            Text("🎁 " + NoiDung.text("napLanDauTieuDe")).font(.system(size: 16, weight: .heavy))
-            Text(NoiDung.text("napLanDauMoTa")).font(.system(size: 12)).opacity(0.85)
-        }
-        .multilineTextAlignment(.center)
-        .foregroundColor(.white)
-        .padding(.vertical, 12).padding(.horizontal, 14)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Theme.primaryGradient))
-    }
-
     /// Ô gói tối giản (07/11/2026 user: "màn đơn giản, ít thông tin nhưng hấp dẫn"): chỉ số tiền + viên vàng
-    /// "+N Xu" (soXuTang backend đã gồm nhân đôi lần đầu — banner đã nói, ô không nhắc lại).
+    /// "+N Xu". Lần nạp đầu: backend đã trả soXuTang nhân đôi và viên vàng NHẤP NHÁY để thể hiện x2 (user 2026-11-07, thay
+    /// banner chữ); từ lần sau backend trả giá trị gốc và viên vàng đứng yên.
     private func goiO(_ goi: GoiNapXu) -> some View {
         VStack(spacing: 10) {
             Text(formatTien(goi.soTien))
                 .font(.system(size: 20, weight: .heavy))
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text("+\(formatXu(goi.soXuTang))")
-                .font(.system(size: 13, weight: .heavy))
-                .foregroundColor(Theme.xuTangChu)
-                .lineLimit(1).minimumScaleFactor(0.7)
-                .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(Theme.xuTangNen))
-                .overlay(Capsule().stroke(Theme.xuTangVien, lineWidth: 1))
+            chipXu(goi)
         }
         .padding(.vertical, 18).padding(.horizontal, 10)
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)))
         .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func chipXu(_ goi: GoiNapXu) -> some View {
+        let chip = Text("+\(formatXu(goi.soXuTang))")
+            .font(.system(size: 13, weight: .heavy))
+            .foregroundColor(Theme.xuTangChu)
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background(Capsule().fill(Theme.xuTangNen))
+            .overlay(Capsule().stroke(Theme.xuTangVien, lineWidth: 1))
+        if info?.lanDau == true {
+            // Nhấp nháy theo thời gian (TimelineView) — mọi viên nháy đồng bộ, không bị animation khác cắt giữa chừng.
+            TimelineView(.animation(minimumInterval: 1.0 / 30)) { tl in
+                let p = (sin(tl.date.timeIntervalSinceReferenceDate * 2 * .pi * 1.1) + 1) / 2
+                chip
+                    .opacity(0.55 + 0.45 * p)
+                    .scaleEffect(1 + 0.06 * p)
+                    .shadow(color: Color.orange.opacity(0.55 * p), radius: 7)
+            }
+        } else {
+            chip
+        }
     }
 
     private func load() async {
