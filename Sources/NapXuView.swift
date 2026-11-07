@@ -86,10 +86,11 @@ struct NapXuView: View {
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text("+\(formatXu(goi.soXuTang))")
                 .font(.system(size: 13, weight: .heavy))
-                .foregroundColor(Color(red: 0.45, green: 0.25, blue: 0))
+                .foregroundColor(Theme.xuTangChu)
                 .lineLimit(1).minimumScaleFactor(0.7)
                 .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Capsule().fill(Color(red: 1, green: 0.84, blue: 0.2)))
+                .background(Capsule().fill(Theme.xuTangNen))
+                .overlay(Capsule().stroke(Theme.xuTangVien, lineWidth: 1))
         }
         .padding(.vertical, 18).padding(.horizontal, 10)
         .frame(maxWidth: .infinity)

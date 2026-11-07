@@ -60,6 +60,11 @@ enum Theme {
     static let warning = Color(red: 0xF9 / 255, green: 0xA8 / 255, blue: 0x25 / 255)
     static let textMuted = Color(red: 0x66 / 255, green: 0x66 / 255, blue: 0x66 / 255)
     static let textFaint = Color(red: 0x99 / 255, green: 0x99 / 255, blue: 0x99 / 255)
+    /// Viên "Xu tặng" (nhãn nút Nạp Xu, ô gói nạp) — vàng kem dịu + chữ hổ phách (07/11/2026: vàng chói
+    /// #FFD633 lệch tông với nền xám/xanh của hạng, user chê "màu hơi xấu").
+    static let xuTangNen = Color(red: 1, green: 0.953, blue: 0.839)
+    static let xuTangChu = Color(red: 0.706, green: 0.325, blue: 0.035)
+    static let xuTangVien = Color(red: 0.961, green: 0.831, blue: 0.541)
     static let divider = Color(red: 0xEE / 255, green: 0xEE / 255, blue: 0xEE / 255)
     /// Nền xám trung tính như cũ — dịp lễ thì đổi sang tông kem ấm của dịp (SeasonalTheme.surface).
     static var bg: Color {
@@ -319,10 +324,11 @@ struct SoDuCard: View {
         var body: some View {
             Text("🎁 \(text)")
                 .font(.system(size: 10, weight: .heavy))
-                .foregroundColor(Color(red: 0.45, green: 0.25, blue: 0))
+                .foregroundColor(Theme.xuTangChu)
                 .lineLimit(1)
                 .padding(.horizontal, 7).padding(.vertical, 2)
-                .background(Capsule().fill(Color(red: 1, green: 0.84, blue: 0.2)))
+                .background(Capsule().fill(Theme.xuTangNen))
+                .overlay(Capsule().stroke(Theme.xuTangVien, lineWidth: 1))
                 .overlay(Capsule().stroke(Color.white, lineWidth: 1.5))
                 .scaleEffect(phong ? 1.08 : 1)
                 .onAppear {
