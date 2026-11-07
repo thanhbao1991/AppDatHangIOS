@@ -33,6 +33,13 @@ struct SeasonalSplashView: View {
         GeometryReader { geo in
             Image(uiImage: anh).resizable().scaledToFill()
                 .frame(width: geo.size.width, height: geo.size.height).clipped()
+            // Logo gốc vẽ chung một chỗ/cỡ cho mọi dịp (ảnh nền không có logo).
+            // Nền sáng (Valentine) thì logo màu đậm của dịp thay vì trắng.
+            Image("LogoDenn").renderingMode(theme.manChaoChuToi ? .template : .original).resizable().scaledToFit()
+                .foregroundColor(theme.manChaoChuToi ? theme.primaryDark : .white)
+                .frame(width: geo.size.width * SeasonalTheme.manChaoLogoRong)
+                .shadow(color: .black.opacity(0.28), radius: 6, y: 1)
+                .position(x: geo.size.width / 2, y: geo.size.height * SeasonalTheme.manChaoLogoY)
             chuChuc
                 .frame(width: geo.size.width)
                 .position(x: geo.size.width / 2, y: geo.size.height * theme.manChaoChuY)

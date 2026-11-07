@@ -144,27 +144,12 @@ enum SeasonalTheme: CaseIterable, Equatable {
         }
     }
 
-    /// Màn chào ảnh riêng (ManChaoCache, tải từ server): tâm khối chữ chúc theo chiều cao màn hình — nằm giữa logo (mỗi ảnh logo một
-    /// độ cao) và đồ trang trí dưới. Chỉnh theo ảnh thật, thêm dịp mới nhớ chỉnh dòng này.
-    var manChaoChuY: CGFloat {
-        switch self {
-        case .noel: return 0.53
-        case .tetDuong: return 0.50
-        case .tet: return 0.68
-        case .valentine: return 0.52
-        case .quocTePhuNu: return 0.50
-        case .gioTo: return 0.68
-        case .thongNhat: return 0.56
-        case .doanNgo: return 0.54
-        case .thieuNhi: return 0.68
-        case .thuongBinh: return 0.55
-        case .vuLan: return 0.50
-        case .quocKhanh: return 0.57
-        case .trungThu: return 0.66
-        case .phuNuVietNam: return 0.56
-        case .nhaGiao: return 0.55
-        }
-    }
+    /// Màn chào ảnh riêng (ManChaoCache, tải từ server): ảnh nền KHÔNG có logo — app vẽ logo gốc ở cùng một chỗ, cùng một cỡ
+    /// cho mọi dịp (chủ quán 2026-11-07: logo lúc to lúc nhỏ, lúc cao lúc thấp trông thiếu đồng bộ). Tâm logo / bề rộng logo /
+    /// tâm khối chữ chúc tính theo chiều cao-rộng màn hình. Ảnh nền mới phải để trống vùng giữa-trên (khoảng 20–60% chiều cao).
+    static let manChaoLogoY: CGFloat = 0.30
+    static let manChaoLogoRong: CGFloat = 0.58
+    var manChaoChuY: CGFloat { 0.50 }
 
     /// Ảnh nền SÁNG (hồng) — chữ chúc dùng màu đậm của dịp thay vì trắng.
     var manChaoChuToi: Bool { self == .valentine }
