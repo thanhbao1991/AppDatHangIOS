@@ -42,6 +42,11 @@ final class AppIconSwitcherTests: XCTestCase {
         XCTAssertNil(AppIconSwitcher.iconMucTieu(maIcon: nil, iconHienTai: nil, lanDoiCuoi: nil, bayGio: bayGio, iconDongGoi: ""))
     }
 
+    func testDangIconPhuTrungHinhIconChinhMoi_KhongDoiLaiTranhPopupThua() {
+        // Cập nhật bản có icon chính NOEL khi máy đang ở icon phụ AppIcon-NOEL, server vẫn muốn NOEL → giữ nguyên.
+        XCTAssertEqual(AppIconSwitcher.iconMucTieu(maIcon: "NOEL", iconHienTai: "AppIcon-NOEL", lanDoiCuoi: truoc(30), bayGio: bayGio, iconDongGoi: "NOEL"), "AppIcon-NOEL")
+    }
+
     func testMaChuaCoIconTrongBanNay_IconQuan() {
         XCTAssertNil(AppIconSwitcher.iconMucTieu(maIcon: "KHONGCO", iconHienTai: nil, lanDoiCuoi: nil, bayGio: bayGio))
     }

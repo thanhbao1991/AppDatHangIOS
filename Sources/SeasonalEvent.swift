@@ -347,6 +347,11 @@ enum AppIconSwitcher {
                             iconDongGoi: String? = nil) -> String? {
         let muon = maIcon.flatMap { maCoIcon.contains($0) ? $0 : nil }
         let dongGoi = iconDongGoi.flatMap { $0.isEmpty ? nil : $0 }
+        // Hình đang hiện trên máy: icon chính = dịp đóng gói (hoặc quán), icon phụ = tên sau "AppIcon-" (QUAN = quán).
+        // Đã đúng hình server muốn thì KHÔNG đổi (kể cả khi đang ở icon phụ trông giống icon chính — tránh popup thừa
+        // sau khi cập nhật bản có icon chính mới).
+        let dangHien: String? = iconHienTai.map { $0 == "AppIcon-QUAN" ? nil : String($0.dropFirst("AppIcon-".count)) } ?? dongGoi
+        if dangHien == muon { return iconHienTai }
         let muonDoi: String? = muon == dongGoi ? nil : "AppIcon-\(muon ?? "QUAN")"
         guard muonDoi != iconHienTai else { return iconHienTai }
         if let lanDoiCuoi, bayGio.timeIntervalSince(lanDoiCuoi) < Double(soNgayToiThieu) * 86_400 {
