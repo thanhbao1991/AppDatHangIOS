@@ -22,13 +22,14 @@ enum ManChaoCache {
     }
 
     /// `duongDan` = DipLe.anhManChao từ server ("/man-chao-dip-le/NOEL.jpg?v=abc"); nil (xem trước) = đường dẫn mặc định,
-    /// đã có ảnh thì không tải lại. Lỗi mạng/404 bỏ qua im lặng — màn chào tự về bộ dự phòng.
+    /// luôn tải lại. Lỗi mạng/404 bỏ qua im lặng — màn chào tự về bộ dự phòng.
     static func taiNeuCan(ma: String, duongDan: String?) async {
         let ud = UserDefaults.standard
         let coSan = FileManager.default.fileExists(atPath: file(ma).path)
         let path = duongDan ?? "/man-chao-dip-le/\(ma).jpg"
         let phienBan = URLComponents(string: path)?.queryItems?.first(where: { $0.name == "v" })?.value
-        if coSan, phienBan == nil || ud.string(forKey: khoaPhienBan(ma)) == phienBan { return }
+        // duongDan nil = xem trước (bản dev): luôn tải lại để thấy ảnh mới nhất trên server, không kẹt ảnh cũ trong máy.
+        if coSan, duongDan != nil, ud.string(forKey: khoaPhienBan(ma)) == phienBan { return }
         guard let url = URL(string: path, relativeTo: goc)?.absoluteURL else { return }
         var req = URLRequest(url: url)
         req.timeoutInterval = 3
