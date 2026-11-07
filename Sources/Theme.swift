@@ -279,8 +279,9 @@ struct SoDuCard: View {
     var body: some View {
         cardBox {
             if let tieuDe {
+                // Canh TRÁI như tiêu đề card Địa chỉ giao hàng / Ngày sinh ở tab Tài khoản.
                 Text(tieuDe).font(.system(size: 16, weight: .bold))
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Divider()
             }
             HStack(alignment: .center, spacing: 12) {
