@@ -26,13 +26,16 @@ enum ManChaoCache {
     static func taiNeuCan(ma: String, duongDan: String?) async {
         let ud = UserDefaults.standard
         let coSan = FileManager.default.fileExists(atPath: file(ma).path)
-        let path = duongDan ?? "/man-chao-dip-le/\(ma).jpg"
+        // Xem trước (duongDan nil): thêm ?t= để vượt cache Cloudflare (max-age 4h) — nếu không vẫn nhận ảnh cũ.
+        let path = duongDan ?? "/man-chao-dip-le/\(ma).jpg?t=\(Int(Date().timeIntervalSince1970))"
         let phienBan = URLComponents(string: path)?.queryItems?.first(where: { $0.name == "v" })?.value
         // duongDan nil = xem trước (bản dev): luôn tải lại để thấy ảnh mới nhất trên server, không kẹt ảnh cũ trong máy.
         if coSan, duongDan != nil, ud.string(forKey: khoaPhienBan(ma)) == phienBan { return }
         guard let url = URL(string: path, relativeTo: goc)?.absoluteURL else { return }
         var req = URLRequest(url: url)
         req.timeoutInterval = 3
+        // URLSession.shared giữ ảnh theo Cache-Control max-age 4h của server → bỏ cache cục bộ để luôn lấy ảnh mới.
+        req.cachePolicy = .reloadIgnoringLocalCacheData
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
               (resp as? HTTPURLResponse)?.statusCode == 200,
               UIImage(data: data) != nil else { return }
