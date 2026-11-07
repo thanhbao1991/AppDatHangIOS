@@ -105,6 +105,8 @@ struct DipLe: Decodable, Equatable {
     var hangToiThieu: String?
     /// Đường dẫn ảnh màn chào (kèm ?v=hash) — xem ManChaoCache. Chỉ có ở /dip-le/hien-thi.
     var anhManChao: String?
+    /// Dịp này có đổi icon không — app đổi icon SAU màn chào nếu icon trên máy chưa khớp (xem SeasonalEvent.doiIconSauManChao).
+    var doiIcon: Bool?
 }
 
 /// Server quyết định icon + giao diện dịp lễ hôm nay (DipLeLich ở Backend, cửa sổ trước/sau lễ khác nhau

@@ -29,6 +29,7 @@ struct ContentView: View {
                 SeasonalSplashView(theme: theme) {
                     SeasonalEvent.danhDauDaHienSplash()
                     seasonalSplash = nil
+                    SeasonalEvent.doiIconSauManChao()
                 }
                 .zIndex(10)
             }

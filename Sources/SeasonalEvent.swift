@@ -267,7 +267,6 @@ enum SeasonalEvent {
         maIcon = kq.maIcon
         giuIcon = kq.giuIcon
         Theme.applyNavBarAppearance()
-        capNhatIcon()
         NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
         // Ảnh màn chào tải ngầm khi dịp vào cửa sổ giao diện (xem ManChaoCache) — cold launch ngày đầu thì
         // ContentView chờ tải xong (tối đa vài giây) rồi mới hiện màn chào.
@@ -304,20 +303,31 @@ enum SeasonalEvent {
         UserDefaults.standard.set("\(theme.maDaiDien)|\(homNay())", forKey: khoaSplashDaXem)
     }
 
+    /// Icon đổi SAU màn chào dịp lễ (chủ quán 2026-11-07: bỏ đổi icon theo lịch server, chỉ theo bản cập nhật + đổi khi
+    /// màn chào hiện mà icon chưa khớp dịp). Dịp không đổi icon (doiIcon false) thì giữ nguyên. iOS hiện popup đổi icon —
+    /// đúng lúc khách vừa thấy màn chào nên có lý do. Giãn ≥7 ngày giữa 2 lần đổi (AppIconSwitcher).
     @MainActor
-    static func capNhatIcon() {
+    static func doiIconSauManChao() {
         #if DEV_LOGIN
-        // Bản dev đổi icon không popup (xem capNhat) → không cần giãn cách, bật/tắt xem trước thấy ngay.
         if let previewOverride {
             AppIconSwitcher.capNhat(maIcon: previewOverride.maDaiDien, boQuaGianCach: true)
             return
         }
         #endif
-        guard !giuIcon else { return }
+        guard let dl = dipLe, dl.doiIcon == true else { return }
         #if DEV_LOGIN
-        AppIconSwitcher.capNhat(maIcon: maIcon, boQuaGianCach: true)
+        AppIconSwitcher.capNhat(maIcon: dl.ma, boQuaGianCach: true)
         #else
-        AppIconSwitcher.capNhat(maIcon: maIcon)
+        AppIconSwitcher.capNhat(maIcon: dl.ma)
+        #endif
+    }
+
+    /// Bản dev: bật/tắt "xem trước dịp lễ" ở Tài khoản đổi icon luôn (tắt xem trước → về icon dịp đang thật, hoặc icon quán).
+    @MainActor
+    static func capNhatIcon() {
+        #if DEV_LOGIN
+        let ma = previewOverride?.maDaiDien ?? (dipLe?.doiIcon == true ? dipLe?.ma : nil)
+        AppIconSwitcher.capNhat(maIcon: ma, boQuaGianCach: true)
         #endif
     }
 }
