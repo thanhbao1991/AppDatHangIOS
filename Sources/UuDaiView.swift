@@ -192,19 +192,29 @@ struct UuDaiView: View {
 
             giftBoxView.frame(maxWidth: .infinity, alignment: .center)
 
-            if dangQuay {
-                Text("Đang mở...")
-                    .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else if soLuotConLai == 0 {
-                Text("Mời bạn quay lại vào ngày mai nhé")
-                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else if soLuotConLai > 0 {
-                Text("👆 Chạm vào hộp quà để mở — còn \(soLuotConLai) lượt")
-                    .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
-                    .frame(maxWidth: .infinity, alignment: .center)
+            // Dòng trạng thái + nút ⓘ ở CUỐI dòng (chủ quán 2026-11-07, thay tiêu đề đã bỏ). ⓘ chứa câu ghi rõ Apple không tài
+            // trợ chương trình quà tặng — App Store Review Guideline 5.3.2 (26/10/2026) — nên hiện ở mọi trạng thái.
+            HStack(spacing: 5) {
+                if dangQuay {
+                    Text("Đang mở...")
+                        .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.primary)
+                } else if soLuotConLai == 0 {
+                    Text("Mời bạn quay lại vào ngày mai nhé")
+                        .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                } else if soLuotConLai > 0 {
+                    Text("👆 Chạm vào hộp quà để mở — còn \(soLuotConLai) lượt")
+                        .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
+                }
+                Button {
+                    alertMessage = ("Hộp quà may mắn", NoiDung.hopQuaTaiTro)
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.textMuted)
+                }
+                .buttonStyle(.plain)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
 
             #if DEV_LOGIN
             // Phiên dev-login chỉ đọc (server chặn mọi thao tác ghi → không mở quà thật được): nút này chạy đúng hiệu ứng mở
@@ -224,19 +234,6 @@ struct UuDaiView: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity, alignment: .center)
-        }
-        // Bỏ tiêu đề "Hộp quà may mắn" (chủ quán thử 2026-11-07) nhưng GIỮ nút ⓘ: App Store Review Guideline 5.3.2 —
-        // chương trình quà tặng phải ghi rõ Apple không tài trợ; câu này nằm trong ⓘ (26/10/2026).
-        .overlay(alignment: .topTrailing) {
-            Button {
-                alertMessage = ("Hộp quà may mắn", NoiDung.hopQuaTaiTro)
-            } label: {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 18))
-                    .foregroundColor(Theme.textMuted)
-                    .padding(.horizontal, 22).padding(.vertical, 20)
-            }
-            .buttonStyle(.plain)
         }
     }
 
