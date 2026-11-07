@@ -266,6 +266,8 @@ struct SoDuCard: View {
     /// Tiêu đề card (vd "Ví Xu") + đường kẻ — nil thì không hiện (card Công nợ).
     var tieuDe: String? = nil
     let giaTri: String
+    /// Đơn vị viết nhỏ SAU số (vd "Xu", "đ") — cùng kiểu cho card Ví Xu và Công nợ (chủ quán 2026-11-08).
+    var donVi: String? = nil
     var mauGiaTri: Color = .primary
     var chuThich: String = ""
     /// Link nhỏ cạnh chú thích (vd "Lịch sử") — nil thì không hiện
@@ -297,7 +299,9 @@ struct SoDuCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         if let icon { icon }
-                        Text(giaTri).font(.system(size: 30, weight: .bold)).foregroundColor(mauGiaTri)
+                        (Text(giaTri).font(.system(size: 30, weight: .bold))
+                            + Text(donVi.map { " \($0)" } ?? "").font(.system(size: 16, weight: .semibold)))
+                            .foregroundColor(mauGiaTri)
                             .lineLimit(1).minimumScaleFactor(0.7)
                     }
                     // chuThich rỗng (chủ quán 2026-11-08 bỏ dòng "Số dư hiện tại"/"Số tiền đang nợ") → không hiện chữ; còn link

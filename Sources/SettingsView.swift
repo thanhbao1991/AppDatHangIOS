@@ -321,7 +321,7 @@ struct SettingsView: View {
     /// Xu và Công nợ: 2 card riêng cùng kiểu SoDuCard với card Xu tab Ưu đãi (2026-10-26, trước gộp chung
     /// 1 card chia 2 cột). Công nợ chỉ hiện khi đang nợ.
     private func xuCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(icon: AnyView(Theme.xuIcon(36)), tieuDe: "Ví Xu", giaTri: SoDuCard.so(vi.soDu),
+        SoDuCard(tieuDe: "Ví Xu", giaTri: SoDuCard.so(vi.soDu), donVi: "Xu",
                  link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", nhanNut: vi.nhanNapXu,
                  onNut: { showNapXu = true }) // không icon ⊕: nút Nạp Xu cùng kiểu nút Xem chi tiết (chủ quán 2026-11-08)
             .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
@@ -332,7 +332,7 @@ struct SettingsView: View {
     }
 
     private func congNoCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(tieuDe: "Công nợ", giaTri: formatTien(vi.tongNo), mauGiaTri: Theme.danger,
+        SoDuCard(tieuDe: "Công nợ", giaTri: SoDuCard.so(vi.tongNo), donVi: "đ", mauGiaTri: Theme.danger,
                  nut: "Xem chi tiết", onNut: { showCongNoHienTai = true })
             .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
     }
