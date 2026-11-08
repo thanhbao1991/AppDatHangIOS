@@ -353,11 +353,19 @@ struct SettingsView: View {
         return (Double(ngay) / Double(soNgay), soNgay - ngay + 1, "1/\(thangSau)")
     }
 
+    private func hopQuaXu(_ nhan: String, _ xu: Double) -> some View {
+        HStack(spacing: 4) {
+            Text("🎁")
+            Text(nhan).foregroundColor(.white.opacity(0.78))
+            Text(formatXu(xu)).fontWeight(.heavy).foregroundColor(.white)
+        }
+    }
+
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi) -> String {
         let t = Self.tienDoThang()
-        var dong = ["Mỗi 300.000đ chi tiêu trong tháng (đặt qua app hoặc mua tại quán) được 10.000 Xu, cộng vào ví ngày \(t.ngayNhan)."]
-        if let xu = vi.thuongXuHangHienTai, xu > 0 { dong.append("Tháng này bạn đã tích \(formatXu(xu)).") }
+        var dong = ["Mỗi 300.000đ đặt qua app được 10.000 Xu; mua tại quán được một nửa (5.000 Xu). Xu cộng vào ví ngày \(t.ngayNhan)."]
+        dong.append("Tháng này: 🎁 App \(formatXu(vi.xuDonAppThangNay ?? 0)) · 🎁 Tại quán \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
     }
@@ -405,8 +413,11 @@ struct SettingsView: View {
                     Text("Còn \(t.conLai) ngày")
                         .foregroundColor(.white.opacity(0.78))
                     Spacer(minLength: 8)
-                    Text("🎁 \(formatXu(vi.thuongXuHangHienTai ?? 0)) · ngày \(t.ngayNhan)")
-                        .fontWeight(.heavy).foregroundColor(.white)
+                    // 2 hộp quà (08/11/2026): Xu từ đơn đặt qua app và Xu từ đơn mua tại quán (×0,5).
+                    HStack(spacing: 12) {
+                        hopQuaXu("App", vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0)
+                        hopQuaXu("Quán", vi.xuDonQuayThangNay ?? 0)
+                    }
                 }
                 .font(.system(size: 12, weight: .semibold))
             }

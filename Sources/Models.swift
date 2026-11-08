@@ -656,6 +656,9 @@ struct KhachHangVi: Decodable {
     // Thưởng hạng bằng Xu (từ 11/2026): giữ hạng tới cuối tháng → ngày 1 nhận thuongXuHangHienTai; lên
     // hangTiepTheo → nhận thuongXuHangTiepTheo. Optional để không vỡ decode với backend cũ.
     var thuongXuHangHienTai: Double? = nil
+    // Tách theo nguồn (08/11/2026): Xu từ đơn đặt qua app (×1) và đơn mua tại quán (×0,5) — 2 hộp quà trên thẻ hạng.
+    var xuDonAppThangNay: Double? = nil
+    var xuDonQuayThangNay: Double? = nil
     var thuongXuHangTiepTheo: Double? = nil
     // Cấp trong hạng (30/10/2026): "Bạc II", "Vàng III"… — hiện tên này; màu thẻ/biểu tượng vẫn theo `hang`.
     // Cấp kế tiếp = mốc 300k kế tiếp (mỗi cấp thêm 10k Xu). Backend cũ không có thì dùng hạng như trước.
