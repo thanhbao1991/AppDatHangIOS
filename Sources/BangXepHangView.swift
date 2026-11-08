@@ -279,10 +279,11 @@ struct BangXepHangView: View {
                                                      startPoint: .leading, endPoint: .trailing))
                       : AnyShapeStyle(Color.white))
         )
+        // Chủ quán 09/11/2026: hạng có quà (top 4) không cần khung viền — chỉ tô nền vàng nhạt.
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(coQua ? Color(red: 0.95, green: 0.78, blue: 0.40) : (d.laBan ? Theme.primary : Color.black.opacity(0.04)),
-                        lineWidth: coQua || d.laBan ? 1.5 : 1)
+                .stroke(d.laBan && !coQua ? Theme.primary : Color.black.opacity(coQua ? 0 : 0.04),
+                        lineWidth: d.laBan && !coQua ? 1.5 : 1)
         )
     }
 

@@ -168,14 +168,14 @@ struct SettingsView: View {
         if loading {
             fullScreenLoading()
         } else {
-            List {
+            // Thiết kế lại 09/11/2026: ScrollView + thẻ TK (TaiKhoanUI.swift) thay List — đồng bộ với thẻ hạng/bảng xếp
+            // hạng và các màn con. Không còn lỗi "nhiều Button trong 1 row List" vì không dùng List nữa.
+            ScrollView {
+              VStack(spacing: TK.khoangCach) {
                 if let vi {
                     #if DEV_LOGIN
-                    cardRow(topExtra: 6) { diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi) }
-                    // Bọc cardBox (nền trắng) cho đồng bộ với các card khác — Button trần nằm thẳng trên
-                    // nền List lạc nhịp.
-                    cardRow {
-                        cardBox {
+                    diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
+                    Group {
                             Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
                                 xemTruocNgay1.toggle()
                                 if xemTruocNgay1 {
@@ -184,10 +184,7 @@ struct SettingsView: View {
                                 }
                             }
                             .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
-                        }
-                    }
-                    cardRow {
-                        cardBox {
+                            .tkThe(dem: 12)
                         Button(seasonalPreviewLabel) {
                             // Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp 5 dịp vào 1 nút thay vì 5
                             // nút riêng, đỡ chật danh sách.
@@ -213,20 +210,22 @@ struct SettingsView: View {
                             }
                         }
                         .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
-                        }
+                        .tkThe(dem: 12)
                     }
                     #else
-                    cardRow(topExtra: 6) { diemHangCard(vi) }
+                    diemHangCard(vi)
                     #endif
-                    cardRow { xuCard(vi) }
-                    if vi.tongNo > 0 { cardRow { congNoCard(vi) } }
+                    xuCard(vi)
+                    if vi.tongNo > 0 { congNoCard(vi) }
                 }
 
-                cardRow { thongTinCaNhanCard }
-                cardRow { ngaySinhCard }
-                cardRow { danhGiaCard }
+                thongTinCaNhanCard
+                ngaySinhCard
+                danhGiaCard
+              }
+              .tkManHinh()
             }
-            .cardListBackground()
+            .background(Theme.bg)
             // Dựng lại cả List khi dịp đổi (card hạng, nút Nạp Xu… đều lấy màu dịp) — chỉ khi dịp THẬT SỰ đổi nên
             // mở lại app cùng dịp không bị nhảy vị trí cuộn.
             .id(themeTick)
@@ -299,21 +298,20 @@ struct SettingsView: View {
     /// Mời khách đánh giá — popup đánh giá chuẩn của iOS (StoreKit requestReview), KHÔNG kèm bất kỳ
     /// quà/voucher/Xu nào (vi phạm chính sách Apple nếu gắn khuyến khích). requestReview không
     /// cần App Store id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
+    /// Thẻ "Khác": Thể lệ Xu + Đánh giá App Store (09/11/2026 gom kiểu Cài đặt).
     private var danhGiaCard: some View {
-        cardBox {
-            // Gọn 1 dòng (chủ quán 2026-11-08: "bớt chữ các card") — trước có tiêu đề + câu mời + link riêng.
-            Button {
-                moDanhGia()
-            } label: {
-                HStack {
-                    Text("⭐ Đánh giá Đenn trên App Store").font(.system(size: 14, weight: .semibold))
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
-                }
-                .foregroundColor(.primary)
+        VStack(spacing: 0) {
+            NavigationLink { TheLeXuView() } label: {
+                TKDong(icon: "doc.text.fill", mau: .orange, tieuDe: "Thể lệ Xu")
+            }
+            .buttonStyle(.plain)
+            TKKe()
+            Button { moDanhGia() } label: {
+                TKDong(icon: "star.fill", mau: .yellow, tieuDe: "Đánh giá Đenn trên App Store")
             }
             .buttonStyle(.plain)
         }
+        .tkThe(dem: 12)
     }
 
     private func moDanhGia() {
@@ -322,21 +320,67 @@ struct SettingsView: View {
 
     /// Xu và Công nợ: 2 card riêng cùng kiểu SoDuCard với card Xu tab Ưu đãi (2026-10-26, trước gộp chung
     /// 1 card chia 2 cột). Công nợ chỉ hiện khi đang nợ.
+    /// Ví Xu (09/11/2026): icon Xu + số dư lớn, nút "Nạp Xu" (nhãn khuyến mãi phía trên) bên phải; dưới là dòng "Lịch sử Xu".
     private func xuCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(tieuDe: "Ví Xu", giaTri: SoDuCard.so(vi.soDu), donVi: "Xu",
-                 link: ("Lịch sử", { showLichSuXu = true }), nut: "Nạp Xu", nhanNut: vi.nhanNapXu,
-                 onNut: { showNapXu = true }) // không icon ⊕: nút Nạp Xu cùng kiểu nút Xem chi tiết (chủ quán 2026-11-08)
-            .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
-            .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
-            .onChange(of: showNapXu) { dangMo in
-                if !dangMo { Task { await load() } }
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 12) {
+                Theme.xuIcon(42)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Ví Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                    (Text(SoDuCard.so(vi.soDu)).font(.system(size: 28, weight: .heavy, design: .rounded))
+                        + Text(" Xu").font(.system(size: 15, weight: .bold)))
+                        .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                }
+                Spacer(minLength: 8)
+                Button { showNapXu = true } label: {
+                    VStack(alignment: .trailing, spacing: -6) {
+                        if let nhan = vi.nhanNapXu { SoDuCard.NhanKhuyenMaiNut(text: nhan).zIndex(1) }
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus").font(.system(size: 12, weight: .bold))
+                            Text("Nạp Xu").font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16).padding(.vertical, 10)
+                        .background(Theme.primaryGradient).clipShape(Capsule())
+                    }
+                    .fixedSize()
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.bottom, 8)
+            TKKe()
+            Button { showLichSuXu = true } label: {
+                TKDong(icon: "clock.arrow.circlepath", tieuDe: "Lịch sử Xu")
+            }
+            .buttonStyle(.plain)
+        }
+        .tkThe(dem: 14)
+        .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
+        .navigationDestination(isPresented: $showNapXu) { NapXuView(onXong: { showNapXu = false }) }
+        .onChange(of: showNapXu) { dangMo in
+            if !dangMo { Task { await load() } }
+        }
     }
 
     private func congNoCard(_ vi: KhachHangVi) -> some View {
-        SoDuCard(tieuDe: "Công nợ", giaTri: SoDuCard.so(vi.tongNo), donVi: "đ", mauGiaTri: Theme.danger,
-                 nut: "Xem chi tiết", onNut: { showCongNoHienTai = true })
-            .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
+        Button { showCongNoHienTai = true } label: {
+            HStack(spacing: 12) {
+                TKIcon(ten: "exclamationmark.circle.fill", mau: Theme.danger, co: 42)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Công nợ").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                    (Text(SoDuCard.so(vi.tongNo)).font(.system(size: 24, weight: .heavy, design: .rounded))
+                        + Text(" đ").font(.system(size: 14, weight: .bold)))
+                        .monospacedDigit().foregroundColor(Theme.danger)
+                }
+                Spacer(minLength: 8)
+                Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tkThe(dem: 14)
+        .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
     }
 
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem
@@ -399,6 +443,7 @@ struct SettingsView: View {
             Image(systemName: "storefront")
                 .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.55))
                 .frame(width: 30, height: 30)
+            // Chủ quán 09/11/2026: giữ dòng gợi ý "Nếu đặt qua app: …" (đã định bỏ rồi đổi ý).
             VStack(alignment: .leading, spacing: 1) {
                 Text(NoiDung.text("theHangQuay"))
                     .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.7))
@@ -506,28 +551,30 @@ struct SettingsView: View {
                     : (hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark]),
                 startPoint: .topLeading, endPoint: .bottomTrailing)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
-        .padding(.vertical, 6)
+        .clipShape(RoundedRectangle(cornerRadius: TK.bo, style: .continuous))
+        .shadow(color: .black.opacity(0.10), radius: 10, y: 4)
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
     /// trong suốt, không viền/nền trắng) nên trông lạc nhịp so với 3 card Xu/Điểm/Công nợ phía trên.
     private var thongTinCaNhanCard: some View {
-        cardBox {
-            HStack {
-                Text("Địa chỉ giao hàng").font(.system(size: 16, weight: .bold))
-                Spacer()
+        VStack(alignment: .leading, spacing: 10) {
+            TKTieuDe(icon: "mappin.and.ellipse", mau: .blue, tieuDe: "Địa chỉ giao hàng") {
                 Button {
                     diaChiEditingId = nil
                     diaChiFormText = ""
                     showDiaChiForm = true
                 } label: {
-                    Image(systemName: "plus.circle.fill").foregroundColor(Theme.primary)
+                    HStack(spacing: 3) {
+                        Image(systemName: "plus").font(.system(size: 11, weight: .bold))
+                        Text("Thêm").font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(Theme.primary)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(Theme.primaryTint))
                 }
                 .buttonStyle(.plain)
             }
-            Divider()
 
             // "Nhận quà sinh nhật" (+1 lượt quay) đã bỏ hẳn 2026-09-24 (trùng thưởng với voucher sinh
             // nhật) — card này giờ chỉ còn địa chỉ. Khai ngày sinh (cho xác minh tuổi 18+ thuốc lá)
@@ -535,7 +582,7 @@ struct SettingsView: View {
             // CheckoutView (chọn địa chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo
             // yêu cầu.
             if diaChiHienThi.isEmpty {
-                Text("Chưa có địa chỉ — bấm + để thêm")
+                Text("Chưa có địa chỉ — bấm Thêm để thêm")
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiHienThi) { item in
@@ -585,9 +632,12 @@ struct SettingsView: View {
                         }
                     }
                     .frame(minHeight: 36)
+                    .padding(.horizontal, 10)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(item.isDefault ? Theme.primaryTint : Theme.bg))
                 }
             }
         }
+        .tkThe()
     }
 
 
@@ -598,17 +648,19 @@ struct SettingsView: View {
     /// quà năm nay mới là ăn gian đổi ngày sinh để canh trúng tháng, còn lại (nhập sai lúc đầu, hoặc
     /// chưa tới lượt nhận quà năm nay) không cần làm khó khách phải nhờ nhân viên.
     private var ngaySinhCard: some View {
-        cardBox {
-            Text("Ngày sinh").font(.system(size: 16, weight: .bold))
-            Divider()
+        VStack(alignment: .leading, spacing: 10) {
+            TKTieuDe(icon: "gift.fill", mau: .pink, tieuDe: "Ngày sinh")
 
             if loadingNgaySinh {
                 ProgressView()
             } else if let ns = ngaySinhInfo?.ngaySinh, ngaySinhInfo?.coTheSua == false {
-                Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
-                    .font(.system(size: 13)).foregroundColor(Theme.success)
-                Text(NoiDung.text("sinhNhatDaNhan"))
-                    .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                        .font(.system(size: 13)).foregroundColor(Theme.success)
+                    Text(NoiDung.text("sinhNhatDaNhan"))
+                        .font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                }
+                .padding(.leading, 40)
             } else if !showDobPicker {
                 // Thu gọn mặc định — wheel chiếm rất nhiều chỗ dọc, chỉ bung ra khi bấm (feedback
                 // 2026-09-27: "bao giờ bấm mới hiện cái này ra chứ", trước hiện thẳng luôn).
@@ -620,9 +672,15 @@ struct SettingsView: View {
                         Text("Chưa nhập").font(.system(size: 13)).foregroundColor(Theme.textFaint)
                     }
                     Spacer()
-                    Button(ngaySinhInfo?.ngaySinh == nil ? "Nhập ngay" : "Sửa") { showDobPicker = true }
-                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Button { showDobPicker = true } label: {
+                        Text(ngaySinhInfo?.ngaySinh == nil ? "Nhập ngay" : "Sửa")
+                            .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                            .padding(.horizontal, 12).padding(.vertical, 5)
+                            .background(Capsule().fill(Theme.primaryTint))
+                    }
+                    .buttonStyle(.plain)
                 }
+                .padding(.leading, 40)
             } else {
                 // .wheel thay cho style mặc định (.compact) — trước đây bấm vào mở lịch dạng LƯỚI
                 // NGÀY-TRONG-THÁNG (graphical), phải bấm header "tháng 9 năm 1991" thêm 1 lần mới ra
@@ -635,18 +693,23 @@ struct SettingsView: View {
                     .frame(maxHeight: 140)
                     .clipped()
                     .environment(\.locale, Locale(identifier: "vi_VN"))
-                HStack {
-                    Button("Huỷ") { showDobPicker = false; dobError = nil }
-                        .buttonStyle(.bordered)
-                        .disabled(savingDob)
-                    Spacer()
+                HStack(spacing: 10) {
+                    Button { showDobPicker = false; dobError = nil } label: {
+                        Text("Huỷ").font(.system(size: 15, weight: .semibold)).foregroundColor(Theme.textMuted)
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(Capsule().fill(Theme.bg))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(savingDob)
                     Button {
                         Task { await xacNhanNgaySinh() }
                     } label: {
-                        if savingDob { ProgressView() } else { Text("Lưu") }
+                        Group { if savingDob { ProgressView().tint(.white) } else { Text("Lưu").font(.system(size: 15, weight: .bold)) } }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(Capsule().fill(Theme.primaryGradient))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.primary)
+                    .buttonStyle(.plain)
                     .disabled(savingDob)
                 }
                 if let dobError {
@@ -654,6 +717,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .tkThe()
     }
 
     private func formatNgaySinh(_ iso: String) -> String {

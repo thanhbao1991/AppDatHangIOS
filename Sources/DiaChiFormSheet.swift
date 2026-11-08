@@ -29,9 +29,10 @@ struct DiaChiFormSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 10) {
-                TextField("Địa chỉ giao hàng", text: $text, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .tint(Theme.primary)
+                // Đồng bộ bộ khung TK (09/11/2026): ô nhập nền xám bo góc.
+                TKTieuDe(icon: "mappin.and.ellipse", mau: .blue, tieuDe: "Địa chỉ giao hàng")
+                TextField("Số nhà, tên đường…", text: $text, axis: .vertical)
+                    .tkONhap()
                     .focused($focused)
 
                 if !suggestions.isEmpty {
@@ -49,7 +50,7 @@ struct DiaChiFormSheet: View {
                         }
                     }
                     .background(Theme.primaryTint.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
                 Spacer()

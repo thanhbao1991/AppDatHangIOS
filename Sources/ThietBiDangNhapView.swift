@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Danh sách thiết bị đăng nhập — tách khỏi TaiKhoanBaoMatView, chỉ hiện khi khách chủ động bấm
-/// vào hàng "Thiết bị đăng nhập" thay vì luôn hiện sẵn trong danh sách chính.
+/// vào hàng "Thiết bị đăng nhập" thay vì luôn hiện sẵn trong danh sách chính. Thiết kế lại 09/11/2026: mỗi thiết bị
+/// một thẻ TK.
 struct ThietBiDangNhapView: View {
     @State private var sessions: [PhienDangNhapKhachHang] = []
     @State private var loading = true
@@ -12,31 +13,14 @@ struct ThietBiDangNhapView: View {
             if loading {
                 fullScreenLoading()
             } else {
-                List(sessions, id: \.id) { item in
-                    HStack(spacing: 12) {
-                        Image(systemName: item.nenTang == "Desktop" ? "desktopcomputer" : "iphone")
-                            .foregroundColor(item.laThietBiHienTai ? Theme.success : Theme.primary)
-                            .frame(width: 32)
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack {
-                                Text(item.thietBi ?? "Thiết bị không rõ").font(.system(size: 15, weight: .bold))
-                                if item.laThietBiHienTai {
-                                    Text("Thiết bị này").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
-                                        .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.success).clipShape(Capsule())
-                                }
-                            }
-                            Text(item.nenTang ?? "?").font(.system(size: 12, weight: .bold)).foregroundColor(item.laThietBiHienTai ? Theme.success : Theme.primary)
-                            Text("Đăng nhập \(formatUtcShort(item.ngayTao)) · Hết hạn \(formatUtcShort(item.hetHan))")
-                                .font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                        }
-                        Spacer()
-                        if !item.laThietBiHienTai {
-                            Button { revokingSession = item } label: {
-                                Image(systemName: "xmark").foregroundColor(Theme.danger)
-                            }
-                        }
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(sessions, id: \.id) { item in the(item) }
                     }
+                    .tkManHinh()
                 }
+                .background(Theme.bg)
+                .refreshable { await load() }
             }
         }
         .navigationTitle("Thiết bị đăng nhập")
@@ -52,6 +36,35 @@ struct ThietBiDangNhapView: View {
                 Text("Đăng xuất thiết bị này?")
             }
         }
+    }
+
+    private func the(_ item: PhienDangNhapKhachHang) -> some View {
+        let mau = item.laThietBiHienTai ? Theme.success : Theme.primary
+        return HStack(spacing: 12) {
+            TKIcon(ten: item.nenTang == "Desktop" ? "desktopcomputer" : "iphone", mau: mau, co: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(item.thietBi ?? "Thiết bị không rõ").font(.system(size: 15, weight: .bold)).lineLimit(1)
+                    if item.laThietBiHienTai {
+                        Text("Thiết bị này").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                            .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.success).clipShape(Capsule())
+                    }
+                }
+                Text(item.nenTang ?? "?").font(.system(size: 12, weight: .semibold)).foregroundColor(mau)
+                Text("Đăng nhập \(formatUtcShort(item.ngayTao)) · Hết hạn \(formatUtcShort(item.hetHan))")
+                    .font(.system(size: 11)).foregroundColor(Theme.textFaint)
+            }
+            Spacer(minLength: 8)
+            if !item.laThietBiHienTai {
+                Button { revokingSession = item } label: {
+                    Text("Đăng xuất").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
+                        .padding(.horizontal, 10).padding(.vertical, 6)
+                        .background(Capsule().fill(Theme.danger.opacity(0.1)))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .tkThe(dem: 14)
     }
 
     /// Backend trả DateTime "yyyy-MM-ddTHH:mm:ss.fffffff" (Kind=Unspecified nhưng thực chất UTC) —

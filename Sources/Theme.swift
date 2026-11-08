@@ -347,7 +347,7 @@ struct SoDuCard: View {
     }
 
     /// Nhãn vàng "🎁 …" trên nút — đập nhẹ (phóng 1 → 1,08) để mắt khách dừng lại ở nút Nạp Xu.
-    private struct NhanKhuyenMaiNut: View {
+    struct NhanKhuyenMaiNut: View {
         let text: String
         @State private var phong = false
 

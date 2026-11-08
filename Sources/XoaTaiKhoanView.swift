@@ -20,48 +20,57 @@ struct XoaTaiKhoanView: View {
 
     private enum Step { case nhapMatKhau, nhapOtp }
 
+    // Thiết kế lại 09/11/2026 theo bộ khung TK (TaiKhoanUI.swift).
     var body: some View {
-        Form {
-            Section {
-                Text(NoiDung.xoaTaiKhoanMoTa)
-                    .font(.system(size: 13)).foregroundColor(Theme.textMuted)
-            }
-
-            Section("Xác nhận mật khẩu") {
-                SecureField("Mật khẩu hiện tại", text: $matKhau)
-                    .disabled(step == .nhapOtp)
-            }
-
-            if step == .nhapOtp {
-                Section("Mã xác nhận") {
-                    TextField(NoiDung.text("otpNhapMa"), text: $otp)
-                        .keyboardType(.numberPad)
-                        .tint(Theme.primary)
+        ScrollView {
+            VStack(spacing: TK.khoangCach) {
+                VStack(alignment: .leading, spacing: 10) {
+                    TKTieuDe(icon: "exclamationmark.triangle.fill", mau: Theme.danger, tieuDe: "Trước khi xoá")
+                    Text(NoiDung.xoaTaiKhoanMoTa)
+                        .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 }
-            }
+                .tkThe()
 
-            if let errorMessage {
-                Text(errorMessage).font(.system(size: 12)).foregroundColor(Theme.danger)
-            }
+                VStack(alignment: .leading, spacing: 12) {
+                    TKTieuDe(icon: "lock.fill", mau: .orange, tieuDe: "Xác nhận")
+                    SecureField("Mật khẩu hiện tại", text: $matKhau)
+                        .disabled(step == .nhapOtp)
+                        .tkONhap()
+                    if step == .nhapOtp {
+                        TextField(NoiDung.text("otpNhapMa"), text: $otp)
+                            .keyboardType(.numberPad)
+                            .tkONhap()
+                    }
+                    if let errorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.circle.fill")
+                            .font(.system(size: 13)).foregroundColor(Theme.danger)
+                    }
+                }
+                .tkThe()
 
-            Section {
                 if step == .nhapMatKhau {
                     Button {
                         Task { await guiOtp() }
                     } label: {
-                        if dangGuiOtp { ProgressView().frame(maxWidth: .infinity) } else { Text("Gửi mã xác nhận").frame(maxWidth: .infinity) }
+                        Group { if dangGuiOtp { ProgressView().tint(.white) } else { Text("Gửi mã xác nhận").font(.system(size: 16, weight: .bold)) } }
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.gradientProminent)
                     .disabled(dangGuiOtp || matKhau.isEmpty)
                 } else {
-                    Button(role: .destructive) {
+                    Button {
                         showConfirm = true
                     } label: {
-                        if dangXoa { ProgressView().frame(maxWidth: .infinity) } else { Text("Xoá tài khoản").frame(maxWidth: .infinity) }
+                        Group { if dangXoa { ProgressView().tint(.white) } else { Text("Xoá tài khoản").font(.system(size: 16, weight: .bold)) } }
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.gradientProminent(danger: true))
                     .disabled(dangXoa || otp.isEmpty)
                 }
             }
+            .tkManHinh()
         }
+        .background(Theme.bg)
         .navigationTitle("Xoá tài khoản")
         .navigationBarTitleDisplayMode(.inline)
         .popupHost { host in

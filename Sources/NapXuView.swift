@@ -21,6 +21,9 @@ struct NapXuView: View {
             if let info {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
+                        // Đồng bộ bộ khung TK (09/11/2026): tiêu đề thẻ có ô icon.
+                        TKTieuDe(icon: "creditcard.fill", tieuDe: "Chọn gói nạp")
+                            .padding(.horizontal, 4)
                         LazyVGrid(columns: cot, spacing: 12) {
                             ForEach(info.goi, id: \.self) { goi in
                                 Button { goiChon = goi } label: { goiO(goi) }
@@ -75,8 +78,11 @@ struct NapXuView: View {
         }
         .padding(.vertical, 18).padding(.horizontal, 10)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)))
-        .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: TK.bo, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+        )
         .contentShape(Rectangle())
     }
 
@@ -136,11 +142,13 @@ struct NapXuQrView: View {
                     qrContent
                 }
             }
-            .padding()
+            .padding(.vertical, 20).padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
+            .tkThe(dem: 0)
+            .tkManHinh()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Theme.bg)
         .navigationTitle("Nạp \(formatTien(goi.soTien))")
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadQr() }
@@ -212,7 +220,7 @@ struct NapXuQrView: View {
         Image(systemName: "checkmark.circle.fill")
             .font(.system(size: 64))
             .foregroundColor(Theme.success)
-            .padding(.top, 60)
+            .padding(.top, 30)
         Text("Nạp Xu thành công").font(.system(size: 20, weight: .bold))
         Text("+\(formatXu(goi.tongXuNhan)) đã vào ví của bạn.")
             .font(.system(size: 14)).foregroundColor(Theme.textMuted)

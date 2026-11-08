@@ -7,9 +7,9 @@ struct LichSuViView: View {
     /// 3 tab lọc theo mẫu "Shopee Xu" — LỊCH SỬ (tất cả), ĐÃ NHẬN (cộng), ĐÃ DÙNG (trừ). Lọc thuần
     /// client-side trên `items` đã tải sẵn, không gọi lại API.
     private enum LocTab: String, CaseIterable {
-        case tatCa = "LỊCH SỬ"
-        case daNhan = "ĐÃ NHẬN"
-        case daDung = "ĐÃ DÙNG"
+        case tatCa = "Tất cả"
+        case daNhan = "Đã nhận"
+        case daDung = "Đã dùng"
     }
 
     @State private var items: [ViGiaoDich] = []
@@ -24,40 +24,45 @@ struct LichSuViView: View {
         }
     }
 
+    // Thiết kế lại 09/11/2026 theo bộ khung TK: thanh lọc viên thuốc + mỗi giao dịch một thẻ.
     var body: some View {
         VStack(spacing: 0) {
-            tabBar
-            Divider()
+            TKThanhLoc(cacMuc: LocTab.allCases, nhan: { $0.rawValue }, chon: $tab)
+                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 4)
             Group {
                 if loading {
                     fullScreenLoading()
-                } else if filteredItems.isEmpty {
-                    Text("Chưa có giao dịch nào.").foregroundColor(Theme.textFaint).frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    // Layout theo mẫu "Lịch sử Xu" Shopee — icon tròn lớn bên trái, tiêu đề/mô tả/giờ
-                    // xếp dọc, số tiền màu bên phải (không kèm số dư phụ, giống bản gốc).
-                    List(filteredItems) { item in
-                        HStack(spacing: 12) {
-                            rowIcon(item)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(item.tenLoai).font(.system(size: 15, weight: .semibold))
-                                if let ghiChu = item.ghiChu, !ghiChu.isEmpty {
-                                    Text(ghiChu).font(.system(size: 13)).foregroundColor(Theme.textMuted)
-                                }
-                                Text(formatUtcShort(item.thoiGian)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            if filteredItems.isEmpty {
+                                TKTrong(icon: "tray", chu: "Chưa có giao dịch nào.")
                             }
-                            Spacer()
-                            Text((item.soTienThayDoi >= 0 ? "+" : "") + formatXu(item.soTienThayDoi))
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
+                            ForEach(filteredItems) { item in
+                                HStack(spacing: 12) {
+                                    rowIcon(item)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(item.tenLoai).font(.system(size: 15, weight: .semibold))
+                                        if let ghiChu = item.ghiChu, !ghiChu.isEmpty {
+                                            Text(ghiChu).font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                                        }
+                                        Text(formatUtcShort(item.thoiGian)).font(.system(size: 12)).foregroundColor(Theme.textFaint)
+                                    }
+                                    Spacer(minLength: 8)
+                                    Text((item.soTienThayDoi >= 0 ? "+" : "") + formatXu(item.soTienThayDoi))
+                                        .font(.system(size: 16, weight: .heavy, design: .rounded)).monospacedDigit()
+                                        .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
+                                }
+                                .tkThe(dem: 14)
+                            }
                         }
-                        .padding(.vertical, 4)
+                        .tkManHinh()
                     }
-                    .listStyle(.plain)
                     .refreshable { await load() }
                 }
             }
         }
+        .background(Theme.bg)
         .navigationTitle("Lịch sử Xu")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
@@ -83,29 +88,6 @@ struct LichSuViView: View {
             }
             .frame(width: 44, height: 44)
         }
-    }
-
-    private var tabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(LocTab.allCases, id: \.self) { t in
-                Button {
-                    tab = t
-                } label: {
-                    VStack(spacing: 8) {
-                        Text(t.rawValue)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(tab == t ? Theme.primary : Theme.textMuted)
-                        Rectangle()
-                            .fill(tab == t ? Theme.primary : Color.clear)
-                            .frame(height: 2)
-                    }
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 12)
-            }
-        }
-        .background(Color(.systemBackground))
     }
 
     /// FIX 2026-09-23 (lệch giờ +7 phát hiện qua ảnh chụp thật): ViGiaoDich.ThoiGian là
