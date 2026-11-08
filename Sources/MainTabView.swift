@@ -119,7 +119,7 @@ struct MainTabView: View {
             // địa chỉ/chọn thanh toán. Trang này tự vẽ header riêng (ẩn navbar hệ thống) nên tự thân
             // đã chiếm toàn màn hình, ẩn tabBar cho đúng ý đồ đó.
             if !isCheckoutActive {
-                Divider()
+                // 09/11/2026: bỏ đường kẻ xám — bóng mờ nhẹ phía trên (khớp bóng thẻ TK toàn app), giữ thanh phẳng sát đáy.
                 tabBar
             }
         }
@@ -279,7 +279,11 @@ struct MainTabView: View {
         }
         .padding(.top, 6)
         .padding(.bottom, 6)
-        .background(.bar)
+        .background(
+            Color(.systemBackground)
+                .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
+                .ignoresSafeArea(edges: .bottom)
+        )
     }
 
     @ViewBuilder
