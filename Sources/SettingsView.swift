@@ -359,21 +359,61 @@ struct SettingsView: View {
     private func oXu(_ tieuDe: String, _ xu: Double, noiBat: Bool) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(tieuDe)
-                .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+                .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(noiBat ? 0.78 : 0.6))
+                .lineLimit(1).minimumScaleFactor(0.8)
             Text(formatXu(xu))
-                .font(.system(size: 17, weight: .heavy)).foregroundColor(.white)
+                .font(.system(size: noiBat ? 17 : 14, weight: noiBat ? .heavy : .semibold))
+                .foregroundColor(.white.opacity(noiBat ? 1 : 0.75))
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .background(Color.white.opacity(noiBat ? 0.18 : 0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// Ô "Đặt qua app x2" (chủ quán 09/11/2026): cho thấy rõ phép nhân "2.900 × 2 = 5.800 Xu" — gốc bằng đúng mức gọi
+    /// qua quầy, app được gấp đôi. Nền vàng + huy hiệu "x2" để nổi hẳn so với ô quầy.
+    private func oXuApp(_ xu: Double) -> some View {
+        let goc = (xu / 2).rounded(.down)
+        let vang = Color(red: 1.0, green: 0.80, blue: 0.25)
+        return VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 5) {
+                Text("Đặt qua app")
+                    .font(.system(size: 11, weight: .bold)).foregroundColor(.white)
+                Text("x2")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Capsule().fill(vang))
+            }
+            if xu > 0 {
+                Text("\(formatSo(goc)) × 2 =")
+                    .font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                    .foregroundColor(vang.opacity(0.95))
+            }
+            Text(formatXu(xu))
+                .font(.system(size: 17, weight: .heavy)).foregroundColor(vang)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [vang.opacity(0.30), vang.opacity(0.12)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(vang.opacity(0.7), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func formatSo(_ v: Double) -> String {
+        let f = NumberFormatter(); f.numberStyle = .decimal; f.groupingSeparator = "."; f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: v)) ?? "\(Int(v))"
     }
 
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi) -> String {
         let t = Self.tienDoThang()
-        var dong = ["Đặt qua app được Xu GẤP ĐÔI gọi qua quầy: mỗi 30.000đ đặt qua app được 1.000 Xu, gọi qua quầy được 500 Xu. Nhận vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
+        var dong = ["Đặt qua app được Xu GẤP ĐÔI gọi qua quầy: mỗi 350.000đ đặt qua app được 20.000 Xu, gọi qua quầy được 10.000 Xu. Nhận vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
         dong.append("Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
@@ -434,10 +474,14 @@ struct SettingsView: View {
                     }
                 }
                 .frame(height: 4)
-                HStack(spacing: 8) {
-                    oXu("Đặt qua app x2 quà", xuApp, noiBat: true)
-                    oXu("Gọi qua quầy", xuQuay, noiBat: false)
+                // Ô app chiếm ~60% bề ngang, ô quầy nhỏ và chìm (chủ quán 09/11/2026: app phải nổi bật hơn hẳn).
+                GeometryReader { geo in
+                    HStack(spacing: 8) {
+                        oXuApp(xuApp).frame(width: (geo.size.width - 8) * 0.6)
+                        oXu("Gọi qua quầy", xuQuay, noiBat: false)
+                    }
                 }
+                .frame(height: 74)
                 .padding(.top, 4)
             }
         }
