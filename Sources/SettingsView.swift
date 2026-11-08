@@ -355,54 +355,64 @@ struct SettingsView: View {
         return (Double(ngay) / Double(soNgay), soNgay - ngay + 1, "1/\(thangSau)")
     }
 
-    /// Ô Xu theo nguồn (08/11/2026): đơn đặt qua app (nổi hơn) và đơn mua tại quầy (×0,5).
-    private func oXu(_ tieuDe: String, _ xu: Double, noiBat: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(tieuDe)
-                .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(noiBat ? 0.78 : 0.6))
-                .lineLimit(1).minimumScaleFactor(0.8)
-            Text(formatXu(xu))
-                .font(.system(size: noiBat ? 17 : 14, weight: noiBat ? .heavy : .semibold))
-                .foregroundColor(.white.opacity(noiBat ? 1 : 0.75))
-                .lineLimit(1).minimumScaleFactor(0.7)
+    private static let vangXu = Color(red: 1.0, green: 0.80, blue: 0.25)
+
+    /// Dòng "Đặt qua app [x2]" (thiết kế lại 09/11/2026): nền vàng, bên phải "2.900 × 2" nhỏ + "5.800 Xu" lớn —
+    /// gốc bằng đúng mức gọi qua quầy, app được gấp đôi. Câu chữ lấy từ backend (NoiDung).
+    private func dongXuApp(_ xu: Double) -> some View {
+        let vang = Self.vangXu
+        return HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "iphone.gen3")
+                .font(.system(size: 15, weight: .bold)).foregroundColor(vang)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(vang.opacity(0.18)))
+            Text(NoiDung.text("theHangApp"))
+                .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+            Text("x2")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
+                .padding(.horizontal, 7).padding(.vertical, 2)
+                .background(Capsule().fill(vang))
+            Spacer(minLength: 6)
+            VStack(alignment: .trailing, spacing: 0) {
+                if xu > 0 {
+                    Text("\(formatSo((xu / 2).rounded(.down))) × 2")
+                        .font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                        .foregroundColor(vang.opacity(0.85))
+                }
+                Text(formatXu(xu))
+                    .font(.system(size: 18, weight: .heavy)).monospacedDigit().foregroundColor(vang)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-        .background(Color.white.opacity(noiBat ? 0.18 : 0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .background(
+            LinearGradient(colors: [vang.opacity(0.26), vang.opacity(0.10)], startPoint: .leading, endPoint: .trailing)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(vang.opacity(0.55), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    /// Ô "Đặt qua app x2" (chủ quán 09/11/2026): cho thấy rõ phép nhân "2.900 × 2 = 5.800 Xu" — gốc bằng đúng mức gọi
-    /// qua quầy, app được gấp đôi. Nền vàng + huy hiệu "x2" để nổi hẳn so với ô quầy.
-    private func oXuApp(_ xu: Double) -> some View {
-        let goc = (xu / 2).rounded(.down)
-        let vang = Color(red: 1.0, green: 0.80, blue: 0.25)
-        return VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 5) {
-                Text("Đặt qua app")
-                    .font(.system(size: 11, weight: .bold)).foregroundColor(.white)
-                Text("x2")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
-                    .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Capsule().fill(vang))
+    /// Dòng "Gọi qua quầy": chìm hẳn; có Xu quầy thì gợi ý "Nếu đặt qua app: gấp đôi" để khách thấy mình đang bỏ lỡ.
+    private func dongXuQuay(_ xu: Double) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "storefront")
+                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.55))
+                .frame(width: 30, height: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(NoiDung.text("theHangQuay"))
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.7))
+                if xu > 0 {
+                    Text(NoiDung.text("theHangGoiYApp").replacingOccurrences(of: "{xu}", with: formatXu(xu * 2)))
+                        .font(.system(size: 11, weight: .semibold)).foregroundColor(Self.vangXu.opacity(0.9))
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                }
             }
-            if xu > 0 {
-                Text("\(formatSo(goc)) × 2 =")
-                    .font(.system(size: 11, weight: .semibold)).monospacedDigit()
-                    .foregroundColor(vang.opacity(0.95))
-            }
+            Spacer(minLength: 6)
             Text(formatXu(xu))
-                .font(.system(size: 17, weight: .heavy)).foregroundColor(vang)
-                .lineLimit(1).minimumScaleFactor(0.7)
+                .font(.system(size: 14, weight: .semibold)).monospacedDigit().foregroundColor(.white.opacity(0.7))
         }
-        .padding(.horizontal, 10).padding(.vertical, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(colors: [vang.opacity(0.30), vang.opacity(0.12)], startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(vang.opacity(0.7), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 12).padding(.vertical, 6)
     }
 
     private func formatSo(_ v: Double) -> String {
@@ -412,10 +422,9 @@ struct SettingsView: View {
 
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi) -> String {
-        let t = Self.tienDoThang()
-        var dong = ["Đặt qua app được Xu GẤP ĐÔI gọi qua quầy: mỗi 350.000đ đặt qua app được 20.000 Xu, gọi qua quầy được 10.000 Xu. Nhận vào ví ngày \(t.ngayNhan), dùng khi đặt món trên app."]
-        dong.append("Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
-        dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
+        // Cách tính Xu nằm hết trong hangGhiChu ở backend (09/11/2026) — đổi tỉ lệ không phải nộp lại store.
+        var dong = ["Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0))."]
+        dong.append(NoiDung.hangGhiChu)
         return dong.joined(separator: "\n\n")
     }
 
@@ -439,50 +448,53 @@ struct SettingsView: View {
                 Spacer()
                 // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
                 // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
+                // Nhãn Top: có giải (≤4) thì vàng + cúp, còn lại mờ. Chạm mở bảng xếp hạng.
                 Button { moBangXepHang = true } label: {
                     let viTri = (vi.topShipper ?? vi.topKhach)?.viTri
-                    Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
-                        .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(Color.white.opacity(0.18))
-                        .clipShape(Capsule())
+                    let coGiai = (viTri ?? 99) <= 4
+                    HStack(spacing: 4) {
+                        Image(systemName: "trophy.fill").font(.system(size: 11, weight: .bold))
+                        Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
+                            .font(.system(size: 13, weight: .heavy))
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.7)
+                    }
+                    .foregroundColor(coGiai ? Color(red: 0.35, green: 0.22, blue: 0.0) : .white)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Capsule().fill(coGiai ? AnyShapeStyle(Self.vangXu) : AnyShapeStyle(Color.white.opacity(0.18))))
                 }
                 .buttonStyle(.plain)
             }
 
-            // Thiết kế lại 08/11/2026: tổng Xu tháng này (nhận ngày 1 tháng sau) + thanh mảnh theo số ngày trong tháng,
-            // dưới là 2 ô tách nguồn — ô "Đặt qua app" nổi hơn để gợi khách chuyển sang app (gấp đôi đơn quầy).
+            // Thiết kế lại lần 2 (09/11/2026): bỏ thanh trượt ngày — "Nhận sau X ngày" đã đủ ý. Tổng Xu lớn, dưới là
+            // dòng "Đặt qua app x2" nổi (vàng) và dòng "Gọi qua quầy" chìm + gợi ý nếu đặt qua app được bao nhiêu.
             let t = Self.tienDoThang()
             let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
             let xuQuay = vi.xuDonQuayThangNay ?? 0
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Quà tháng này")
-                    .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
-                HStack(alignment: .firstTextBaseline) {
-                    Text(formatXu(xuApp + xuQuay))
-                        .font(.system(size: 26, weight: .heavy)).foregroundColor(.white)
-                        .lineLimit(1).minimumScaleFactor(0.7)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .lastTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(NoiDung.text("theHangQua"))
+                            .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+                        Text(formatXu(xuApp + xuQuay))
+                            .font(.system(size: 32, weight: .heavy, design: .rounded)).monospacedDigit()
+                            .foregroundColor(.white)
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                    }
                     Spacer(minLength: 8)
-                    Text("Nhận sau \(t.conLai) ngày")
-                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.78))
-                }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.2))
-                        Capsule().fill(Color.white)
-                            .frame(width: max(6, geo.size.width * t.phanTram))
+                    HStack(spacing: 4) {
+                        Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
+                        Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
+                            .font(.system(size: 11, weight: .bold))
                     }
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(Capsule().fill(Color.white.opacity(0.14)))
+                    .padding(.bottom, 6)
                 }
-                .frame(height: 4)
-                // Ô app chiếm ~60% bề ngang, ô quầy nhỏ và chìm (chủ quán 09/11/2026: app phải nổi bật hơn hẳn).
-                GeometryReader { geo in
-                    HStack(spacing: 8) {
-                        oXuApp(xuApp).frame(width: (geo.size.width - 8) * 0.6)
-                        oXu("Gọi qua quầy", xuQuay, noiBat: false)
-                    }
+                VStack(spacing: 4) {
+                    dongXuApp(xuApp)
+                    dongXuQuay(xuQuay)
                 }
-                .frame(height: 74)
-                .padding(.top, 4)
             }
         }
         .padding(16)

@@ -23,54 +23,51 @@ struct BangXepHangDong: Decodable, Identifiable {
     var id: String { "\(viTri)-\(ten)" }
 }
 
-/// Khối bục: chỉ bo 2 góc trên (UnevenRoundedRectangle cần iOS 17, app còn hỗ trợ iOS 16).
-private struct BoGocTren: Shape {
-    let r: CGFloat
-    func path(in rect: CGRect) -> Path {
-        Path(UIBezierPath(roundedRect: rect, byRoundingCorners: [.topLeft, .topRight],
-                          cornerRadii: CGSize(width: r, height: r)).cgPath)
-    }
-}
-
+/// Thiết kế lại 09/11/2026 theo mẫu chủ quán gửi: nền kem ấm, bục 3D vàng/bạc/đồng, mỗi người top 3 có vương miện
+/// riêng, tên trên nhãn trắng + Xu trên nhãn xanh đậm; hạng 4–10 trong thẻ trắng, avatar màu pastel, người có quà
+/// (hạng 4) tô vàng; cuối màn là lời cảm ơn (câu chữ từ backend).
 struct BangXepHangView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var bang: BangXepHang?
     @State private var loi = false
+
+    private static let kem = Color(red: 1.0, green: 0.976, blue: 0.937)
+    private static let kemDam = Color(red: 0.984, green: 0.937, blue: 0.851)
+    private static let xanhDam = Color(red: 0.11, green: 0.16, blue: 0.29)
+    private static let nau = Color(red: 0.55, green: 0.38, blue: 0.14)
 
     var body: some View {
         NavigationStack {
             Group {
                 if let bang {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 18) {
                             if bang.dong.isEmpty {
                                 Text("Chưa có ai trong bảng tháng này.")
-                                    .foregroundColor(.secondary).padding(.vertical, 40)
+                                    .foregroundColor(.secondary).padding(.vertical, 60)
                             } else {
                                 buc(bang.dong.filter { $0.viTri <= 3 })
                                 let conLai = bang.dong.filter { $0.viTri > 3 }
                                 if !conLai.isEmpty {
-                                    VStack(spacing: 0) {
-                                        ForEach(Array(conLai.enumerated()), id: \.element.id) { i, d in
-                                            if i > 0 { Divider().padding(.leading, 62) }
-                                            dongView(d)
-                                        }
+                                    VStack(spacing: 8) {
+                                        ForEach(conLai) { d in dongView(d) }
                                     }
-                                    .background(Color(.secondarySystemGroupedBackground))
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .padding(8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                            .fill(Color.white.opacity(0.85))
+                                            .shadow(color: Self.nau.opacity(0.10), radius: 12, y: 4)
+                                    )
                                 }
-                            }
-                            // Chủ quán 09/11/2026: không cần câu hướng dẫn — backend gửi rỗng thì không hiện.
-                            if !bang.moTa.isEmpty {
-                                Text(bang.moTa)
-                                    .font(.system(size: 12)).foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 8)
+                                camOn
                             }
                         }
-                        .padding(16)
+                        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 28)
                     }
-                    .background(Color(.systemGroupedBackground).ignoresSafeArea())
+                    .background(
+                        LinearGradient(colors: [Self.kem, Self.kemDam], startPoint: .top, endPoint: .bottom)
+                            .ignoresSafeArea()
+                    )
                 } else if loi {
                     VStack(spacing: 12) {
                         Text("Chưa tải được bảng xếp hạng.").foregroundColor(.secondary)
@@ -92,14 +89,25 @@ struct BangXepHangView: View {
         if let b = await APIClient.shared.getBangXepHang() { bang = b } else { loi = true }
     }
 
-    // MARK: - Bục top 3 (2 · 1 · 3)
+    // MARK: - Màu huy chương (sáng → đậm cho khối 3D)
 
-    static func mauHuyChuong(_ viTri: Int) -> Color {
+    static func mauHuyChuong(_ viTri: Int) -> (sang: Color, dam: Color) {
         switch viTri {
-        case 1: return Color(red: 0.98, green: 0.74, blue: 0.16)
-        case 2: return Color(red: 0.62, green: 0.66, blue: 0.72)
-        default: return Color(red: 0.80, green: 0.50, blue: 0.27)
+        case 1: return (Color(red: 1.0, green: 0.86, blue: 0.40), Color(red: 0.90, green: 0.62, blue: 0.10))
+        case 2: return (Color(red: 0.90, green: 0.92, blue: 0.95), Color(red: 0.62, green: 0.66, blue: 0.73))
+        default: return (Color(red: 0.96, green: 0.72, blue: 0.55), Color(red: 0.76, green: 0.45, blue: 0.27))
         }
+    }
+
+    /// Màu pastel cố định theo chữ cái — mỗi người một màu, không đổi giữa các lần mở.
+    static func mauPastel(_ ten: String) -> Color {
+        let bang: [Color] = [
+            Color(red: 0.80, green: 0.88, blue: 1.00), Color(red: 0.88, green: 0.84, blue: 0.98),
+            Color(red: 0.80, green: 0.94, blue: 0.86), Color(red: 1.00, green: 0.84, blue: 0.84),
+            Color(red: 0.80, green: 0.94, blue: 0.94), Color(red: 1.00, green: 0.90, blue: 0.78),
+        ]
+        let so = ten.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF }
+        return bang[so % bang.count]
     }
 
     /// Chữ cái đầu cho ô tròn; tên chỉ còn SĐT che ("•••• 6947") thì dùng 2 số cuối.
@@ -120,94 +128,179 @@ struct BangXepHangView: View {
         }
     }
 
+    // MARK: - Bục top 3 (2 · 1 · 3)
+
     private func buc(_ top: [BangXepHangDong]) -> some View {
         let theoViTri = Dictionary(top.map { ($0.viTri, $0) }, uniquingKeysWith: { a, _ in a })
-        return HStack(alignment: .bottom, spacing: 8) {
-            ForEach([2, 1, 3], id: \.self) { v in
-                if let d = theoViTri[v] { cotBuc(d) } else { Color.clear.frame(maxWidth: .infinity) }
+        return VStack(spacing: 0) {
+            HStack(alignment: .bottom, spacing: 0) {
+                ForEach([2, 1, 3], id: \.self) { v in
+                    if let d = theoViTri[v] { cotBuc(d) } else { Color.clear.frame(maxWidth: .infinity) }
+                }
             }
+            // Bệ trắng dưới chân bục
+            Capsule()
+                .fill(LinearGradient(colors: [.white, Self.kemDam], startPoint: .top, endPoint: .bottom))
+                .frame(height: 16)
+                .shadow(color: Self.nau.opacity(0.15), radius: 6, y: 3)
+                .padding(.horizontal, -6)
         }
         .padding(.top, 8)
     }
 
     private func cotBuc(_ d: BangXepHangDong) -> some View {
-        let mau = Self.mauHuyChuong(d.viTri)
+        let (sang, dam) = Self.mauHuyChuong(d.viTri)
         let laMot = d.viTri == 1
-        let co: CGFloat = laMot ? 72 : 58
-        return VStack(spacing: 6) {
-            ZStack(alignment: .top) {
-                Circle()
-                    .fill(LinearGradient(colors: [mau.opacity(0.35), mau.opacity(0.12)], startPoint: .top, endPoint: .bottom))
-                    .overlay(Circle().stroke(mau, lineWidth: 3))
-                    .overlay(daiDien(d, co: co * 0.38, mau: mau.opacity(0.95)))
-                    .frame(width: co, height: co)
-                    .padding(.top, laMot ? 16 : 0)
-                if laMot {
+        let co: CGFloat = laMot ? 86 : 66
+        return VStack(spacing: 0) {
+            // Vương miện + vòng huy chương (+ cành nguyệt quế cho hạng 1 trên iOS 17)
+            ZStack {
+                if laMot { nguyetQue(mau: dam, co: co) }
+                VStack(spacing: -8) {
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 22)).foregroundColor(mau)
-                        .shadow(color: mau.opacity(0.4), radius: 3, y: 1)
-                        .offset(y: -6)
+                        .font(.system(size: laMot ? 28 : 20))
+                        .foregroundStyle(LinearGradient(colors: [sang, dam], startPoint: .top, endPoint: .bottom))
+                        .shadow(color: dam.opacity(0.4), radius: 2, y: 1)
+                        .zIndex(1)
+                    Circle()
+                        .fill(LinearGradient(colors: [.white, sang.opacity(0.5)], startPoint: .top, endPoint: .bottom))
+                        .overlay(daiDien(d, co: co * 0.36, mau: dam))
+                        .padding(5)
+                        .background(Circle().fill(LinearGradient(colors: [sang, dam], startPoint: .topLeading, endPoint: .bottomTrailing)))
+                        .frame(width: co, height: co)
+                        .shadow(color: dam.opacity(0.35), radius: 6, y: 3)
                 }
             }
-            Text(d.ten)
-                .font(.system(size: 13, weight: d.laBan ? .heavy : .semibold))
-                .lineLimit(1).minimumScaleFactor(0.8)
-            Text(giaTri(d.xu, soDon: d.soDon))
-                .font(.system(size: laMot ? 15 : 13, weight: .bold)).monospacedDigit()
-                .foregroundColor(Theme.primaryDark)
-            ZStack(alignment: .top) {
-                BoGocTren(r: 12)
-                    .fill(LinearGradient(colors: [mau, mau.opacity(0.65)], startPoint: .top, endPoint: .bottom))
-                VStack(spacing: 6) {
-                    Text("\(d.viTri)")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
-                    if d.thuongXu > 0 {
-                        Text("+\(formatXu(d.thuongXu))")
-                            .font(.system(size: 10, weight: .bold)).monospacedDigit()
-                            .lineLimit(1).minimumScaleFactor(0.7)
-                            .foregroundColor(mau)
-                            .padding(.horizontal, 6).padding(.vertical, 3)
-                            .background(Capsule().fill(.white))
-                    }
-                }
-                .padding(.top, 8).padding(.horizontal, 4)
+            // Nhãn tên (trắng) + nhãn Xu (xanh đậm, viền màu huy chương)
+            VStack(spacing: -4) {
+                Text(d.ten)
+                    .font(.system(size: 13, weight: .bold)).foregroundColor(Self.xanhDam)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(Capsule().fill(.white).shadow(color: Self.nau.opacity(0.12), radius: 3, y: 1))
+                    .zIndex(1)
+                Text(giaTri(d.xu, soDon: d.soDon))
+                    .font(.system(size: laMot ? 16 : 14, weight: .heavy, design: .rounded)).monospacedDigit()
+                    .foregroundColor(.white)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Capsule().fill(Self.xanhDam))
+                    .overlay(Capsule().stroke(sang, lineWidth: 1.5))
             }
-            .frame(height: laMot ? 110 : (d.viTri == 2 ? 86 : 70))
+            .padding(.top, 6).padding(.horizontal, 4)
+            .zIndex(1)
+            // Khối bục 3D: mặt trên sáng, thân chuyển đậm, số lớn trắng, quà Top ở dưới số
+            VStack(spacing: 4) {
+                Text("\(d.viTri)")
+                    .font(.system(size: laMot ? 44 : 34, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: dam.opacity(0.8), radius: 1, y: 2)
+                if d.thuongXu > 0 {
+                    Text("+\(formatXu(d.thuongXu))")
+                        .font(.system(size: 10, weight: .heavy)).monospacedDigit()
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                        .foregroundColor(dam)
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .background(Capsule().fill(.white.opacity(0.9)))
+                }
+            }
+            .padding(.top, 14).padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .frame(height: laMot ? 124 : (d.viTri == 2 ? 96 : 80), alignment: .top)
+            .background(
+                ZStack(alignment: .top) {
+                    LinearGradient(colors: [sang, dam], startPoint: .top, endPoint: .bottom)
+                    // mặt trên của khối
+                    LinearGradient(colors: [.white.opacity(0.7), sang.opacity(0.2)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 10)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .padding(.top, -10)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func nguyetQue(mau: Color, co: CGFloat) -> some View {
+        if #available(iOS 17.0, *) {
+            HStack(spacing: co * 0.55) {
+                Image(systemName: "laurel.leading")
+                Image(systemName: "laurel.trailing")
+            }
+            .font(.system(size: co * 0.62, weight: .regular))
+            .foregroundStyle(mau.opacity(0.8))
+            .offset(y: 10)
+        }
     }
 
     // MARK: - Hạng 4–10
 
     private func dongView(_ d: BangXepHangDong) -> some View {
-        HStack(spacing: 12) {
-            Text("\(d.viTri)")
-                .font(.system(size: 14, weight: .bold, design: .rounded)).monospacedDigit()
-                .foregroundColor(.secondary)
-                .frame(width: 20)
+        let coQua = d.thuongXu > 0
+        return HStack(spacing: 12) {
+            VStack(spacing: 0) {
+                if coQua {
+                    Image(systemName: "crown.fill").font(.system(size: 10)).foregroundColor(Color(red: 0.95, green: 0.70, blue: 0.15))
+                }
+                Text("\(d.viTri)")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded)).monospacedDigit()
+                    .foregroundColor(Self.xanhDam)
+            }
+            .frame(width: 26)
             Circle()
-                .fill(Theme.primary.opacity(0.12))
-                .overlay(daiDien(d, co: 14, mau: Theme.primary))
-                .frame(width: 34, height: 34)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(d.ten).font(.system(size: 15, weight: d.laBan ? .heavy : .medium)).lineLimit(1)
-                // Shipper có giải hạng 4 (5k Xu, 08/11/2026)
-                if d.thuongXu > 0 {
+                .fill(Self.mauPastel(d.ten))
+                .overlay(Circle().stroke(.white, lineWidth: 2.5))
+                .overlay(daiDien(d, co: 16, mau: Self.xanhDam.opacity(0.85)))
+                .frame(width: 42, height: 42)
+                .shadow(color: .black.opacity(0.08), radius: 3, y: 1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(d.ten)
+                    .font(.system(size: 15, weight: d.laBan ? .heavy : .semibold)).foregroundColor(Self.xanhDam)
+                    .lineLimit(1)
+                if coQua {
                     Text("+\(formatXu(d.thuongXu))")
                         .font(.system(size: 11, weight: .bold)).monospacedDigit()
-                        .foregroundColor(Theme.xuTangChu)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(Theme.xuTangNen))
+                        .foregroundColor(Self.nau)
+                        .padding(.horizontal, 8).padding(.vertical, 2)
+                        .background(Capsule().fill(Color(red: 1.0, green: 0.88, blue: 0.62)))
                 }
             }
             Spacer()
             Text(giaTri(d.xu, soDon: d.soDon))
-                .font(.system(size: 14, weight: .semibold)).monospacedDigit()
+                .font(.system(size: 15, weight: .heavy, design: .rounded)).monospacedDigit()
+                .foregroundColor(Self.xanhDam)
         }
-        .padding(.horizontal, 14).padding(.vertical, 10)
-        .background(d.laBan ? Theme.primary.opacity(0.10) : Color.clear)
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(coQua
+                      ? AnyShapeStyle(LinearGradient(colors: [Color(red: 1.0, green: 0.95, blue: 0.82), Color(red: 1.0, green: 0.98, blue: 0.92)],
+                                                     startPoint: .leading, endPoint: .trailing))
+                      : AnyShapeStyle(Color.white))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(coQua ? Color(red: 0.95, green: 0.78, blue: 0.40) : (d.laBan ? Theme.primary : Color.black.opacity(0.04)),
+                        lineWidth: coQua || d.laBan ? 1.5 : 1)
+        )
+    }
+
+    // MARK: - Lời cảm ơn cuối màn
+
+    private var camOn: some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 8) {
+                Image(systemName: "heart.fill").font(.system(size: 10))
+                Text(NoiDung.text("bxhCamOn"))
+                    .font(.system(size: 22, weight: .semibold, design: .serif)).italic()
+                Image(systemName: "heart.fill").font(.system(size: 10))
+            }
+            .foregroundColor(Self.nau)
+            Text(NoiDung.text("bxhCamOnPhu"))
+                .font(.system(size: 13)).foregroundColor(Self.nau.opacity(0.8))
+        }
+        .padding(.top, 6)
     }
 
     private func giaTri(_ xu: Double?, soDon: Int) -> String {
