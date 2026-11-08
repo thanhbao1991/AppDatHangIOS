@@ -20,9 +20,9 @@ struct SettingsView: View {
     private var diaChiHienThi: [DiaChiKhachHang] { diaChiList }
     @State private var vi: KhachHangVi?
     @State private var loading = true
+    @State private var moBangXepHang = false
     #if DEV_LOGIN
     @State private var xemTruocNgay1 = false
-    @State private var moBangXepHang = false
     @State private var chucMungXemTruoc: QuaChucMung?
     @State private var quaXemTruocConLai: [QuaChucMung] = []
     /// Không tự dùng, chỉ đổi giá trị để buộc nhãn nút "🧪 Xem trước..." vẽ lại (SeasonalEvent.previewOverride
