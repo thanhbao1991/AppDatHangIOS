@@ -320,38 +320,39 @@ struct SettingsView: View {
 
     /// Xu và Công nợ: 2 card riêng cùng kiểu SoDuCard với card Xu tab Ưu đãi (2026-10-26, trước gộp chung
     /// 1 card chia 2 cột). Công nợ chỉ hiện khi đang nợ.
-    /// Ví Xu (09/11/2026): icon Xu + số dư lớn, nút "Nạp Xu" (nhãn khuyến mãi phía trên) bên phải; dưới là dòng "Lịch sử Xu".
+    /// Ví Xu (09/11/2026, đổi vị trí theo chủ quán): hàng trên = số dư + "Xem chi tiết ›" (mở Lịch sử Xu) cùng kiểu thẻ
+    /// Công nợ; hàng dưới = dòng "Nạp Xu" (nhãn khuyến mãi bên phải).
     private func xuCard(_ vi: KhachHangVi) -> some View {
         VStack(spacing: 0) {
-            HStack(alignment: .center, spacing: 12) {
-                // Chủ quán 09/11/2026: icon đồng xu ảnh lạc lõng → ô icon TK (ví, cam) cùng kiểu ô icon thẻ Công nợ.
-                TKIcon(ten: "wallet.pass.fill", mau: .orange, co: 42)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Ví Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
-                    (Text(SoDuCard.so(vi.soDu)).font(.system(size: 28, weight: .heavy, design: .rounded))
-                        + Text(" Xu").font(.system(size: 15, weight: .bold)))
-                        .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-                }
-                Spacer(minLength: 8)
-                Button { showNapXu = true } label: {
-                    VStack(alignment: .trailing, spacing: -6) {
-                        if let nhan = vi.nhanNapXu { SoDuCard.NhanKhuyenMaiNut(text: nhan).zIndex(1) }
-                        HStack(spacing: 4) {
-                            Image(systemName: "plus").font(.system(size: 12, weight: .bold))
-                            Text("Nạp Xu").font(.system(size: 14, weight: .bold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16).padding(.vertical, 10)
-                        .background(Theme.primaryGradient).clipShape(Capsule())
+            Button { showLichSuXu = true } label: {
+                HStack(alignment: .center, spacing: 12) {
+                    // Chủ quán 09/11/2026: icon đồng xu ảnh lạc lõng → ô icon TK (ví, cam) cùng kiểu ô icon thẻ Công nợ.
+                    TKIcon(ten: "wallet.pass.fill", mau: .orange, co: 42)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Ví Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        (Text(SoDuCard.so(vi.soDu)).font(.system(size: 24, weight: .heavy, design: .rounded))
+                            + Text(" Xu").font(.system(size: 14, weight: .bold)))
+                            .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                     }
-                    .fixedSize()
+                    Spacer(minLength: 8)
+                    Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
                 }
-                .buttonStyle(.plain)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .padding(.bottom, 8)
             TKKe()
-            Button { showLichSuXu = true } label: {
-                TKDong(icon: "clock.arrow.circlepath", tieuDe: "Lịch sử Xu")
+            Button { showNapXu = true } label: {
+                HStack(spacing: 12) {
+                    TKIcon(ten: "plus", mau: Theme.primary)
+                    Text("Nạp Xu").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
+                    Spacer(minLength: 8)
+                    if let nhan = vi.nhanNapXu { SoDuCard.NhanKhuyenMaiNut(text: nhan) }
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
+                }
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
