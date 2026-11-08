@@ -373,7 +373,7 @@ struct SettingsView: View {
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi) -> String {
         let t = Self.tienDoThang()
-        var dong = ["Mỗi 30.000đ đặt qua app được 1.000 Xu, mua tại quầy được 500 Xu. Xu tích được trong tháng tự vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
+        var dong = ["Quà tháng này là Xu: mỗi 30.000đ đặt qua app được 1.000 Xu (100% quà), gọi qua quầy được 500 Xu (50% quà). Nhận vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
         dong.append("Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
@@ -413,14 +413,14 @@ struct SettingsView: View {
             let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
             let xuQuay = vi.xuDonQuayThangNay ?? 0
             VStack(alignment: .leading, spacing: 8) {
-                Text("Xu tích được tháng này")
+                Text("Quà tháng này")
                     .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
                 HStack(alignment: .firstTextBaseline) {
                     Text(formatXu(xuApp + xuQuay))
                         .font(.system(size: 26, weight: .heavy)).foregroundColor(.white)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: 8)
-                    Text("Vào ví sau \(t.conLai) ngày")
+                    Text("Nhận sau \(t.conLai) ngày")
                         .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.78))
                 }
                 GeometryReader { geo in
@@ -432,8 +432,8 @@ struct SettingsView: View {
                 }
                 .frame(height: 4)
                 HStack(spacing: 8) {
-                    oXu("Đơn đặt qua app", xuApp, tiLe: "Mỗi 30.000đ được 1.000 Xu", noiBat: true)
-                    oXu("Đơn mua tại quầy", xuQuay, tiLe: "Mỗi 30.000đ được 500 Xu", noiBat: false)
+                    oXu("Đặt qua app", xuApp, tiLe: "100% quà", noiBat: true)
+                    oXu("Gọi qua quầy", xuQuay, tiLe: "50% quà", noiBat: false)
                 }
                 .padding(.top, 4)
             }
