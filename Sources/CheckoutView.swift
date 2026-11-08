@@ -437,10 +437,8 @@ struct CheckoutView: View {
 
     private var donHangCardContent: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Text("Chi tiết đơn hàng").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            TKTieuDe(icon: "cup.and.saucer.fill", mau: .brown, tieuDe: "Chi tiết đơn hàng") {
                 Image(systemName: "lock.fill").font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                Spacer()
                 Text("\(cart.totalCount) ly")
                     .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                     .padding(.horizontal, 8).padding(.vertical, 3)
@@ -472,7 +470,7 @@ struct CheckoutView: View {
 
     private var thanhToanCardContent: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Hình thức thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            TKTieuDe(icon: "creditcard.fill", mau: .green, tieuDe: "Hình thức thanh toán").padding(.bottom, 4)
             paymentOptionRow(.codTraKhiNhanHang, icon: "banknote", label: "Thanh toán khi nhận hàng")
             Divider()
             paymentOptionRow(.chuyenKhoanQR, icon: "qrcode", label: "Chuyển khoản qua mã QR")
@@ -501,7 +499,7 @@ struct CheckoutView: View {
 
     private var chiTietThanhToanCardContent: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Chi tiết thanh toán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+            TKTieuDe(icon: "doc.text.fill", mau: .orange, tieuDe: "Chi tiết thanh toán")
             chiTietRow("Tổng tiền hàng", formatTien(tongTienHang))
             if muaHoGiam > 0 {
                 chiTietRow("Giảm Mua hộ 5%", "-" + formatTien(muaHoGiam), color: Theme.danger)

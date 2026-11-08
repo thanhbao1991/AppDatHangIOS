@@ -96,22 +96,30 @@ struct ThongBaoView: View {
                                 dismiss()
                             }
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(alignment: .top, spacing: 12) {
                                 Text(item.loai == .khuyenMai ? "🎁" : thongBaoDonHangIcon(item.tieude))
                                     .frame(width: 40, height: 40)
                                     .background(item.loai == .khuyenMai ? Color(red: 1, green: 0.953, blue: 0.878) : Theme.primaryTint)
-                                    .clipShape(Circle())
-                                VStack(alignment: .leading, spacing: 2) {
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                VStack(alignment: .leading, spacing: 3) {
                                     Text(item.tieude).font(.system(size: 14, weight: .bold))
                                     noiDungText(item).font(.system(size: 13)).foregroundColor(Theme.textMuted)
                                     Text(formatThongBaoTime(item.ngayTao)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
                                 }
+                                Spacer(minLength: 0)
                             }
+                            .tkThe(dem: 14)
                         }
+                        .buttonStyle(.plain)
                         .foregroundColor(.primary)
-                        .padding(.vertical, 4)
+                        // 09/11/2026: mỗi thông báo một thẻ TK (đồng bộ tab Tài khoản), nền Theme.bg.
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Theme.bg)
                     .refreshable { await load(silent: true) }
                 }
             }

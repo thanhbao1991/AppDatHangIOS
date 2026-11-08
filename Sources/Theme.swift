@@ -222,12 +222,15 @@ extension View {
     /// hệt), giờ gom 1 chỗ để khoảng cách card-với-top và card-với-card đồng bộ thật sự trên cả 4 tab
     /// thay vì "trông giống giống" do trùng hợp copy-paste.
     func cardBoxStyle() -> some View {
+        // 09/11/2026: đồng bộ bộ khung TK của tab Tài khoản (TaiKhoanUI.swift) — bo 18, bóng nhẹ, không viền.
         self
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+            .background(
+                RoundedRectangle(cornerRadius: TK.bo, style: .continuous)
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+            )
             .padding(.horizontal)
             .padding(.vertical, 6)
     }

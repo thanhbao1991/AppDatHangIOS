@@ -54,17 +54,30 @@ struct GioHangView: View {
                 // 2026-09-26: đổi sang dạng PHẲNG (List(.plain) + đường kẻ mặc định) giống Đơn hàng/
                 // Lịch sử Xu/Voucher — bỏ cardBox/cardRow/cardListBackground (Theme.swift) riêng cho
                 // màn này, các tab khác vẫn dùng nguyên style card chung đó.
+                // 09/11/2026: mỗi món một thẻ TK (đồng bộ tab Tài khoản), nền Theme.bg; ô ghi chú cùng kiểu ô nhập TK.
                 List {
                     ForEach(cart.items) { item in
                         itemRow(item)
+                            .tkThe(dem: 12)
+                            .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
                     TextField("Ghi chú thêm", text: $cart.ghiChuDon)
-                        .textFieldStyle(.roundedBorder)
+                        .padding(.horizontal, 14).padding(.vertical, 13)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+                        )
                         .tint(Theme.primary)
-                        .padding(.vertical, 6)
-                        .listRowSeparator(.hidden, edges: .bottom)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 10, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Theme.bg)
                 bottomBar
             }
         }
@@ -339,7 +352,6 @@ struct GioHangView: View {
                 quantityStepper(item)
             }
         }
-        .padding(.vertical, 6)
     }
 
     /// Bộ +/- gọn kiểu Long Châu — nút trái đổi hẳn sang icon thùng rác khi số lượng còn 1 (bấm sẽ

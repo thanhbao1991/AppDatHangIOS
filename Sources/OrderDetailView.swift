@@ -36,7 +36,7 @@ struct OrderDetailView: View {
             // Chuyển toàn trang sang FLAT (feedback 2026-09-28) — bỏ hẳn nền xám bo góc `card` cũ,
             // mỗi mục giờ chỉ còn padding dọc + Divider phân cách, khớp phong cách các màn đã đổi
             // flat khác trong app (OrderStatusView/GioHangView/LichSuViView).
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
                 section {
                     // Từng bỏ hẳn mã hoá đơn khỏi đầu trang (feedback 2026-09-28) — thêm lại 2026-10-04
                     // dạng "#xxxxxxxx" vì giờ có push notification nhắc theo mã này, khớp OrderStatusView.
@@ -54,10 +54,9 @@ struct OrderDetailView: View {
                         timeline
                     }
                 }
-                Divider()
 
                 section {
-                    Text("Thông tin nhận hàng").font(.system(size: 15, weight: .bold))
+                    TKTieuDe(icon: "shippingbox.fill", mau: .blue, tieuDe: "Thông tin nhận hàng")
                     // Dùng chung DonHangKhach.laGiaoHangCoDiaChi/hinhThucNhanHangText (Models.swift) với
                     // OrderStatusView — 1 nguồn duy nhất, tránh lặp lại 2 bản logic dễ lệch nhau (bug
                     // thật phát hiện 2026-09-28).
@@ -71,7 +70,6 @@ struct OrderDetailView: View {
                         iconRow("note.text", "Ghi chú", ghiChuRieng)
                     }
                 }
-                Divider()
 
                 // Tách "Hình thức thanh toán" ra thành mục RIÊNG, đặt TRƯỚC "Danh sách sản phẩm"
                 // (feedback 2026-09-28, tham khảo layout ảnh mẫu) — trước đây gộp vào đầu mục "Thông
@@ -79,9 +77,7 @@ struct OrderDetailView: View {
                 // không có tiền tố GhiChu, có thể null nếu chưa thu đồng nào).
                 if let httt = hinhThucThanhToanHienThi {
                     section {
-                        HStack {
-                            Text("Hình thức thanh toán").font(.system(size: 15, weight: .bold))
-                            Spacer()
+                        TKTieuDe(icon: "creditcard.fill", mau: .green, tieuDe: "Hình thức thanh toán") {
                             if order.conLai <= 0 {
                                 Label("Đã thanh toán", systemImage: "checkmark.circle.fill")
                                     .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.success)
@@ -95,7 +91,6 @@ struct OrderDetailView: View {
                             Spacer()
                         }
                     }
-                    Divider()
                 }
 
                 // Style lại danh sách sản phẩm (feedback 2026-09-28) — thêm Divider mảnh giữa các món
@@ -103,9 +98,7 @@ struct OrderDetailView: View {
                 // "x{n}" chuyển hẳn lên góc trên cùng bên phải NGANG HÀNG với tên món thay vì đứng lẻ
                 // loi giữa khoảng trống bên phải như bản trước, khớp cách bố trí ở ảnh mẫu tham khảo hơn.
                 section {
-                    HStack {
-                        Text("Danh sách sản phẩm").font(.system(size: 15, weight: .bold))
-                        Spacer()
+                    TKTieuDe(icon: "cup.and.saucer.fill", mau: .brown, tieuDe: "Danh sách sản phẩm") {
                         Text("\(order.items.reduce(0) { $0 + $1.soLuong }) ly")
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(Theme.primaryTint).clipShape(Capsule())
@@ -138,10 +131,9 @@ struct OrderDetailView: View {
                         }
                     }
                 }
-                Divider()
 
                 section {
-                    Text("Thông tin thanh toán").font(.system(size: 15, weight: .bold))
+                    TKTieuDe(icon: "doc.text.fill", mau: .orange, tieuDe: "Thông tin thanh toán")
                     infoRow("Tổng tiền", order.tongTien)
                     // Giảm giá = 0 thì Tổng tiền và Thành tiền LUÔN bằng nhau — bớt hẳn dòng "Thành
                     // tiền" trùng lặp trong trường hợp đó (feedback 2026-09-28: "nếu tổng tiền và
@@ -168,8 +160,9 @@ struct OrderDetailView: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
         }
+        .background(Theme.bg)
         .navigationTitle("Chi tiết đơn hàng")
         .navigationBarTitleDisplayMode(.inline)
         // "Đặt lại" chuyển lên toolbar góc trên phải — LUÔN NỔI khi cuộn (feedback 2026-09-28), thay
@@ -195,9 +188,9 @@ struct OrderDetailView: View {
 
     @ViewBuilder
     private func section<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        // 09/11/2026: mỗi mục một thẻ TK (đồng bộ tab Tài khoản), thay kiểu phẳng có Divider.
         VStack(alignment: .leading, spacing: 8, content: content)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .tkThe()
     }
 
     /// Ảnh món (tham khảo layout Long Châu — ảnh thumbnail bên trái mỗi dòng sản phẩm, 2026-09-28)

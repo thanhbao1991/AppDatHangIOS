@@ -53,18 +53,25 @@ struct OrderStatusView: View {
                         nhomFilterCard
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         if filteredOrders.isEmpty {
                             Text("Không có đơn nào ở mục này.")
                                 .font(.system(size: 13)).foregroundColor(Theme.textFaint)
                                 .frame(maxWidth: .infinity).padding(.vertical, 24)
                                 .listRowSeparator(.hidden)
                         } else {
+                            // 09/11/2026: mỗi đơn một thẻ TK (đồng bộ tab Tài khoản), nền Theme.bg.
                             ForEach(filteredOrders, id: \.id) { order in
                                 orderCard(order)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
                             }
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Theme.bg)
                     .refreshable { await load(silent: true) }
                 }
             }
@@ -237,10 +244,7 @@ struct OrderStatusView: View {
             orderCardContent(item)
             actionRow(item)
         }
-        // KHÔNG thêm .padding(.horizontal) riêng — List đã tự có inset ngang mặc định, cộng thêm nữa
-        // sẽ bị double padding khiến hàng đơn hẹp hơn hẳn Lịch sử Xu (LichSuViView không thêm padding
-        // ngang cho hàng, chỉ dựa đúng 1 lớp inset mặc định của List).
-        .padding(.vertical, 10)
+        .tkThe(dem: 14)
     }
 
     /// Hàng dưới cùng mỗi card — góc trái hiện KẾT QUẢ đánh giá (đơn đã đánh giá rồi, không cần nút
