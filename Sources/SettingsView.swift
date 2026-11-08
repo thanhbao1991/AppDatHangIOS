@@ -353,9 +353,8 @@ struct SettingsView: View {
         return (Double(ngay) / Double(soNgay), soNgay - ngay + 1, "1/\(thangSau)")
     }
 
-    private func hopQuaXu(_ nhan: String, _ xu: Double) -> some View {
+    private func dongXu(_ nhan: String, _ xu: Double) -> some View {
         HStack(spacing: 4) {
-            Text("🎁")
             Text(nhan).foregroundColor(.white.opacity(0.78))
             Text(formatXu(xu)).fontWeight(.heavy).foregroundColor(.white)
         }
@@ -365,7 +364,7 @@ struct SettingsView: View {
     private func thongTinHang(_ vi: KhachHangVi) -> String {
         let t = Self.tienDoThang()
         var dong = ["Mỗi 300.000đ đặt qua app được 10.000 Xu; mua tại quán được một nửa (5.000 Xu). Xu cộng vào ví ngày \(t.ngayNhan)."]
-        dong.append("Tháng này: 🎁 App \(formatXu(vi.xuDonAppThangNay ?? 0)) · 🎁 Tại quán \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
+        dong.append("Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
     }
@@ -398,9 +397,14 @@ struct SettingsView: View {
                 }
             }
 
-            // Thanh = số ngày đã qua trong tháng; trái = còn mấy ngày, phải = Xu cộng ngày 1 tháng sau (08/11/2026).
+            // Thanh = số ngày đã qua trong tháng (08/11/2026). Xu đơn app ở trên thanh (phải), Xu đơn quầy (×0,5) dưới
+            // thanh (phải); trái dưới = còn bao nhiêu ngày tới ngày 1 tháng sau nhận Xu.
             let t = Self.tienDoThang()
             VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Spacer(minLength: 8)
+                    dongXu("App", vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0)
+                }
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.white.opacity(0.2))
@@ -410,17 +414,13 @@ struct SettingsView: View {
                 }
                 .frame(height: 6)
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Còn \(t.conLai) ngày")
+                    Text("Nhận sau \(t.conLai) ngày")
                         .foregroundColor(.white.opacity(0.78))
                     Spacer(minLength: 8)
-                    // 2 hộp quà (08/11/2026): Xu từ đơn đặt qua app và Xu từ đơn mua tại quán (×0,5).
-                    HStack(spacing: 12) {
-                        hopQuaXu("App", vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0)
-                        hopQuaXu("Quán", vi.xuDonQuayThangNay ?? 0)
-                    }
+                    dongXu("Quầy", vi.xuDonQuayThangNay ?? 0)
                 }
-                .font(.system(size: 12, weight: .semibold))
             }
+            .font(.system(size: 12, weight: .semibold))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
