@@ -89,6 +89,7 @@ struct GioHangView: View {
             VoucherPickerSheet(
                 vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien,
                 giaTriGiam: { cart.soTienGiam($0) },
+                lyDo: { cart.lyDoChuaDuDieuKien($0) },
                 selected: $cart.selectedVoucher,
                 onClose: { showVoucherSheet = false },
                 onRetry: { await cart.reloadVouchers() }

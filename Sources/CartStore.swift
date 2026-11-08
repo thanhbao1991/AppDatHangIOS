@@ -183,6 +183,37 @@ final class CartStore: ObservableObject {
         return true
     }
 
+    /// Vì sao voucher CHƯA dùng được + hướng dẫn cách dùng (09/11/2026, chủ quán: voucher mờ khó hiểu — bấm vào phải
+    /// giải thích). Cùng thứ tự kiểm tra với voucherDuDieuKien. nil = đã đủ điều kiện.
+    func lyDoChuaDuDieuKien(_ v: Voucher) -> String? {
+        guard !voucherDuDieuKien(v) else { return nil }
+        let items = itemsApDungVoucher
+        if v.chiApDungKhiCoSizeL {
+            return "Voucher này chỉ dùng khi giỏ có món Size L.\n\nCách dùng: trong Giỏ hàng, bấm vào một món rồi đổi sang Size L."
+        }
+        if v.chiApDungKhiCoSizeXL {
+            return "Voucher này chỉ dùng khi giỏ có món Size XL.\n\nCách dùng: trong Giỏ hàng, bấm vào một món rồi đổi sang Size XL."
+        }
+        if v.chiApDungKhiCoTopping {
+            return "Voucher này chỉ dùng khi có món thêm topping.\n\nCách dùng: trong Giỏ hàng, bấm vào một món rồi chọn thêm topping."
+        }
+        if v.chiApDungKhiCoMonMoi {
+            return "Voucher này dành cho món bạn chưa từng đặt.\n\nCách dùng: thêm vào giỏ một món mới mà bạn chưa đặt lần nào."
+        }
+        if v.chiApDungKhiDatLai {
+            return "Voucher này chỉ dùng cho đơn đặt lại.\n\nCách dùng: vào tab Đơn hàng, bấm \"Đặt lại\" ở một đơn cũ."
+        }
+        let monKhongTinh = coMonKhongApDungVoucher ? " (không tính nước lon, ăn vặt và món không pha chế)" : ""
+        if let donToiThieu = v.donToiThieu, donToiThieu > 0, tongTienApDungVoucher < donToiThieu {
+            return "Đơn cần tối thiểu \(formatTien(donToiThieu))\(monKhongTinh).\n\nThêm \(formatTien(donToiThieu - tongTienApDungVoucher)) nữa là dùng được."
+        }
+        if let soLuongToiThieu = v.soLuongToiThieu, soLuongToiThieu > 0 {
+            let co = items.reduce(0) { $0 + $1.soLuong }
+            return "Đơn cần tối thiểu \(soLuongToiThieu) ly\(monKhongTinh).\n\nThêm \(max(1, soLuongToiThieu - co)) ly nữa là dùng được."
+        }
+        return "Voucher này chưa áp dụng được cho giỏ hàng hiện tại."
+    }
+
     /// Số tiền voucher v giảm được cho giỏ hiện tại — chỉ tính trên món pha chế.
     func soTienGiam(_ v: Voucher) -> Double {
         let base = tongTienApDungVoucher

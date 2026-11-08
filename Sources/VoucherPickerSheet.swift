@@ -10,7 +10,10 @@ struct VoucherPickerSheet: View {
     /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
     /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
     let giaTriGiam: (Voucher) -> Double
+    /// Vì sao chưa dùng được + cách dùng (CartStore.lyDoChuaDuDieuKien) — hiện khi bấm voucher chưa đủ điều kiện.
+    var lyDo: (Voucher) -> String? = { _ in nil }
     @Binding var selected: Voucher?
+    @State private var huongDan: (ten: String, lyDo: String)?
     var onClose: () -> Void
     /// Tải lại danh sách voucher — dùng cho nút "Thử tải lại" khi `vouchers` rỗng. Thêm 2026-09-28
     /// (feedback: sheet trắng tinh khi request /voucher/kha-dung rớt mạng giữa chừng, APIClient nuốt
@@ -98,7 +101,11 @@ struct VoucherPickerSheet: View {
                     let ok = duDieuKien(v)
                     cardRow {
                         Button {
-                            guard ok else { return }
+                            // 09/11/2026: voucher chưa đủ điều kiện KHÔNG mờ/khoá nữa — bấm vào hiện lý do + cách dùng.
+                            guard ok else {
+                                huongDan = (v.ten, lyDo(v) ?? "Voucher này chưa áp dụng được cho giỏ hàng hiện tại.")
+                                return
+                            }
                             // Đóng sheet TRƯỚC, chỉ ghi `selected` SAU khi sheet đã đóng xong (~0.35s,
                             // khớp thời gian dismiss mặc định của sheet) — nếu ghi ngay rồi đóng cùng
                             // lúc, số tiền ở màn dưới đổi trong lúc sheet còn che nên hiệu ứng đếm giảm
@@ -114,21 +121,38 @@ struct VoucherPickerSheet: View {
                             // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
                             // tiền quy đổi riêng cho đơn hiện tại, tránh cùng 1 voucher trông như 2
                             // voucher khác nhau giữa 2 màn.
-                            VoucherTicketCard(
-                                ten: v.ten, moTa: v.moTa, ma: v.ma,
-                                nhanGiam: v.nhanGiamGia,
-                                nhanGiamToiDa: v.nhanGiamToiDa,
-                                donToiThieu: v.donToiThieu,
-                                daChon: selected?.id == v.id
-                            )
+                            VStack(alignment: .leading, spacing: 6) {
+                                VoucherTicketCard(
+                                    ten: v.ten, moTa: v.moTa, ma: v.ma,
+                                    nhanGiam: v.nhanGiamGia,
+                                    nhanGiamToiDa: v.nhanGiamToiDa,
+                                    donToiThieu: v.donToiThieu,
+                                    daChon: selected?.id == v.id
+                                )
+                                // Rõ ràng (không mờ) + dòng nhắc nhỏ để khách biết bấm vào xem cách dùng.
+                                if !ok {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "info.circle.fill").font(.system(size: 12))
+                                        Text("Chưa đủ điều kiện · Bấm để xem cách dùng")
+                                            .font(.system(size: 12, weight: .semibold))
+                                    }
+                                    .foregroundColor(Theme.xuTangChu)
+                                    .padding(.leading, 6)
+                                }
+                            }
                             .padding(.horizontal).padding(.vertical, 6)
-                            .opacity(ok ? 1 : 0.65)
                         }
                         .buttonStyle(.plain)
-                        .disabled(!ok)
                     }
                 }
         }
         .cardListBackground()
+        .popupHost { host in
+            host.alert(huongDan?.ten ?? "", isPresented: Binding(get: { huongDan != nil }, set: { if !$0 { huongDan = nil } })) {
+                Button("Đã hiểu") {}
+            } message: {
+                Text(huongDan?.lyDo ?? "")
+            }
+        }
     }
 }
