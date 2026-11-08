@@ -60,10 +60,13 @@ struct BangXepHangView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 }
                             }
-                            Text(bang.moTa)
-                                .font(.system(size: 12)).foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 8)
+                            // Chủ quán 09/11/2026: không cần câu hướng dẫn — backend gửi rỗng thì không hiện.
+                            if !bang.moTa.isEmpty {
+                                Text(bang.moTa)
+                                    .font(.system(size: 12)).foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 8)
+                            }
                         }
                         .padding(16)
                     }
