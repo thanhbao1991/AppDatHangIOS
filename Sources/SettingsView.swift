@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var loading = true
     #if DEV_LOGIN
     @State private var xemTruocNgay1 = false
+    @State private var moBangXepHang = false
     @State private var chucMungXemTruoc: QuaChucMung?
     @State private var quaXemTruocConLai: [QuaChucMung] = []
     /// Không tự dùng, chỉ đổi giá trị để buộc nhãn nút "🧪 Xem trước..." vẽ lại (SeasonalEvent.previewOverride
@@ -140,6 +141,7 @@ struct SettingsView: View {
                     Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
                 }
         }
+        .sheet(isPresented: $moBangXepHang) { BangXepHangView() }
         .sheet(isPresented: $showDiaChiForm) {
             DiaChiFormSheet(
                 initialText: diaChiFormText,
@@ -354,15 +356,13 @@ struct SettingsView: View {
     }
 
     /// Ô Xu theo nguồn (08/11/2026): đơn đặt qua app (nổi hơn) và đơn mua tại quầy (×0,5).
-    private func oXu(_ tieuDe: String, _ xu: Double, tiLe: String, noiBat: Bool) -> some View {
+    private func oXu(_ tieuDe: String, _ xu: Double, noiBat: Bool) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(tieuDe)
                 .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
             Text(formatXu(xu))
                 .font(.system(size: 17, weight: .heavy)).foregroundColor(.white)
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(tiLe)
-                .font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.6))
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -397,14 +397,17 @@ struct SettingsView: View {
                         .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
                 Spacer()
-                // Xếp hạng shipper tháng này theo chi tiêu tính hạng (2026-10-26, chỉ tài khoản shipper).
-                if let top = vi.topShipper ?? vi.topKhach {
-                    Text("Top \(top.viTri)")
+                // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
+                // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
+                Button { moBangXepHang = true } label: {
+                    let viTri = (vi.topShipper ?? vi.topKhach)?.viTri
+                    Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
                         .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                         .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(Color.white.opacity(0.18))
                         .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
 
             // Thiết kế lại 08/11/2026: tổng Xu tháng này (nhận ngày 1 tháng sau) + thanh mảnh theo số ngày trong tháng,
@@ -432,8 +435,8 @@ struct SettingsView: View {
                 }
                 .frame(height: 4)
                 HStack(spacing: 8) {
-                    oXu("Đặt qua app", xuApp, tiLe: "100% quà", noiBat: true)
-                    oXu("Gọi qua quầy", xuQuay, tiLe: "50% quà", noiBat: false)
+                    oXu("Đặt qua app", xuApp, noiBat: true)
+                    oXu("Gọi qua quầy -50% quà", xuQuay, noiBat: false)
                 }
                 .padding(.top, 4)
             }

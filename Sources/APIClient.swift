@@ -554,6 +554,11 @@ actor APIClient {
 
     // ===== Ví / gamification =====
 
+    func getBangXepHang() async -> BangXepHang? {
+        let env: ApiEnvelope<BangXepHang> = await decode("/dat-hang/bang-xep-hang")
+        return env.isSuccess ? env.data : nil
+    }
+
     func getVi() async -> KhachHangVi? {
         let env: ApiEnvelope<KhachHangVi> = await decode("/dat-hang/vi")
         return env.isSuccess ? env.data : nil
