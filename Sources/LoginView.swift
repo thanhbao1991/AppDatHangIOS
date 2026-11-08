@@ -42,6 +42,13 @@ struct LoginView: View {
             ScrollView {
                 VStack(spacing: 32) {
                     VStack(spacing: 8) {
+                        // Ô icon kiểu TK (bo góc, nền trắng mờ) — cùng ngôn ngữ ô icon toàn app.
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.system(size: 30, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 64, height: 64)
+                            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white.opacity(0.18)))
+                            .padding(.bottom, 6)
                         Text("Đenn Coffee")
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(.white)
@@ -49,7 +56,7 @@ struct LoginView: View {
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.85))
                     }
-                    .padding(.top, 120)
+                    .padding(.top, 90)
 
                     VStack(spacing: 14) {
                         if !error.isEmpty {
@@ -61,7 +68,7 @@ struct LoginView: View {
                             .padding(.horizontal, 14).padding(.vertical, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Theme.danger.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
 
                         switch step {
@@ -73,8 +80,8 @@ struct LoginView: View {
                     }
                     .padding(24)
                     .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(Color(.systemBackground))
                             .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 12)
                     )
 
@@ -268,10 +275,11 @@ struct LoginView: View {
         }
         .padding(.horizontal, 14)
         .frame(height: 50)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        // 09/11/2026: cùng kiểu ô nhập TK toàn app — nền xám nhạt, không viền; chỉ viền màu chủ đạo khi đang gõ.
+        .background(Theme.bg, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(isFocused ? Theme.primary : Color(.separator).opacity(0.4), lineWidth: isFocused ? 1.5 : 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(isFocused ? Theme.primary : Color.clear, lineWidth: 1.5)
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
     }
@@ -302,7 +310,7 @@ struct LoginView: View {
             .frame(height: 52)
             .foregroundColor(.white)
             .background(Theme.primaryGradient.opacity(disabled ? 0.35 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .disabled(disabled)
     }

@@ -188,7 +188,6 @@ struct MenuView: View {
             // chiếm trọn màn, không cạnh tranh chỗ với dải quảng bá không liên quan tới từ khoá gõ).
             if !loading && error.isEmpty && !isSearching && !noiBatSanPhams.isEmpty {
                 noiBatCarousel
-                Divider()
             }
 
             Group {
@@ -226,6 +225,8 @@ struct MenuView: View {
                             .font(.system(size: 15, weight: .bold))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.bg)
                         HStack(spacing: 0) {
                         nhomSidebar(onTap: { id in
                             isJumpingToSection = true
@@ -241,23 +242,27 @@ struct MenuView: View {
                                             // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
                                             // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
                                             // không cần nhánh rỗng riêng nữa.
-                                            ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
-                                                productRow(sp)
-                                                    // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở
-                                                    // CẢ mục "Yêu thích" lẫn mục "Bạc Xỉu" thật (cùng
-                                                    // 1 sp.id). List trước đây cô lập nhận diện theo
-                                                    // Section nên không sao, LazyVStack thì gộp chung
-                                                    // 1 không gian nhận diện toàn cây — trùng id giữa
-                                                    // 2 section gây lẫn/tráo render (dòng trống). Ghép
-                                                    // thêm nhom.id để đảm bảo không trùng nhau nữa.
-                                                    .id("\(section.nhom.id)|\(sp.id)")
-                                                    .background(sectionBackground(index))
-                                                // Divider tự tay — List trước đây tự vẽ đường kẻ giữa
-                                                // các hàng, ScrollView thường thì không, phải vẽ tay.
-                                                if itemIndex < section.items.count - 1 {
-                                                    Divider().padding(.leading, 16)
+                                            // 09/11/2026 (đồng bộ toàn app theo bộ khung TK — KHÔNG theo ảnh mẫu): món
+                                            // của mỗi nhóm gom vào 1 thẻ trắng bo 18 có bóng nhẹ, kẻ mảnh giữa các món
+                                            // (kiểu nhóm dòng ở tab Tài khoản), trên nền xám Theme.bg.
+                                            VStack(spacing: 0) {
+                                                ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
+                                                    productRow(sp)
+                                                        // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở CẢ mục "Yêu
+                                                        // thích" lẫn mục "Bạc Xỉu" thật (cùng 1 sp.id); trùng id giữa
+                                                        // 2 section gây lẫn/tráo render (dòng trống).
+                                                        .id("\(section.nhom.id)|\(sp.id)")
+                                                    if itemIndex < section.items.count - 1 {
+                                                        Divider().padding(.leading, 84)
+                                                    }
                                                 }
                                             }
+                                            .background(
+                                                RoundedRectangle(cornerRadius: TK.bo, style: .continuous)
+                                                    .fill(Color(.systemBackground))
+                                                    .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+                                            )
+                                            .padding(.horizontal, 10).padding(.bottom, 8)
                                         } header: {
                                             sectionHeader(section.nhom, items: section.items)
                                                 .id(section.nhom.id)
@@ -274,6 +279,7 @@ struct MenuView: View {
                                 withAnimation { proxy.scrollTo(req.id, anchor: .top) }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
                             }
+                            .background(Theme.bg)
                             .refreshable {
                                 await load(silent: true)
                             }
@@ -324,10 +330,13 @@ struct MenuView: View {
     /// header thay vì Color(.secondarySystemGroupedBackground) trung tính cũ, nổi bật hơn khớp cột
     /// nhóm sidebar bên trái đã có nền tô đậm cho mục đang chọn.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
+            // Ô icon kiểu TK (vuông bo góc tô nhạt) như tiêu đề thẻ toàn app.
             Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                .font(.system(size: 14))
-            Text(nhom.ten).font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
+                .font(.system(size: 15))
+                .frame(width: 28, height: 28)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primaryTint))
+            Text(nhom.ten).font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
             Spacer()
             if !items.isEmpty {
                 Button {
@@ -346,16 +355,8 @@ struct MenuView: View {
         }
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, minHeight: Self.categoryHeaderHeight, maxHeight: Self.categoryHeaderHeight)
-        // Nền đục hẳn (không dùng Material .bar mờ) — header này PIN (ghim) khi cuộn, nổi đè lên
-        // nội dung đã cuộn qua bên dưới; nền mờ/trong suốt để lộ nội dung đó xuyên qua, gây chồng
-        // lấn/nhoè (đã thấy qua ảnh chụp thật). Theme.primaryTint BẢN THÂN là opacity(0.12) nên
-        // KHÔNG được dùng trực tiếp làm background (vẫn xuyên thấu) — lót thêm 1 lớp systemBackground
-        // đục phía dưới để cả khối trở thành đục hoàn toàn, chỉ tự pha màu 1 LẦN ở đây, không lộ nội
-        // dung cuộn qua bên dưới.
-        .background {
-            Color(.systemBackground)
-            Theme.primaryTint
-        }
+        // 09/11/2026: header không ghim (đã bỏ pinned từ 2026-09-25) nên nằm thẳng trên nền xám Theme.bg, phía dưới là
+        // thẻ trắng chứa món của nhóm — không cần nền tô riêng nữa.
     }
 
     /// Cột trái: danh sách nhóm cố định — bấm thì báo `onTap` để cột phải tự cuộn tới đúng section
@@ -370,9 +371,6 @@ struct MenuView: View {
                             onTap(section.nhom.id)
                         } label: {
                             HStack(spacing: 6) {
-                                Rectangle()
-                                    .fill(isSelected ? Theme.primary : Color.clear)
-                                    .frame(width: 3)
                                 // "#" ghép liền chữ đầu bằng Text concatenation (+) thay vì Text
                                 // riêng có .frame(width:) — frame cố định tạo khoảng trắng 2 bên "#"
                                 // làm mất cảm giác hashtag dính liền kiểu "#BạcXỉu".
@@ -388,8 +386,14 @@ struct MenuView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.trailing, 4)
                             }
+                            .padding(.leading, 8)
                             .frame(height: Self.categoryHeaderHeight)
-                            .background(isSelected ? Theme.primaryTint.opacity(0.5) : Color.clear)
+                            // 09/11/2026: mục đang chọn là ô bo góc tô nhạt (kiểu ô chọn TK) thay vạch dọc + nền phủ ngang.
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(isSelected ? Theme.primaryTint : Color.clear)
+                            )
+                            .padding(.horizontal, 5).padding(.vertical, 1)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -397,7 +401,7 @@ struct MenuView: View {
                 }
             }
             .frame(width: 84)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(.systemBackground))
             // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
             // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
             .onChange(of: selectedNhomId) { id in
@@ -557,7 +561,7 @@ struct MenuView: View {
                                 VStack(alignment: .leading, spacing: 6) {
                                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                            .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                     } else {
                                         AnhMonPlaceholder(width: cardWidth, height: 90)
                                     }
@@ -590,7 +594,7 @@ struct MenuView: View {
             .frame(height: 90 + 6 + 16 + 4 + 15)
         }
         .padding(.vertical, 10)
-        .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
+        .background(Theme.bg) // 09/11/2026: cùng nền xám toàn app
     }
 
     /// Gộp món "Nổi bật" (chọn tay qua AppQuanLyIOS) VÀ top bán chạy 30 ngày (tự động, banChayIds) —

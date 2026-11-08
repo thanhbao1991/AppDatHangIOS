@@ -74,19 +74,14 @@ struct LichSuViView: View {
     @ViewBuilder
     private func rowIcon(_ item: ViGiaoDich) -> some View {
         if item.soTienThayDoi >= 0 {
-            Theme.xuIcon(44)
+            // 09/11/2026: ô icon TK thay icon đồng xu ảnh (chủ quán: lạc lõng).
+            TKIcon(ten: "arrow.down.left", mau: Theme.success, co: 44)
         } else if let hinhAnh = item.hinhAnhSanPhamDauTien, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                 .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         } else {
-            ZStack {
-                Circle().fill(Theme.danger.opacity(0.12))
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Theme.danger)
-            }
-            .frame(width: 44, height: 44)
+            TKIcon(ten: "arrow.up.right", mau: Theme.danger, co: 44)
         }
     }
 

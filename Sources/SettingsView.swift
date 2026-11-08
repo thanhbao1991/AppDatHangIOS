@@ -324,7 +324,8 @@ struct SettingsView: View {
     private func xuCard(_ vi: KhachHangVi) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 12) {
-                Theme.xuIcon(42)
+                // Chủ quán 09/11/2026: icon đồng xu ảnh lạc lõng → ô icon TK (ví, cam) cùng kiểu ô icon thẻ Công nợ.
+                TKIcon(ten: "wallet.pass.fill", mau: .orange, co: 42)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Ví Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
                     (Text(SoDuCard.so(vi.soDu)).font(.system(size: 28, weight: .heavy, design: .rounded))
