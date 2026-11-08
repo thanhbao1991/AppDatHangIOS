@@ -30,7 +30,7 @@ struct DanhGiaSheet: View {
                 .padding(.top, 12)
 
                 TextField("Nhận xét (không bắt buộc)", text: $nhanXet, axis: .vertical)
-                    .textFieldStyle(.roundedBorder).tint(Theme.primary)
+                    .tkONhap() // 09/11/2026: cùng kiểu ô nhập TK toàn app
                     .lineLimit(3...6)
 
                 if let error {
