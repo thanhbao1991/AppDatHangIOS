@@ -398,7 +398,7 @@ struct SettingsView: View {
                 }
                 Spacer()
                 // Xếp hạng shipper tháng này theo chi tiêu tính hạng (2026-10-26, chỉ tài khoản shipper).
-                if let top = vi.topShipper {
+                if let top = vi.topShipper ?? vi.topKhach {
                     Text("Top \(top.viTri)")
                         .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                         .padding(.horizontal, 10).padding(.vertical, 4)
@@ -728,6 +728,9 @@ enum XemTruocNgay1 {
         if let h = choNhanHang(v) { json["thuongHangThang"] = h }
         if let t = v.topShipper, t.thuongXu > 0 {
             json["thuongTopShipper"] = ["viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu, "daNhan": false] as [String: Any]
+        }
+        if let t = v.topKhach, t.thuongXu > 0 {
+            json["thuongTopKhach"] = ["viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu, "daNhan": false] as [String: Any]
         }
         guard let data = try? JSONSerialization.data(withJSONObject: json),
               let gia = try? JSONDecoder().decode(KhachHangVi.self, from: data) else { return [] }

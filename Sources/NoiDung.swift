@@ -14,6 +14,8 @@ enum NoiDung {
         "chucMungHangTieuDe": "Quà {thang}",
         "chucMungHangPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
         "chucMungTopTieuDe": "Top {viTri} người dùng\n{thang}",
+        "chucMungTopKhachTieuDe": "Top {viTri} khách hàng\n{thang}",
+        "chucMungTopKhachPhu": "Cảm ơn bạn đã luôn đặt món qua app Đenn.",
         "chucMungTopPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
         "chucMungChuyenDiemTieuDe": "Điểm tích ở quầy\nđã thành Xu",
         "chucMungChuyenDiemPhu": "Đã cộng vào ví.",

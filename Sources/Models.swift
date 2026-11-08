@@ -672,6 +672,9 @@ struct KhachHangVi: Decodable {
     // Xếp hạng shipper tháng này (chỉ có khi laShipper) — top 3 cuối tháng nhận Xu.
     var topShipper: TopShipperThang? = nil
     var thuongTopShipper: ThuongTopShipper? = nil
+    // Top khách (08/11/2026): khách không shipper, cả tháng 100% đặt qua app — cùng kiểu dữ liệu với Top shipper.
+    var topKhach: TopShipperThang? = nil
+    var thuongTopKhach: ThuongTopShipper? = nil
     // Điểm tích ở quầy đã đổi thành Xu lúc đăng nhập app lần đầu (30/10/2026) — Xu đã cộng sẵn, chỉ hiện màn chúc mừng 1 lần.
     var quaChuyenDiemQuay: QuaChuyenDiemQuay? = nil
 }

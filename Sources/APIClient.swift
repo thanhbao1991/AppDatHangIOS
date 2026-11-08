@@ -530,6 +530,11 @@ actor APIClient {
         return ActionResult(success: env.isSuccess, message: env.message)
     }
 
+    func nhanThuongTopKhach() async -> ActionResult {
+        let env: ApiEnvelope<Double> = await decode("/dat-hang/thuong-top-khach/nhan", method: "POST")
+        return ActionResult(success: env.isSuccess, message: env.message)
+    }
+
     func nhanThuongTop() async -> ActionResult {
         let env: ApiEnvelope<Double> = await decode("/dat-hang/thuong-top/nhan", method: "POST")
         return ActionResult(success: env.isSuccess, message: env.message)

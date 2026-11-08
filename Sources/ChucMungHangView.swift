@@ -4,9 +4,11 @@ import SwiftUI
 /// Vàng 30k / Kim Cương 60k) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k). Xu không hết hạn.
 /// KHÔNG tự cộng: bấm "Nhận ngay" mới cộng vào ví; chưa bấm thì lần sau mở app lại hiện. Mỗi quà 1 màn riêng.
 struct QuaChucMung: Identifiable, Equatable {
-    enum Loai { case hang, top, chuyenDiem }
+    enum Loai { case hang, top, topKhach, chuyenDiem }
     let loai: Loai
     let icon: String
+    /// Ảnh minh hoạ vẽ riêng (Assets) thay emoji — nil thì dùng `icon`.
+    var anh: String? = nil
     let tieuDe: String
     let mauHang: String
     let soXu: Double
@@ -15,6 +17,7 @@ struct QuaChucMung: Identifiable, Equatable {
         switch loai {
         case .hang: return "hang"
         case .top: return "top"
+        case .topKhach: return "topKhach"
         case .chuyenDiem: return "chuyenDiem"
         }
     }
@@ -45,15 +48,22 @@ enum ChucMungHang {
         if let t = vi?.thuongHangThang, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
                 loai: .hang,
-                icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉",
+                icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉", anh: "ChucMungQuaThang",
                 tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hangDayDu ?? t.hang, "thang": tenThang(t.thangDat)]),
                 mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu")))
         }
         if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
             ds.append(QuaChucMung(
-                loai: .top, icon: "🏆",
+                loai: .top, icon: "🏆", anh: "ChucMungTopShipper",
                 tieuDe: dien(NoiDung.text("chucMungTopTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
                 mauHang: "Kim Cương", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopPhu")))
+        }
+        // Top khách đặt 100% qua app (08/11/2026).
+        if let t = vi?.thuongTopKhach, t.daNhan == false, t.soXu > 0 {
+            ds.append(QuaChucMung(
+                loai: .topKhach, icon: "👑", anh: "ChucMungTopKhach",
+                tieuDe: dien(NoiDung.text("chucMungTopKhachTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
+                mauHang: "Vàng", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopKhachPhu")))
         }
         return ds
     }
@@ -63,6 +73,7 @@ enum ChucMungHang {
         switch qua.loai {
         case .hang: return await APIClient.shared.nhanThuongHang().success
         case .top: return await APIClient.shared.nhanThuongTop().success
+        case .topKhach: return await APIClient.shared.nhanThuongTopKhach().success
         case .chuyenDiem:
             if let id = daXemChuyenDiemId { UserDefaults.standard.set(id, forKey: khoaDaXemChuyenDiem) }
             return true
@@ -109,8 +120,13 @@ struct ChucMungHangView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Text(qua.icon)
-                    .font(.system(size: 110))
+                Group {
+                    if let anh = qua.anh, UIImage(named: anh) != nil {
+                        Image(anh).resizable().scaledToFit().frame(width: 220, height: 220)
+                    } else {
+                        Text(qua.icon).font(.system(size: 110))
+                    }
+                }
                     .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
                     .scaleEffect(hien ? 1 : 0.2)
                     .rotationEffect(.degrees(hien ? 0 : -30))
