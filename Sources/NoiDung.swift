@@ -11,7 +11,7 @@ enum NoiDung {
         "xoaTaiKhoanMoTa": "Nếu tài khoản còn công nợ, bạn cần thanh toán hết trước khi xoá. Số dư Xu (nếu có) vẫn được quán giữ nguyên, dùng lại được khi bạn đăng ký lại app bằng cùng số điện thoại.\n\nXoá tài khoản sẽ xoá mật khẩu hiện tại và ngày sinh đã khai, thu hồi mọi phiên đăng nhập. Bạn sẽ không còn thấy lại đơn hàng, thẻ tích điểm, lịch sử Xu hay địa chỉ đã lưu trong app, kể cả nếu đăng ký lại sau này. Số điện thoại, tên và lịch sử mua hàng vẫn được quán lưu giữ (kế toán, chăm sóc khách hàng ngoài app) — xem Chính sách bảo mật. Không thể hoàn tác.",
         "hangGhiChu": "Chỉ tính đơn đặt qua app. Nước lon, ăn vặt và món không pha chế không được tính vào hạng.\n\nChương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
         "hopQuaTaiTro": "Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
-        "chucMungHangTieuDe": "Bạn đạt hạng {hang}\n{thang}",
+        "chucMungHangTieuDe": "Quà {thang}",
         "chucMungHangPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
         "chucMungTopTieuDe": "Top {viTri} người dùng\n{thang}",
         "chucMungTopPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
