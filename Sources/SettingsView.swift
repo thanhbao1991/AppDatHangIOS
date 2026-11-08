@@ -373,7 +373,7 @@ struct SettingsView: View {
     /// Nội dung popup ⓘ trên thẻ hạng.
     private func thongTinHang(_ vi: KhachHangVi) -> String {
         let t = Self.tienDoThang()
-        var dong = ["Quà tháng này là Xu: mỗi 30.000đ đặt qua app được 1.000 Xu (100% quà), gọi qua quầy được 500 Xu (50% quà). Nhận vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
+        var dong = ["Đặt qua app được Xu GẤP ĐÔI gọi qua quầy: mỗi 30.000đ đặt qua app được 1.000 Xu, gọi qua quầy được 500 Xu. Nhận vào ví ngày \(t.ngayNhan), dùng để trừ tiền khi mua."]
         dong.append("Tháng này: App \(formatXu(vi.xuDonAppThangNay ?? 0)) · Quầy \(formatXu(vi.xuDonQuayThangNay ?? 0)).")
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
