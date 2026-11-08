@@ -55,11 +55,14 @@ struct ThanhToanView: View {
                     .padding(.top, 100)
                 }
             }
-            .padding()
+            .padding(.vertical, 20).padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
+            // 09/11/2026: nội dung trong thẻ TK trên nền xám (đồng bộ toàn app).
+            .tkThe(dem: 0)
+            .tkManHinh()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Theme.bg)
         .navigationTitle("Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
         // Bỏ nút back hệ thống (feedback 2026-09-28) — back sẽ pop về CheckoutView (giỏ đã clear(),

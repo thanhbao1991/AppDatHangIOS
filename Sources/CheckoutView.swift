@@ -256,9 +256,12 @@ struct CheckoutView: View {
         // Nội dung Mua hộ ngắn hơn segmented picker — kéo full width cho bằng các card bên dưới.
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
+        // 09/11/2026: cùng kiểu thẻ TK (bo 18, bóng nhẹ, không viền) như các thẻ khác.
+        .background(
+            RoundedRectangle(cornerRadius: TK.bo, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+        )
         .padding(.horizontal)
         .padding(.vertical, 6)
     }
@@ -315,10 +318,10 @@ struct CheckoutView: View {
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(chon ? Theme.primaryTint : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(chon ? Theme.primary : Theme.divider))
-        .contentShape(RoundedRectangle(cornerRadius: 8))
+        // 09/11/2026: cùng kiểu ô địa chỉ ở tab Tài khoản — nền xám nhạt, đang chọn tô màu + viền nhạt.
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(chon ? Theme.primaryTint : Theme.bg))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(chon ? Theme.primary.opacity(0.5) : Color.clear))
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture { if !editing { action() } }
         .foregroundColor(chon ? Theme.primary : Theme.textMuted)
     }
@@ -367,7 +370,7 @@ struct CheckoutView: View {
                 }
             }
             .background(Theme.primaryTint.opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
@@ -415,7 +418,7 @@ struct CheckoutView: View {
                         onDragEnd: { newCoord in ghimDoKhach = true; Task { await applyCoord(newCoord) } }
                     )
                     .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     Text("Kéo ghim để chọn đúng chỗ giao hàng")
                         .font(.system(size: 11)).foregroundColor(Theme.textMuted)
                         .padding(.horizontal, 10)

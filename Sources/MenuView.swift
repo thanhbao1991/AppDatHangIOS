@@ -445,7 +445,7 @@ struct MenuView: View {
                 HStack(spacing: 12) {
                     if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
                         CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else {
                         AnhMonPlaceholder(width: 56, height: 56)
                     }
@@ -822,7 +822,7 @@ struct ProductPickerSheet: View {
                     HStack(alignment: .top) {
                         if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
                             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         VStack(alignment: .leading, spacing: 8) {
                             Text(sanPham.ten).font(.headline)
@@ -1066,7 +1066,7 @@ struct ProductPickerSheet: View {
                                         .minimumScaleFactor(0.75)
                                         .background(active ? Theme.primary : Theme.textMuted.opacity(0.1))
                                         .foregroundColor(active ? .white : Theme.textMuted)
-                                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                         .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
@@ -1092,8 +1092,9 @@ struct ProductPickerSheet: View {
                     .scrollContentBackground(.hidden)
                     .frame(height: 100)
             }
-            .padding(4)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.divider))
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            // 09/11/2026: cùng kiểu ô nhập TK (nền xám bo 12, không viền).
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.bg))
         }
     }
 

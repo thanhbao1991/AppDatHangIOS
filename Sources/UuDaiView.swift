@@ -97,7 +97,7 @@ struct UuDaiView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(Theme.success.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else {
                         Button {
                             Task { await lamDiemDanh() }
@@ -159,9 +159,9 @@ struct UuDaiView: View {
             .padding(.vertical, 10)
             .opacity(daXongNgayNay ? 0.45 : 1)
             .background(isDay7 ? Theme.primary : Theme.bg)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(isToday ? Theme.primary : Color.clear, lineWidth: 2)
             )
             .overlay(alignment: .topTrailing) {
@@ -187,7 +187,7 @@ struct UuDaiView: View {
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Theme.primary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 10)
-                    .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 8))
+                    .background(Theme.primaryTint).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
             giftBoxView.frame(maxWidth: .infinity, alignment: .center)

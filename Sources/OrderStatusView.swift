@@ -183,7 +183,7 @@ struct OrderStatusView: View {
     private func firstItemImage(_ item: DonHangKhach) -> some View {
         if let hinhAnh = item.items.first?.hinhAnh, let url = URL(string: hinhAnh) {
             CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         } else {
             RoundedRectangle(cornerRadius: 10).fill(Theme.primaryTint).frame(width: 56, height: 56)
                 .overlay(Image(systemName: "cup.and.saucer.fill").foregroundColor(Theme.primary))
