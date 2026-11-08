@@ -435,8 +435,8 @@ struct SettingsView: View {
                 }
                 .frame(height: 4)
                 HStack(spacing: 8) {
-                    oXu("Đặt qua app", xuApp, noiBat: true)
-                    oXu("Gọi qua quầy -50% quà", xuQuay, noiBat: false)
+                    oXu("Đặt qua app x2 quà", xuApp, noiBat: true)
+                    oXu("Gọi qua quầy", xuQuay, noiBat: false)
                 }
                 .padding(.top, 4)
             }
