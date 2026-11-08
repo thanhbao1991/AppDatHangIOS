@@ -106,6 +106,17 @@ struct BangXepHangView: View {
         return t.first.map { String($0).uppercased() } ?? "?"
     }
 
+    /// Dòng của chính mình backend trả tên "Bạn" → hiện hình người thay vì chữ "B".
+    @ViewBuilder
+    private func daiDien(_ d: BangXepHangDong, co: CGFloat, mau: Color) -> some View {
+        if d.laBan {
+            Image(systemName: "person.fill").font(.system(size: co * 0.95, weight: .bold)).foregroundColor(mau)
+        } else {
+            Text(Self.kyTuDaiDien(d.ten))
+                .font(.system(size: co, weight: .heavy, design: .rounded)).foregroundColor(mau)
+        }
+    }
+
     private func buc(_ top: [BangXepHangDong]) -> some View {
         let theoViTri = Dictionary(top.map { ($0.viTri, $0) }, uniquingKeysWith: { a, _ in a })
         return HStack(alignment: .bottom, spacing: 8) {
@@ -125,9 +136,7 @@ struct BangXepHangView: View {
                 Circle()
                     .fill(LinearGradient(colors: [mau.opacity(0.35), mau.opacity(0.12)], startPoint: .top, endPoint: .bottom))
                     .overlay(Circle().stroke(mau, lineWidth: 3))
-                    .overlay(Text(Self.kyTuDaiDien(d.ten))
-                        .font(.system(size: co * 0.38, weight: .heavy, design: .rounded))
-                        .foregroundColor(mau.opacity(0.95)))
+                    .overlay(daiDien(d, co: co * 0.38, mau: mau.opacity(0.95)))
                     .frame(width: co, height: co)
                     .padding(.top, laMot ? 16 : 0)
                 if laMot {
@@ -177,11 +186,19 @@ struct BangXepHangView: View {
                 .frame(width: 20)
             Circle()
                 .fill(Theme.primary.opacity(0.12))
-                .overlay(Text(Self.kyTuDaiDien(d.ten))
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(Theme.primary))
+                .overlay(daiDien(d, co: 14, mau: Theme.primary))
                 .frame(width: 34, height: 34)
-            Text(d.ten).font(.system(size: 15, weight: d.laBan ? .heavy : .medium)).lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(d.ten).font(.system(size: 15, weight: d.laBan ? .heavy : .medium)).lineLimit(1)
+                // Shipper có giải hạng 4 (5k Xu, 08/11/2026)
+                if d.thuongXu > 0 {
+                    Text("+\(formatXu(d.thuongXu))")
+                        .font(.system(size: 11, weight: .bold)).monospacedDigit()
+                        .foregroundColor(Theme.xuTangChu)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Theme.xuTangNen))
+                }
+            }
             Spacer()
             Text(giaTri(d.xu, soDon: d.soDon))
                 .font(.system(size: 14, weight: .semibold)).monospacedDigit()
