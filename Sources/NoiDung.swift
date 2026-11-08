@@ -13,7 +13,7 @@ enum NoiDung {
         "hopQuaTaiTro": "Chương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
         "chucMungHangTieuDe": "Quà {thang}",
         "chucMungHangPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
-        "chucMungTopTieuDe": "Top {viTri} người dùng\n{thang}",
+        "chucMungTopTieuDe": "Top {viTri} shipper\n{thang}",
         "chucMungTopKhachTieuDe": "Top {viTri} khách hàng\n{thang}",
         "chucMungTopKhachPhu": "Cảm ơn bạn đã luôn đặt món qua app Đenn.",
         "chucMungTopPhu": "Cảm ơn bạn đã đồng hành cùng Đenn!",
