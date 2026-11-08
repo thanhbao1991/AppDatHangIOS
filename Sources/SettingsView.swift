@@ -183,7 +183,7 @@ struct SettingsView: View {
                                     if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
                                 }
                             }
-                            .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
+                            .font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity)
                             .tkThe(dem: 12)
                         Button(seasonalPreviewLabel) {
                             // Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp 5 dịp vào 1 nút thay vì 5
@@ -209,7 +209,7 @@ struct SettingsView: View {
                                 }
                             }
                         }
-                        .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity)
+                        .font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity)
                         .tkThe(dem: 12)
                     }
                     #else
@@ -762,7 +762,23 @@ struct SettingsView: View {
         async let diaChiTask = APIClient.shared.getDiaChiList()
         async let viTask = APIClient.shared.getVi()
         async let ngaySinhTask = APIClient.shared.getSinhNhat()
-        (diaChiList, vi, ngaySinhInfo) = await (diaChiTask, viTask, ngaySinhTask)
+        let (dc, viMoi, ns) = await (diaChiTask, viTask, ngaySinhTask)
+        // 09/11/2026 (ảnh chụp chủ quán): lần mở đầu đôi khi ví trả nil (mạng/phiên chưa sẵn) → tab mất thẻ hạng/Ví Xu/
+        // Công nợ tới khi kéo làm mới. Thử lại tối đa 2 lần; lỗi thì GIỮ dữ liệu cũ, không xoá về rỗng.
+        var viTai = viMoi
+        var lan = 0
+        while viTai == nil && lan < 2 && !Task.isCancelled {
+            lan += 1
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            viTai = await APIClient.shared.getVi()
+        }
+        if let viTai { vi = viTai }
+        if !dc.isEmpty || vi != nil { diaChiList = dc }
+        if ns != nil { ngaySinhInfo = ns }
+        if diaChiList.isEmpty && dc.isEmpty && viTai == nil {
+            // Cả ví lẫn địa chỉ đều trống/lỗi — thử tải lại địa chỉ một lần cho chắc.
+            diaChiList = await APIClient.shared.getDiaChiList()
+        }
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         // Nạp sẵn DatePicker theo đúng ngày sinh đã khai (nếu có) — để lúc mở form sửa (coTheSua=true)
         // khách thấy đúng ngày cũ thay vì luôn nhảy về mặc định "18 năm trước".
