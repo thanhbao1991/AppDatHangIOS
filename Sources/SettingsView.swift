@@ -341,32 +341,23 @@ struct SettingsView: View {
     /// KhachHangViDto.Hang bên Backend), không liên quan Xu. Thiết kế nền tối gradient theo hạng +
     /// thanh tiến độ "còn Xđ để lên hạng Y" để tạo động lực mua thêm trong tháng (2026-09-14).
     /// Thưởng hạng bằng Xu (từ 11/2026). Freeship KHÔNG hiện trên thẻ (chủ quán 2026-11-07).
-    /// Bên trái dưới thanh tiến độ: quà ĐÃ ĐẠT của hạng hiện tại.
-    @ViewBuilder
-    private func thuongHangDong(_ vi: KhachHangVi) -> some View {
-        if let xu = vi.thuongXuHangHienTai, xu > 0 {
-            Text("🎁 \(formatXu(xu))")
-                .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.9))
-        }
-    }
-
-    /// Bên phải: quà SẮP ĐẠT ở hạng kế tiếp.
-    private func thuongSapDat(_ vi: KhachHangVi, hangTiepTheo: String) -> some View {
-        let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo
-        return HStack(spacing: 10) {
-            Text(hangTiepTheo).fontWeight(.heavy)
-            if let xu, xu > 0 { Text("🎁 \(formatXu(xu))") }
-        }
-        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white)
+    /// Tiến độ THÁNG (chủ quán 08/11/2026): thanh chạy theo số ngày đã qua trong tháng (giờ Việt Nam), bên phải là
+    /// Xu sẽ được cộng ngày 1 tháng sau = chi tiêu tháng này × 10k/300k (đơn app + đơn tại quán, backend
+    /// HangKhachHang.ThuongXuTheoChiTieu → thuongXuHangHienTai).
+    private static func tienDoThang(_ now: Date = Date()) -> (phanTram: Double, conLai: Int, ngayNhan: String) {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        let ngay = cal.component(.day, from: now)
+        let soNgay = cal.range(of: .day, in: .month, for: now)?.count ?? 30
+        let thangSau = cal.date(byAdding: .month, value: 1, to: now).map { cal.component(.month, from: $0) } ?? 1
+        return (Double(ngay) / Double(soNgay), soNgay - ngay + 1, "1/\(thangSau)")
     }
 
     /// Nội dung popup ⓘ trên thẻ hạng.
-    private func thongTinHang(_ vi: KhachHangVi, hangTiepTheo: String?) -> String {
-        var dong: [String] = []
-        if let hangTiepTheo, let xu = vi.thuongXuCapTiepTheo ?? vi.thuongXuHangTiepTheo, xu > 0 {
-            // Quà theo hạng THÁNG TRƯỚC, nhận từ ngày 1 (ThuongHangThangService). Xu không hết hạn.
-            dong.append("Đạt hạng \(hangTiepTheo) trong tháng: ngày 1 tháng sau nhận \(formatXu(xu)).")
-        }
+    private func thongTinHang(_ vi: KhachHangVi) -> String {
+        let t = Self.tienDoThang()
+        var dong = ["Mỗi 300.000đ chi tiêu trong tháng (đặt qua app hoặc mua tại quán) được 10.000 Xu, cộng vào ví ngày \(t.ngayNhan)."]
+        if let xu = vi.thuongXuHangHienTai, xu > 0 { dong.append("Tháng này bạn đã tích \(formatXu(xu)).") }
         dong.append(NoiDung.hangGhiChu) // câu chữ từ backend (NoiDung.swift)
         return dong.joined(separator: "\n\n")
     }
@@ -377,7 +368,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     // ⓘ (ghi chú món không tính hạng + câu Apple không tài trợ, Guideline 5.3.2) dời lên đây khi bỏ
                     // dòng "Bạn cần chi tiêu thêm…" (chủ quán 2026-11-07: đơn giản card).
-                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi, hangTiepTheo: vi.capTiepTheo ?? vi.hangTiepTheo)) } label: {
+                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
                         (Text("HẠNG THÀNH VIÊN ") + Text(Image(systemName: "info.circle")))
                             .font(.system(size: 10, weight: .bold)).tracking(1.2)
                             // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
@@ -399,33 +390,25 @@ struct SettingsView: View {
                 }
             }
 
-            // Thanh tiến độ + 2 đầu: trái = quà đã đạt, phải = quà hạng kế tiếp, mờ 50% rồi rõ dần theo tiến độ
-            // (chủ quán 2026-11-07, thay câu "Bạn cần chi tiêu thêm Xđ để lên hạng Y").
-            if let hangTiepTheo = vi.capTiepTheo ?? vi.hangTiepTheo {
-                let tienDo = min(max(vi.phanTramTienDoCap ?? vi.phanTramTienDoLenHang, 0), 1)
-                VStack(alignment: .leading, spacing: 8) {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Color.white.opacity(0.2))
-                            Capsule().fill(Color.white)
-                                .frame(width: max(8, geo.size.width * tienDo))
-                        }
-                    }
-                    .frame(height: 6)
-                    HStack(alignment: .firstTextBaseline) {
-                        thuongHangDong(vi)
-                        Spacer(minLength: 8)
-                        thuongSapDat(vi, hangTiepTheo: hangTiepTheo)
-                            .opacity(0.5 + 0.5 * tienDo)
+            // Thanh = số ngày đã qua trong tháng; trái = còn mấy ngày, phải = Xu cộng ngày 1 tháng sau (08/11/2026).
+            let t = Self.tienDoThang()
+            VStack(alignment: .leading, spacing: 8) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.2))
+                        Capsule().fill(Color.white)
+                            .frame(width: max(8, geo.size.width * t.phanTram))
                     }
                 }
-            } else {
+                .frame(height: 6)
                 HStack(alignment: .firstTextBaseline) {
-                    thuongHangDong(vi)
+                    Text("Còn \(t.conLai) ngày")
+                        .foregroundColor(.white.opacity(0.78))
                     Spacer(minLength: 8)
-                    Text("🎉 Hạng cao nhất")
-                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85))
+                    Text("🎁 \(formatXu(vi.thuongXuHangHienTai ?? 0)) · ngày \(t.ngayNhan)")
+                        .fontWeight(.heavy).foregroundColor(.white)
                 }
+                .font(.system(size: 12, weight: .semibold))
             }
         }
         .padding(16)
