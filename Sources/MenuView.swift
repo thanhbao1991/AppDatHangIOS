@@ -233,7 +233,6 @@ struct MenuView: View {
                             selectedNhomId = id
                             scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
                         })
-                        Divider()
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 0) {
@@ -389,19 +388,22 @@ struct MenuView: View {
                             .padding(.leading, 8)
                             .frame(height: Self.categoryHeaderHeight)
                             // 09/11/2026: mục đang chọn là ô bo góc tô nhạt (kiểu ô chọn TK) thay vạch dọc + nền phủ ngang.
+                            // 09/11/2026 (chủ quán: trông như lỗi giao diện): cột nền xám liền với nội dung, mục đang chọn là
+                            // thẻ trắng nhỏ có bóng nhẹ — cùng kiểu thẻ TK, không còn khối trắng + vạch kẻ dọc.
                             .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(isSelected ? Theme.primaryTint : Color.clear)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(isSelected ? Color(.systemBackground) : Color.clear)
+                                    .shadow(color: .black.opacity(isSelected ? 0.06 : 0), radius: 4, y: 1)
                             )
-                            .padding(.horizontal, 5).padding(.vertical, 1)
+                            .padding(.leading, 8).padding(.trailing, 4).padding(.vertical, 2)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
                 }
             }
-            .frame(width: 84)
-            .background(Color(.systemBackground))
+            .frame(width: 88)
+            .background(Theme.bg)
             // Khách tự cuộn tay bên phải → header row .onAppear đổi selectedNhomId theo → tự cuộn
             // sidebar theo để mục đang chọn luôn nằm trong tầm nhìn, không bắt khách tự kéo tìm.
             .onChange(of: selectedNhomId) { id in
