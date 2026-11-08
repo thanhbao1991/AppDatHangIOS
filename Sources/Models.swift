@@ -97,7 +97,7 @@ struct TenDuong: Decodable, Identifiable { let id: String; let ten: String }
 /// (DipLeDto), KHÔNG tự tính ngày ở client nữa (tránh lệch ngày giữa app trang trí và voucher giảm
 /// giá thật). ma quyết định màu/emoji (xem SeasonalTheme), ten/moTa dùng làm câu chúc banner — sửa ở
 /// AppQuanLyIOS (Voucher) là app tự đổi theo. Xem APIClient.getDipLe.
-struct DipLe: Decodable, Equatable {
+struct DipLe: Codable, Equatable {
     let ma: String
     let ten: String
     let moTa: String?
@@ -107,6 +107,8 @@ struct DipLe: Decodable, Equatable {
     var anhManChao: String?
     /// Dịp này có đổi icon không — app đổi icon SAU màn chào nếu icon trên máy chưa khớp (xem SeasonalEvent.doiIconSauManChao).
     var doiIcon: Bool?
+    /// "yyyy-MM-ddT..." — bản lưu máy quá ngày này thì bỏ (xem SeasonalEvent.dipLuuMay).
+    var ngayKetThuc: String?
 }
 
 /// Server quyết định icon + giao diện dịp lễ hôm nay (DipLeLich ở Backend, cửa sổ trước/sau lễ khác nhau

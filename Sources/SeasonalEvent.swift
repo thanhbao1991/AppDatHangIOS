@@ -193,8 +193,25 @@ enum SeasonalTheme: CaseIterable, Equatable {
 /// các View đọc qua computed static var, không phải @Published — cần tick/.onReceive(.christmasPreviewToggled)
 /// ở call site để buộc body vẽ lại.
 enum SeasonalEvent {
-    private(set) static var dipLe: DipLe?
-    private(set) static var theme: SeasonalTheme?
+    /// Khởi tạo từ bản lưu máy (lần mở trước) — để mở app là đúng màu dịp + màn chào hiện NGAY khung hình đầu, không chờ
+    /// server (trước 1.0.10 chờ load() + tải ảnh xong mới bật màn chào → hiện SAU thực đơn). load() ghi đè bằng dữ liệu mới.
+    private(set) static var dipLe: DipLe? = dipLuuMay()
+    private(set) static var theme: SeasonalTheme? = dipLe.flatMap { SeasonalTheme(ma: $0.ma) }
+
+    private static let khoaLuuDip = "seasonalEvent.giaoDien"
+
+    private static func dipLuuMay() -> DipLe? {
+        guard let data = UserDefaults.standard.data(forKey: khoaLuuDip),
+              let d = try? JSONDecoder().decode(DipLe.self, from: data) else { return nil }
+        // Lâu không mở app, dịp đã qua → bỏ, khỏi hiện dịp cũ trong lúc chờ server.
+        if let kt = d.ngayKetThuc?.prefix(10) {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd"
+            f.timeZone = TimeZone(secondsFromGMT: 7 * 3600)
+            if let ngay = f.date(from: String(kt)), Date() >= ngay.addingTimeInterval(86_400) { return nil }
+        }
+        return d
+    }
 
     #if DEV_LOGIN
     /// Công tắc xem thử — CHỈ có ở bản dev (DEV_LOGIN), bật ở SettingsView khu "🧪 Xem trước...".
@@ -264,6 +281,11 @@ enum SeasonalEvent {
         guard env.isSuccess, let kq = env.data else { return }
         dipLe = kq.giaoDien
         theme = kq.giaoDien.flatMap { SeasonalTheme(ma: $0.ma) }
+        if theme != nil, let d = dipLe, let luu = try? JSONEncoder().encode(d) {
+            UserDefaults.standard.set(luu, forKey: khoaLuuDip)
+        } else {
+            UserDefaults.standard.removeObject(forKey: khoaLuuDip)
+        }
         maIcon = kq.maIcon
         giuIcon = kq.giuIcon
         Theme.applyNavBarAppearance()

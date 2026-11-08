@@ -6,7 +6,8 @@ import SwiftUI
 struct ContentView: View {
     @State private var isLoggedIn = Prefs.isLoggedIn
     @State private var batBuocCapNhat: AppVersionPolicy?
-    @State private var seasonalSplash: SeasonalTheme?
+    /// Có dịp lưu máy → màn chào hiện ngay khung hình đầu (không chờ server), xem SeasonalEvent.dipLe.
+    @State private var seasonalSplash: SeasonalTheme? = SeasonalEvent.canHienSplash() ? SeasonalEvent.active : nil
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -38,8 +39,14 @@ struct ContentView: View {
         .task { await NoiDung.taiLai() }
         .task { await kiemTraQua() }
         .task {
+            // Đã hiện sẵn từ bản lưu máy → chỉ tải lại ngầm. Chưa có (lần đầu vào dịp) thì chỉ hiện nếu server trả kịp
+            // ~1,5s; chậm hơn thì bỏ lần này — khỏi bật màn chào đè lên lúc khách đang xem thực đơn.
+            let daHienSan = seasonalSplash != nil
+            let batDau = Date()
             await SeasonalEvent.load()
-            if SeasonalEvent.canHienSplash() { seasonalSplash = SeasonalEvent.active }
+            if !daHienSan, Date().timeIntervalSince(batDau) < 1.5, SeasonalEvent.canHienSplash() {
+                seasonalSplash = SeasonalEvent.active
+            }
         }
         #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .xemTruocSplash)) { _ in
