@@ -353,11 +353,21 @@ struct SettingsView: View {
         return (Double(ngay) / Double(soNgay), soNgay - ngay + 1, "1/\(thangSau)")
     }
 
-    private func dongXu(_ nhan: String, _ xu: Double) -> some View {
-        HStack(spacing: 4) {
-            Text(nhan).foregroundColor(.white.opacity(0.78))
-            Text(formatXu(xu)).fontWeight(.heavy).foregroundColor(.white)
+    /// Ô Xu theo nguồn (08/11/2026): đơn đặt qua app (nổi hơn) và đơn mua tại quầy (×0,5).
+    private func oXu(_ tieuDe: String, _ xu: Double, tiLe: String, noiBat: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(tieuDe)
+                .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+            Text(formatXu(xu))
+                .font(.system(size: 17, weight: .heavy)).foregroundColor(.white)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(tiLe)
+                .font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.6))
         }
+        .padding(.horizontal, 10).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(noiBat ? 0.18 : 0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     /// Nội dung popup ⓘ trên thẻ hạng.
@@ -397,30 +407,36 @@ struct SettingsView: View {
                 }
             }
 
-            // Thanh = số ngày đã qua trong tháng (08/11/2026). Xu đơn app ở trên thanh (phải), Xu đơn quầy (×0,5) dưới
-            // thanh (phải); trái dưới = còn bao nhiêu ngày tới ngày 1 tháng sau nhận Xu.
+            // Thiết kế lại 08/11/2026: tổng Xu tháng này (nhận ngày 1 tháng sau) + thanh mảnh theo số ngày trong tháng,
+            // dưới là 2 ô tách nguồn — ô "Đặt qua app" nổi hơn để gợi khách chuyển sang app (gấp đôi đơn quầy).
             let t = Self.tienDoThang()
+            let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
+            let xuQuay = vi.xuDonQuayThangNay ?? 0
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
+                Text("Xu tháng này")
+                    .font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+                HStack(alignment: .firstTextBaseline) {
+                    Text(formatXu(xuApp + xuQuay))
+                        .font(.system(size: 26, weight: .heavy)).foregroundColor(.white)
+                        .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: 8)
-                    dongXu("App", vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0)
+                    Text("Nhận sau \(t.conLai) ngày")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.78))
                 }
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.white.opacity(0.2))
                         Capsule().fill(Color.white)
-                            .frame(width: max(8, geo.size.width * t.phanTram))
+                            .frame(width: max(6, geo.size.width * t.phanTram))
                     }
                 }
-                .frame(height: 6)
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Nhận sau \(t.conLai) ngày")
-                        .foregroundColor(.white.opacity(0.78))
-                    Spacer(minLength: 8)
-                    dongXu("Quầy", vi.xuDonQuayThangNay ?? 0)
+                .frame(height: 4)
+                HStack(spacing: 8) {
+                    oXu("Đặt qua app", xuApp, tiLe: "10.000 Xu mỗi 300.000đ", noiBat: true)
+                    oXu("Mua tại quầy", xuQuay, tiLe: "5.000 Xu mỗi 300.000đ", noiBat: false)
                 }
+                .padding(.top, 4)
             }
-            .font(.system(size: 12, weight: .semibold))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
