@@ -705,6 +705,8 @@ struct ThuongHangThang: Decodable, Equatable, Identifiable {
     let hetHan: String
     // false = đang chờ khách bấm "Nhận ngay" (chưa cộng ví). Nil = backend cũ (đã tự cộng).
     var daNhan: Bool? = nil
+    /// true = hệ thống tự cộng ngày 1 (từ 12/2026) — hiện màn chúc mừng 1 lần, nút "Tuyệt vời".
+    var tuDong: Bool? = nil
 }
 
 // Quà Top shipper tháng trước — chỉ tài khoản shipper; màn chúc mừng riêng, bấm "Nhận ngay" mới cộng.
@@ -713,6 +715,8 @@ struct ThuongTopShipper: Decodable, Equatable {
     let thangDat: String
     let soXu: Double
     var daNhan: Bool? = nil
+    var id: String? = nil
+    var tuDong: Bool? = nil
 }
 
 struct ViGiaoDich: Decodable, Identifiable {

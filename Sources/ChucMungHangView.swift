@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Màn chúc mừng đầu tháng (2026-10-26): từ ngày 1 khách có quà CHỜ NHẬN theo hạng tháng trước (Bạc 10k /
 /// Vàng 30k / Kim Cương 60k) và — chỉ shipper — quà Top 3 tháng trước (30k/20k/10k). Xu không hết hạn.
-/// KHÔNG tự cộng: bấm "Nhận ngay" mới cộng vào ví; chưa bấm thì lần sau mở app lại hiện. Mỗi quà 1 màn riêng.
+/// Từ 12/2026 (chủ quán 08/11/2026) hệ thống TỰ cộng lúc 0h30 ngày 1 (TuDong) → màn hiện 1 lần, nút "Tuyệt vời".
+/// Quà daNhan=false (trước 0h30 / backend cũ) vẫn bấm "Nhận ngay" như cũ. Mỗi quà 1 màn riêng.
 struct QuaChucMung: Identifiable, Equatable {
     enum Loai { case hang, top, topKhach, chuyenDiem }
     let loai: Loai
@@ -13,6 +14,9 @@ struct QuaChucMung: Identifiable, Equatable {
     let mauHang: String
     let soXu: Double
     let ghiChu: String?
+    /// Xu đã được hệ thống tự cộng (08/11/2026) — nút chỉ để đóng màn, nhớ trên máy là đã xem theo `khoaDaXem`.
+    var daCong = false
+    var khoaDaXem: String? = nil
     var id: String {
         switch loai {
         case .hang: return "hang"
@@ -22,7 +26,7 @@ struct QuaChucMung: Identifiable, Equatable {
         }
     }
     /// Quà đổi điểm quầy: Xu đã cộng sẵn — nút chỉ để đóng màn.
-    var nutBam: String { loai == .chuyenDiem ? "Tuyệt vời" : "Nhận ngay" }
+    var nutBam: String { loai == .chuyenDiem || daCong ? "Tuyệt vời" : "Nhận ngay" }
 }
 
 enum ChucMungHang {
@@ -33,6 +37,18 @@ enum ChucMungHang {
 
     /// Id quà đổi điểm quầy đã xem (lưu trên máy) — màn chỉ hiện 1 lần.
     private static let khoaDaXemChuyenDiem = "chucMung.chuyenDiem.daXem"
+
+    /// Quà hệ thống tự cộng đã xem (lưu trên máy) — mỗi quà chỉ hiện màn chúc mừng 1 lần.
+    private static let khoaDaXemTuDong = "chucMung.tuDong.daXem"
+    private static func daXemTuDong(_ khoa: String) -> Bool {
+        (UserDefaults.standard.stringArray(forKey: khoaDaXemTuDong) ?? []).contains(khoa)
+    }
+    /// Chờ bấm "Nhận ngay" (daCong=false) hoặc đã tự cộng mà chưa xem (daCong=true). Nil = không hiện.
+    private static func trangThai(daNhan: Bool?, tuDong: Bool?, khoa: String) -> Bool? {
+        if daNhan == false { return false }
+        if tuDong == true, !daXemTuDong(khoa) { return true }
+        return nil
+    }
 
     /// Các quà đang chờ nhận: đổi điểm quầy (đã cộng sẵn) → hạng → Top.
     static func quaCho(_ vi: KhachHangVi?) -> [QuaChucMung] {
@@ -45,31 +61,42 @@ enum ChucMungHang {
                 mauHang: "Vàng", soXu: q.soXu, ghiChu: NoiDung.text("chucMungChuyenDiemPhu")))
             daXemChuyenDiemId = q.id
         }
-        if let t = vi?.thuongHangThang, t.daNhan == false, t.soXu > 0 {
+        if let t = vi?.thuongHangThang, t.soXu > 0,
+           let daCong = trangThai(daNhan: t.daNhan, tuDong: t.tuDong, khoa: "hang-\(t.id)") {
             ds.append(QuaChucMung(
                 loai: .hang,
                 icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉", anh: "ChucMungQuaThang",
                 tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hangDayDu ?? t.hang, "thang": tenThang(t.thangDat)]),
-                mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu")))
+                mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu"), daCong: daCong, khoaDaXem: "hang-\(t.id)"))
         }
-        if let t = vi?.thuongTopShipper, t.daNhan == false, t.soXu > 0 {
+        if let t = vi?.thuongTopShipper, t.soXu > 0,
+           let daCong = trangThai(daNhan: t.daNhan, tuDong: t.tuDong, khoa: "top-\(t.id ?? "")") {
             ds.append(QuaChucMung(
                 loai: .top, icon: "🏆", anh: "ChucMungTopShipper",
                 tieuDe: dien(NoiDung.text("chucMungTopTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
-                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopPhu")))
+                mauHang: "Kim Cương", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopPhu"), daCong: daCong, khoaDaXem: "top-\(t.id ?? "")"))
         }
         // Top khách đặt 100% qua app (08/11/2026).
-        if let t = vi?.thuongTopKhach, t.daNhan == false, t.soXu > 0 {
+        if let t = vi?.thuongTopKhach, t.soXu > 0,
+           let daCong = trangThai(daNhan: t.daNhan, tuDong: t.tuDong, khoa: "topKhach-\(t.id ?? "")") {
             ds.append(QuaChucMung(
                 loai: .topKhach, icon: "👑", anh: "ChucMungTopKhach",
                 tieuDe: dien(NoiDung.text("chucMungTopKhachTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
-                mauHang: "Vàng", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopKhachPhu")))
+                mauHang: "Vàng", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopKhachPhu"), daCong: daCong, khoaDaXem: "topKhach-\(t.id ?? "")"))
         }
         return ds
     }
 
     /// Gọi API nhận quà. Lỗi mạng thì thôi — màn sẽ hiện lại lần sau.
     static func nhan(_ qua: QuaChucMung) async -> Bool {
+        if qua.daCong {
+            if let k = qua.khoaDaXem {
+                var ds = UserDefaults.standard.stringArray(forKey: khoaDaXemTuDong) ?? []
+                ds.append(k)
+                UserDefaults.standard.set(Array(ds.suffix(50)), forKey: khoaDaXemTuDong)
+            }
+            return true
+        }
         switch qua.loai {
         case .hang: return await APIClient.shared.nhanThuongHang().success
         case .top: return await APIClient.shared.nhanThuongTop().success

@@ -10,6 +10,18 @@ final class ChucMungHangTests: XCTestCase {
         XCTAssertEqual(ChucMungHang.tenThang(t.thangDat), "tháng 10")
     }
 
+    // Quà hệ thống tự cộng (08/11/2026): hiện 1 lần với nút "Tuyệt vời", bấm xong lần sau không hiện nữa.
+    func test_quaCho_tuDong_hienMotLan() async throws {
+        UserDefaults.standard.removeObject(forKey: "chucMung.tuDong.daXem")
+        let json = #"{"soDu":0,"diemThangNay":0,"diemThangTruoc":0,"duocNhanVoucher":false,"daNhanVoucher":false,"tongNo":0,"tongChiTieuThangNay":0,"hang":"Thành Viên","hangThangTruoc":"","yeuThichSanPhamIds":[],"conLaiDeLenHang":0,"phanTramTienDoLenHang":0,"thuongHangThang":{"id":"g9","hang":"Bạc","thangDat":"11/2026","soXu":12000,"conLai":12000,"hetHan":"2026-12-31T00:00:00","daNhan":true,"tuDong":true},"thuongTopKhach":{"viTri":1,"thangDat":"11/2026","soXu":30000,"daNhan":true,"id":"g10","tuDong":true}}"#
+        let v = try JSONDecoder().decode(KhachHangVi.self, from: Data(json.utf8))
+        let ds = ChucMungHang.quaCho(v)
+        XCTAssertEqual(ds.map(\.loai), [.hang, .topKhach])
+        XCTAssertTrue(ds.allSatisfy { $0.daCong && $0.nutBam == "Tuyệt vời" })
+        for q in ds { _ = await ChucMungHang.nhan(q) }
+        XCTAssertTrue(ChucMungHang.quaCho(v).isEmpty)
+    }
+
     private func vi(hangDaNhan: Bool?, topDaNhan: Bool?) throws -> KhachHangVi {
         var hang = #""thuongHangThang":{"id":"00000000-0000-0000-0000-000000000000","hang":"Bạc","thangDat":"10/2026","soXu":10000,"conLai":10000,"hetHan":"2026-11-30T00:00:00""#
         hang += hangDaNhan.map { #","daNhan":\#($0)}"# } ?? "}"
