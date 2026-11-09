@@ -150,6 +150,8 @@ struct TKThanhLoc<T: Hashable>: View {
 /// hiện "+N Xu" bay lên. Xem xong lưu mốc mới. Tháng mới: mốc cũ thuộc tháng trước nên tính từ 0.
 struct RuongXuDau<Phai: View>: View {
     let xu: Double
+    /// Nút bên phải hàng tiêu đề (Top N — thẻ hạng đã bỏ 09/11/2026).
+    var tieuDePhai: AnyView? = nil
     let onInfo: () -> Void
     @ViewBuilder var duoiSo: () -> Phai
 
@@ -174,8 +176,13 @@ struct RuongXuDau<Phai: View>: View {
         HStack(alignment: .center, spacing: 12) {
             ruong.frame(width: 96, height: 96)
             VStack(alignment: .leading, spacing: 6) {
-                Text(NoiDung.text("ruongXuTieuDe"))
-                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                HStack(alignment: .center, spacing: 6) {
+                    Text(NoiDung.text("ruongXuTieuDe"))
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                    Spacer(minLength: 4)
+                    if let tieuDePhai { tieuDePhai }
+                }
                 Button(action: onInfo) {
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
                         HStack(alignment: .firstTextBaseline, spacing: 0) {

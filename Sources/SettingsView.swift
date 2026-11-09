@@ -175,10 +175,8 @@ struct SettingsView: View {
                 if let vi {
                     #if DEV_LOGIN
                     // 2 nút xem trước đã dời vào icon tia chớp trên header, trước chuông (devMenu, chủ quán 09/11/2026).
-                    hangTopCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
                     ruongXuCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
                     #else
-                    hangTopCard(vi)
                     ruongXuCard(vi)
                     #endif
                     xuCard(vi)
@@ -512,7 +510,7 @@ struct SettingsView: View {
         let xuQuay = vi.xuDonQuayThangNay ?? 0
         return VStack(alignment: .leading, spacing: 14) {
             // Xu tăng so với lần xem trước → xu bay chui vào rương + số đếm chạy (RuongXuDau, TaiKhoanUI.swift).
-            RuongXuDau(xu: xuApp + xuQuay, onInfo: { alertMessage = ("Rương Xu", thongTinHang(vi)) }) {
+            RuongXuDau(xu: xuApp + xuQuay, tieuDePhai: AnyView(topNhan(vi)), onInfo: { alertMessage = ("Rương Xu", thongTinHang(vi)) }) {
                 HStack(spacing: 4) {
                     Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
                     Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
@@ -530,49 +528,23 @@ struct SettingsView: View {
         .tkThe(dem: 16)
     }
 
-    /// Thẻ HẠNG + TOP (tách riêng 09/11/2026): nền gradient theo hạng, 1 hàng "🌱 Hạng Bạc ⓘ" | "🏆 Top N >".
-    private func hangTopCard(_ vi: KhachHangVi) -> some View {
-        HStack(alignment: .center, spacing: 10) {
-            Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(hangIcon[vi.hang] ?? "🌱") Hạng \(vi.hangDayDu ?? vi.hang)")
-                        .font(.system(size: 18, weight: .heavy)).foregroundColor(.white)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.78))
-                }
+    /// Nhãn Top trên thẻ Rương Xu (09/11/2026: bỏ thẻ hạng, đưa Top xuống đây). Mọi khách đều có: trong top 10 hiện "Top N",
+    /// ngoài top 10 / chưa xếp hạng "Top ?". Có giải (≤4) thì vàng + cúp, còn lại tông chủ đạo nhạt. Chạm mở bảng xếp hạng.
+    private func topNhan(_ vi: KhachHangVi) -> some View {
+        Button { moBangXepHang = true } label: {
+            let viTri = (vi.topShipper ?? vi.topKhach)?.viTri
+            let coGiai = (viTri ?? 99) <= 4
+            HStack(spacing: 4) {
+                Image(systemName: "trophy.fill").font(.system(size: 11, weight: .bold))
+                Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
+                    .font(.system(size: 13, weight: .heavy))
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.7)
             }
-            .buttonStyle(.plain)
-            Spacer(minLength: 8)
-                // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
-                // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
-                // Nhãn Top: có giải (≤4) thì vàng + cúp, còn lại mờ. Chạm mở bảng xếp hạng.
-                Button { moBangXepHang = true } label: {
-                    let viTri = (vi.topShipper ?? vi.topKhach)?.viTri
-                    let coGiai = (viTri ?? 99) <= 4
-                    HStack(spacing: 4) {
-                        Image(systemName: "trophy.fill").font(.system(size: 11, weight: .bold))
-                        Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
-                            .font(.system(size: 13, weight: .heavy))
-                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.7)
-                    }
-                    .foregroundColor(coGiai ? Color(red: 0.35, green: 0.22, blue: 0.0) : .white)
-                    .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Capsule().fill(coGiai ? AnyShapeStyle(Self.vangXu) : AnyShapeStyle(Color.white.opacity(0.18))))
-                }
-                .buttonStyle(.plain)
+            .foregroundColor(coGiai ? Color(red: 0.35, green: 0.22, blue: 0.0) : Theme.primary)
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(Capsule().fill(coGiai ? AnyShapeStyle(Self.vangXu) : AnyShapeStyle(Theme.primaryTint)))
         }
-        .padding(.horizontal, 18).padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                // Dịp lễ: thẻ hạng theo màu dịp như mọi chỗ khác (thẻ xanh navy giữa app đỏ bị rời rạc).
-                colors: SeasonalEvent.active != nil ? [Theme.primary, Theme.primaryDark]
-                    : (hangGradient[vi.hang] ?? [Theme.primary, Theme.primaryDark]),
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: TK.bo, style: .continuous))
-        .shadow(color: .black.opacity(0.10), radius: 10, y: 4)
+        .buttonStyle(.plain)
     }
 
     /// Gộp tên hiển thị/sinh nhật/địa chỉ vào chung 1 card — trước đây là List Section trơn (chữ nền
