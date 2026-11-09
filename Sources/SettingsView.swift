@@ -510,7 +510,7 @@ struct SettingsView: View {
         let xuQuay = vi.xuDonQuayThangNay ?? 0
         return VStack(alignment: .leading, spacing: 14) {
             // Xu tăng so với lần xem trước → xu bay chui vào rương + số đếm chạy (RuongXuDau, TaiKhoanUI.swift).
-            RuongXuDau(xu: xuApp + xuQuay, tieuDePhai: AnyView(topNhan(vi)), onInfo: { alertMessage = ("Rương Xu", thongTinHang(vi)) }) {
+            RuongXuDau(xu: xuApp + xuQuay, tieuDePhai: AnyView(topNhan(vi)), onInfo: { alertMessage = ("Xu tích luỹ", thongTinHang(vi)) }) {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.right.circle.fill").font(.system(size: 10, weight: .bold))
                     Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
