@@ -38,6 +38,10 @@ struct TaiKhoanBaoMatView: View {
                         NavigationLink { ChinhSachBaoMatView() } label: {
                             TKDong(icon: "hand.raised.fill", mau: .green, tieuDe: "Chính sách bảo mật")
                         }
+                        TKKe()
+                        NavigationLink { HoTroKhachHangView() } label: {
+                            TKDong(icon: "questionmark.bubble.fill", mau: .blue, tieuDe: "Hỗ trợ khách hàng")
+                        }
                     }
                     .buttonStyle(.plain)
                     .tkThe(dem: 12)
