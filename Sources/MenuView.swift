@@ -621,6 +621,7 @@ struct MenuView: View {
     }
 
     private func load(silent: Bool = false) async {
+        let lanDau = selectedNhomId.isEmpty
         // Cache RAM (APIClient.catalogCache, 5 phút) mất sạch mỗi lần app bị kill — khách tắt mở lại
         // app là coi như rỗng, phải chờ network thật xong mới hiện được gì. Lần tải đầu (sanPhams
         // rỗng) thử hiện tạm bản cache ĐĨA cuối cùng (không hạn) ngay lập tức, tắt loading toàn màn
@@ -648,10 +649,10 @@ struct MenuView: View {
         async let viTask = APIClient.shared.getVi()
         async let banChayTask = APIClient.shared.getBanChayIds()
         async let giaRiengTask = APIClient.shared.getGiaRieng()
-        let (spResult, nhom, top, vi, banChay, giaRieng) = await (spTask, nhomTask, topTask, viTask, banChayTask, giaRiengTask)
+        // 09/11/2026: KHÔNG chờ /vi (API chậm nhất, chỉ để lấy Yêu thích + hạng) cùng thực đơn — áp vi ở cuối hàm.
+        let (spResult, nhom, top, banChay, giaRieng) = await (spTask, nhomTask, topTask, banChayTask, giaRiengTask)
         giaRiengMap = giaRieng
-        yeuThichIds = Set(vi?.yeuThichSanPhamIds ?? [])
-        if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        if let viNhanh = BoNhoTam.vi { yeuThichIds = Set(viNhanh.yeuThichSanPhamIds) }
         // Chỉ chặn màn bằng lỗi khi KHÔNG có gì để hiện (lần tải đầu thất bại) — refresh (kéo-thả)
         // hoặc network thật thất bại sau khi đã hiện snapshot đĩa thì giữ NGUYÊN danh sách đang hiện,
         // không ghi đè bằng mảng rỗng chỉ vì 1 lần mất mạng thoáng qua.
@@ -675,6 +676,14 @@ struct MenuView: View {
             selectedNhomId = sections.first?.nhom.id ?? ""
         }
         loading = false
+        // Áp /vi sau khi thực đơn đã hiện. Lần đầu chưa có Yêu thích (nên đã rơi về nhóm đầu) mà giờ có → chọn lại Yêu thích.
+        if let vi = await viTask {
+            BoNhoTam.vi = vi
+            let truocRong = yeuThichIds.isEmpty
+            yeuThichIds = Set(vi.yeuThichSanPhamIds)
+            KhachHangSession.shared.capNhatHang(vi.hang)
+            if lanDau && truocRong && !yeuThichIds.isEmpty { selectedNhomId = Self.yeuThichNhomId }
+        }
     }
 }
 

@@ -240,12 +240,13 @@ final class CartStore: ObservableObject {
         async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
         async let spTask: [String] = APIClient.shared.getSanPhamDaTungDat()
         async let loaiTruTask: [String] = APIClient.shared.getSanPhamKhongApDungVoucher()
-        vi = await viTask
-        if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
+        // 09/11/2026: voucher hiện trước, không chờ /vi (API chậm nhất).
         vouchers = await voucherTask
         sanPhamDaTungDat = await spTask
         spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
         validateSelectedVoucher()
+        vi = await viTask
+        if let vi { BoNhoTam.vi = vi; KhachHangSession.shared.capNhatHang(vi.hang) }
     }
 
     /// Tải LẠI riêng danh sách voucher, bỏ qua guard "1 lần/phiên" của loadUuDaiIfNeeded — dùng cho

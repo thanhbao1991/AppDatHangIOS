@@ -14,16 +14,17 @@ struct UuDaiView: View {
     /// false khi nhúng trong UuDaiVoucherView (thanh tiêu đề do view cha vẽ).
     var showHeader: Bool = true
 
-    @State private var loading = true
+    // Có dữ liệu lần trước (BoNhoTam) thì hiện ngay, load() tải lại rồi thay vào (09/11/2026).
+    @State private var loading = BoNhoTam.diemDanh == nil
 
     @State private var dangQuay = false
     @State private var ketQuaQuay: String?
     // -1 = chưa tải xong/lỗi (ẩn dòng chữ), >=0 = số lượt thật. Cập nhật lại NGAY sau mỗi lần quay
     // từ VongQuayResult.soLuotConLai (server trả kèm), không cần gọi thêm request.
-    @State private var soLuotConLai = -1
+    @State private var soLuotConLai = BoNhoTam.soLuotConLai ?? -1
     @State private var alertMessage: (title: String, message: String)?
 
-    @State private var diemDanh: DiemDanhInfo?
+    @State private var diemDanh: DiemDanhInfo? = BoNhoTam.diemDanh
     @State private var dangDiemDanh = false
 
     @State private var soDuXu: Double?
@@ -58,6 +59,7 @@ struct UuDaiView: View {
             .background(Theme.bg)
         }
         .task { await load() }
+        .onDisappear { luuBoNhoTam() } // giữ cả lượt quay/điểm danh vừa làm
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
@@ -346,12 +348,23 @@ struct UuDaiView: View {
         async let quay = APIClient.shared.getVongQuayInfo()
         async let diemDanhKq = APIClient.shared.getDiemDanhInfo()
         async let viKq = APIClient.shared.getVi()
-        soLuotConLai = await quay?.soLuotConLai ?? -1
-        diemDanh = await diemDanhKq
-        let vi = await viKq
-        soDuXu = vi?.soDu
-        nhanNapXu = vi?.nhanNapXu
+        let quayKq = await quay
+        let ddKq = await diemDanhKq
+        // Lỗi mạng thì giữ số cũ, không xoá về rỗng.
+        if let quayKq { soLuotConLai = quayKq.soLuotConLai }
+        if let ddKq { diemDanh = ddKq }
+        // Tab này không còn hiện số dư Xu (bỏ 07/11) → không bắt khách chờ /vi (chậm nhất) mới hết vòng xoay.
         loading = false
+        luuBoNhoTam()
+        if let vi = await viKq {
+            soDuXu = vi.soDu
+            nhanNapXu = vi.nhanNapXu
+        }
+    }
+
+    private func luuBoNhoTam() {
+        if soLuotConLai >= 0 { BoNhoTam.soLuotConLai = soLuotConLai }
+        if let diemDanh { BoNhoTam.diemDanh = diemDanh }
     }
 
     private func spin() async {

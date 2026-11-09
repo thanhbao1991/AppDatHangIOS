@@ -11,15 +11,16 @@ struct SettingsView: View {
 
     @Environment(\.requestReview) private var requestReview
 
-    @State private var diaChiList: [DiaChiKhachHang] = []
+    @State private var diaChiList: [DiaChiKhachHang] = BoNhoTam.diaChiList ?? []
     // Hiện ĐẦY ĐỦ cả địa chỉ nhân viên nhập qua Desktop lẫn khách tự thêm (đổi lại 2026-09-24 — trước
     // đó từng ẩn hẳn địa chỉ nhân viên ở card này, nhưng khách mới cài app lần đầu nhìn thấy trống dù
     // quán đã có sẵn địa chỉ từ lịch sử đặt hàng, gây cảm giác thiếu sót). Nút sửa/xoá vẫn tự ẩn với
     // địa chỉ nhân viên nhập qua `item.coTheXoa` bên dưới — khách chỉ được XEM/CHỌN mặc định, không
     // sửa/xoá được địa chỉ không phải do mình tạo.
     private var diaChiHienThi: [DiaChiKhachHang] { diaChiList }
-    @State private var vi: KhachHangVi?
-    @State private var loading = true
+    // Có dữ liệu lần trước (BoNhoTam) thì hiện ngay, không vòng xoay — load() tải lại rồi thay vào.
+    @State private var vi: KhachHangVi? = BoNhoTam.vi
+    @State private var loading = BoNhoTam.vi == nil
     @State private var moBangXepHang = false
     #if DEV_LOGIN
     @State private var xemTruocNgay1 = false
@@ -57,7 +58,7 @@ struct SettingsView: View {
     // ở tab Tài khoản cho khách nào chưa mua sản phẩm thuốc lá cũng khai được (để hưởng voucher sinh
     // nhật). Chống lạm dụng nằm ở BACKEND (GamificationService.CapNhatNgaySinhAsync): chỉ cho khai
     // 1 LẦN DUY NHẤT, sửa lại phải nhờ nhân viên qua Desktop — UI ở đây chỉ ẩn form sau khi đã có.
-    @State private var ngaySinhInfo: SinhNhatInfo?
+    @State private var ngaySinhInfo: SinhNhatInfo? = BoNhoTam.ngaySinhInfo
     @State private var loadingNgaySinh = false
     @State private var dobPicked = Calendar.current.date(byAdding: .year, value: -18, to: Date()) ?? Date()
     @State private var savingDob = false
@@ -104,6 +105,7 @@ struct SettingsView: View {
         // congNoContent), không phải ở navigationDestination — giữ nguyên 2 modifier tách theo subview
         // (fix 2026-09-23 lần 2) vì đúng hướng, chỉ thiếu buttonStyle (fix 2026-09-23 lần 3, ĐÃ XONG).
         .task { await load() }
+        .onDisappear { luuBoNhoTam() } // giữ cả thay đổi sau load (thêm/xoá địa chỉ, khai ngày sinh…)
         #if DEV_LOGIN
         .fullScreenCover(item: $chucMungXemTruoc) { t in
             ChucMungHangView(qua: t) {
@@ -750,7 +752,7 @@ struct SettingsView: View {
     }
 
     private func load() async {
-        loadingNgaySinh = true
+        loadingNgaySinh = ngaySinhInfo == nil
         async let diaChiTask = APIClient.shared.getDiaChiListOpt()
         async let viTask = APIClient.shared.getVi()
         async let ngaySinhTask = APIClient.shared.getSinhNhat()
@@ -781,6 +783,13 @@ struct SettingsView: View {
         }
         loadingNgaySinh = false
         loading = false
+        luuBoNhoTam()
+    }
+
+    private func luuBoNhoTam() {
+        if let vi { BoNhoTam.vi = vi }
+        BoNhoTam.diaChiList = diaChiList
+        if let ngaySinhInfo { BoNhoTam.ngaySinhInfo = ngaySinhInfo }
     }
 
 
