@@ -209,7 +209,8 @@ struct RuongXuDau<Phai: View>: View {
                 .buttonStyle(.plain)
                 duoiSo()
             }
-            Spacer(minLength: 0)
+            // Giãn hết bề ngang để nhãn Top (tieuDePhai) sát mép phải thẻ, thẳng hàng ô "Đặt qua app".
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .onAppear(perform: kiemTra)
         .onChange(of: xu) { _ in kiemTra() }
