@@ -529,14 +529,14 @@ struct SettingsView: View {
     }
 
     /// Nhãn Top trên thẻ Rương Xu (09/11/2026: bỏ thẻ hạng, đưa Top xuống đây). Mọi khách đều có: trong top 10 hiện "Top N",
-    /// ngoài top 10 / chưa xếp hạng "Top ?". Có giải (≤4) thì vàng + cúp, còn lại tông chủ đạo nhạt. Chạm mở bảng xếp hạng.
+    /// ngoài top 10 / chưa xếp hạng "Xem BXH" (10/11/2026, thay "Top ?" nghe như chưa hoàn thiện). Có giải (≤4) thì vàng + cúp, còn lại tông chủ đạo nhạt. Chạm mở bảng xếp hạng.
     private func topNhan(_ vi: KhachHangVi) -> some View {
         Button { moBangXepHang = true } label: {
             let viTri = (vi.topShipper ?? vi.topKhach)?.viTri
             let coGiai = (viTri ?? 99) <= 4
             HStack(spacing: 4) {
                 Image(systemName: "trophy.fill").font(.system(size: 11, weight: .bold))
-                Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Top ?" } ?? "Top ?")
+                Text(viTri.map { $0 <= 10 ? "Top \($0)" : "Xem BXH" } ?? "Xem BXH")
                     .font(.system(size: 13, weight: .heavy))
                 Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.7)
             }
