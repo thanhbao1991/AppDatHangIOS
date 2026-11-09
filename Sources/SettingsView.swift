@@ -450,7 +450,7 @@ struct SettingsView: View {
                     .lineLimit(1).minimumScaleFactor(0.7)
             }
         }
-        .padding(.horizontal, 12).padding(.vertical, 10)
+        .padding(.horizontal, 14).padding(.vertical, 14)
         .background(
             LinearGradient(colors: [vang.opacity(0.26), vang.opacity(0.10)], startPoint: .leading, endPoint: .trailing)
         )
@@ -478,7 +478,7 @@ struct SettingsView: View {
             Text(formatXu(xu))
                 .font(.system(size: 14, weight: .semibold)).monospacedDigit().foregroundColor(.white.opacity(0.7))
         }
-        .padding(.horizontal, 12).padding(.vertical, 6)
+        .padding(.horizontal, 14).padding(.vertical, 4)
     }
 
     private func formatSo(_ v: Double) -> String {
@@ -495,7 +495,7 @@ struct SettingsView: View {
     }
 
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center) {
                 // Gom nhãn "HẠNG THÀNH VIÊN" + tên hạng thành 1 dòng "🌱 Hạng Bạc ⓘ" (chủ quán 09/11/2026: đỡ tốn chỗ).
                 // ⓘ vẫn mở ghi chú cách tính hạng (Guideline 5.3.2) — chạm cả dòng.
@@ -535,34 +535,35 @@ struct SettingsView: View {
             let t = Self.tienDoThang()
             let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
             let xuQuay = vi.xuDonQuayThangNay ?? 0
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .lastTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
+            // 09/11/2026 "chật quá": "Nhận sau X ngày" lên chung hàng nhãn "Quà tháng này" (số Xu đứng 1 mình), giãn
+            // khoảng cách giữa các khối + đệm thẻ 16 → 20.
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .center) {
                         Text(NoiDung.text("theHangQua"))
-                            .font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.78))
-                        Text(formatXu(xuApp + xuQuay))
-                            .font(.system(size: 32, weight: .heavy, design: .rounded)).monospacedDigit()
-                            .foregroundColor(.white)
-                            .lineLimit(1).minimumScaleFactor(0.6)
+                            .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+                        Spacer(minLength: 8)
+                        HStack(spacing: 4) {
+                            Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
+                            Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 9).padding(.vertical, 5)
+                        .background(Capsule().fill(Color.white.opacity(0.14)))
                     }
-                    Spacer(minLength: 8)
-                    HStack(spacing: 4) {
-                        Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
-                        Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(Capsule().fill(Color.white.opacity(0.14)))
-                    .padding(.bottom, 6)
+                    Text(formatXu(xuApp + xuQuay))
+                        .font(.system(size: 34, weight: .heavy, design: .rounded)).monospacedDigit()
+                        .foregroundColor(.white)
+                        .lineLimit(1).minimumScaleFactor(0.6)
                 }
-                VStack(spacing: 4) {
+                VStack(spacing: 10) {
                     dongXuApp(xuApp)
                     dongXuQuay(xuQuay)
                 }
             }
         }
-        .padding(16)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
