@@ -360,17 +360,26 @@ struct SettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.bottom, 8)
-            TKKe()
+            .padding(.bottom, 12)
+            // Chủ quán 09/11/2026: dòng Nạp Xu gom 2 bên thành 1 nút — nút gradient full ngang, nhãn "🎁 Có Xu tặng" nằm trong nút.
             Button { showNapXu = true } label: {
-                HStack(spacing: 12) {
-                    TKIcon(ten: "plus", mau: Theme.primary)
-                    Text("Nạp Xu").font(.system(size: 15, weight: .semibold)).foregroundColor(.primary)
-                    Spacer(minLength: 8)
-                    if let nhan = vi.nhanNapXu { SoDuCard.NhanKhuyenMaiNut(text: nhan) }
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 16, weight: .bold))
+                    Text("Nạp Xu").font(.system(size: 15, weight: .bold))
+                    if let nhan = vi.nhanNapXu {
+                        Text("🎁 \(nhan)")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundColor(Theme.xuTangChu)
+                            .lineLimit(1)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Capsule().fill(Theme.xuTangNen))
+                    }
                 }
-                .padding(.vertical, 10)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Theme.primaryGradient)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
