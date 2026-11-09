@@ -497,20 +497,19 @@ struct SettingsView: View {
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 2) {
-                    // ⓘ (ghi chú món không tính hạng + câu Apple không tài trợ, Guideline 5.3.2) dời lên đây khi bỏ
-                    // dòng "Bạn cần chi tiêu thêm…" (chủ quán 2026-11-07: đơn giản card).
-                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
-                        (Text("HẠNG THÀNH VIÊN ") + Text(Image(systemName: "info.circle")))
-                            .font(.system(size: 10, weight: .bold)).tracking(1.2)
-                            // 0.65 -> 0.78: feedback "text phụ nhỏ màu xám nhạt trên card xanh hơi chìm"
-                            // — chữ nhỏ 10pt cần độ tương phản cao hơn văn bản thường để vẫn đọc rõ.
+                // Gom nhãn "HẠNG THÀNH VIÊN" + tên hạng thành 1 dòng "🌱 Hạng Bạc ⓘ" (chủ quán 09/11/2026: đỡ tốn chỗ).
+                // ⓘ vẫn mở ghi chú cách tính hạng (Guideline 5.3.2) — chạm cả dòng.
+                Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text("\(hangIcon[vi.hang] ?? "🌱") Hạng \(vi.hangDayDu ?? vi.hang)")
+                            .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.78))
                     }
-                    .buttonStyle(.plain)
-                    Text("\(hangIcon[vi.hang] ?? "🌱") \(vi.hangDayDu ?? vi.hang)")
-                        .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
                 }
+                .buttonStyle(.plain)
                 Spacer()
                 // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
                 // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
