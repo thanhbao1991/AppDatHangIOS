@@ -175,40 +175,34 @@ struct BangXepHangView: View {
                         .shadow(color: dam.opacity(0.35), radius: 6, y: 3)
                 }
             }
-            // Nhãn tên (trắng) + nhãn Xu (xanh đậm, viền màu huy chương)
-            VStack(spacing: -4) {
+            // Nhãn tên (trắng) + điểm Xu hiện tại (chữ nhỏ, nhạt). Chủ quán 10/11/2026: điểm đang nổi hơn giải
+            // thưởng → giải thưởng mới là nhãn xanh đậm nổi bật (trên khối bục), điểm lùi xuống thành chữ phụ.
+            VStack(spacing: 3) {
                 Text(d.ten)
                     .font(.system(size: 13, weight: .bold)).foregroundColor(Self.xanhDam)
                     .lineLimit(1).minimumScaleFactor(0.7)
                     .padding(.horizontal, 12).padding(.vertical, 5)
                     .background(Capsule().fill(.white).shadow(color: Self.nau.opacity(0.12), radius: 3, y: 1))
-                    .zIndex(1)
                 Text(giaTri(d.xu, soDon: d.soDon))
-                    .font(.system(size: laMot ? 16 : 14, weight: .heavy, design: .rounded)).monospacedDigit()
-                    .foregroundColor(.white)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+                    .foregroundColor(Self.xanhDam.opacity(0.55))
                     .lineLimit(1).minimumScaleFactor(0.7)
-                    .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(Capsule().fill(Self.xanhDam))
-                    .overlay(Capsule().stroke(sang, lineWidth: 1.5))
             }
-            .padding(.top, 6).padding(.horizontal, 4)
-            .zIndex(1)
-            // Khối bục 3D: mặt trên sáng, thân chuyển đậm, số lớn trắng, quà Top ở dưới số
-            VStack(spacing: 4) {
+            .padding(.top, 6).padding(.horizontal, 4).padding(.bottom, 16)
+            // Khối bục 3D: mặt trên sáng, thân chuyển đậm, số lớn trắng; giải thưởng là nhãn xanh đậm vắt qua mép trên
+            VStack(spacing: 2) {
+                if d.thuongXu > 0 {
+                    nhanQua(d.thuongXu, laMot: laMot, vien: sang)
+                        .padding(.top, -14)
+                } else {
+                    Color.clear.frame(height: 4)
+                }
                 Text("\(d.viTri)")
                     .font(.system(size: laMot ? 44 : 34, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .shadow(color: dam.opacity(0.8), radius: 1, y: 2)
-                if d.thuongXu > 0 {
-                    Text("+\(formatXu(d.thuongXu))")
-                        .font(.system(size: 10, weight: .heavy)).monospacedDigit()
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                        .foregroundColor(dam)
-                        .padding(.horizontal, 7).padding(.vertical, 3)
-                        .background(Capsule().fill(.white.opacity(0.9)))
-                }
             }
-            .padding(.top, 14).padding(.horizontal, 4)
+            .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, alignment: .top)
             .frame(height: laMot ? 124 : (d.viTri == 2 ? 96 : 80), alignment: .top)
             .background(
@@ -218,11 +212,25 @@ struct BangXepHangView: View {
                     LinearGradient(colors: [.white.opacity(0.7), sang.opacity(0.2)], startPoint: .top, endPoint: .bottom)
                         .frame(height: 10)
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous)) // chỉ cắt nền — nhãn quà được tràn mép trên
             )
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            .padding(.top, -10)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Nhãn giải thưởng — phần nổi nhất của mỗi người có quà: nền xanh đậm, viền màu huy chương, hộp quà + số Xu.
+    private func nhanQua(_ xu: Double, laMot: Bool, vien: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "gift.fill").font(.system(size: laMot ? 13 : 11, weight: .bold))
+            Text("+\(formatXu(xu))")
+                .font(.system(size: laMot ? 16 : 13, weight: .heavy, design: .rounded)).monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.6)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, laMot ? 12 : 9).padding(.vertical, laMot ? 7 : 6)
+        .background(Capsule().fill(Self.xanhDam))
+        .overlay(Capsule().stroke(vien, lineWidth: 1.5))
+        .shadow(color: Self.xanhDam.opacity(0.3), radius: 4, y: 2)
     }
 
     @ViewBuilder
@@ -262,18 +270,21 @@ struct BangXepHangView: View {
                 Text(d.ten)
                     .font(.system(size: 15, weight: d.laBan ? .heavy : .semibold)).foregroundColor(Self.xanhDam)
                     .lineLimit(1)
+                // Có quà: điểm lùi xuống dưới tên (chữ phụ), quà nằm bên phải ở chỗ nổi nhất.
                 if coQua {
-                    Text("+\(formatXu(d.thuongXu))")
-                        .font(.system(size: 11, weight: .bold)).monospacedDigit()
-                        .foregroundColor(Self.nau)
-                        .padding(.horizontal, 8).padding(.vertical, 2)
-                        .background(Capsule().fill(Color(red: 1.0, green: 0.88, blue: 0.62)))
+                    Text(giaTri(d.xu, soDon: d.soDon))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit()
+                        .foregroundColor(Self.xanhDam.opacity(0.55))
                 }
             }
             Spacer()
-            Text(giaTri(d.xu, soDon: d.soDon))
-                .font(.system(size: 15, weight: .heavy, design: .rounded)).monospacedDigit()
-                .foregroundColor(Self.xanhDam)
+            if coQua {
+                nhanQua(d.thuongXu, laMot: false, vien: Color(red: 1.0, green: 0.80, blue: 0.35))
+            } else {
+                Text(giaTri(d.xu, soDon: d.soDon))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded)).monospacedDigit()
+                    .foregroundColor(Self.xanhDam.opacity(0.6))
+            }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
         .background(
