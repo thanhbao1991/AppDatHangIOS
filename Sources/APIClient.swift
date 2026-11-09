@@ -484,6 +484,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? nil) : nil
     }
 
+    /// Lỗi/bị huỷ → nil (phân biệt với "chưa có đơn nào") để màn giữ danh sách cũ.
+    func getDonCuaToiOpt() async -> [DonHangKhach]? {
+        let env: ApiEnvelope<[DonHangKhach]> = await decode("/dat-hang/don-cua-toi?take=50")
+        return env.isSuccess ? (env.data ?? []) : nil
+    }
+
     func getDonCuaToi() async -> [DonHangKhach] {
         let env: ApiEnvelope<[DonHangKhach]> = await decode("/dat-hang/don-cua-toi?take=50")
         return env.isSuccess ? (env.data ?? []) : []
@@ -552,6 +558,12 @@ actor APIClient {
     }
 
     // ===== Thông báo =====
+
+    /// Lỗi/bị huỷ → nil để màn giữ danh sách cũ.
+    func getThongBaoOpt() async -> [ThongBao]? {
+        let env: ApiEnvelope<[ThongBao]> = await decode("/dat-hang/thong-bao")
+        return env.isSuccess ? (env.data ?? []) : nil
+    }
 
     func getThongBao() async -> [ThongBao] {
         let env: ApiEnvelope<[ThongBao]> = await decode("/dat-hang/thong-bao")

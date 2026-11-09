@@ -28,7 +28,8 @@ struct BangXepHangDong: Decodable, Identifiable {
 /// (hạng 4) tô vàng; cuối màn là lời cảm ơn (câu chữ từ backend).
 struct BangXepHangView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var bang: BangXepHang?
+    // 09/11/2026: hiện ngay bảng lần trước (BoNhoTam), tải lại rồi thay vào.
+    @State private var bang: BangXepHang? = BoNhoTam.bangXepHang
     @State private var loi = false
 
     private static let kem = Color(red: 1.0, green: 0.976, blue: 0.937)
@@ -86,7 +87,10 @@ struct BangXepHangView: View {
 
     private func tai() async {
         loi = false
-        if let b = await APIClient.shared.getBangXepHang() { bang = b } else { loi = true }
+        if let b = await APIClient.shared.getBangXepHang() {
+            bang = b
+            BoNhoTam.bangXepHang = b
+        } else if bang == nil { loi = true } // đang hiện bảng cũ thì giữ, không báo lỗi
     }
 
     // MARK: - Màu huy chương (sáng → đậm cho khối 3D)

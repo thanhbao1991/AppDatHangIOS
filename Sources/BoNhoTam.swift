@@ -9,6 +9,9 @@ enum BoNhoTam {
     static var ngaySinhInfo: SinhNhatInfo?
     static var soLuotConLai: Int?
     static var diemDanh: DiemDanhInfo?
+    static var donCuaToi: [DonHangKhach]?
+    static var thongBao: [ThongBao]?
+    static var bangXepHang: BangXepHang?
 
     static func xoa() {
         vi = nil
@@ -16,5 +19,8 @@ enum BoNhoTam {
         ngaySinhInfo = nil
         soLuotConLai = nil
         diemDanh = nil
+        donCuaToi = nil
+        thongBao = nil
+        bangXepHang = nil
     }
 }

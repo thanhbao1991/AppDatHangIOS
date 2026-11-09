@@ -128,8 +128,15 @@ struct ThongBaoView: View {
     }
 
     private func load(silent: Bool = false) async {
-        if !silent { loading = true }
-        items = await APIClient.shared.getThongBao()
+        // 09/11/2026: hiện ngay danh sách lần trước (BoNhoTam), tải lại rồi thay vào; lỗi thì giữ danh sách cũ.
+        if items.isEmpty, let daCo = BoNhoTam.thongBao {
+            items = daCo
+            loading = false
+        } else if !silent { loading = true }
+        if let moi = await APIClient.shared.getThongBaoOpt() {
+            items = moi
+            BoNhoTam.thongBao = moi
+        }
         if let first = items.first {
             Prefs.thongBaoLastSeen = first.ngayTao
         }

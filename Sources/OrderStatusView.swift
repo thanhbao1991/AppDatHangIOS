@@ -316,9 +316,17 @@ struct OrderStatusView: View {
     }
 
     private func load(silent: Bool = false) async {
-        if !silent { loading = true }
-        let result = await APIClient.shared.getDonCuaToi()
-        orders = result
+        // 09/11/2026: mở lại tab hiện ngay danh sách lần trước (BoNhoTam), tải lại lặng lẽ rồi thay vào.
+        if orders.isEmpty, let daCo = BoNhoTam.donCuaToi {
+            orders = daCo
+            loading = false
+        } else if !silent { loading = true }
+        // Lỗi mạng/bị huỷ (nil) → GIỮ danh sách đang hiện, không xoá trống (trước đây getDonCuaToi trả [] khi lỗi
+        // → khách đang theo dõi đơn giao thấy danh sách đột nhiên trống).
+        if let result = await APIClient.shared.getDonCuaToiOpt() {
+            orders = result
+            BoNhoTam.donCuaToi = result
+        }
         // Mặc định mở tab CÓ DỮ LIỆU đầu tiên tính từ trái qua (theo thứ tự NhomDonHang.allCases:
         // Đang xử lý/Đang giao/Đã giao) thay vì luôn cứng "Đang xử lý" dù tab đó rỗng, khách khỏi
         // phải tự bấm qua tab khác mới thấy đơn (feedback 2026-09-27).
