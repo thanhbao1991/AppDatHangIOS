@@ -193,7 +193,8 @@ struct SettingsView: View {
             // Dựng lại cả List khi dịp đổi (card hạng, nút Nạp Xu… đều lấy màu dịp) — chỉ khi dịp THẬT SỰ đổi nên
             // mở lại app cùng dịp không bị nhảy vị trí cuộn.
             .id(themeTick)
-            .refreshable { await load() }
+            // Task rời: kéo làm mới đổi state làm SwiftUI huỷ task refreshable → request bị cancel → dữ liệu về rỗng.
+            .refreshable { await Task { await load() }.value }
         }
     }
 
@@ -751,7 +752,7 @@ struct SettingsView: View {
 
     private func load() async {
         loadingNgaySinh = true
-        async let diaChiTask = APIClient.shared.getDiaChiList()
+        async let diaChiTask = APIClient.shared.getDiaChiListOpt()
         async let viTask = APIClient.shared.getVi()
         async let ngaySinhTask = APIClient.shared.getSinhNhat()
         let (dc, viMoi, ns) = await (diaChiTask, viTask, ngaySinhTask)
@@ -765,12 +766,11 @@ struct SettingsView: View {
             viTai = await APIClient.shared.getVi()
         }
         if let viTai { vi = viTai }
-        if !dc.isEmpty || vi != nil { diaChiList = dc }
+        // Địa chỉ lỗi (nil) → giữ danh sách cũ; thử lại 1 lần trước khi bỏ cuộc.
+        var dcTai = dc
+        if dcTai == nil { dcTai = await APIClient.shared.getDiaChiListOpt() }
+        if let dcTai { diaChiList = dcTai }
         if ns != nil { ngaySinhInfo = ns }
-        if diaChiList.isEmpty && dc.isEmpty && viTai == nil {
-            // Cả ví lẫn địa chỉ đều trống/lỗi — thử tải lại địa chỉ một lần cho chắc.
-            diaChiList = await APIClient.shared.getDiaChiList()
-        }
         if let hang = vi?.hang { KhachHangSession.shared.capNhatHang(hang) }
         // Nạp sẵn DatePicker theo đúng ngày sinh đã khai (nếu có) — để lúc mở form sửa (coTheSua=true)
         // khách thấy đúng ngày cũ thay vì luôn nhảy về mặc định "18 năm trước".

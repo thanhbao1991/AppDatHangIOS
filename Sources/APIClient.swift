@@ -496,6 +496,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Như getDiaChiList nhưng phân biệt "lỗi/bị huỷ" (nil) với "khách thật sự chưa có địa chỉ" ([]).
+    func getDiaChiListOpt() async -> [DiaChiKhachHang]? {
+        let env: ApiEnvelope<[DiaChiKhachHang]> = await decode("/dat-hang/dia-chi")
+        return env.isSuccess ? (env.data ?? []) : nil
+    }
+
     struct DiaChiBody: Encodable { let diaChi: String }
 
     func themDiaChi(_ diaChi: String) async -> ActionResult {
