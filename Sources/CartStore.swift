@@ -234,7 +234,15 @@ final class CartStore: ObservableObject {
     /// ưu đãi giờ đây) và CheckoutView (phòng khi khách vào thẳng bằng "Đặt lại" mà chưa ghé Giỏ hàng
     /// lần nào từ lúc mở app). Chỉ tải 1 LẦN/phiên (uuDaiLoaded) — cả 2 màn cùng gọi không tải trùng.
     func loadUuDaiIfNeeded() async {
-        guard !uuDaiLoaded, Prefs.isLoggedIn else { return }
+        guard Prefs.isLoggedIn else { return }
+        if vi == nil, let daCo = BoNhoTam.vi { vi = daCo }
+        // 09/11/2026 (chủ quán: tab Tài khoản 300 Xu mà Giỏ hàng "Dùng 0 Xu"): ví trước đây chỉ tải 1 lần/phiên — lần đó lỗi
+        // (nil → 0 Xu) hoặc số dư đổi sau đó (nạp, đặt đơn, thưởng) thì giỏ giữ số sai tới khi tắt app. Giờ voucher vẫn
+        // 1 lần/phiên, còn ví tải lại mỗi lần mở Giỏ hàng/Thanh toán; lỗi thì giữ số cũ.
+        guard !uuDaiLoaded else {
+            if let moi = await APIClient.shared.getVi() { vi = moi; BoNhoTam.vi = moi }
+            return
+        }
         uuDaiLoaded = true
         async let viTask: KhachHangVi? = APIClient.shared.getVi()
         async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
@@ -245,8 +253,7 @@ final class CartStore: ObservableObject {
         sanPhamDaTungDat = await spTask
         spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
         validateSelectedVoucher()
-        vi = await viTask
-        if let vi { BoNhoTam.vi = vi; KhachHangSession.shared.capNhatHang(vi.hang) }
+        if let moi = await viTask { vi = moi; BoNhoTam.vi = moi; KhachHangSession.shared.capNhatHang(moi.hang) }
     }
 
     /// Tải LẠI riêng danh sách voucher, bỏ qua guard "1 lần/phiên" của loadUuDaiIfNeeded — dùng cho
