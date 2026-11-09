@@ -144,6 +144,43 @@ struct TKThanhLoc<T: Hashable>: View {
     }
 }
 
+/// Rương Xu "tích tích" (09/11/2026): ảnh rương Gemini (Assets RuongXu), cứ ~2,4s một đồng Xu rơi từ trên vào rương, chạm
+/// miệng rương thì rương nảy nhẹ + lóe sáng. Chưa có Xu tháng này thì rương đứng yên, không rơi xu.
+struct RuongXuTichTich: View {
+    var coXu: Bool = true
+    private let chuKy: Double = 2.4
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !coXu)) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: chuKy) / chuKy
+            // 0 → 0,45: xu rơi; 0,45 → 0,6: rương nảy; còn lại nghỉ.
+            let roi = min(t / 0.45, 1)
+            let nay = t > 0.45 && t < 0.62 ? sin((t - 0.45) / 0.17 * .pi) : 0
+            GeometryReader { geo in
+                let w = geo.size.width
+                ZStack {
+                    Circle()
+                        .fill(RadialGradient(colors: [Color(red: 1, green: 0.85, blue: 0.4).opacity(0.55 * nay + 0.15), .clear],
+                                             center: .center, startRadius: 0, endRadius: w * 0.55))
+                        .frame(width: w, height: w)
+                    Image("RuongXu")
+                        .resizable().aspectRatio(contentMode: .fit)
+                        .frame(width: w * 0.92)
+                        .scaleEffect(x: 1 + 0.04 * nay, y: 1 - 0.05 * nay, anchor: .bottom)
+                        .offset(y: w * 0.06)
+                    if coXu && t < 0.45 {
+                        Theme.xuIcon(w * 0.24)
+                            .rotation3DEffect(.degrees(roi * 540), axis: (x: 0, y: 1, z: 0))
+                            .offset(y: -w * 0.5 + roi * w * 0.42)
+                            .opacity(roi < 0.85 ? 1 : (1 - (roi - 0.85) / 0.15))
+                    }
+                }
+                .frame(width: w, height: geo.size.height)
+            }
+        }
+    }
+}
+
 /// Trạng thái trống dùng chung.
 struct TKTrong: View {
     let icon: String

@@ -12,6 +12,8 @@ enum NoiDung {
         "hangGhiChu": "Đặt qua app được Xu GẤP ĐÔI gọi qua quầy: mỗi 400.000đ đặt qua app được 20.000 Xu, gọi qua quầy được 10.000 Xu. Xu tự cộng vào ví ngày 1 tháng sau, dùng khi đặt món trên app. Nước lon, ăn vặt và món không pha chế không được tính.\n\nChương trình do Đenn Coffee tổ chức, miễn phí cho khách hàng. Apple không tài trợ và không liên quan đến chương trình này.",
         "theHangQua": "Quà tháng này",
         "theHangNhanSau": "Nhận sau {ngay} ngày",
+        "ruongXuTieuDe": "Rương Xu tháng này",
+        "ruongXuMoSau": "Mở rương sau {ngay} ngày",
         "theHangApp": "Đặt qua app",
         "theHangQuay": "Gọi qua quầy",
         "theHangGoiYApp": "Nếu đặt qua app: {xu}",

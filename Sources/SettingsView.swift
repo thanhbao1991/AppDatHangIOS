@@ -175,9 +175,11 @@ struct SettingsView: View {
                 if let vi {
                     #if DEV_LOGIN
                     // 2 nút xem trước đã dời vào icon tia chớp trên header, trước chuông (devMenu, chủ quán 09/11/2026).
-                    diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
+                    hangTopCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
+                    ruongXuCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
                     #else
-                    diemHangCard(vi)
+                    hangTopCard(vi)
+                    ruongXuCard(vi)
                     #endif
                     xuCard(vi)
                     if vi.tongNo > 0 { congNoCard(vi) }
@@ -434,60 +436,58 @@ struct SettingsView: View {
     /// Dòng "Đặt qua app [x2]" (thiết kế lại 09/11/2026): nền vàng, bên phải "2.900 × 2" nhỏ + "5.800 Xu" lớn —
     /// gốc bằng đúng mức gọi qua quầy, app được gấp đôi. Câu chữ lấy từ backend (NoiDung).
     private func dongXuApp(_ xu: Double) -> some View {
-        let vang = Self.vangXu
+        // 09/11/2026: nằm trong thẻ Heo đất NỀN TRẮNG → tông kem/hổ phách (cùng nhãn Xu tặng), không còn chữ trắng.
+        let chu = Theme.xuTangChu
         return HStack(alignment: .center, spacing: 10) {
             Image(systemName: "iphone.gen3")
-                .font(.system(size: 15, weight: .bold)).foregroundColor(vang)
+                .font(.system(size: 15, weight: .bold)).foregroundColor(chu)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(vang.opacity(0.18)))
+                .background(Circle().fill(Color.white.opacity(0.7)))
             Text(NoiDung.text("theHangApp"))
-                .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                .font(.system(size: 14, weight: .bold)).foregroundColor(.primary)
             Text("x2")
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
                 .padding(.horizontal, 7).padding(.vertical, 2)
-                .background(Capsule().fill(vang))
+                .background(Capsule().fill(Self.vangXu))
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 0) {
                 if xu > 0 {
                     Text("\(formatSo((xu / 2).rounded(.down))) × 2")
                         .font(.system(size: 11, weight: .semibold)).monospacedDigit()
-                        .foregroundColor(vang.opacity(0.85))
+                        .foregroundColor(chu.opacity(0.75))
                 }
                 Text(formatXu(xu))
-                    .font(.system(size: 18, weight: .heavy)).monospacedDigit().foregroundColor(vang)
+                    .font(.system(size: 17, weight: .heavy)).monospacedDigit().foregroundColor(chu)
                     .lineLimit(1).minimumScaleFactor(0.7)
             }
         }
-        .padding(.horizontal, 14).padding(.vertical, 14)
-        .background(
-            LinearGradient(colors: [vang.opacity(0.26), vang.opacity(0.10)], startPoint: .leading, endPoint: .trailing)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(vang.opacity(0.55), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 12).padding(.vertical, 12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.xuTangNen))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Theme.xuTangVien, lineWidth: 1))
     }
 
     /// Dòng "Gọi qua quầy": chìm hẳn; có Xu quầy thì gợi ý "Nếu đặt qua app: gấp đôi" để khách thấy mình đang bỏ lỡ.
     private func dongXuQuay(_ xu: Double) -> some View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "storefront")
-                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.55))
+                .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
                 .frame(width: 30, height: 30)
             // Chủ quán 09/11/2026: giữ dòng gợi ý "Nếu đặt qua app: …" (đã định bỏ rồi đổi ý).
             VStack(alignment: .leading, spacing: 1) {
                 Text(NoiDung.text("theHangQuay"))
-                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
                 if xu > 0 {
                     Text(NoiDung.text("theHangGoiYApp").replacingOccurrences(of: "{xu}", with: formatXu(xu * 2)))
-                        .font(.system(size: 11, weight: .semibold)).foregroundColor(Self.vangXu.opacity(0.9))
+                        .font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.xuTangChu)
                         .lineLimit(1).minimumScaleFactor(0.8)
                 }
             }
             Spacer(minLength: 6)
             Text(formatXu(xu))
-                .font(.system(size: 14, weight: .semibold)).monospacedDigit().foregroundColor(.white.opacity(0.7))
+                .font(.system(size: 14, weight: .semibold)).monospacedDigit().foregroundColor(Theme.textMuted)
         }
-        .padding(.horizontal, 14).padding(.vertical, 4)
+        .padding(.horizontal, 12).padding(.vertical, 2)
     }
 
     private func formatSo(_ v: Double) -> String {
@@ -503,37 +503,64 @@ struct SettingsView: View {
         return dong.joined(separator: "\n\n")
     }
 
-    private func diemHangCard(_ vi: KhachHangVi) -> some View {
-        // 09/11/2026 chủ quán: bỏ dòng tên hạng + nhãn "Quà tháng này", sắp lại — hàng 1: số Xu lớn ⓘ | Top N; hàng 2: "Nhận
-        // sau X ngày"; dưới là 2 dòng app/quầy. ⓘ vẫn mở ghi chú cách tính (Guideline 5.3.2).
+    /// Thẻ RƯƠNG XU (chủ quán 09/11/2026: "xu tích thành heo đất tích tích", heo Gemini xấu → "dùng rương cũng được") — tách
+    /// khỏi thẻ hạng. Ảnh rương Gemini (Assets RuongXu), đồng Xu rơi vào rương theo nhịp + rương nảy nhẹ khi nhận xu. Số lớn = Xu tích tháng này (app + quầy),
+    /// "Mở rương sau X ngày" = ngày 1 tháng sau cộng vào ví. Dưới là 2 dòng app ×2 / quầy. ⓘ mở cách tính (Guideline 5.3.2).
+    private func ruongXuCard(_ vi: KhachHangVi) -> some View {
         let t = Self.tienDoThang()
         let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
         let xuQuay = vi.xuDonQuayThangNay ?? 0
-        return VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(formatXu(xuApp + xuQuay))
-                                .font(.system(size: 34, weight: .heavy, design: .rounded)).monospacedDigit()
-                                .foregroundColor(.white)
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                RuongXuTichTich(coXu: xuApp + xuQuay > 0)
+                    .frame(width: 96, height: 96)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(NoiDung.text("ruongXuTieuDe"))
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                    Button { alertMessage = ("Rương Xu", thongTinHang(vi)) } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            (Text(SoDuCard.so(xuApp + xuQuay)).font(.system(size: 30, weight: .heavy, design: .rounded))
+                                + Text(" Xu").font(.system(size: 15, weight: .bold)))
+                                .monospacedDigit().foregroundColor(Theme.xuTangChu)
                                 .lineLimit(1).minimumScaleFactor(0.6)
                             Image(systemName: "info.circle")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.78))
+                                .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
                         }
                     }
                     .buttonStyle(.plain)
                     HStack(spacing: 4) {
                         Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
-                        Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
+                        Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
                             .font(.system(size: 11, weight: .bold))
                     }
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 9).padding(.vertical, 5)
-                    .background(Capsule().fill(Color.white.opacity(0.14)))
+                    .foregroundColor(Theme.xuTangChu)
+                    .padding(.horizontal, 9).padding(.vertical, 4)
+                    .background(Capsule().fill(Theme.xuTangNen))
                 }
-                Spacer(minLength: 8)
+                Spacer(minLength: 0)
+            }
+            VStack(spacing: 8) {
+                dongXuApp(xuApp)
+                dongXuQuay(xuQuay)
+            }
+        }
+        .tkThe(dem: 16)
+    }
+
+    /// Thẻ HẠNG + TOP (tách riêng 09/11/2026): nền gradient theo hạng, 1 hàng "🌱 Hạng Bạc ⓘ" | "🏆 Top N >".
+    private func hangTopCard(_ vi: KhachHangVi) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(hangIcon[vi.hang] ?? "🌱") Hạng \(vi.hangDayDu ?? vi.hang)")
+                        .font(.system(size: 18, weight: .heavy)).foregroundColor(.white)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.78))
+                }
+            }
+            .buttonStyle(.plain)
+            Spacer(minLength: 8)
                 // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
                 // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
                 // Nhãn Top: có giải (≤4) thì vàng + cúp, còn lại mờ. Chạm mở bảng xếp hạng.
@@ -551,16 +578,8 @@ struct SettingsView: View {
                     .background(Capsule().fill(coGiai ? AnyShapeStyle(Self.vangXu) : AnyShapeStyle(Color.white.opacity(0.18))))
                 }
                 .buttonStyle(.plain)
-                .frame(maxHeight: .infinity, alignment: .top)
-            }
-            .fixedSize(horizontal: false, vertical: true)
-
-            VStack(spacing: 10) {
-                dongXuApp(xuApp)
-                dongXuQuay(xuQuay)
-            }
         }
-        .padding(20)
+        .padding(.horizontal, 18).padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
