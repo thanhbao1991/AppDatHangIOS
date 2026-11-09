@@ -320,14 +320,10 @@ struct SettingsView: View {
     /// Mời khách đánh giá — popup đánh giá chuẩn của iOS (StoreKit requestReview), KHÔNG kèm bất kỳ
     /// quà/voucher/Xu nào (vi phạm chính sách Apple nếu gắn khuyến khích). requestReview không
     /// cần App Store id, iOS tự quyết định có hiện popup hay không (tối đa 3 lần/năm) nên không bị spam.
-    /// Thẻ "Khác": Thể lệ Xu + Đánh giá App Store (09/11/2026 gom kiểu Cài đặt).
+    /// Thẻ "Khác": chỉ còn Đánh giá App Store — chủ quán 10/11/2026 bỏ "Thể lệ Xu" khỏi thẻ này (vẫn mở được ở
+    /// Tài khoản & bảo mật, màn Nạp Xu và hộp quà Ưu đãi).
     private var danhGiaCard: some View {
         VStack(spacing: 0) {
-            NavigationLink { TheLeXuView() } label: {
-                TKDong(icon: "doc.text.fill", mau: .orange, tieuDe: "Thể lệ Xu")
-            }
-            .buttonStyle(.plain)
-            TKKe()
             Button { moDanhGia() } label: {
                 TKDong(icon: "star.fill", mau: .yellow, tieuDe: "Đánh giá Đenn trên App Store")
             }
