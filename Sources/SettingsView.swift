@@ -174,44 +174,8 @@ struct SettingsView: View {
               VStack(spacing: TK.khoangCach) {
                 if let vi {
                     #if DEV_LOGIN
+                    // 2 nút xem trước đã dời vào icon tia chớp trên header, trước chuông (devMenu, chủ quán 09/11/2026).
                     diemHangCard(xemTruocNgay1 ? XemTruocNgay1.vi(vi) : vi)
-                    Group {
-                            Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") {
-                                xemTruocNgay1.toggle()
-                                if xemTruocNgay1 {
-                                    quaXemTruocConLai = XemTruocNgay1.qua(vi)
-                                    if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
-                                }
-                            }
-                            .font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity)
-                            .tkThe(dem: 12)
-                        Button(seasonalPreviewLabel) {
-                            // Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp 5 dịp vào 1 nút thay vì 5
-                            // nút riêng, đỡ chật danh sách.
-                            if let current = SeasonalEvent.previewOverride,
-                               let idx = SeasonalTheme.allCases.firstIndex(of: current),
-                               idx + 1 < SeasonalTheme.allCases.count {
-                                SeasonalEvent.previewOverride = SeasonalTheme.allCases[idx + 1]
-                            } else if SeasonalEvent.previewOverride == nil {
-                                SeasonalEvent.previewOverride = SeasonalTheme.allCases.first
-                            } else {
-                                SeasonalEvent.previewOverride = nil
-                            }
-                            Theme.applyNavBarAppearance()
-                            SeasonalEvent.capNhatIcon()
-                            seasonalPreviewTick += 1
-                            NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
-                            Task {
-                                await SeasonalEvent.taiXemTruoc()
-                                // Màn chào của dịp vừa chọn (sau khi có câu chúc thật) — để xem trước, không đợi tới dịp.
-                                if SeasonalEvent.previewOverride != nil {
-                                    NotificationCenter.default.post(name: .xemTruocSplash, object: nil)
-                                }
-                            }
-                        }
-                        .font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary).frame(maxWidth: .infinity)
-                        .tkThe(dem: 12)
-                    }
                     #else
                     diemHangCard(vi)
                     #endif
@@ -273,6 +237,9 @@ struct SettingsView: View {
                 .padding(.top, 4)
             }
             Spacer()
+            #if DEV_LOGIN
+            devMenu
+            #endif
             notificationBell
             accountSettingsGear
         }
@@ -282,6 +249,58 @@ struct SettingsView: View {
         .frame(minHeight: HeaderBarMetrics.rowHeight)
         .background(HeaderBackground())
     }
+
+    #if DEV_LOGIN
+    /// Icon tia chớp trên header (chỉ bản dev) — gom 2 nút "Xem trước ngày 1 tháng sau" + "Xem trước dịp lễ".
+    private var devMenu: some View {
+        Menu {
+            Button(xemTruocNgay1 ? "🧪 Tắt xem trước ngày 1" : "🧪 Xem trước ngày 1 tháng sau") { batTatXemTruocNgay1() }
+                .disabled(vi == nil)
+            Button(seasonalPreviewLabel) { xoayXemTruocDipLe() }
+        } label: {
+            Image(systemName: xemTruocNgay1 || SeasonalEvent.previewOverride != nil ? "bolt.fill" : "bolt")
+                .font(.system(size: 18))
+                .foregroundColor(.white)
+                .frame(width: 30, height: 30)
+        }
+        // Chữ mục menu theo màu chủ đạo — header bọc .tint(.white) (xem popupHost) sẽ làm chữ trắng vô hình.
+        .tint(Theme.primary)
+        .accessibilityLabel("Xem trước")
+    }
+
+    private func batTatXemTruocNgay1() {
+        guard let vi else { return }
+        xemTruocNgay1.toggle()
+        if xemTruocNgay1 {
+            quaXemTruocConLai = XemTruocNgay1.qua(vi)
+            if !quaXemTruocConLai.isEmpty { chucMungXemTruoc = quaXemTruocConLai.removeFirst() }
+        }
+    }
+
+    /// Bấm xoay vòng qua từng dịp rồi về "tắt" — gộp các dịp vào 1 nút.
+    private func xoayXemTruocDipLe() {
+        if let current = SeasonalEvent.previewOverride,
+           let idx = SeasonalTheme.allCases.firstIndex(of: current),
+           idx + 1 < SeasonalTheme.allCases.count {
+            SeasonalEvent.previewOverride = SeasonalTheme.allCases[idx + 1]
+        } else if SeasonalEvent.previewOverride == nil {
+            SeasonalEvent.previewOverride = SeasonalTheme.allCases.first
+        } else {
+            SeasonalEvent.previewOverride = nil
+        }
+        Theme.applyNavBarAppearance()
+        SeasonalEvent.capNhatIcon()
+        seasonalPreviewTick += 1
+        NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+        Task {
+            await SeasonalEvent.taiXemTruoc()
+            // Màn chào của dịp vừa chọn (sau khi có câu chúc thật) — để xem trước, không đợi tới dịp.
+            if SeasonalEvent.previewOverride != nil {
+                NotificationCenter.default.post(name: .xemTruocSplash, object: nil)
+            }
+        }
+    }
+    #endif
 
     private var chuaDatTen: Bool {
         let ten = (Prefs.tenKhachHang ?? "").trimmingCharacters(in: .whitespaces)
