@@ -511,33 +511,16 @@ struct SettingsView: View {
         let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
         let xuQuay = vi.xuDonQuayThangNay ?? 0
         return VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
-                RuongXuTichTich(coXu: xuApp + xuQuay > 0)
-                    .frame(width: 96, height: 96)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(NoiDung.text("ruongXuTieuDe"))
-                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
-                    Button { alertMessage = ("Rương Xu", thongTinHang(vi)) } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            (Text(SoDuCard.so(xuApp + xuQuay)).font(.system(size: 30, weight: .heavy, design: .rounded))
-                                + Text(" Xu").font(.system(size: 15, weight: .bold)))
-                                .monospacedDigit().foregroundColor(Theme.xuTangChu)
-                                .lineLimit(1).minimumScaleFactor(0.6)
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    HStack(spacing: 4) {
-                        Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
-                        Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundColor(Theme.xuTangChu)
-                    .padding(.horizontal, 9).padding(.vertical, 4)
-                    .background(Capsule().fill(Theme.xuTangNen))
+            // Xu tăng so với lần xem trước → xu bay chui vào rương + số đếm chạy (RuongXuDau, TaiKhoanUI.swift).
+            RuongXuDau(xu: xuApp + xuQuay, onInfo: { alertMessage = ("Rương Xu", thongTinHang(vi)) }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
+                    Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
+                        .font(.system(size: 11, weight: .bold))
                 }
-                Spacer(minLength: 0)
+                .foregroundColor(Theme.xuTangChu)
+                .padding(.horizontal, 9).padding(.vertical, 4)
+                .background(Capsule().fill(Theme.xuTangNen))
             }
             VStack(spacing: 8) {
                 dongXuApp(xuApp)

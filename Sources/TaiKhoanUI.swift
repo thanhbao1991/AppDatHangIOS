@@ -144,41 +144,155 @@ struct TKThanhLoc<T: Hashable>: View {
     }
 }
 
-/// Rương Xu "tích tích" (09/11/2026): ảnh rương Gemini (Assets RuongXu), cứ ~2,4s một đồng Xu rơi từ trên vào rương, chạm
-/// miệng rương thì rương nảy nhẹ + lóe sáng. Chưa có Xu tháng này thì rương đứng yên, không rơi xu.
-struct RuongXuTichTich: View {
-    var coXu: Bool = true
-    private let chuKy: Double = 2.4
+/// Phần đầu thẻ Rương Xu (09/11/2026): ảnh rương (Assets RuongXu) + số Xu tháng này. Bình thường ĐỨNG YÊN; chỉ khi số Xu
+/// LỚN HƠN lần cuối khách xem (lưu máy theo khách + tháng) mới chạy hiệu ứng: vài đồng Xu bay từ trên, xoay, rơi vào miệng
+/// rương rồi thu nhỏ CHUI vào trong (lấp sau thành trước), rương nảy + lóe sáng mỗi đồng, số đếm chạy từ số cũ lên số mới,
+/// hiện "+N Xu" bay lên. Xem xong lưu mốc mới. Tháng mới: mốc cũ thuộc tháng trước nên tính từ 0.
+struct RuongXuDau<Phai: View>: View {
+    let xu: Double
+    let onInfo: () -> Void
+    @ViewBuilder var duoiSo: () -> Phai
+
+    @State private var soHienThi: Double = 0
+    @State private var dangChay = false
+    @State private var batDau: Date?
+    @State private var soXuBay = 0
+    @State private var cong: Double = 0
+
+    private static let cachXu: Double = 0.22   // giây giữa 2 đồng
+    private static let roiMat: Double = 0.55   // giây 1 đồng rơi
+
+    private var khoa: String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        let c = cal.dateComponents([.year, .month], from: Date())
+        return "ruongXu.daXem.\(Prefs.khachHangId ?? "?").\(c.year ?? 0)-\(c.month ?? 0)"
+    }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !coXu)) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: chuKy) / chuKy
-            // 0 → 0,45: xu rơi; 0,45 → 0,6: rương nảy; còn lại nghỉ.
-            let roi = min(t / 0.45, 1)
-            let nay = t > 0.45 && t < 0.62 ? sin((t - 0.45) / 0.17 * .pi) : 0
+        HStack(alignment: .center, spacing: 12) {
+            ruong.frame(width: 96, height: 96)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(NoiDung.text("ruongXuTieuDe"))
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                Button(action: onInfo) {
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        HStack(alignment: .firstTextBaseline, spacing: 0) {
+                            SoXuChay(value: soHienThi)
+                                .font(.system(size: 30, weight: .heavy, design: .rounded))
+                            Text(" Xu").font(.system(size: 15, weight: .bold))
+                        }
+                        .monospacedDigit().foregroundColor(Theme.xuTangChu)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if dangChay && cong > 0 {
+                            Text("+\(SoDuCard.so(cong))")
+                                .font(.system(size: 13, weight: .heavy, design: .rounded))
+                                .foregroundColor(Theme.success)
+                                .offset(x: 10, y: -14)
+                                .transition(.asymmetric(insertion: .scale.combined(with: .opacity),
+                                                        removal: .move(edge: .top).combined(with: .opacity)))
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                duoiSo()
+            }
+            Spacer(minLength: 0)
+        }
+        .onAppear(perform: kiemTra)
+        .onChange(of: xu) { _ in kiemTra() }
+    }
+
+    private var ruong: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !dangChay)) { ctx in
+            let tg = batDau.map { ctx.date.timeIntervalSince($0) } ?? 99
             GeometryReader { geo in
                 let w = geo.size.width
+                let nay = doNay(tg)
                 ZStack {
                     Circle()
-                        .fill(RadialGradient(colors: [Color(red: 1, green: 0.85, blue: 0.4).opacity(0.55 * nay + 0.15), .clear],
+                        .fill(RadialGradient(colors: [Color(red: 1, green: 0.85, blue: 0.4).opacity(0.6 * nay + 0.12), .clear],
                                              center: .center, startRadius: 0, endRadius: w * 0.55))
-                        .frame(width: w, height: w)
-                    Image("RuongXu")
-                        .resizable().aspectRatio(contentMode: .fit)
-                        .frame(width: w * 0.92)
-                        .scaleEffect(x: 1 + 0.04 * nay, y: 1 - 0.05 * nay, anchor: .bottom)
-                        .offset(y: w * 0.06)
-                    if coXu && t < 0.45 {
-                        Theme.xuIcon(w * 0.24)
-                            .rotation3DEffect(.degrees(roi * 540), axis: (x: 0, y: 1, z: 0))
-                            .offset(y: -w * 0.5 + roi * w * 0.42)
-                            .opacity(roi < 0.85 ? 1 : (1 - (roi - 0.85) / 0.15))
+                    // Thân rương (cả ảnh) — xu vẽ ĐÈ lên, rồi phần nửa dưới ảnh (thành trước) vẽ đè lại xu → xu như chui vào trong.
+                    anhRuong(w, nay: nay)
+                    ForEach(0..<soXuBay, id: \.self) { i in
+                        let p = (tg - Double(i) * Self.cachXu) / Self.roiMat
+                        if p > 0 && p < 1 {
+                            Theme.xuIcon(w * 0.22 * (1 - 0.45 * max(0, (p - 0.7) / 0.3)))
+                                .rotation3DEffect(.degrees(p * 540), axis: (x: 0, y: 1, z: 0))
+                                .offset(x: CGFloat(i % 3 - 1) * w * 0.07 * (1 - p),
+                                        y: -w * 0.62 + CGFloat(p * p) * w * 0.74)
+                                .opacity(p < 0.9 ? 1 : (1 - p) / 0.1)
+                        }
                     }
+                    anhRuong(w, nay: nay)
+                        .mask(alignment: .bottom) {
+                            Rectangle().frame(height: w * 0.5)   // thành trước rương (từ ổ khoá xuống)
+                        }
                 }
                 .frame(width: w, height: geo.size.height)
             }
         }
     }
+
+    private func anhRuong(_ w: CGFloat, nay: Double) -> some View {
+        Image("RuongXu")
+            .resizable().aspectRatio(contentMode: .fit)
+            .frame(width: w * 0.92, height: w * 0.92)
+            .scaleEffect(x: 1 + 0.04 * nay, y: 1 - 0.05 * nay, anchor: .bottom)
+            .offset(y: w * 0.04)
+            .frame(width: w, height: w)
+    }
+
+    /// Nảy ngắn mỗi lần 1 đồng chạm miệng rương (≈ 85% đường rơi).
+    private func doNay(_ tg: Double) -> Double {
+        guard dangChay else { return 0 }
+        for i in 0..<soXuBay {
+            let cham = Double(i) * Self.cachXu + Self.roiMat * 0.85
+            let d = tg - cham
+            if d >= 0 && d < 0.16 { return sin(d / 0.16 * .pi) }
+        }
+        return 0
+    }
+
+    private func kiemTra() {
+        let ud = UserDefaults.standard
+        let cu = ud.object(forKey: khoa) as? Double ?? 0
+        guard xu > cu, !dangChay else {
+            if !dangChay { soHienThi = xu }
+            if xu < cu { ud.set(xu, forKey: khoa) }
+            return
+        }
+        soHienThi = cu
+        cong = xu - cu
+        soXuBay = min(6, max(3, Int(cong / 2000) + 2))
+        let tongTg = Double(soXuBay - 1) * Self.cachXu + Self.roiMat + 0.3
+        ud.set(xu, forKey: khoa)
+        // Chờ màn vào hẳn rồi mới chạy cho khách kịp nhìn.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            batDau = Date()
+            withAnimation(.spring(response: 0.35)) { dangChay = true }
+            withAnimation(.easeOut(duration: tongTg)) { soHienThi = xu }
+            DispatchQueue.main.asyncAfter(deadline: .now() + tongTg + 0.6) {
+                withAnimation(.easeIn(duration: 0.3)) { dangChay = false }
+                batDau = nil
+            }
+        }
+    }
+}
+
+/// Số Xu đếm chạy (nội suy qua animatableData) — "1.234".
+private struct SoXuChay: View, Animatable {
+    var value: Double
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+    var body: some View { Text(SoDuCard.so(value.rounded())) }
 }
 
 /// Trạng thái trống dùng chung.
