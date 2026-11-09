@@ -365,10 +365,9 @@ struct SettingsView: View {
             // Chủ quán 09/11/2026: dòng Nạp Xu gom 2 bên thành 1 nút — nút gradient full ngang, nhãn "🎁 Có Xu tặng" nằm trong nút.
             Button { showNapXu = true } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 16, weight: .bold))
                     Text("Nạp Xu").font(.system(size: 15, weight: .bold))
                     if let nhan = vi.nhanNapXu {
-                        Text("🎁 \(nhan)")
+                        Text(nhan)
                             .font(.system(size: 11, weight: .heavy))
                             .foregroundColor(Theme.xuTangChu)
                             .lineLimit(1)
@@ -377,13 +376,13 @@ struct SettingsView: View {
                     }
                 }
                 .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 20).padding(.vertical, 9)
                 .background(Theme.primaryGradient)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .contentShape(Rectangle())
+                .clipShape(Capsule())
+                .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .tkThe(dem: 14)
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }
