@@ -159,8 +159,9 @@ struct RuongXuDau<Phai: View>: View {
     @State private var soXuBay = 0
     @State private var cong: Double = 0
 
-    private static let cachXu: Double = 0.22   // giây giữa 2 đồng
-    private static let roiMat: Double = 0.55   // giây 1 đồng rơi
+    // Kiểu generic không có static stored property — dùng computed.
+    private static var cachXu: Double { 0.22 }   // giây giữa 2 đồng
+    private static var roiMat: Double { 0.55 }   // giây 1 đồng rơi
 
     private var khoa: String {
         var cal = Calendar(identifier: .gregorian)
