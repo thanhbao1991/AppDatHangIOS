@@ -504,22 +504,36 @@ struct SettingsView: View {
     }
 
     private func diemHangCard(_ vi: KhachHangVi) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+        // 09/11/2026 chủ quán: bỏ dòng tên hạng + nhãn "Quà tháng này", sắp lại — hàng 1: số Xu lớn ⓘ | Top N; hàng 2: "Nhận
+        // sau X ngày"; dưới là 2 dòng app/quầy. ⓘ vẫn mở ghi chú cách tính (Guideline 5.3.2).
+        let t = Self.tienDoThang()
+        let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
+        let xuQuay = vi.xuDonQuayThangNay ?? 0
+        return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center) {
-                // Gom nhãn "HẠNG THÀNH VIÊN" + tên hạng thành 1 dòng "🌱 Hạng Bạc ⓘ" (chủ quán 09/11/2026: đỡ tốn chỗ).
-                // ⓘ vẫn mở ghi chú cách tính hạng (Guideline 5.3.2) — chạm cả dòng.
-                Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("\(hangIcon[vi.hang] ?? "🌱") Hạng \(vi.hangDayDu ?? vi.hang)")
-                            .font(.system(size: 22, weight: .heavy)).foregroundColor(.white)
-                            .lineLimit(1).minimumScaleFactor(0.7)
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.78))
+                VStack(alignment: .leading, spacing: 8) {
+                    Button { alertMessage = ("Hạng thành viên", thongTinHang(vi)) } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(formatXu(xuApp + xuQuay))
+                                .font(.system(size: 34, weight: .heavy, design: .rounded)).monospacedDigit()
+                                .foregroundColor(.white)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.78))
+                        }
                     }
+                    .buttonStyle(.plain)
+                    HStack(spacing: 4) {
+                        Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
+                        Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(Capsule().fill(Color.white.opacity(0.14)))
                 }
-                .buttonStyle(.plain)
-                Spacer()
+                Spacer(minLength: 8)
                 // Nhãn Top (08/11/2026): mọi khách đều có — trong top 10 hiện "Top N", ngoài top 10 / chưa xếp hạng
                 // hiện "Top ?". Chạm mở bảng xếp hạng (shipper xem bảng shipper, khách xem bảng khách).
                 // Nhãn Top: có giải (≤4) thì vàng + cúp, còn lại mờ. Chạm mở bảng xếp hạng.
@@ -537,39 +551,13 @@ struct SettingsView: View {
                     .background(Capsule().fill(coGiai ? AnyShapeStyle(Self.vangXu) : AnyShapeStyle(Color.white.opacity(0.18))))
                 }
                 .buttonStyle(.plain)
+                .frame(maxHeight: .infinity, alignment: .top)
             }
+            .fixedSize(horizontal: false, vertical: true)
 
-            // Thiết kế lại lần 2 (09/11/2026): bỏ thanh trượt ngày — "Nhận sau X ngày" đã đủ ý. Tổng Xu lớn, dưới là
-            // dòng "Đặt qua app x2" nổi (vàng) và dòng "Gọi qua quầy" chìm + gợi ý nếu đặt qua app được bao nhiêu.
-            let t = Self.tienDoThang()
-            let xuApp = vi.xuDonAppThangNay ?? vi.thuongXuHangHienTai ?? 0
-            let xuQuay = vi.xuDonQuayThangNay ?? 0
-            // 09/11/2026 "chật quá": "Nhận sau X ngày" lên chung hàng nhãn "Quà tháng này" (số Xu đứng 1 mình), giãn
-            // khoảng cách giữa các khối + đệm thẻ 16 → 20.
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .center) {
-                        Text(NoiDung.text("theHangQua"))
-                            .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.78))
-                        Spacer(minLength: 8)
-                        HStack(spacing: 4) {
-                            Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
-                            Text(NoiDung.text("theHangNhanSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
-                                .font(.system(size: 11, weight: .bold))
-                        }
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 9).padding(.vertical, 5)
-                        .background(Capsule().fill(Color.white.opacity(0.14)))
-                    }
-                    Text(formatXu(xuApp + xuQuay))
-                        .font(.system(size: 34, weight: .heavy, design: .rounded)).monospacedDigit()
-                        .foregroundColor(.white)
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                }
-                VStack(spacing: 10) {
-                    dongXuApp(xuApp)
-                    dongXuQuay(xuQuay)
-                }
+            VStack(spacing: 10) {
+                dongXuApp(xuApp)
+                dongXuQuay(xuQuay)
             }
         }
         .padding(20)
