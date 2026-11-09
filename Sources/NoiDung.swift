@@ -13,7 +13,7 @@ enum NoiDung {
         "theHangQua": "Quà tháng này",
         "theHangNhanSau": "Nhận sau {ngay} ngày",
         "ruongXuTieuDe": "Xu tích luỹ",
-        "ruongXuMoSau": "Mở rương sau {ngay} ngày",
+        "ruongXuMoSau": "Tự động chuyển về ví sau {ngay} ngày",
         "theHangApp": "Đặt qua app",
         "theHangQuay": "Gọi qua quầy",
         "theHangGoiYApp": "Nếu đặt qua app: {xu}",

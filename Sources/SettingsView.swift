@@ -512,7 +512,7 @@ struct SettingsView: View {
             // Xu tăng so với lần xem trước → xu bay chui vào rương + số đếm chạy (RuongXuDau, TaiKhoanUI.swift).
             RuongXuDau(xu: xuApp + xuQuay, tieuDePhai: AnyView(topNhan(vi)), onInfo: { alertMessage = ("Rương Xu", thongTinHang(vi)) }) {
                 HStack(spacing: 4) {
-                    Image(systemName: "gift.fill").font(.system(size: 10, weight: .bold))
+                    Image(systemName: "arrow.right.circle.fill").font(.system(size: 10, weight: .bold))
                     Text(NoiDung.text("ruongXuMoSau").replacingOccurrences(of: "{ngay}", with: "\(t.conLai)"))
                         .font(.system(size: 11, weight: .bold))
                 }
