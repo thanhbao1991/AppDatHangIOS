@@ -270,20 +270,14 @@ struct BangXepHangView: View {
                 Text(d.ten)
                     .font(.system(size: 15, weight: d.laBan ? .heavy : .semibold)).foregroundColor(Self.xanhDam)
                     .lineLimit(1)
-                // Có quà: điểm lùi xuống dưới tên (chữ phụ), quà nằm bên phải ở chỗ nổi nhất.
-                if coQua {
-                    Text(giaTri(d.xu, soDon: d.soDon))
-                        .font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit()
-                        .foregroundColor(Self.xanhDam.opacity(0.55))
-                }
+                // Mọi dòng: điểm là chữ phụ dưới tên (giống bục top 3); cột phải chỉ dành cho quà.
+                Text(giaTri(d.xu, soDon: d.soDon))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit()
+                    .foregroundColor(Self.xanhDam.opacity(0.55))
             }
             Spacer()
             if coQua {
                 nhanQua(d.thuongXu, laMot: false, vien: Color(red: 1.0, green: 0.80, blue: 0.35))
-            } else {
-                Text(giaTri(d.xu, soDon: d.soDon))
-                    .font(.system(size: 14, weight: .semibold, design: .rounded)).monospacedDigit()
-                    .foregroundColor(Self.xanhDam.opacity(0.6))
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
@@ -319,8 +313,13 @@ struct BangXepHangView: View {
         .padding(.top, 6)
     }
 
+    /// Điểm xếp hạng — dòng phụ. Chủ quán 10/11/2026: "vừa xu điểm vừa xu thưởng lộn xộn" → chỉ giải thưởng mang
+    /// chữ "Xu"; điểm ghi "Tích luỹ 20.050" (không đơn vị) để không lẫn với quà.
     private func giaTri(_ xu: Double?, soDon: Int) -> String {
-        if let xu, xu > 0 { return formatXu(xu) }
+        if let xu, xu > 0 {
+            let so = formatXu(xu).replacingOccurrences(of: " Xu", with: "")
+            return "Tích luỹ \(so)"
+        }
         return "\(soDon) đơn"
     }
 }
