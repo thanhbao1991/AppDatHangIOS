@@ -18,17 +18,9 @@ final class DevXemThu: ObservableObject {
     /// Chỉ để nhãn "Xem trước dịp lễ" vẽ lại (SeasonalEvent.previewOverride là static var).
     @Published var tickDipLe = 0
 
-    /// Bấm xoay vòng qua từng dịp rồi về "tắt".
-    func xoayDipLe() {
-        if let current = SeasonalEvent.previewOverride,
-           let idx = SeasonalTheme.allCases.firstIndex(of: current),
-           idx + 1 < SeasonalTheme.allCases.count {
-            SeasonalEvent.previewOverride = SeasonalTheme.allCases[idx + 1]
-        } else if SeasonalEvent.previewOverride == nil {
-            SeasonalEvent.previewOverride = SeasonalTheme.allCases.first
-        } else {
-            SeasonalEvent.previewOverride = nil
-        }
+    /// Chọn thẳng 1 dịp để xem trước (nil = tắt xem trước).
+    func chonDipLe(_ dip: SeasonalTheme?) {
+        SeasonalEvent.previewOverride = dip
         Theme.applyNavBarAppearance()
         SeasonalEvent.capNhatIcon()
         tickDipLe += 1
@@ -63,8 +55,13 @@ struct DevMenuButton: View {
                 x.xemTruocNgay1.toggle()
                 if x.xemTruocNgay1 { moTab(.settings) }
             }
-            Button(SeasonalEvent.previewOverride.map { "🧪 Đang xem: \($0.previewTen) (bấm để đổi/tắt)" } ?? "🧪 Xem trước dịp lễ") {
-                x.xoayDipLe()
+            Menu(SeasonalEvent.previewOverride.map { "🧪 Đang xem: \($0.previewTen)" } ?? "🧪 Xem trước dịp lễ") {
+                if SeasonalEvent.previewOverride != nil {
+                    Button("Tắt xem trước", role: .destructive) { x.chonDipLe(nil) }
+                }
+                ForEach(SeasonalTheme.allCases, id: \.self) { dip in
+                    Button(dip.previewTen) { x.chonDipLe(dip) }
+                }
             }
             Button("🧪 Xem trước chúc mừng sinh nhật") {
                 NotificationCenter.default.post(name: .xemTruocSinhNhat, object: nil)
