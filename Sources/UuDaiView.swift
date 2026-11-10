@@ -26,7 +26,6 @@ struct UuDaiView: View {
 
     @State private var diemDanh: DiemDanhInfo? = BoNhoTam.diemDanh
     @State private var dangDiemDanh = false
-    @State private var baoNhanh: String?
     #if DEV_LOGIN
     /// Nút thử nghiệm ở menu ⚡ chung mọi tab (DevXemThu.swift) — ở đây chỉ nhận lệnh + đọc ngày đang thử.
     @ObservedObject private var dev = DevXemThu.shared
@@ -66,19 +65,6 @@ struct UuDaiView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.bg)
         }
-        // Ngày 1–6: báo nhanh tự ẩn (không bắt bấm đóng); ngày 7 mới dùng popup (có voucher cần đọc).
-        .overlay(alignment: .top) {
-            if let t = baoNhanh {
-                Text(t)
-                    .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(Capsule().fill(Theme.success))
-                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
-                    .padding(.top, showHeader ? 70 : 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: baoNhanh)
         #if DEV_LOGIN
         // Lệnh từ menu ⚡ (có thể bấm ở tab khác rồi chuyển sang đây — @Published phát lại giá trị hiện tại khi màn hiện).
         .onReceive(dev.$hieuUngDiemDanh) { n in
@@ -87,7 +73,7 @@ struct UuDaiView: View {
             if n >= 7 {
                 let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
                 let f = DateFormatter(); f.dateFormat = "dd/MM"
-                hienKetQuaDiemDanh(ngay: 7, "Bạn đã điểm danh đủ 7 ngày liên tiếp!\n+\(formatXu(dd.thuongNgay7)) đã vào ví.\n\n🎁 Tặng thêm voucher \"7 Ngày Chăm Chỉ\" giảm 10% (tối đa 5.000đ), dùng đến hết ngày \(f.string(from: het)) — xem ở mục Voucher.")
+                hienKetQuaDiemDanh(ngay: 7, "+\(formatXu(dd.thuongNgay7)) và voucher giảm 10% (dùng đến \(f.string(from: het))).")
             } else {
                 hienKetQuaDiemDanh(ngay: n, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
             }
@@ -419,17 +405,9 @@ struct UuDaiView: View {
         NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
     }
 
-    /// Ngày 1–6: báo nhanh tự ẩn 2,5s; ngày 7: popup (có voucher cần đọc).
+    /// Ngày 1–6: không báo gì (chủ quán 10/11: giữ như cũ, ô ngày tick là đủ); ngày 7: popup (có voucher cần đọc).
     private func hienKetQuaDiemDanh(ngay: Int, _ m: String) {
-        if ngay >= 7 {
-            alertMessage = ("🎉 Chúc mừng!", m)
-        } else {
-            baoNhanh = "✓ Điểm danh thành công — \(m)"
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 2_500_000_000)
-                baoNhanh = nil
-            }
-        }
+        if ngay >= 7 { alertMessage = ("🎉 Đủ 7 ngày!", m) }
     }
 
     private func lamDiemDanh() async {
