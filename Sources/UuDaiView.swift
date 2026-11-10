@@ -71,9 +71,7 @@ struct UuDaiView: View {
             guard let n, let dd = diemDanh else { return }
             DispatchQueue.main.async { dev.hieuUngDiemDanh = nil }
             if n >= 7 {
-                let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
-                let f = DateFormatter(); f.dateFormat = "dd/MM"
-                hienKetQuaDiemDanh(ngay: 7, "+\(formatXu(dd.thuongNgay7)) và voucher giảm 10% (dùng đến \(f.string(from: het))).")
+                hienKetQuaDiemDanh(ngay: 7, "Nhận ngay +\(formatXu(dd.thuongNgay7)) và voucher giảm 10% từ Đenn nhé!")
             } else {
                 hienKetQuaDiemDanh(ngay: n, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
             }
@@ -407,7 +405,7 @@ struct UuDaiView: View {
 
     /// Ngày 1–6: không báo gì (chủ quán 10/11: giữ như cũ, ô ngày tick là đủ); ngày 7: popup (có voucher cần đọc).
     private func hienKetQuaDiemDanh(ngay: Int, _ m: String) {
-        if ngay >= 7 { alertMessage = ("🎉 Đủ 7 ngày!", m) }
+        if ngay >= 7 { alertMessage = ("🎉 Bạn đã chinh phục 7 ngày điểm danh!", m) }
     }
 
     private func lamDiemDanh() async {
