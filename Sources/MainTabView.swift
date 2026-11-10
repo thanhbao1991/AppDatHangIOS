@@ -207,6 +207,16 @@ struct MainTabView: View {
     /// (pill trắng) của tab Thực đơn do overlay không cộng dồn layout — đổi hẳn sang truyền xuống
     /// làm trailing thật trong HStack của từng header để không chồng lấn.
     private var notificationBell: some View {
+        HStack(spacing: 4) {
+            #if DEV_LOGIN
+            // Bản dev: menu ⚡ các nút thử nghiệm ở mọi tab (cạnh chuông) — chủ quán 10/11/2026.
+            DevMenuButton { selectedTab = $0 }
+            #endif
+            chuong
+        }
+    }
+
+    private var chuong: some View {
         Button {
             guard isLoggedIn else { showLogin = true; return }
             showThongBao = true

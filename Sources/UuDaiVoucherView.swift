@@ -31,5 +31,10 @@ struct UuDaiVoucherView: View {
             }
         }
         .background(Color(.systemBackground))
+        #if DEV_LOGIN
+        // Lệnh thử điểm danh / mở quà từ menu ⚡ → về ngăn Ưu đãi để thấy hiệu ứng.
+        .onReceive(DevXemThu.shared.$hieuUngDiemDanh) { if $0 != nil { ngan = .uuDai } }
+        .onReceive(DevXemThu.shared.$moQua) { if $0 { ngan = .uuDai } }
+        #endif
     }
 }

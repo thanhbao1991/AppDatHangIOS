@@ -27,8 +27,13 @@ struct UuDaiView: View {
     @State private var diemDanh: DiemDanhInfo? = BoNhoTam.diemDanh
     @State private var dangDiemDanh = false
     @State private var baoNhanh: String?
-    /// Bản dev: ngày đang xem thử điểm danh (0 = tắt). Biến có ở mọi bản cho gọn, chỉ nút dev mới đổi.
-    @State private var thuNgay = 0
+    #if DEV_LOGIN
+    /// Nút thử nghiệm ở menu ⚡ chung mọi tab (DevXemThu.swift) — ở đây chỉ nhận lệnh + đọc ngày đang thử.
+    @ObservedObject private var dev = DevXemThu.shared
+    private var thuNgay: Int { dev.thuNgay }
+    #else
+    private let thuNgay = 0
+    #endif
 
     @State private var soDuXu: Double?
     @State private var nhanNapXu: String?
@@ -74,6 +79,25 @@ struct UuDaiView: View {
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: baoNhanh)
+        #if DEV_LOGIN
+        // Lệnh từ menu ⚡ (có thể bấm ở tab khác rồi chuyển sang đây — @Published phát lại giá trị hiện tại khi màn hiện).
+        .onReceive(dev.$hieuUngDiemDanh) { n in
+            guard let n, let dd = diemDanh else { return }
+            DispatchQueue.main.async { dev.hieuUngDiemDanh = nil }
+            if n >= 7 {
+                let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
+                let f = DateFormatter(); f.dateFormat = "dd/MM"
+                hienKetQuaDiemDanh(ngay: 7, "Bạn đã điểm danh đủ 7 ngày liên tiếp!\n+\(formatXu(dd.thuongNgay7)) đã vào ví.\n\n🎁 Tặng thêm voucher \"7 Ngày Chăm Chỉ\" giảm 10% (tối đa 5.000đ), dùng đến hết ngày \(f.string(from: het)) — xem ở mục Voucher.")
+            } else {
+                hienKetQuaDiemDanh(ngay: n, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
+            }
+        }
+        .onReceive(dev.$moQua) { bat in
+            guard bat else { return }
+            DispatchQueue.main.async { dev.moQua = false }
+            xemThuMoQua()
+        }
+        #endif
         .task { await load() }
         .onDisappear { luuBoNhoTam() } // giữ cả lượt quay/điểm danh vừa làm
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
@@ -133,24 +157,6 @@ struct UuDaiView: View {
                         .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                         .disabled(dangDiemDanh)
                     }
-                    #if DEV_LOGIN
-                    // Chỉ bản dev: dev login chỉ đọc (POST điểm danh bị chặn) → 1 nút bấm lần lượt ngày 1→7 xem hiệu ứng
-                    // (ô ngày tick dần + báo nhanh / popup ngày 7); bấm sau ngày 7 thì tắt, về dữ liệu thật.
-                    Button(thuNgay == 0 ? "🧪 Thử điểm danh: ngày 1" : thuNgay < 7 ? "🧪 Thử điểm danh: ngày \(thuNgay + 1)" : "🧪 Tắt thử điểm danh") {
-                        if thuNgay >= 7 { thuNgay = 0; return }
-                        thuNgay += 1
-                        if thuNgay >= 7 {
-                            let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
-                            let f = DateFormatter(); f.dateFormat = "dd/MM"
-                            hienKetQuaDiemDanh(ngay: 7, "Bạn đã điểm danh đủ 7 ngày liên tiếp!\n+\(formatXu(dd.thuongNgay7)) đã vào ví.\n\n🎁 Tặng thêm voucher \"7 Ngày Chăm Chỉ\" giảm 10% (tối đa 5.000đ), dùng đến hết ngày \(f.string(from: het)) — xem ở mục Voucher.")
-                        } else {
-                            hienKetQuaDiemDanh(ngay: thuNgay, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
-                        }
-                    }
-                    .font(.system(size: 13, weight: .semibold))
-                    .buttonStyle(.bordered).tint(Theme.primary)
-                    .frame(maxWidth: .infinity)
-                    #endif
                 }
             }
         }
@@ -255,17 +261,6 @@ struct UuDaiView: View {
                 .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity, alignment: .center)
-
-            #if DEV_LOGIN
-            // Phiên dev-login chỉ đọc (server chặn mọi thao tác ghi → không mở quà thật được): nút này chạy đúng hiệu ứng mở
-            // quà với kết quả mẫu, KHÔNG gọi server. Chỉ có ở bản dev.
-            Button { xemThuMoQua() } label: {
-                Text("🧪 Xem thử hiệu ứng mở quà")
-                    .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity, alignment: .center)
-            #endif
 
             // Công khai tỉ lệ trúng (hộp quà có yếu tố ngẫu nhiên) — bảng tỉ lệ nằm trong trang Thể lệ Xu.
             Button { showTheLe = true } label: {
