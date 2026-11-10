@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Bản dev (10/11/2026 chủ quán: "tất cả button thử nghiệm gom vào đây, hiển thị trên tất cả tab"): menu ⚡ cạnh chuông ở
 /// MỌI tab (gắn trong MainTabView.notificationBell). Trạng thái xem thử để chung ở đây cho các màn đọc.
+@MainActor
 final class DevXemThu: ObservableObject {
     static let shared = DevXemThu()
 
