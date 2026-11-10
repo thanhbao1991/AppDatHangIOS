@@ -27,6 +27,8 @@ struct UuDaiView: View {
     @State private var diemDanh: DiemDanhInfo? = BoNhoTam.diemDanh
     @State private var dangDiemDanh = false
     @State private var baoNhanh: String?
+    /// Bản dev: ngày đang xem thử điểm danh (0 = tắt). Biến có ở mọi bản cho gọn, chỉ nút dev mới đổi.
+    @State private var thuNgay = 0
 
     @State private var soDuXu: Double?
     @State private var nhanNapXu: String?
@@ -96,8 +98,12 @@ struct UuDaiView: View {
                 cardBox {
                     // Bỏ tiêu đề "Điểm danh nhận Xu" (chủ quán thử 2026-11-07) — nút "Điểm danh nhận N Xu" dưới đã nói rõ.
                     HStack(spacing: 6) {
+                        // Đang thử (bản dev): ô ngày tick tới ngày đang thử.
+                        let hienThi = thuNgay > 0
+                            ? DiemDanhInfo(ngayTiepTheo: thuNgay, daDiemDanhHomNay: true, thuongThuong: dd.thuongThuong, thuongNgay7: dd.thuongNgay7)
+                            : dd
                         ForEach(1...7, id: \.self) { day in
-                            diemDanhDayBox(day: day, info: dd)
+                            diemDanhDayBox(day: day, info: hienThi)
                         }
                     }
 
@@ -128,15 +134,17 @@ struct UuDaiView: View {
                         .disabled(dangDiemDanh)
                     }
                     #if DEV_LOGIN
-                    // Chỉ bản dev: dev login chỉ đọc (POST điểm danh bị chặn) → xem thử hiệu ứng sau khi bấm.
-                    HStack(spacing: 8) {
-                        Button("🧪 Thử ngày 1–6") {
-                            hienKetQuaDiemDanh(ngay: 3, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
-                        }
-                        Button("🧪 Thử ngày 7") {
+                    // Chỉ bản dev: dev login chỉ đọc (POST điểm danh bị chặn) → 1 nút bấm lần lượt ngày 1→7 xem hiệu ứng
+                    // (ô ngày tick dần + báo nhanh / popup ngày 7); bấm sau ngày 7 thì tắt, về dữ liệu thật.
+                    Button(thuNgay == 0 ? "🧪 Thử điểm danh: ngày 1" : thuNgay < 7 ? "🧪 Thử điểm danh: ngày \(thuNgay + 1)" : "🧪 Tắt thử điểm danh") {
+                        if thuNgay >= 7 { thuNgay = 0; return }
+                        thuNgay += 1
+                        if thuNgay >= 7 {
                             let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
                             let f = DateFormatter(); f.dateFormat = "dd/MM"
                             hienKetQuaDiemDanh(ngay: 7, "Bạn đã điểm danh đủ 7 ngày liên tiếp!\n+\(formatXu(dd.thuongNgay7)) đã vào ví.\n\n🎁 Tặng thêm voucher \"7 Ngày Chăm Chỉ\" giảm 10% (tối đa 5.000đ), dùng đến hết ngày \(f.string(from: het)) — xem ở mục Voucher.")
+                        } else {
+                            hienKetQuaDiemDanh(ngay: thuNgay, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
                         }
                     }
                     .font(.system(size: 13, weight: .semibold))
