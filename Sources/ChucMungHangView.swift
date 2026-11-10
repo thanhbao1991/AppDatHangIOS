@@ -233,7 +233,7 @@ struct ChucMungHangView: View {
 }
 
 /// Pháo giấy rơi — vẽ bằng Canvas + TimelineView, không cần thư viện ngoài.
-private struct PhaoGiayView: View {
+struct PhaoGiayView: View {
     private struct Manh {
         let x: Double, tre: Double, tocDo: Double, co: Double, mau: Color, lac: Double
     }

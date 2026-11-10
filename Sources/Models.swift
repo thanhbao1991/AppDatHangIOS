@@ -236,6 +236,8 @@ struct VoucherCuaToi: Decodable, Identifiable {
     /// HangToiThieu cho voucher lễ tết/sinh nhật, để card tự hiện nhãn "Yêu cầu hạng X trở lên" thay vì
     /// khách không biết vì sao voucher chưa dùng được dù đã tới ngày (xem VoucherTicketCard.hangYeuCau).
     var hangToiThieu: String?
+    /// Voucher quà sinh nhật — màn chúc mừng sinh nhật (ChucMungSinhNhatView). nil với backend cũ.
+    var laSinhNhat: Bool?
 
     /// Giá trị giảm THAM KHẢO để sắp xếp (không phải số tiền giảm thực tế cho 1 đơn cụ thể — tab
     /// Voucher không có ngữ cảnh giỏ hàng như VoucherPickerSheet) — PhanTram dùng trần giamToiDa (số

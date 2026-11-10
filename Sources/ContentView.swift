@@ -78,14 +78,26 @@ struct ContentView: View {
             }
             .id(q.id) // mỗi quà 1 màn mới — không mang trạng thái "đang nhận" của màn trước
         }
+        .fullScreenCover(item: $sinhNhat) { v in
+            ChucMungSinhNhatView(voucher: v) {
+                ChucMungSinhNhat.danhDauDaXem()
+                sinhNhat = nil
+            }
+        }
     }
 
     @State private var chucMung: QuaChucMung?
     @State private var quaConLai: [QuaChucMung] = []
+    @State private var sinhNhat: VoucherCuaToi?
 
     /// Gọi lúc mở app, mỗi lần quay lại từ nền và khi vừa đăng nhập. Đang hiện màn quà thì thôi.
     private func kiemTraQua() async {
         guard isLoggedIn, chucMung == nil, batBuocCapNhat == nil else { return }
+        // Màn chúc mừng sinh nhật (11/11/2026) — nhường màn quà đầu tháng nếu đang có.
+        if sinhNhat == nil, seasonalSplash == nil, let v = await ChucMungSinhNhat.kiemTra(), chucMung == nil, seasonalSplash == nil {
+            sinhNhat = v
+            return
+        }
         guard let vi = await APIClient.shared.getVi() else { return }
         guard chucMung == nil else { return }
         quaConLai = ChucMungHang.quaCho(vi)
