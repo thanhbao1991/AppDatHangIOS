@@ -429,59 +429,43 @@ struct SettingsView: View {
 
     private static let vangXu = Color(red: 1.0, green: 0.80, blue: 0.25)
 
-    /// Cột "Đặt qua app [x2]" (10/11/2026 chủ quán: app | quầy trình bày 2 cột cạnh nhau): nền vàng, nhãn trên,
-    /// số Xu lớn, dưới là "2.900 × 2" — gốc bằng đúng mức gọi qua quầy, app được gấp đôi. Câu chữ lấy từ backend (NoiDung).
+    /// Cột "Đặt qua app [x2]" | "Đặt tại quầy" (10/11/2026 chủ quán: 2 cột cạnh nhau, CÙNG một style — lấy cột quầy làm
+    /// chuẩn: nền xám nhạt, icon tròn trắng, nhãn + số Xu xám, dòng phụ hổ phách). App: dòng phụ "2.900 × 2" (gốc bằng mức
+    /// quầy, app gấp đôi); quầy: gợi ý "Nếu đặt qua app: …". Câu chữ lấy từ backend (NoiDung).
     private func cotXuApp(_ xu: Double) -> some View {
-        // 09/11/2026: nằm trong thẻ NỀN TRẮNG → tông kem/hổ phách (cùng nhãn Xu tặng), không còn chữ trắng.
-        let chu = Theme.xuTangChu
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: "iphone.gen3")
-                    .font(.system(size: 12, weight: .bold)).foregroundColor(chu)
-                    .frame(width: 24, height: 24)
-                    .background(Circle().fill(Color.white.opacity(0.7)))
-                Text(NoiDung.text("theHangApp"))
-                    .font(.system(size: 13, weight: .bold)).foregroundColor(.primary)
-                    .lineLimit(1).minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                Text("x2")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Capsule().fill(Self.vangXu))
-            }
-            Text(formatXu(xu))
-                .font(.system(size: 20, weight: .heavy)).monospacedDigit().foregroundColor(chu)
-                .lineLimit(1).minimumScaleFactor(0.6)
-            Text(xu > 0 ? "\(formatSo((xu / 2).rounded(.down))) × 2" : " ")
-                .font(.system(size: 11, weight: .semibold)).monospacedDigit()
-                .foregroundColor(chu.opacity(0.75))
-                .lineLimit(1).minimumScaleFactor(0.8)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.xuTangNen))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Theme.xuTangVien, lineWidth: 1))
+        cotXu(icon: "iphone.gen3", nhan: NoiDung.text("theHangApp"), xu: xu, x2: true,
+              phu: xu > 0 ? "\(formatSo((xu / 2).rounded(.down))) × 2" : nil)
     }
 
-    /// Cột "Đặt tại quầy": chìm hơn cột app (nền xám nhạt); có Xu quầy thì gợi ý "Nếu đặt qua app: gấp đôi" để khách
-    /// thấy mình đang bỏ lỡ (chủ quán 09/11/2026: giữ dòng gợi ý).
     private func cotXuQuay(_ xu: Double) -> some View {
+        cotXu(icon: "storefront", nhan: NoiDung.text("theHangQuay"), xu: xu, x2: false,
+              phu: xu > 0 ? NoiDung.text("theHangGoiYApp").replacingOccurrences(of: "{xu}", with: formatXu(xu * 2)) : nil)
+    }
+
+    private func cotXu(icon: String, nhan: String, xu: Double, x2: Bool, phu: String?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: "storefront")
+                Image(systemName: icon)
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
                     .frame(width: 24, height: 24)
                     .background(Circle().fill(Color.white))
-                Text(NoiDung.text("theHangQuay"))
+                Text(nhan)
                     .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
                     .lineLimit(1).minimumScaleFactor(0.8)
+                if x2 {
+                    Spacer(minLength: 0)
+                    Text("x2")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Self.vangXu))
+                }
             }
             Text(formatXu(xu))
                 .font(.system(size: 20, weight: .heavy)).monospacedDigit().foregroundColor(Theme.textMuted)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(xu > 0 ? NoiDung.text("theHangGoiYApp").replacingOccurrences(of: "{xu}", with: formatXu(xu * 2)) : " ")
-                .font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.xuTangChu)
+            Text(phu ?? " ")
+                .font(.system(size: 11, weight: .semibold)).monospacedDigit().foregroundColor(Theme.xuTangChu)
                 .lineLimit(2).minimumScaleFactor(0.8)
         }
         .padding(12)
