@@ -127,6 +127,22 @@ struct UuDaiView: View {
                         .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
                         .disabled(dangDiemDanh)
                     }
+                    #if DEV_LOGIN
+                    // Chỉ bản dev: dev login chỉ đọc (POST điểm danh bị chặn) → xem thử hiệu ứng sau khi bấm.
+                    HStack(spacing: 8) {
+                        Button("🧪 Thử ngày 1–6") {
+                            hienKetQuaDiemDanh(ngay: 3, "+\(formatXu(dd.thuongThuong)) đã vào ví.")
+                        }
+                        Button("🧪 Thử ngày 7") {
+                            let het = Calendar.current.date(byAdding: .day, value: 6, to: Date()) ?? Date()
+                            let f = DateFormatter(); f.dateFormat = "dd/MM"
+                            hienKetQuaDiemDanh(ngay: 7, "Bạn đã điểm danh đủ 7 ngày liên tiếp!\n+\(formatXu(dd.thuongNgay7)) đã vào ví.\n\n🎁 Tặng thêm voucher \"7 Ngày Chăm Chỉ\" giảm 10% (tối đa 5.000đ), dùng đến hết ngày \(f.string(from: het)) — xem ở mục Voucher.")
+                        }
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .buttonStyle(.bordered).tint(Theme.primary)
+                    .frame(maxWidth: .infinity)
+                    #endif
                 }
             }
         }
@@ -400,6 +416,19 @@ struct UuDaiView: View {
         NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
     }
 
+    /// Ngày 1–6: báo nhanh tự ẩn 2,5s; ngày 7: popup (có voucher cần đọc).
+    private func hienKetQuaDiemDanh(ngay: Int, _ m: String) {
+        if ngay >= 7 {
+            alertMessage = ("🎉 Chúc mừng!", m)
+        } else {
+            baoNhanh = "✓ Điểm danh thành công — \(m)"
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2_500_000_000)
+                baoNhanh = nil
+            }
+        }
+    }
+
     private func lamDiemDanh() async {
         dangDiemDanh = true
         defer { dangDiemDanh = false }
@@ -409,17 +438,7 @@ struct UuDaiView: View {
             soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
             NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
             // 10/11/2026: chúc mừng sau khi bấm — câu chữ từ server (ngày 7 kèm voucher "7 Ngày Chăm Chỉ").
-            if let m = res.message, !m.isEmpty {
-                if (res.data?.ngay ?? 0) >= 7 {
-                    alertMessage = ("🎉 Chúc mừng!", m)
-                } else {
-                    baoNhanh = "✓ Điểm danh thành công — \(m)"
-                    Task { @MainActor in
-                        try? await Task.sleep(nanoseconds: 2_500_000_000)
-                        baoNhanh = nil
-                    }
-                }
-            }
+            if let m = res.message, !m.isEmpty { hienKetQuaDiemDanh(ngay: res.data?.ngay ?? 0, m) }
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
         }
