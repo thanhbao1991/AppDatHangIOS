@@ -127,7 +127,17 @@ struct OrderStatusView: View {
                         alertMessage = ("Đơn được tính hạng",
                                         NoiDung.text("donTinhHangGiaiThich"))
                     } label: {
-                        Text(item.xuGapDoi == true ? "🏅🏅" : "🏅").font(.system(size: 13))
+                        HStack(spacing: 3) {
+                            Text("🏅").font(.system(size: 13))
+                            if item.xuGapDoi == true {
+                                Text("x2")
+                                    .font(.system(size: 10, weight: .heavy))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Capsule().fill(Theme.primary))
+                            }
+                        }
                     }
                     .buttonStyle(.borderless)
                 }
