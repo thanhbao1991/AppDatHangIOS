@@ -394,6 +394,10 @@ struct UuDaiView: View {
             diemDanh = await APIClient.shared.getDiemDanhInfo() ?? diemDanh
             soDuXu = await APIClient.shared.getVi()?.soDu ?? soDuXu
             NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
+            // 10/11/2026: chúc mừng sau khi bấm — câu chữ từ server (ngày 7 kèm voucher "7 Ngày Chăm Chỉ").
+            if let m = res.message, !m.isEmpty {
+                alertMessage = ((res.data?.ngay ?? 0) >= 7 ? "🎉 Chúc mừng!" : "Điểm danh thành công", m)
+            }
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
         }
