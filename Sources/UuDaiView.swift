@@ -26,6 +26,7 @@ struct UuDaiView: View {
 
     @State private var diemDanh: DiemDanhInfo? = BoNhoTam.diemDanh
     @State private var dangDiemDanh = false
+    @State private var baoNhanh: String?
 
     @State private var soDuXu: Double?
     @State private var nhanNapXu: String?
@@ -58,6 +59,19 @@ struct UuDaiView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.bg)
         }
+        // Ngày 1–6: báo nhanh tự ẩn (không bắt bấm đóng); ngày 7 mới dùng popup (có voucher cần đọc).
+        .overlay(alignment: .top) {
+            if let t = baoNhanh {
+                Text(t)
+                    .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(Capsule().fill(Theme.success))
+                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                    .padding(.top, showHeader ? 70 : 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: baoNhanh)
         .task { await load() }
         .onDisappear { luuBoNhoTam() } // giữ cả lượt quay/điểm danh vừa làm
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
@@ -396,7 +410,15 @@ struct UuDaiView: View {
             NotificationCenter.default.post(name: .uuDaiDaThayDoi, object: nil)
             // 10/11/2026: chúc mừng sau khi bấm — câu chữ từ server (ngày 7 kèm voucher "7 Ngày Chăm Chỉ").
             if let m = res.message, !m.isEmpty {
-                alertMessage = ((res.data?.ngay ?? 0) >= 7 ? "🎉 Chúc mừng!" : "Điểm danh thành công", m)
+                if (res.data?.ngay ?? 0) >= 7 {
+                    alertMessage = ("🎉 Chúc mừng!", m)
+                } else {
+                    baoNhanh = "✓ Điểm danh thành công — \(m)"
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 2_500_000_000)
+                        baoNhanh = nil
+                    }
+                }
             }
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
