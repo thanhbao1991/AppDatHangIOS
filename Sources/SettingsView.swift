@@ -851,11 +851,15 @@ enum XemTruocNgay1 {
             "tongNo": 0, "tongChiTieuThangNay": 0, "hang": "Thành Viên", "hangThangTruoc": "", "yeuThichSanPhamIds": [String](), "conLaiDeLenHang": 0, "phanTramTienDoLenHang": 0,
         ]
         if let h = choNhanHang(v) { json["thuongHangThang"] = h }
+        // Từ 1/12/2026 backend TỰ cộng lúc 0h30 ngày 1 (ThuongXuThangTuDongService) → daNhan + tuDong, nút "Tuyệt vời".
+        // Id mới mỗi lần xem trước để khoá "đã xem" trên máy không chặn lần xem sau.
         if let t = v.topShipper, t.thuongXu > 0 {
-            json["thuongTopShipper"] = ["viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu, "daNhan": false] as [String: Any]
+            json["thuongTopShipper"] = ["id": "xemTruoc-\(UUID().uuidString)", "viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu,
+                                        "daNhan": true, "tuDong": true] as [String: Any]
         }
         if let t = v.topKhach, t.thuongXu > 0 {
-            json["thuongTopKhach"] = ["viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu, "daNhan": false] as [String: Any]
+            json["thuongTopKhach"] = ["id": "xemTruoc-\(UUID().uuidString)", "viTri": t.viTri, "thangDat": thangNay(), "soXu": t.thuongXu,
+                                      "daNhan": true, "tuDong": true] as [String: Any]
         }
         guard let data = try? JSONSerialization.data(withJSONObject: json),
               let gia = try? JSONDecoder().decode(KhachHangVi.self, from: data) else { return [] }
@@ -869,7 +873,8 @@ enum XemTruocNgay1 {
 
     private static func choNhanHang(_ v: KhachHangVi) -> [String: Any]? {
         guard let xu = v.thuongXuHangHienTai, xu > 0, let t = vi(v).thuongHangThang else { return nil }
-        return ["id": t.id, "hang": t.hang, "thangDat": t.thangDat, "soXu": xu, "conLai": xu, "hetHan": t.hetHan, "daNhan": false]
+        return ["id": UUID().uuidString, "hang": t.hang, "thangDat": t.thangDat, "soXu": xu, "conLai": xu, "hetHan": t.hetHan,
+                "daNhan": true, "tuDong": true]
     }
 
     static func vi(_ v: KhachHangVi) -> KhachHangVi {
