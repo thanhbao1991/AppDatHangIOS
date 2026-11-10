@@ -498,6 +498,8 @@ struct DonHangKhach: Decodable, Identifiable, Hashable {
     let daThuBangXu: Double?
     // Đơn được tính vào hạng/điểm (chỉ đơn đặt qua app, 26/10) — nil với backend cũ.
     let tinhHang: Bool?
+    // Đơn app Xu x2 (đơn quầy x0,5) → hiện 2 huân chương.
+    let xuGapDoi: Bool?
 
     /// Nhãn trạng thái hiển thị — "Hoàn tất" nhưng còn ghi nợ (conLai > 0) thì đổi thành "Ghi nợ" để
     /// biết ngay đơn đã giao xong nhưng CHƯA thu đủ tiền (feedback 2026-09-28). Chỉ áp dụng đúng
