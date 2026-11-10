@@ -78,13 +78,9 @@ struct ChucMungSinhNhatView: View {
                     if let toiDa = voucher.nhanGiamToiDa {
                         Text(toiDa).font(.system(size: 14, weight: .semibold)).foregroundColor(.white.opacity(0.9))
                     }
-                    Text(voucher.ten)
+                    Text("Voucher Chúc Mừng Sinh Nhật")
                         .font(.system(size: 15, weight: .bold)).foregroundColor(.white)
                         .padding(.top, 2)
-                    Text(voucher.moTa ?? "Dùng 1 lần trong tháng sinh nhật của bạn")
-                        .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.85))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 18)
                 }
                 .padding(.vertical, 22)
                 .frame(maxWidth: .infinity)
@@ -100,7 +96,7 @@ struct ChucMungSinhNhatView: View {
                 Spacer()
 
                 Button(action: dong) {
-                    Text("Dùng quà ngay")
+                    Text("Tuyệt vời")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(hongDam)
                         .frame(maxWidth: .infinity)
