@@ -31,6 +31,8 @@ struct ContentView: View {
                     SeasonalEvent.danhDauDaHienSplash()
                     seasonalSplash = nil
                     SeasonalEvent.doiIconSauManChao()
+                    // Màn sinh nhật chờ màn chào dịp lễ — kiểm lại ngay khi màn chào đóng.
+                    Task { try? await Task.sleep(nanoseconds: 400_000_000); await kiemTraQua() }
                 }
                 .zIndex(10)
             }
@@ -84,6 +86,10 @@ struct ContentView: View {
                 if !quaConLai.isEmpty {
                     try? await Task.sleep(nanoseconds: 500_000_000)
                     chucMung = quaConLai.removeFirst()
+                } else {
+                    // Hết quà đầu tháng → tới màn chúc mừng sinh nhật (nếu có).
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    await kiemTraQua()
                 }
             }
             .id(q.id) // mỗi quà 1 màn mới — không mang trạng thái "đang nhận" của màn trước
