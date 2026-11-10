@@ -160,6 +160,9 @@ struct RuongXuDau<Phai: View>: View {
     @State private var batDau: Date?
     @State private var soXuBay = 0
     @State private var cong: Double = 0
+    /// Số Xu đổi TRONG LÚC hiệu ứng đang chạy (vd đổi tài khoản → ví tải 2 lần liên tiếp) — trước 10/11/2026 bị bỏ qua nên
+    /// rương kẹt số cũ (7.400 trong khi app+quầy = 7.950), vuốt tải lại cũng không đổi vì `xu` không đổi nữa.
+    @State private var xuCho: Double?
 
     // Kiểu generic không có static stored property — dùng computed.
     private static var cachXu: Double { 0.22 }   // giây giữa 2 đồng
@@ -271,8 +274,14 @@ struct RuongXuDau<Phai: View>: View {
     private func kiemTra() {
         let ud = UserDefaults.standard
         let cu = ud.object(forKey: khoa) as? Double ?? 0
-        guard xu > cu, !dangChay else {
-            if !dangChay { soHienThi = xu }
+        if dangChay {
+            // Đang chạy hiệu ứng: nhớ số mới, chạy xong sẽ áp (không bỏ qua như trước).
+            xuCho = xu
+            ud.set(xu, forKey: khoa)
+            return
+        }
+        guard xu > cu else {
+            soHienThi = xu
             if xu < cu { ud.set(xu, forKey: khoa) }
             return
         }
@@ -289,6 +298,10 @@ struct RuongXuDau<Phai: View>: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + tongTg + 0.6) {
                 withAnimation(.easeIn(duration: 0.3)) { dangChay = false }
                 batDau = nil
+                if let moi = xuCho {
+                    xuCho = nil
+                    withAnimation(.easeOut(duration: 0.4)) { soHienThi = moi }
+                }
             }
         }
     }
