@@ -49,6 +49,16 @@ struct ContentView: View {
             }
         }
         #if DEV_LOGIN
+        .onReceive(NotificationCenter.default.publisher(for: .xemTruocSinhNhat)) { _ in
+            // Ưu tiên voucher sinh nhật thật của tài khoản; không có thì dùng voucher mẫu.
+            Task {
+                let thatSu = await APIClient.shared.getVoucherCuaToi().first { $0.laSinhNhat == true }
+                sinhNhat = thatSu ?? VoucherCuaToi(
+                    id: "xem-truoc", thuTu: nil, ma: "BIRTHDAY", ten: "Quà sinh nhật",
+                    moTa: "Dùng 1 lần trong tháng sinh nhật của bạn", soTienGiam: 0, loaiGiam: "PhanTram",
+                    phanTramGiam: 15, giamToiDa: 10000, donToiThieu: nil, daSuDung: false)
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .xemTruocSplash)) { _ in
             // Xem trước: tải ảnh dịp (nếu chưa có) rồi mới mở màn chào.
             Task {

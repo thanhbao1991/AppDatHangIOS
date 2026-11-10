@@ -66,6 +66,9 @@ struct DevMenuButton: View {
             Button(SeasonalEvent.previewOverride.map { "🧪 Đang xem: \($0.previewTen) (bấm để đổi/tắt)" } ?? "🧪 Xem trước dịp lễ") {
                 x.xoayDipLe()
             }
+            Button("🧪 Xem trước chúc mừng sinh nhật") {
+                NotificationCenter.default.post(name: .xemTruocSinhNhat, object: nil)
+            }
             Button(x.thuNgay == 0 ? "🧪 Thử điểm danh: ngày 1" : x.thuNgay < 7 ? "🧪 Thử điểm danh: ngày \(x.thuNgay + 1)" : "🧪 Tắt thử điểm danh") {
                 x.buocDiemDanh()
                 if x.thuNgay > 0 { moTab(.sanThuong) }

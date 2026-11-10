@@ -12,6 +12,8 @@ extension Notification.Name {
     static let christmasPreviewToggled = Notification.Name("christmasPreviewToggled")
     /// DEV_LOGIN only — nút xem trước dịp lễ mở luôn màn chào (SeasonalSplashView, bình thường chỉ hiện lúc mở app).
     static let xemTruocSplash = Notification.Name("xemTruocSplash")
+    /// DEV_LOGIN only — nút xem trước màn chúc mừng sinh nhật (voucher mẫu, không cần đúng ngày sinh).
+    static let xemTruocSinhNhat = Notification.Name("xemTruocSinhNhat")
 }
 
 /// Host app THẬT được khởi động khi chạy unit test — xem giải thích chi tiết ở Prefs.swift của
