@@ -302,27 +302,13 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .padding(.bottom, 12)
-            // Chủ quán 09/11/2026: dòng Nạp Xu gom 2 bên thành 1 nút — nút gradient full ngang, nhãn "🎁 Có Xu tặng" nằm trong nút.
+            // Chủ quán 11/11/2026: Nạp Xu dùng chung thẻ cam nổi bật với thẻ "Bạn có N voucher dùng được" ở Giỏ hàng.
             Button { showNapXu = true } label: {
-                HStack(spacing: 8) {
-                    Text("Nạp Xu").font(.system(size: 15, weight: .bold))
-                    if let nhan = vi.nhanNapXu {
-                        Text(nhan)
-                            .font(.system(size: 11, weight: .heavy))
-                            .foregroundColor(Theme.xuTangChu)
-                            .lineLimit(1)
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(Capsule().fill(Theme.xuTangNen))
-                    }
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 20).padding(.vertical, 9)
-                .background(Theme.primaryGradient)
-                .clipShape(Capsule())
-                .contentShape(Capsule())
+                BannerCamNoiBat(icon: "gift.fill", tieuDe: "Nạp Xu", nhan: vi.nhanNapXu,
+                                phu: NoiDung.text("napXuBannerPhu"), nut: "Nạp")
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .frame(maxWidth: .infinity, alignment: .center)
         }
         .tkThe(dem: 14)
         .navigationDestination(isPresented: $showLichSuXu) { LichSuViView() }

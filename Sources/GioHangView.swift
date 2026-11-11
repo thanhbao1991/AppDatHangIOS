@@ -9,9 +9,25 @@ import SwiftUI
 /// nháy cũ quá nhạt). Chỉ hiện khi có voucher dùng được cho giỏ mà khách CHƯA chọn: nền cam nhạt viền nét đứt kiểu vé,
 /// icon vé lắc, "Bạn có N voucher dùng được" + "Tiết kiệm đến Xđ cho đơn này", nút "Chọn" đập nhẹ, vệt sáng quét ngang
 /// mỗi 2,4 giây. Một TimelineView lái cả 3 hiệu ứng.
+/// 11/11/2026: tách thành BannerCamNoiBat dùng chung — nút Nạp Xu tab Tài khoản cũng dùng cho nổi bật.
 private struct NhacVoucherRow: View {
     let soVoucher: Int
     let giamToiDa: Double
+
+    var body: some View {
+        BannerCamNoiBat(icon: "ticket.fill", tieuDe: "Bạn có \(soVoucher) voucher dùng được",
+                        phu: giamToiDa > 0 ? "Tiết kiệm đến \(formatTien(giamToiDa)) cho đơn này" : nil,
+                        nut: "Chọn")
+    }
+}
+
+/// Thẻ cam kiểu vé nổi bật: icon lắc, tiêu đề cam đậm (+ nhãn vàng tuỳ chọn), dòng phụ, nút gradient đập nhẹ, vệt sáng quét.
+struct BannerCamNoiBat: View {
+    let icon: String
+    let tieuDe: String
+    var nhan: String? = nil
+    let phu: String?
+    let nut: String
 
     private static let cam = Color(red: 0.96, green: 0.45, blue: 0.08)
     private static let chuKy = 2.4
@@ -27,21 +43,31 @@ private struct NhacVoucherRow: View {
             let quet = min(t / 1.0, 1)
 
             HStack(spacing: 10) {
-                Image(systemName: "ticket.fill")
+                Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(Self.cam)
                     .rotationEffect(.degrees(lac))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Bạn có \(soVoucher) voucher dùng được")
-                        .font(.system(size: 14, weight: .bold)).foregroundColor(Self.cam)
-                    if giamToiDa > 0 {
-                        Text("Tiết kiệm đến \(formatTien(giamToiDa)) cho đơn này")
+                    HStack(spacing: 6) {
+                        Text(tieuDe)
+                            .font(.system(size: 14, weight: .bold)).foregroundColor(Self.cam)
+                        if let nhan {
+                            Text(nhan)
+                                .font(.system(size: 11, weight: .heavy))
+                                .foregroundColor(Theme.xuTangChu)
+                                .lineLimit(1)
+                                .padding(.horizontal, 7).padding(.vertical, 2)
+                                .background(Capsule().fill(Theme.xuTangNen))
+                        }
+                    }
+                    if let phu {
+                        Text(phu)
                             .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     }
                 }
                 Spacer(minLength: 6)
                 HStack(spacing: 2) {
-                    Text("Chọn").font(.system(size: 13, weight: .bold))
+                    Text(nut).font(.system(size: 13, weight: .bold))
                     Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
                 }
                 .foregroundColor(.white)
