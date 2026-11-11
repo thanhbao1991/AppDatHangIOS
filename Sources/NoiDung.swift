@@ -35,7 +35,7 @@ enum NoiDung {
         "napLanDauTieuDe": "Lần nạp đầu tiên: nhân đôi Xu tặng",
         "napLanDauMoTa": "Lần sau nạp vẫn được tặng Xu, không giới hạn số lần.",
         "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
-        "napXuBannerPhu": "Nạp Xu được tặng thêm Xu, dùng đặt món trên app",
+        "napXuBannerPhu": "Dùng để thanh toán đơn đặt hàng qua App",
         "goiYVoucherSize":"Nâng {size} miễn phí",
         "goiYVoucherSizeGiam": "Nâng {size}, giảm {tien}",
         "goiYVoucherSizePhu": "Bấm để đổi {mon} sang {size}",
