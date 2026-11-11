@@ -68,6 +68,39 @@ private struct NhacVoucherRow: View {
     }
 }
 
+/// Nhắc khách CHƯA đủ điều kiện voucher giảm tiền cố định (Size L / Size XL / Topping) — 11/11/2026, chủ quán: nhắc
+/// để thay đổi hành vi (uống size lớn, gọi topping), khác thẻ cam NhacVoucherRow chỉ giúp tiết kiệm. Màu xanh chủ đạo để
+/// không lẫn với thẻ cam. Bấm = mở sheet sửa đúng món cần đổi.
+private struct GoiYVoucherRow: View {
+    let icon: String
+    let tieuDe: String
+    let phu: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(Theme.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tieuDe).font(.system(size: 14, weight: .bold)).foregroundColor(Theme.primary)
+                Text(phu).font(.system(size: 12)).foregroundColor(Theme.textMuted).lineLimit(1)
+            }
+            Spacer(minLength: 6)
+            HStack(spacing: 2) {
+                Text("Đổi").font(.system(size: 13, weight: .bold))
+                Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(Capsule().fill(Theme.primary))
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(Theme.primary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.primary.opacity(0.35), lineWidth: 1))
+    }
+}
+
 struct GioHangView: View {
     @EnvironmentObject var cart: CartStore
     @Binding var path: [HomeRoute]
@@ -233,6 +266,14 @@ struct GioHangView: View {
     @ViewBuilder
     private var uuDaiSection: some View {
         VStack(spacing: 10) {
+            if let goiY = goiYVoucher {
+                Button { openEdit(goiY.item) } label: {
+                    GoiYVoucherRow(icon: goiY.icon, tieuDe: goiY.tieuDe, phu: goiY.phu)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
             Button { showVoucherSheet = true } label: {
                 if cart.selectedVoucher == nil && !cart.vouchersHienThi.isEmpty {
                     NhacVoucherRow(soVoucher: cart.vouchersHienThi.count,
@@ -291,6 +332,61 @@ struct GioHangView: View {
             }
         }
         .padding(.horizontal).padding(.vertical, 10)
+    }
+
+    private struct GoiYVoucher {
+        let icon: String
+        let tieuDe: String
+        let phu: String
+        let item: CartItem
+    }
+
+    /// Chọn 1 lời nhắc (ưu tiên Size L → Size XL → Topping) cho voucher GIẢM TIỀN CỐ ĐỊNH khách còn lượt nhưng giỏ chưa
+    /// đủ điều kiện. Mỗi đơn chỉ dùng 1 voucher, nên chỉ nhắc khi voucher đó giảm NHIỀU HƠN voucher đang dùng được —
+    /// nếu không thì đổi giỏ cũng chẳng được thêm gì. Chỉ nhắc món thật sự có size/topping đó (tra catalog).
+    private var goiYVoucher: GoiYVoucher? {
+        guard Prefs.isLoggedIn else { return nil }
+        let giamHienCo = cart.vouchersHienThi.map { cart.soTienGiam($0) }.max() ?? 0
+        let ungVien = cart.vouchers.filter {
+            $0.loaiGiam != "PhanTram" && $0.soTienGiam > giamHienCo && !cart.voucherDuDieuKien($0)
+        }
+        let items = cart.itemsApDungVoucher
+        func thay(_ s: String, _ size: String, _ tien: Double, _ mon: String) -> String {
+            s.replacingOccurrences(of: "{size}", with: size)
+                .replacingOccurrences(of: "{tien}", with: formatTien(tien))
+                .replacingOccurrences(of: "{mon}", with: mon)
+        }
+
+        for laL in [true, false] {
+            guard let v = ungVien.first(where: { laL ? $0.chiApDungKhiCoSizeL : $0.chiApDungKhiCoSizeXL }) else { continue }
+            let size = laL ? "Size L" : "Size XL"
+            // Món có giá chênh lên size đích thấp nhất (M→L, L→XL +5k là miễn phí; M→XL +10k thì chỉ "giảm").
+            var tot: (item: CartItem, chenh: Double)?
+            for item in items where !isSizeXLBienThe(item.tenBienThe) {
+                guard let sp = sanPham(for: item),
+                      let dich = sp.bienThe.first(where: { laL ? isSizeLBienThe($0.tenBienThe) : isSizeXLBienThe($0.tenBienThe) })
+                else { continue }
+                let chenh = (giaRiengMap[dich.id] ?? dich.giaBan) - item.giaBan
+                if chenh >= 0, tot == nil || chenh < tot!.chenh { tot = (item, chenh) }
+            }
+            guard let tot else { continue }
+            let tien = v.soTienGiam
+            let tieuDe = thay(NoiDung.text(tot.chenh <= tien ? "goiYVoucherSize" : "goiYVoucherSizeGiam"), size, tien, tot.item.tenSanPham)
+            return GoiYVoucher(icon: "arrow.up.circle.fill", tieuDe: tieuDe,
+                               phu: thay(NoiDung.text("goiYVoucherSizePhu"), size, tien, tot.item.tenSanPham), item: tot.item)
+        }
+
+        if let v = ungVien.first(where: { $0.chiApDungKhiCoTopping }),
+           toppings.contains(where: { !$0.ngungBan }),
+           let item = items.first(where: { item in
+               guard let sp = sanPham(for: item) else { return false }
+               return !thuocLaNhomIds.contains(sp.nhomSanPhamId ?? "")
+           }) {
+            return GoiYVoucher(icon: "plus.circle.fill",
+                               tieuDe: thay(NoiDung.text("goiYVoucherTopping"), "", v.soTienGiam, item.tenSanPham),
+                               phu: thay(NoiDung.text("goiYVoucherToppingPhu"), "", v.soTienGiam, item.tenSanPham), item: item)
+        }
+        return nil
     }
 
     @ViewBuilder
