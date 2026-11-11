@@ -37,7 +37,7 @@ enum NoiDung {
         "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
         "napXuBannerPhu": "Thanh toán nhanh chóng, tiện lợi ngay trên App",
         "goiYVoucherSize":"Nâng {size} miễn phí",
-        "goiYVoucherSizeGiam": "Nâng {size}, giảm {tien}",
+        "goiYVoucherSizeGiam": "Nâng {size} có voucher",
         "goiYVoucherSizePhu": "Bấm để đổi {mon} sang {size}",
         "goiYVoucherTopping": "Topping miễn phí",
         "goiYVoucherToppingPhu": "Thêm 1 topping đến {tien} cho {mon}",

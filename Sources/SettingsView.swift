@@ -169,7 +169,10 @@ struct SettingsView: View {
         } else {
             // Thiết kế lại 09/11/2026: ScrollView + thẻ TK (TaiKhoanUI.swift) thay List — đồng bộ với thẻ hạng/bảng xếp
             // hạng và các màn con. Không còn lỗi "nhiều Button trong 1 row List" vì không dùng List nữa.
-            ScrollView {
+            // 11/11/2026: tab vuốt ngang được qua 2 cạnh máy (nội dung nhỉnh hơn màn hình) — ép bề rộng nội dung đúng bằng
+            // ScrollView để không bao giờ cuộn/nảy ngang, dù thẻ con nào lỡ rộng hơn.
+            GeometryReader { geo in
+            ScrollView(.vertical) {
               VStack(spacing: TK.khoangCach) {
                 if let vi {
                     #if DEV_LOGIN
@@ -187,6 +190,9 @@ struct SettingsView: View {
                 danhGiaCard
               }
               .tkManHinh()
+              .frame(width: geo.size.width)
+              .clipped()
+            }
             }
             .background(Theme.bg)
             // Dựng lại cả List khi dịp đổi (card hạng, nút Nạp Xu… đều lấy màu dịp) — chỉ khi dịp THẬT SỰ đổi nên
