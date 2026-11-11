@@ -120,6 +120,24 @@ struct NapXuView: View {
     }
 }
 
+/// Lần nạp đang chờ tiền về (11/11/2026): khách mở QR rồi thoát ra trước khi tiền về thì tab Tài khoản vẫn tự dò số dư
+/// tới khi đủ (SettingsView.choTienNapVe), khỏi phải kéo làm mới. Chỉ giữ trong RAM, quá 30 phút thì thôi dò.
+enum NapXuChoTien {
+    struct Cho { let mocSoDu: Double; let tongXu: Double; let luc: Date }
+    private static var cho: Cho?
+
+    static var hienTai: Cho? {
+        guard let cho, Date().timeIntervalSince(cho.luc) < 30 * 60 else { return nil }
+        return cho
+    }
+    static func batDau(mocSoDu: Double, tongXu: Double) { cho = Cho(mocSoDu: mocSoDu, tongXu: tongXu, luc: Date()) }
+    static func xong() { cho = nil }
+    static func daVe(_ soDu: Double) -> Bool {
+        guard let c = hienTai else { return false }
+        return soDu - c.mocSoDu >= c.tongXu - 0.5
+    }
+}
+
 /// QR nạp 1 gói — bố cục giống ThanhToanView (QR backend vẽ qua /HoaDon/bill-qr, nút tải ảnh QR).
 /// Dò số dư mỗi 5 giây khi đang mở màn này để báo "Đã nạp thành công" ngay khi webhook cộng Xu.
 struct NapXuQrView: View {
@@ -240,13 +258,23 @@ struct NapXuQrView: View {
     /// Tự huỷ khi rời màn (task gắn view). So với số dư lúc mở: tăng đủ tổng Xu của gói = đã nạp. Lần đọc
     /// số dư đầu lỗi mạng thì vòng sau đọc lại làm mốc (không thì không bao giờ báo được thành công).
     private func doSoDu() async {
-        soDuBanDau = await APIClient.shared.getVi()?.soDu
+        // Mở lại QR cùng lần chờ thì giữ mốc cũ (không thì tiền về giữa 2 lần mở sẽ bị coi là mốc mới).
+        soDuBanDau = NapXuChoTien.hienTai.flatMap { $0.tongXu == goi.tongXuNhan ? $0.mocSoDu : nil }
+        if soDuBanDau == nil, let s = await APIClient.shared.getVi()?.soDu {
+            soDuBanDau = s
+            NapXuChoTien.batDau(mocSoDu: s, tongXu: goi.tongXuNhan)
+        }
         while !Task.isCancelled && !daNhan {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             guard let hienTai = await APIClient.shared.getVi()?.soDu else { continue }
-            guard let batDau = soDuBanDau else { soDuBanDau = hienTai; continue }
+            guard let batDau = soDuBanDau else {
+                soDuBanDau = hienTai
+                NapXuChoTien.batDau(mocSoDu: hienTai, tongXu: goi.tongXuNhan)
+                continue
+            }
             if hienTai - batDau >= goi.tongXuNhan - 0.5 {
                 daNhan = true
+                NapXuChoTien.xong()
             }
         }
     }

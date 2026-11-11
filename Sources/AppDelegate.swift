@@ -40,6 +40,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     // Cho phép hiện banner/sound ngay cả khi app đang mở (mặc định iOS tự nuốt im lặng nếu thiếu hàm này).
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Báo cho màn đang mở tự tải lại (vd tab Tài khoản tải lại ví khi có tin "Đã nạp … Xu").
+        NotificationCenter.default.post(name: .nhanThongBaoKhiDangMo, object: nil)
         completionHandler([.banner, .sound, .badge])
     }
 
@@ -50,6 +52,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         }
         completionHandler()
     }
+}
+
+extension Notification.Name {
+    /// Push đến khi app đang mở (willPresent).
+    static let nhanThongBaoKhiDangMo = Notification.Name("nhanThongBaoKhiDangMo")
 }
 
 /// Xin quyền thông báo ĐÚNG LÚC (30/10/2026): sau khi khách đặt đơn thành công, giải thích trước rồi mới hiện hộp xin

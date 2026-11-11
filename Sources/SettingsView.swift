@@ -96,6 +96,11 @@ struct SettingsView: View {
         // congNoContent), không phải ở navigationDestination — giữ nguyên 2 modifier tách theo subview
         // (fix 2026-09-23 lần 2) vì đúng hướng, chỉ thiếu buttonStyle (fix 2026-09-23 lần 3, ĐÃ XONG).
         .task { await load() }
+        // Đóng màn Nạp Xu (showNapXu → false) hay vào lại tab đều chạy lại vòng dò nếu còn lần nạp chờ tiền về.
+        .task(id: showNapXu) { await choTienNapVe() }
+        .onReceive(NotificationCenter.default.publisher(for: .nhanThongBaoKhiDangMo)) { _ in
+            Task { await taiLaiVi() }
+        }
         .onDisappear { luuBoNhoTam() } // giữ cả thay đổi sau load (thêm/xoá địa chỉ, khai ngày sinh…)
         #if DEV_LOGIN
         // Bật "Xem trước ngày 1" từ menu ⚡ (bất kỳ tab nào) → chạy chuỗi màn chúc mừng khi tab này hiện.
@@ -686,7 +691,10 @@ struct SettingsView: View {
             try? await Task.sleep(nanoseconds: 800_000_000)
             viTai = await APIClient.shared.getVi()
         }
-        if let viTai { vi = viTai }
+        if let viTai {
+            vi = viTai
+            if NapXuChoTien.daVe(viTai.soDu) { NapXuChoTien.xong() }
+        }
         // Địa chỉ lỗi (nil) → giữ danh sách cũ; thử lại 1 lần trước khi bỏ cuộc.
         var dcTai = dc
         if dcTai == nil { dcTai = await APIClient.shared.getDiaChiListOpt() }
@@ -704,6 +712,29 @@ struct SettingsView: View {
         loadingNgaySinh = false
         loading = false
         luuBoNhoTam()
+    }
+
+    /// Khách mở QR nạp rồi thoát ra trước khi tiền về (11/11/2026): dò số dư mỗi 5 giây khi đang đứng ở tab này, tiền về
+    /// là số Xu tự nhảy. Đang mở màn Nạp Xu thì để màn đó tự dò. Tự dừng khi rời tab (task huỷ) hoặc quá 30 phút.
+    private func choTienNapVe() async {
+        while !Task.isCancelled, !showNapXu, NapXuChoTien.hienTai != nil {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard !Task.isCancelled, !showNapXu, let moi = await APIClient.shared.getVi() else { continue }
+            if NapXuChoTien.daVe(moi.soDu) {
+                vi = moi
+                BoNhoTam.vi = moi
+                NapXuChoTien.xong()
+                return
+            }
+        }
+    }
+
+    /// Nhận thông báo lúc đang mở app (vd "Đã nạp … Xu") → tải lại ví, không đợi vòng dò.
+    private func taiLaiVi() async {
+        guard let moi = await APIClient.shared.getVi() else { return }
+        vi = moi
+        BoNhoTam.vi = moi
+        if NapXuChoTien.daVe(moi.soDu) { NapXuChoTien.xong() }
     }
 
     private func luuBoNhoTam() {
