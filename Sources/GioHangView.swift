@@ -5,24 +5,65 @@ import SwiftUI
 /// (trước đây gộp cả 3 bước "Hoá đơn/Nhận hàng/Thanh toán" thành 1 timeline dài trong CÙNG tab) theo
 /// yêu cầu tham khảo bố cục Shopee — 2 màn rõ ràng: xem giỏ trước, bấm "Đặt hàng" mới sang bước điền
 /// địa chỉ/chọn thanh toán.
-/// Mờ/rõ lặp lại khi `bat` = true; tắt thì về rõ hẳn ngay.
-private struct NhapNhay: ViewModifier {
-    let bat: Bool
-    @State private var mo = false
+/// Thẻ NHẮC DÙNG VOUCHER (chủ quán 11/11/2026: "cần hiệu ứng nhắc dùng voucher rõ ràng hơn" — chữ "Chọn voucher" nhấp
+/// nháy cũ quá nhạt). Chỉ hiện khi có voucher dùng được cho giỏ mà khách CHƯA chọn: nền cam nhạt viền nét đứt kiểu vé,
+/// icon vé lắc, "Bạn có N voucher dùng được" + "Tiết kiệm đến Xđ cho đơn này", nút "Chọn" đập nhẹ, vệt sáng quét ngang
+/// mỗi 2,4 giây. Một TimelineView lái cả 3 hiệu ứng.
+private struct NhacVoucherRow: View {
+    let soVoucher: Int
+    let giamToiDa: Double
 
-    func body(content: Content) -> some View {
-        content
-            .opacity(bat && mo ? 0.25 : 1)
-            .onAppear { capNhat(bat) }
-            .onChange(of: bat) { capNhat($0) }
-    }
+    private static let cam = Color(red: 0.96, green: 0.45, blue: 0.08)
+    private static let chuKy = 2.4
 
-    private func capNhat(_ bat: Bool) {
-        if bat {
-            mo = false
-            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { mo = true }
-        } else {
-            withAnimation(.easeOut(duration: 0.2)) { mo = false }
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60)) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: Self.chuKy)
+            // Lắc vé 0 → 0,6s đầu chu kỳ, tắt dần.
+            let lac = t < 0.6 ? sin(t / 0.6 * .pi * 4) * 14 * (1 - t / 0.6) : 0
+            // Nút "Chọn" đập nhẹ liên tục.
+            let dap = 1 + 0.05 * sin(t / Self.chuKy * .pi * 4)
+            // Vệt sáng quét 0 → 1s.
+            let quet = min(t / 1.0, 1)
+
+            HStack(spacing: 10) {
+                Image(systemName: "ticket.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(Self.cam)
+                    .rotationEffect(.degrees(lac))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Bạn có \(soVoucher) voucher dùng được")
+                        .font(.system(size: 14, weight: .bold)).foregroundColor(Self.cam)
+                    if giamToiDa > 0 {
+                        Text("Tiết kiệm đến \(formatTien(giamToiDa)) cho đơn này")
+                            .font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    }
+                }
+                Spacer(minLength: 6)
+                HStack(spacing: 2) {
+                    Text("Chọn").font(.system(size: 13, weight: .bold))
+                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(Capsule().fill(LinearGradient(colors: [Self.cam, Color(red: 0.93, green: 0.25, blue: 0.12)],
+                                                           startPoint: .leading, endPoint: .trailing)))
+                .scaleEffect(dap)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .background(Self.cam.opacity(0.10))
+            .overlay(
+                GeometryReader { g in
+                    LinearGradient(colors: [.clear, .white.opacity(0.7), .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: g.size.width * 0.35)
+                        .rotationEffect(.degrees(20))
+                        .offset(x: -g.size.width * 0.4 + quet * g.size.width * 1.45)
+                        .opacity(quet < 1 ? 1 : 0)
+                }
+                .allowsHitTesting(false)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Self.cam.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 3])))
         }
     }
 }
@@ -193,6 +234,11 @@ struct GioHangView: View {
     private var uuDaiSection: some View {
         VStack(spacing: 10) {
             Button { showVoucherSheet = true } label: {
+                if cart.selectedVoucher == nil && !cart.vouchersHienThi.isEmpty {
+                    NhacVoucherRow(soVoucher: cart.vouchersHienThi.count,
+                                   giamToiDa: cart.vouchersHienThi.map { cart.soTienGiam($0) }.max() ?? 0)
+                        .contentShape(Rectangle())
+                } else {
                 HStack {
                     // Ghi rõ giá trị giảm ngay sau khi chọn (feedback 2026-09-27) thay vì chỉ đếm số
                     // lượng ưu đãi trần trụi như bản trước.
@@ -208,13 +254,12 @@ struct GioHangView: View {
                         Text("Chọn voucher").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
                         Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                     }
-                    // Nhấp nháy gây chú ý khi có voucher dùng được mà khách chưa chọn (2026-10-19).
-                    .modifier(NhapNhay(bat: cart.selectedVoucher == nil && !cart.vouchersHienThi.isEmpty))
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(Theme.bg)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .contentShape(Rectangle())
+                }
             }
             .buttonStyle(.plain)
 
