@@ -17,7 +17,7 @@ private struct NhacVoucherRow: View {
     var body: some View {
         BannerCamNoiBat(icon: "ticket.fill", tieuDe: "Bạn có \(soVoucher) voucher dùng được",
                         phu: giamToiDa > 0 ? "Tiết kiệm đến \(formatTien(giamToiDa)) cho đơn này" : nil,
-                        nut: "Chọn")
+                        nut: "Chọn", iconNut: "ticket.fill")
     }
 }
 
@@ -28,6 +28,8 @@ struct BannerCamNoiBat: View {
     var nhan: String? = nil
     let phu: String?
     let nut: String
+    /// Icon SF Symbol trong nút gradient (trước chữ) — đồng bộ các banner (chủ quán 11/11/2026).
+    var iconNut: String? = nil
 
     private static let cam = Color(red: 0.96, green: 0.45, blue: 0.08)
     private static let chuKy = 2.4
@@ -66,7 +68,8 @@ struct BannerCamNoiBat: View {
                     }
                 }
                 Spacer(minLength: 6)
-                HStack(spacing: 2) {
+                HStack(spacing: 3) {
+                    if let iconNut { Image(systemName: iconNut).font(.system(size: 11, weight: .bold)) }
                     Text(nut).font(.system(size: 13, weight: .bold))
                     Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
                 }
@@ -112,7 +115,8 @@ private struct GoiYVoucherRow: View {
                 Text(phu).font(.system(size: 12)).foregroundColor(Theme.textMuted).lineLimit(1)
             }
             Spacer(minLength: 6)
-            HStack(spacing: 2) {
+            HStack(spacing: 3) {
+                Image(systemName: icon).font(.system(size: 11, weight: .bold))
                 Text("Đổi").font(.system(size: 13, weight: .bold))
                 Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
             }
