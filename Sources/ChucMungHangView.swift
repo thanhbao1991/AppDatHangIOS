@@ -65,7 +65,7 @@ enum ChucMungHang {
            let daCong = trangThai(daNhan: t.daNhan, tuDong: t.tuDong, khoa: "hang-\(t.id)") {
             ds.append(QuaChucMung(
                 loai: .hang,
-                icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉", anh: "ChucMungQuaThang",
+                icon: ["Kim Cương": "💎", "Vàng": "🌟", "Bạc": "⭐"][t.hang] ?? "🎉", anh: "RuongXu",   // 11/11/2026: rương (cùng ảnh thẻ Tổng xu tích luỹ) thay hộp quà
                 tieuDe: dien(NoiDung.text("chucMungHangTieuDe"), ["hang": t.hangDayDu ?? t.hang, "thang": tenThang(t.thangDat)]),
                 mauHang: t.hang, soXu: t.soXu, ghiChu: NoiDung.text("chucMungHangPhu"), daCong: daCong, khoaDaXem: "hang-\(t.id)"))
         }
