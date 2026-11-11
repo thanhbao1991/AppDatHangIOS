@@ -90,6 +90,15 @@ struct VoucherPickerSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// Phần "cách dùng" của lyDoChuaDuDieuKien (đoạn sau "\n\n", bỏ tiền tố "Cách dùng: ") để hiện thẳng dưới thẻ.
+    static func cachDungNgan(_ lyDo: String?) -> String {
+        guard let lyDo, !lyDo.isEmpty else { return "Chưa đủ điều kiện cho giỏ hàng hiện tại" }
+        let doan = lyDo.components(separatedBy: "\n\n").last ?? lyDo
+        let bo = doan.hasPrefix("Cách dùng: ") ? String(doan.dropFirst("Cách dùng: ".count)) : doan
+        guard let dau = bo.first else { return lyDo }
+        return dau.uppercased() + bo.dropFirst()
+    }
+
     private var voucherList: some View {
         List {
                 // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
@@ -129,12 +138,13 @@ struct VoucherPickerSheet: View {
                                     donToiThieu: v.donToiThieu,
                                     daChon: selected?.id == v.id
                                 )
-                                // Rõ ràng (không mờ) + dòng nhắc nhỏ để khách biết bấm vào xem cách dùng.
+                                // 11/11/2026 (chủ quán): hiện LUÔN cách dùng dưới thẻ, không bắt bấm mới xem.
                                 if !ok {
-                                    HStack(spacing: 5) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 5) {
                                         Image(systemName: "info.circle.fill").font(.system(size: 12))
-                                        Text("Chưa đủ điều kiện · Bấm để xem cách dùng")
+                                        Text(Self.cachDungNgan(lyDo(v)))
                                             .font(.system(size: 12, weight: .semibold))
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                     .foregroundColor(Theme.xuTangChu)
                                     .padding(.leading, 6)
