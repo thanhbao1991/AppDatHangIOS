@@ -33,6 +33,7 @@ struct BannerCamNoiBat: View {
 
     private static let cam = Color(red: 0.96, green: 0.45, blue: 0.08)
     private static let chuKy = 2.4
+    private static func kep(_ x: Double) -> Double { min(1, max(0, x)) }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 60)) { tl in
@@ -80,15 +81,17 @@ struct BannerCamNoiBat: View {
                 .scaleEffect(dap)
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Self.cam.opacity(0.10))
+            // Vệt sáng: dịch các điểm dừng của gradient phủ đúng khung thẻ — KHÔNG dùng offset/rotation như bản đầu
+            // (11/11/2026: dải gradient thò ra ngoài thẻ làm ScrollView tab Tài khoản vuốt ngang được qua 2 cạnh máy).
             .overlay(
-                GeometryReader { g in
-                    LinearGradient(colors: [.clear, .white.opacity(0.7), .clear], startPoint: .leading, endPoint: .trailing)
-                        .frame(width: g.size.width * 0.35)
-                        .rotationEffect(.degrees(20))
-                        .offset(x: -g.size.width * 0.4 + quet * g.size.width * 1.45)
-                        .opacity(quet < 1 ? 1 : 0)
-                }
+                LinearGradient(stops: [
+                    .init(color: .clear, location: Self.kep(quet * 1.4 - 0.35)),
+                    .init(color: .white.opacity(0.7), location: Self.kep(quet * 1.4 - 0.2)),
+                    .init(color: .clear, location: Self.kep(quet * 1.4 - 0.05)),
+                ], startPoint: UnitPoint(x: 0, y: 0.2), endPoint: UnitPoint(x: 1, y: 0.8))
+                .opacity(quet > 0 && quet < 1 ? 1 : 0)
                 .allowsHitTesting(false)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
