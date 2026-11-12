@@ -2,9 +2,10 @@ import SwiftUI
 
 /// Màn chúc mừng sinh nhật (2026-11-11): từ ĐÚNG ngày sinh nhật tới hết tháng sinh nhật, nếu khách có voucher quà sinh
 /// nhật dùng được (đủ điều kiện + chưa dùng — server chỉ trả voucher đó khi đủ, xem VoucherCuaToi.laSinhNhat) thì hiện
-/// 1 màn/năm lúc mở app. Xem rồi ghi nhớ trên máy theo năm.
+/// 1 màn/năm lúc mở app. Xem rồi ghi nhớ trên máy theo năm, RIÊNG từng tài khoản (12/11: 2 người dùng chung máy thì
+/// người sau vẫn thấy màn của mình).
 enum ChucMungSinhNhat {
-    private static let khoaNam = "chucMungSinhNhat.namDaXem"
+    private static var khoaNam: String { "chucMungSinhNhat.namDaXem_\(Prefs.khachHangId ?? "anon")" }
 
     /// Voucher cần hiện màn chúc mừng, nil = không hiện.
     static func canHien(ngaySinh: SinhNhatInfo?, vouchers: [VoucherCuaToi], homNay: Date = Date()) -> VoucherCuaToi? {
