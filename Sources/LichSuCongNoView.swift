@@ -5,10 +5,16 @@ import SwiftUI
 /// đang nợ đơn nào — giờ chỉ hiện đơn còn nợ. Card tổng nợ ở đầu đã bỏ (feedback 2026-09-23) — tổng
 /// đã hiện sẵn ở SettingsView rồi. Thiết kế lại 09/11/2026: mỗi đơn một thẻ TK (TaiKhoanUI.swift).
 struct LichSuCongNoView: View {
+    /// Bấm "Thanh toán" ở thẻ Công nợ (tab Tài khoản) → tải xong tự mở luôn màn QR trả nợ.
+    var moThanhToanNgay = false
+
     @State private var items: [CongNoLichSu] = []
     @State private var loading = true
+    @State private var showThanhToan = false
+    @State private var daTuMo = false
 
     private var conNo: [CongNoLichSu] { items.filter { $0.conLai > 0 } }
+    private var tongNo: Double { conNo.reduce(0) { $0 + $1.conLai } }
 
     var body: some View {
         Group {
@@ -27,11 +33,38 @@ struct LichSuCongNoView: View {
                 }
                 .background(Theme.bg)
                 .refreshable { await load() }
+                // Nút trả nợ nổi đáy: safeAreaInset + nền đặc (Material bị nháy — xem memory nút nổi SwiftUI).
+                .safeAreaInset(edge: .bottom) {
+                    if !conNo.isEmpty { nutThanhToan }
+                }
             }
         }
         .navigationTitle("Công nợ hiện tại")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showThanhToan) {
+            // Đơn nợ mới nhất (API sắp NgayNo giảm dần) làm "đơn chính" của mã QR — backend cộng phần nợ còn lại.
+            if let dau = conNo.first {
+                ThanhToanView(hoaDonId: dau.hoaDonId, tongNo: tongNo) { showThanhToan = false }
+            }
+        }
+        // Quay về từ màn QR thì tải lại để thấy nợ đã được gạch (SePay webhook).
+        .onChange(of: showThanhToan) { dangMo in
+            if !dangMo { Task { await load() } }
+        }
         .task { await load() }
+    }
+
+    private var nutThanhToan: some View {
+        Button { showThanhToan = true } label: {
+            Text("Thanh toán công nợ · \(formatTien(tongNo))")
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.gradientProminent)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(Theme.bg.ignoresSafeArea(edges: .bottom))
     }
 
     /// Khách chỉ xem đơn của chính mình nên nhãn phụ là PHÂN LOẠI (Giao hàng/Mang về/Tại quán), không phải tên khách.
@@ -87,5 +120,9 @@ struct LichSuCongNoView: View {
     private func load() async {
         items = await APIClient.shared.getLichSuCongNo()
         loading = false
+        if moThanhToanNgay && !daTuMo && !conNo.isEmpty {
+            daTuMo = true
+            showThanhToan = true
+        }
     }
 }

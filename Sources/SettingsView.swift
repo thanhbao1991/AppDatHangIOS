@@ -52,6 +52,7 @@ struct SettingsView: View {
     @State private var showLichSuXu = false
     @State private var showNapXu = false
     @State private var showCongNoHienTai = false
+    @State private var congNoTraNgay = false
 
     // Ngày sinh — tái dùng đúng field/API đã có cho xác minh tuổi 18+ (MenuView), chỉ thêm chỗ khai
     // ở tab Tài khoản cho khách nào chưa mua sản phẩm thuốc lá cũng khai được (để hưởng voucher sinh
@@ -329,25 +330,38 @@ struct SettingsView: View {
         }
     }
 
+    /// 13/11/2026: thêm nút "Thanh toán công nợ" (trước đó khách không có chỗ nào để trả nợ) — mở màn
+    /// Công nợ rồi tự vào luôn màn QR (LichSuCongNoView.moThanhToanNgay).
     private func congNoCard(_ vi: KhachHangVi) -> some View {
-        Button { showCongNoHienTai = true } label: {
-            HStack(spacing: 12) {
-                TKIcon(ten: "exclamationmark.circle.fill", mau: Theme.danger, co: 42)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Công nợ").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
-                    (Text(SoDuCard.so(vi.tongNo)).font(.system(size: 24, weight: .heavy, design: .rounded))
-                        + Text(" đ").font(.system(size: 14, weight: .bold)))
-                        .monospacedDigit().foregroundColor(Theme.danger)
+        VStack(spacing: 12) {
+            Button { congNoTraNgay = false; showCongNoHienTai = true } label: {
+                HStack(spacing: 12) {
+                    TKIcon(ten: "exclamationmark.circle.fill", mau: Theme.danger, co: 42)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Công nợ").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        (Text(SoDuCard.so(vi.tongNo)).font(.system(size: 24, weight: .heavy, design: .rounded))
+                            + Text(" đ").font(.system(size: 14, weight: .bold)))
+                            .monospacedDigit().foregroundColor(Theme.danger)
+                    }
+                    Spacer(minLength: 8)
+                    Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
                 }
-                Spacer(minLength: 8)
-                Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            Button { congNoTraNgay = true; showCongNoHienTai = true } label: {
+                Label("Thanh toán công nợ", systemImage: "qrcode")
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.gradientProminent)
         }
-        .buttonStyle(.plain)
         .tkThe(dem: 14)
-        .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView() }
+        .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView(moThanhToanNgay: congNoTraNgay) }
+        .onChange(of: showCongNoHienTai) { dangMo in
+            if !dangMo { Task { await load() } }
+        }
     }
 
     /// Card Điểm & Hạng thành viên đi CHUNG một card — Hạng xét theo chi tiêu THÁNG HIỆN TẠI (xem

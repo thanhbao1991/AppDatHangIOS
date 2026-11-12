@@ -24,7 +24,13 @@ struct NhacGiuNoiDungCk: View {
 
 struct ThanhToanView: View {
     let hoaDonId: String
+    /// Chế độ trả công nợ (13/11/2026, mở từ màn Công nợ hiện tại): truyền tổng nợ đang hiện cho khách.
+    /// hoaDonId là đơn nợ mới nhất — backend tự cộng mọi khoản nợ khác vào số tiền + nội dung QR
+    /// (GetThanhToanInfoAsync), SePay tự gạch nợ toàn bộ khi khách chuyển đúng tổng (OtherCleared).
+    var tongNo: Double? = nil
     let onDone: () -> Void
+
+    private var laTraNo: Bool { tongNo != nil }
 
     @State private var info: ThanhToanInfoDto?
     @State private var qrImage: UIImage?
@@ -63,12 +69,12 @@ struct ThanhToanView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.bg)
-        .navigationTitle("Thanh toán")
+        .navigationTitle(laTraNo ? "Thanh toán công nợ" : "Thanh toán")
         .navigationBarTitleDisplayMode(.inline)
         // Bỏ nút back hệ thống (feedback 2026-09-28) — back sẽ pop về CheckoutView (giỏ đã clear(),
         // hiện trống, trải nghiệm tệ). Chỉ còn đúng 1 lối ra: nút "Xong, xem đơn hàng" gọi onDone()
-        // để về đúng tab Đơn hàng.
-        .navigationBarBackButtonHidden(true)
+        // để về đúng tab Đơn hàng. Chế độ trả nợ thì giữ back (về lại màn Công nợ là đúng).
+        .navigationBarBackButtonHidden(!laTraNo)
         .task { await load() }
         .popupHost { host in
             host.alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
@@ -123,17 +129,30 @@ struct ThanhToanView: View {
 
         Text(formatVnd(info.amount)).font(.system(size: 32, weight: .bold))
 
+        // Số QR có thể lớn hơn tổng nợ: backend gộp cả đơn đang giao chưa trả (TongDonKhacDangGiao).
+        if let tongNo, info.amount > tongNo + 0.5 {
+            Text("Đã gồm \(formatVnd(info.amount - tongNo)) của đơn đang giao chưa thanh toán")
+                .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                .multilineTextAlignment(.center).frame(maxWidth: 300)
+        }
+
         Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
             .disabled(qrImage == nil)
+
+        if laTraNo {
+            Text("Chuyển khoản xong, công nợ tự được gạch sau vài giây.")
+                .font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                .multilineTextAlignment(.center).frame(maxWidth: 300)
+        }
 
         // "onDone" từng bị KHAI BÁO nhưng KHÔNG NƠI NÀO GỌI (bug thật, phát hiện 2026-09-28) — khách
         // xem/lưu QR xong chỉ có nút back hệ thống, pop về đúng route TRƯỚC route .thanhToan trên
         // stack (CheckoutView nếu vừa đặt hàng xong, cart đã clear() nên hiện trống — trải nghiệm tệ).
         // Bấm "Xong" gọi onDone() thật để về tab Đơn hàng (xem MainTabView: onDone luôn set
         // selectedTab=.donHang + path=[], KHÔNG bao giờ tới trang chi tiết đơn hàng).
-        Button("Xong, xem đơn hàng") { onDone() }
+        Button(laTraNo ? "Xong" : "Xong, xem đơn hàng") { onDone() }
             .buttonStyle(.bordered)
             .tint(Theme.primary)
             .frame(maxWidth: 320)
