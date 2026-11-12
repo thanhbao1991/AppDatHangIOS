@@ -131,7 +131,7 @@ struct ThanhToanView: View {
 
         // Số QR có thể lớn hơn tổng nợ: backend gộp cả đơn đang giao chưa trả (TongDonKhacDangGiao).
         if let tongNo, info.amount > tongNo + 0.5 {
-            Text("Đã gồm \(formatVnd(info.amount - tongNo)) của đơn đang giao chưa thanh toán")
+            Text("Đã gồm \(formatVnd(info.amount - tongNo)) của đơn đang giao")
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 .multilineTextAlignment(.center).frame(maxWidth: 300)
         }
