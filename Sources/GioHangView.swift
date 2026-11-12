@@ -30,21 +30,31 @@ struct BannerCamNoiBat: View {
     let nut: String
     /// Icon SF Symbol trong nút gradient (trước chữ) — đồng bộ các banner (chủ quán 11/11/2026).
     var iconNut: String? = nil
+    /// false = bản phẳng, đứng yên (không lắc/đập/vệt sáng) — nút Thanh toán công nợ (chủ quán 13/11/2026).
+    var hieuUng = true
 
     private static let cam = Color(red: 0.96, green: 0.45, blue: 0.08)
     private static let chuKy = 2.4
     private static func kep(_ x: Double) -> Double { min(1, max(0, x)) }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60)) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: Self.chuKy)
-            // Lắc vé 0 → 0,6s đầu chu kỳ, tắt dần.
-            let lac = t < 0.6 ? sin(t / 0.6 * .pi * 4) * 14 * (1 - t / 0.6) : 0
-            // Nút "Chọn" đập nhẹ liên tục.
-            let dap = 1 + 0.05 * sin(t / Self.chuKy * .pi * 4)
-            // Vệt sáng quét 0 → 1s.
-            let quet = min(t / 1.0, 1)
+        if hieuUng {
+            TimelineView(.animation(minimumInterval: 1.0 / 60)) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: Self.chuKy)
+                // Lắc vé 0 → 0,6s đầu chu kỳ, tắt dần.
+                let lac = t < 0.6 ? sin(t / 0.6 * .pi * 4) * 14 * (1 - t / 0.6) : 0
+                // Nút "Chọn" đập nhẹ liên tục.
+                let dap = 1 + 0.05 * sin(t / Self.chuKy * .pi * 4)
+                // Vệt sáng quét 0 → 1s.
+                let quet = min(t / 1.0, 1)
+                the(lac: lac, dap: dap, quet: quet)
+            }
+        } else {
+            the(lac: 0, dap: 1, quet: 0)
+        }
+    }
 
+    private func the(lac: Double, dap: Double, quet: Double) -> some View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
@@ -96,7 +106,6 @@ struct BannerCamNoiBat: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Self.cam.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 3])))
-        }
     }
 }
 
