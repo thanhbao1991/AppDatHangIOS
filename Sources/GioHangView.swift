@@ -390,7 +390,8 @@ struct GioHangView: View {
         guard Prefs.isLoggedIn else { return nil }
         let giamHienCo = cart.vouchersHienThi.map { cart.soTienGiam($0) }.max() ?? 0
         let ungVien = cart.vouchers.filter {
-            $0.loaiGiam != "PhanTram" && $0.soTienGiam > giamHienCo && !cart.voucherDuDieuKien($0)
+            // >= (chủ quán 13/11/2026): giảm bằng voucher đang có vẫn gợi ý — cùng số giảm nhưng được ly lớn hơn.
+            $0.loaiGiam != "PhanTram" && $0.soTienGiam >= giamHienCo && !cart.voucherDuDieuKien($0)
         }
         let items = cart.itemsApDungVoucher
         func thay(_ s: String, _ size: String, _ tien: Double, _ mon: String) -> String {
