@@ -350,12 +350,13 @@ struct SettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // Chủ quán 13/11/2026: cùng kiểu thẻ cam "Nạp Xu" ở thẻ Ví Xu, nút "Thanh toán".
             Button { congNoTraNgay = true; showCongNoHienTai = true } label: {
-                Label("Thanh toán công nợ", systemImage: "qrcode")
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
+                BannerCamNoiBat(icon: "qrcode", tieuDe: "Thanh toán công nợ",
+                                phu: "Thanh toán nhanh chóng", nut: "Thanh toán", iconNut: "qrcode")
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(.gradientProminent)
+            .buttonStyle(.plain)
         }
         .tkThe(dem: 14)
         .navigationDestination(isPresented: $showCongNoHienTai) { LichSuCongNoView(moThanhToanNgay: congNoTraNgay) }
