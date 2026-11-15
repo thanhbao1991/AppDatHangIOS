@@ -19,7 +19,6 @@ struct AnhMonView: View {
     var body: some View {
         let _ = themeTick
         content
-            .id(themeTick)
             .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in themeTick += 1 }
     }
 

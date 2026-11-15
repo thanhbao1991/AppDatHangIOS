@@ -25,12 +25,12 @@ struct MainTabView: View {
     @State private var showTaiKhoanBaoMat = false
     @State private var showLogin = false
     @StateObject private var deepLinkRouter = DeepLinkRouter.shared
-    #if DEV_LOGIN
-    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại theo màu dịp lễ (Theme.primary) khi
-    /// SettingsView bắn .christmasPreviewToggled — SeasonalEvent.active là static var, không tự kích
-    /// hoạt lại body.
+    /// Đổi giá trị để buộc body vẽ lại theo màu dịp lễ (Theme.primary) khi .christmasPreviewToggled bắn
+    /// (SeasonalEvent.load đổi dịp, hoặc xem trước ở bản dev) — SeasonalEvent.active là static var.
+    /// PHẢI được ĐỌC trong body (`let _ =` đầu body): SwiftUI chỉ vẽ lại khi @State được body đọc — trước
+    /// 15/11/2026 chỉ tăng mà không đọc nên đổi dịp lễ phải chuyển tab mới thấy (cả bản khách, vì onReceive
+    /// từng chỉ có ở DEV_LOGIN).
     @State private var seasonalPreviewTick = 0
-    #endif
 
     /// true khi trang Thanh toán (CheckoutView) đang mở ở tab Thực đơn HOẶC Giỏ hàng (2 chỗ duy nhất
     /// có thể push route .checkout, xem navigationDestination bên dưới) — dùng để ẩn tabBar dưới cùng.
@@ -50,6 +50,7 @@ struct MainTabView: View {
     }
 
     var body: some View {
+        let _ = seasonalPreviewTick
         VStack(spacing: 0) {
             Group {
                 switch selectedTab {
@@ -112,7 +113,10 @@ struct MainTabView: View {
             .tint(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Đăng nhập/đăng xuất → dựng lại nội dung tab (tải lại giá riêng, đơn hàng...) nhưng giữ giỏ hàng.
-            .id(isLoggedIn)
+            // Đổi dịp lễ (seasonalPreviewTick — chỉ tăng khi dịp THẬT SỰ đổi, xem SeasonalEvent.load) cũng dựng
+            // lại: nhiều view con (SearchBar, banner, thẻ...) tự đọc Theme.primary mà tham số không đổi nên
+            // SwiftUI bỏ qua vẽ lại → trước đây phải chuyển tab mới thấy màu lễ.
+            .id("\(isLoggedIn)|\(seasonalPreviewTick)")
 
             // Ẩn hẳn thanh tab dưới cùng khi đang ở trang Thanh toán (CheckoutView) — khớp Shopee:
             // checkout là luồng riêng tách biệt, không cho lỡ tay chuyển tab giữa chừng khi đang điền
@@ -128,11 +132,9 @@ struct MainTabView: View {
         .onReceive(NotificationCenter.default.publisher(for: .yeuCauDangNhap)) { _ in
             if !isLoggedIn { showLogin = true }
         }
-        #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
             seasonalPreviewTick += 1
         }
-        #endif
         .onChange(of: isLoggedIn) { loggedIn in
             if loggedIn {
                 showLogin = false

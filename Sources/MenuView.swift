@@ -38,11 +38,9 @@ struct MenuView: View {
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
     @State private var giaRiengMap: [String: Double] = [:]
-    #if DEV_LOGIN
-    /// Không tự dùng, chỉ đổi giá trị để buộc body vẽ lại khi SettingsView bắn .christmasPreviewToggled
-    /// (SeasonalEvent.active là static var, không tự kích hoạt lại body).
+    /// Buộc body vẽ lại khi .christmasPreviewToggled bắn (SeasonalEvent.active là static var) — PHẢI đọc
+    /// trong body (`let _ =` đầu body), xem ghi chú cùng tên ở MainTabView.
     @State private var seasonalPreviewTick = 0
-    #endif
     /// Màn chúc mừng quà đầu tháng (hạng, Top shipper) — hiện tới khi bấm "Nhận ngay" (ChucMungHang).
 
 
@@ -171,6 +169,7 @@ struct MenuView: View {
     }
 
     var body: some View {
+        let _ = seasonalPreviewTick
         VStack(spacing: 0) {
             // Thanh tìm kiếm gradient tràn lên status bar — khớp DaySearchBar(tinted: true) của
             // tab Hoá đơn bên AppQuanLyIOS, thay .searchable() hệ thống (khác style, thụt xuống
@@ -290,11 +289,9 @@ struct MenuView: View {
         }
         .task { if sanPhams.isEmpty { await load() } }
         .task { await SeasonalEvent.load() }
-        #if DEV_LOGIN
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
             seasonalPreviewTick += 1
         }
-        #endif
         // Màn chúc mừng quà đầu tháng đã chuyển lên ContentView (06/11/2026) — hiện ở mọi tab.
         .sheet(item: $picking) { sp in
             ProductPickerSheet(

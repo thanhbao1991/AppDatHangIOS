@@ -279,6 +279,7 @@ enum SeasonalEvent {
         let env = await APIClient.shared.getDipLeHienThi()
         // Lỗi mạng: giữ nguyên trạng thái cũ — nhất là KHÔNG đổi icon (hiểu nhầm "hết dịp" → popup vô cớ).
         guard env.isSuccess, let kq = env.data else { return }
+        let doiDip = kq.giaoDien != dipLe
         dipLe = kq.giaoDien
         theme = kq.giaoDien.flatMap { SeasonalTheme(ma: $0.ma) }
         if theme != nil, let d = dipLe, let luu = try? JSONEncoder().encode(d) {
@@ -289,7 +290,8 @@ enum SeasonalEvent {
         maIcon = kq.maIcon
         giuIcon = kq.giuIcon
         Theme.applyNavBarAppearance()
-        NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil)
+        // load() chạy mỗi lần mở tab Thực đơn — chỉ báo vẽ lại khi dịp thật sự đổi.
+        if doiDip { NotificationCenter.default.post(name: .christmasPreviewToggled, object: nil) }
         // Ảnh màn chào tải ngầm khi dịp vào cửa sổ giao diện (xem ManChaoCache) — cold launch ngày đầu thì
         // ContentView chờ tải xong (tối đa vài giây) rồi mới hiện màn chào.
         // Dịp đang có icon (sớm hơn giao diện ~5 ngày): tải sẵn ngầm, không chờ.
