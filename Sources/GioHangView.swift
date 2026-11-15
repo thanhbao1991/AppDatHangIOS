@@ -437,12 +437,7 @@ struct GioHangView: View {
         // Dòng giỏ có thể không mang hinhAnh (giỏ lưu từ bản cũ, "Đặt lại" từ hoá đơn cũ) — rơi về
         // ảnh trong catalog, khớp với sheet sửa món vốn đã dùng SanPham thật từ catalog.
         let sp = sanPham(for: item)
-        if let hinhAnh = item.hinhAnh ?? sp?.hinhAnh, let url = URL(string: hinhAnh) {
-            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 10))
-        } else {
-            AnhMonPlaceholder(width: 56, height: 56)
-        }
+        AnhMonView(hinhAnh: item.hinhAnh ?? sp?.hinhAnh, hinhAnhCat: sp?.hinhAnhCat, width: 56, height: 56, cornerRadius: 10)
     }
 
     /// Nhóm chứa thuốc lá/sinh tố/đá xay — cần cho ProductPickerSheet lúc sửa, khớp y hệt logic bên

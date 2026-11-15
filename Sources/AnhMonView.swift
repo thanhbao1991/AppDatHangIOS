@@ -1,0 +1,50 @@
+import SwiftUI
+import UIKit
+
+/// Ảnh món ở danh sách/thẻ: món có ảnh ly TÁCH NỀN (hinhAnhCat — PNG/WebP trong suốt do backend phục vụ,
+/// xem AnhMonCat.cs) thì app TỰ VẼ nền theo màu theme hiện tại (màu hạng, hoặc màu dịp lễ khi đang lễ) rồi
+/// đặt ly lên — đổi theme là nền đổi theo, không cần chụp/ghép lại ảnh. Món không có ảnh tách nền thì giữ
+/// như cũ: ảnh JPEG (hinhAnh), chưa có hình thì logo (AnhMonPlaceholder).
+struct AnhMonView: View {
+    let hinhAnh: String?
+    let hinhAnhCat: String?
+    let width: CGFloat
+    let height: CGFloat
+    var cornerRadius: CGFloat = 12
+
+    var body: some View {
+        if let cat = hinhAnhCat, let url = URL(string: cat) {
+            ZStack {
+                Self.nenTheoTheme
+                CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
+                    .padding(min(width, height) * 0.06)
+            }
+            .frame(width: width, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else if let hinhAnh, let url = URL(string: hinhAnh) {
+            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+                .frame(width: width, height: height)
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else {
+            AnhMonPlaceholder(width: width, height: height, cornerRadius: cornerRadius)
+        }
+    }
+
+    /// Radial: tâm sáng (màu theme pha trắng) → mép đậm (primaryDark) — cùng kiểu nền teal "E" đã duyệt
+    /// cho ảnh JPEG. Theme.primary/primaryDark là computed theo hạng + dịp lễ nên mỗi lần vẽ lấy giá trị mới.
+    private static var nenTheoTheme: some View {
+        GeometryReader { geo in
+            RadialGradient(colors: [Theme.primary.pha(trang: 0.38), Theme.primaryDark],
+                           center: .center, startRadius: 0, endRadius: max(geo.size.width, geo.size.height) * 0.85)
+        }
+    }
+}
+
+private extension Color {
+    /// Pha màu với trắng (0 = giữ nguyên, 1 = trắng).
+    func pha(trang t: CGFloat) -> Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return Color(red: r + (1 - r) * t, green: g + (1 - g) * t, blue: b + (1 - b) * t)
+    }
+}

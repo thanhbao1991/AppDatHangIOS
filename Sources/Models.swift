@@ -85,6 +85,8 @@ struct SanPham: Decodable, Identifiable {
     let khongLenStore: Bool
     /// Nhân viên đánh dấu thủ công qua Desktop — hiện trong dải "Món quán đề xuất" đầu tab Thực đơn.
     let noiBat: Bool
+    /// Ảnh ly tách nền (app tự vẽ nền theo theme, xem AnhMonView) — nil nếu món chưa có.
+    var hinhAnhCat: String? = nil
 }
 
 struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }

@@ -449,12 +449,7 @@ struct MenuView: View {
         HStack(spacing: 12) {
             Button { picking = item } label: {
                 HStack(spacing: 12) {
-                    if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                            .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    } else {
-                        AnhMonPlaceholder(width: 56, height: 56)
-                    }
+                    AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.ten)
                             .font(.system(size: 15, weight: .semibold))
@@ -561,12 +556,7 @@ struct MenuView: View {
                         ForEach(noiBatSanPhams) { item in
                             Button { picking = item } label: {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    if let hinhAnh = item.hinhAnh, let url = URL(string: hinhAnh) {
-                                        CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                            .frame(width: cardWidth, height: 90).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                    } else {
-                                        AnhMonPlaceholder(width: cardWidth, height: 90)
-                                    }
+                                    AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: cardWidth, height: 90)
                                     Text(item.ten)
                                         .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(.primary)
@@ -835,9 +825,8 @@ struct ProductPickerSheet: View {
             NavigationStack {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .top) {
-                        if let hinhAnh = sanPham.hinhAnh, let url = URL(string: hinhAnh) {
-                            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
-                                .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        if sanPham.hinhAnh != nil || sanPham.hinhAnhCat != nil {
+                            AnhMonView(hinhAnh: sanPham.hinhAnh, hinhAnhCat: sanPham.hinhAnhCat, width: 56, height: 56)
                         }
                         VStack(alignment: .leading, spacing: 8) {
                             Text(sanPham.ten).font(.headline)
