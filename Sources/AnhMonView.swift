@@ -19,6 +19,7 @@ struct AnhMonView: View {
     var body: some View {
         let _ = themeTick
         content
+            .id(themeTick)
             .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in themeTick += 1 }
     }
 
@@ -26,7 +27,7 @@ struct AnhMonView: View {
     private var content: some View {
         if let cat = hinhAnhCat, let url = URL(string: cat) {
             ZStack {
-                Self.nenTheoTheme
+                nen
                 CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
                     .padding(min(width, height) * 0.06)
             }
@@ -42,12 +43,11 @@ struct AnhMonView: View {
     }
 
     /// Radial: tâm sáng (màu theme pha trắng) → mép đậm (primaryDark) — cùng kiểu nền teal "E" đã duyệt
-    /// cho ảnh JPEG. Theme.primary/primaryDark là computed theo hạng + dịp lễ nên mỗi lần vẽ lấy giá trị mới.
-    private static var nenTheoTheme: some View {
-        GeometryReader { geo in
-            RadialGradient(colors: [Theme.primary.pha(trang: 0.38), Theme.primaryDark],
-                           center: .center, startRadius: 0, endRadius: max(geo.size.width, geo.size.height) * 0.85)
-        }
+    /// cho ảnh JPEG. Màu đọc NGAY trong body (không giấu trong closure của GeometryReader — closure không
+    /// bắt biến nào bị SwiftUI coi là "không đổi" nên bỏ qua vẽ lại khi theme đổi).
+    private var nen: some View {
+        RadialGradient(colors: [Theme.primary.pha(trang: 0.38), Theme.primaryDark],
+                       center: .center, startRadius: 0, endRadius: max(width, height) * 0.85)
     }
 }
 
