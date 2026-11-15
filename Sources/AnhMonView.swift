@@ -12,7 +12,18 @@ struct AnhMonView: View {
     let height: CGFloat
     var cornerRadius: CGFloat = 12
 
+    /// Theme.primary là static computed (không @Published) và các tham số của view này không đổi khi đổi theme
+    /// → SwiftUI bỏ qua vẽ lại. Tự nghe .christmasPreviewToggled (bắn khi dịp lễ/theme đổi) rồi đổi tick để vẽ lại ngay.
+    @State private var themeTick = 0
+
     var body: some View {
+        let _ = themeTick
+        content
+            .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in themeTick += 1 }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if let cat = hinhAnhCat, let url = URL(string: cat) {
             ZStack {
                 Self.nenTheoTheme
