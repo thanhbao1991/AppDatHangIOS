@@ -327,6 +327,19 @@ enum SeasonalEvent {
         UserDefaults.standard.set("\(theme.maDaiDien)|\(homNay())", forKey: khoaSplashDaXem)
     }
 
+    /// Thời gian màn chào hiện rõ (giây) — chủ quán 2026-11-16: lần đầu của mỗi dịp 1,5s, mỗi lần sau bớt 0,25s, thấp nhất
+    /// 0,75s (1,5 → 1,25 → 1,0 → 0,75 → 0,75…). Đếm theo dịp nên dịp mới lại bắt đầu từ 1,5s. Gọi 1 lần lúc màn chào
+    /// bắt đầu hiện — hàm tự cộng số lần. Xem trước (DEV) luôn 1,5s, không đếm.
+    static func layThoiGianSplashVaDem(_ theme: SeasonalTheme) -> Double {
+        #if DEV_LOGIN
+        if previewOverride != nil { return 1.5 }
+        #endif
+        let khoa = "seasonalSplash.soLan.\(theme.maDaiDien)"
+        let soLanTruoc = UserDefaults.standard.integer(forKey: khoa)
+        UserDefaults.standard.set(soLanTruoc + 1, forKey: khoa)
+        return max(1.5 - 0.25 * Double(soLanTruoc), 0.75)
+    }
+
     /// Icon đổi SAU màn chào dịp lễ (chủ quán 2026-11-07: bỏ đổi icon theo lịch server, chỉ theo bản cập nhật + đổi khi
     /// màn chào hiện mà icon chưa khớp dịp). Dịp không đổi icon (doiIcon false) thì giữ nguyên. iOS hiện popup đổi icon —
     /// đúng lúc khách vừa thấy màn chào nên có lý do. Giãn ≥7 ngày giữa 2 lần đổi (AppIconSwitcher).
