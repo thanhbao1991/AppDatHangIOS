@@ -579,9 +579,9 @@ struct CheckoutView: View {
                     Text(formatTien(conLaiPhaiTra)).font(.system(size: 18, weight: .bold))
                 }
                 Spacer()
-                // 17/11/2026 (chủ quán duyệt): bỏ bảng "Xác nhận đặt hàng" — nhắc lại đúng màn này, bấm là đặt luôn.
+                // 17/11/2026: chủ quán GIỮ bảng "Xác nhận đặt hàng" — khách xem lại trước khi đặt.
                 Button {
-                    Task { await datHang() }
+                    showXacNhan = true
                 } label: {
                     if loading { ProgressView().tint(.white) } else { Text(nutDatText).fontWeight(.bold) }
                 }
