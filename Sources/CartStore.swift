@@ -54,6 +54,7 @@ final class CartStore: ObservableObject {
     @Published private(set) var voucherChuaDung: [VoucherCuaToi] = []
     /// Thứ tự nhóm trên sheet "Chọn voucher" do backend quyết định (dungDuoc/chuaDung/thieuDieuKien).
     @Published private(set) var thuTuNhomVoucher: [String] = []
+    @Published private(set) var thuTuIdVoucher: [String] = []
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
     /// SanPhamId món không pha chế (nước lon, ăn vặt, nhóm Khác...) — voucher bỏ qua hẳn các dòng này,
@@ -252,11 +253,14 @@ final class CartStore: ObservableObject {
         }
         uuDaiLoaded = true
         async let viTask: KhachHangVi? = APIClient.shared.getVi()
+        // 17/11/2026 (chủ quán: "load khá chậm để hiển thị banner"): hiện ngay danh sách voucher lần trước lưu trên máy,
+        // server trả về thì thay (lỗi mạng thì giữ bản cũ).
+        if vouchers.isEmpty, let cu = Self.docVoucherChonDaLuu() { apDungVoucherChon(cu) }
         async let voucherTask: VoucherChon? = APIClient.shared.getVoucherChon()
         async let spTask: [String] = APIClient.shared.getSanPhamDaTungDat()
         async let loaiTruTask: [String] = APIClient.shared.getSanPhamKhongApDungVoucher()
         // 09/11/2026: voucher hiện trước, không chờ /vi (API chậm nhất).
-        apDungVoucherChon(await voucherTask)
+        if let moi = await voucherTask { apDungVoucherChon(moi); Self.luuVoucherChon(moi) }
         sanPhamDaTungDat = await spTask
         spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
         validateSelectedVoucher()
@@ -267,13 +271,29 @@ final class CartStore: ObservableObject {
     /// nút "Thử tải lại" ở VoucherPickerSheet khi lần tải đầu bị rớt mạng giữa chừng (feedback
     /// 2026-09-28: sheet trắng tinh không rõ đang lỗi hay thật sự hết voucher, xem VoucherPickerSheet).
     func reloadVouchers() async {
-        apDungVoucherChon(await APIClient.shared.getVoucherChon())
+        guard let moi = await APIClient.shared.getVoucherChon() else { return }
+        apDungVoucherChon(moi)
+        Self.luuVoucherChon(moi)
     }
 
-    /// Server lỗi → để trống (sheet hiện nút "Thử tải lại").
-    private func apDungVoucherChon(_ kq: VoucherChon?) {
-        vouchers = kq?.khaDung ?? []
-        voucherChuaDung = kq?.chuaDung ?? []
-        thuTuNhomVoucher = kq?.thuTuNhom ?? []
+    private func apDungVoucherChon(_ kq: VoucherChon) {
+        vouchers = kq.khaDung
+        voucherChuaDung = kq.chuaDung
+        thuTuNhomVoucher = kq.thuTuNhom
+        thuTuIdVoucher = kq.thuTuId ?? []
+        validateSelectedVoucher()
+    }
+
+    /// Lưu theo tài khoản (đổi tài khoản không thấy voucher của người trước). Chỉ để hiện nhanh — đặt đơn server vẫn kiểm lại.
+    private static func khoaVoucherChon() -> String? { Prefs.khachHangId.map { "voucherChon_\($0)" } }
+
+    private static func luuVoucherChon(_ kq: VoucherChon) {
+        guard let khoa = khoaVoucherChon(), let data = try? JSONEncoder().encode(kq) else { return }
+        UserDefaults.standard.set(data, forKey: khoa)
+    }
+
+    private static func docVoucherChonDaLuu() -> VoucherChon? {
+        guard let khoa = khoaVoucherChon(), let data = UserDefaults.standard.data(forKey: khoa) else { return nil }
+        return try? JSONDecoder().decode(VoucherChon.self, from: data)
     }
 }

@@ -135,7 +135,7 @@ struct DipLeHienThi: Decodable, Equatable {
 
 /// Voucher khả dụng cho khách hiện tại — chỉ những cái ĐANG đủ điều kiện (xem
 /// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
-struct Voucher: Decodable, Identifiable, Equatable {
+struct Voucher: Codable, Identifiable, Equatable {
     let id: String
     let ma: String
     let ten: String
@@ -208,13 +208,15 @@ struct Voucher: Decodable, Identifiable, Equatable {
 /// CheckoutView. Xem DatHangService.GetVoucherCuaToiAsync.
 /// GET /dat-hang/voucher/chon — sheet "Chọn voucher": thứ tự nhóm, thứ tự voucher và dòng lý do do backend quyết định
 /// (chủ quán 2026-11-17: đổi thứ tự không phải đẩy app). Xem VoucherChonDto bên Backend.
-struct VoucherChon: Decodable {
+struct VoucherChon: Codable {
     var thuTuNhom: [String] = []
+    /// Thứ tự toàn bộ voucher (Id) — dùng khi thuTuNhom = ["tatCa"] (không chia nhóm, xếp đúng thứ tự kéo-thả ở AppQuanLyIOS).
+    var thuTuId: [String]?
     var khaDung: [Voucher] = []
     var chuaDung: [VoucherCuaToi] = []
 }
 
-struct VoucherCuaToi: Decodable, Identifiable {
+struct VoucherCuaToi: Codable, Identifiable {
     let id: String
     var thuTu: Int?
     let ma: String

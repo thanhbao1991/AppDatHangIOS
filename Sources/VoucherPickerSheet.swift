@@ -12,6 +12,8 @@ struct VoucherPickerSheet: View {
     /// Thứ tự nhóm do backend quyết định (CartStore.thuTuNhomVoucher): "dungDuoc", "chuaDung", "thieuDieuKien". Thiếu
     /// nhóm nào thì nhóm đó nối cuối theo thứ tự mặc định.
     var thuTuNhom: [String] = []
+    /// Thứ tự toàn bộ voucher (Id) khi thuTuNhom = ["tatCa"] — xem VoucherChon.thuTuId.
+    var thuTuId: [String] = []
     let duDieuKien: (Voucher) -> Bool
     /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
     /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
@@ -36,7 +38,25 @@ struct VoucherPickerSheet: View {
     }
     private var thieuDieuKien: [Voucher] { vouchers.filter { !duDieuKien($0) } }
 
+    private enum Dong: Identifiable {
+        case khaDung(Voucher), chuaDung(VoucherCuaToi)
+        var id: String {
+            switch self { case .khaDung(let v): return v.id; case .chuaDung(let v): return v.id }
+        }
+    }
+
+    /// Không chia nhóm (server gửi "tatCa"): mọi voucher xếp đúng thứ tự kéo-thả ở AppQuanLyIOS; voucher lạ (không có trong
+    /// thuTuId) xuống cuối, giữ thứ tự cũ.
+    private var tatCaTheoThuTu: [Dong] {
+        let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+        let tatCa = vouchers.map(Dong.khaDung) + voucherChuaDung.map(Dong.chuaDung)
+        return tatCa.enumerated()
+            .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
+            .map(\.element)
+    }
+
     private var nhomHienThi: [String] {
+        if thuTuNhom.contains("tatCa") { return ["tatCa"] }
         let macDinh = ["dungDuoc", "chuaDung", "thieuDieuKien"]
         let tuServer = thuTuNhom.filter(macDinh.contains)
         return tuServer + macDinh.filter { !tuServer.contains($0) }
@@ -187,6 +207,13 @@ struct VoucherPickerSheet: View {
                     switch nhom {
                     case "dungDuoc": ForEach(dungDuocNgay) { dongVoucher($0) }
                     case "thieuDieuKien": ForEach(thieuDieuKien) { dongVoucher($0) }
+                    case "tatCa":
+                        ForEach(tatCaTheoThuTu) { d in
+                            switch d {
+                            case .khaDung(let v): dongVoucher(v)
+                            case .chuaDung(let v): dongVoucherChuaDung(v)
+                            }
+                        }
                     default: ForEach(voucherChuaDung) { dongVoucherChuaDung($0) }
                     }
                 }
