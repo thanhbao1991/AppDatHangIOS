@@ -446,6 +446,12 @@ actor APIClient {
         return env.isSuccess ? (env.data ?? []) : []
     }
 
+    /// Sheet "Chọn voucher" — nil khi lỗi mạng/server.
+    func getVoucherChon() async -> VoucherChon? {
+        let env: ApiEnvelope<VoucherChon> = await decode("/dat-hang/voucher/chon")
+        return env.isSuccess ? env.data : nil
+    }
+
     /// Toàn bộ voucher của tài khoản (kể cả đã dùng) cho tab Ưu đãi.
     func getVoucherCuaToi() async -> [VoucherCuaToi] {
         let env: ApiEnvelope<[VoucherCuaToi]> = await decode("/dat-hang/voucher/cua-toi")

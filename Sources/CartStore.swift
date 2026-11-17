@@ -52,9 +52,8 @@ final class CartStore: ObservableObject {
     /// Voucher CHƯA dùng được (chưa tới ngày / chưa đủ hạng-điều kiện) — chỉ để hiện thêm ở sheet "Chọn voucher" cho khách
     /// biết có gì đang chờ (chủ quán 2026-11-17: "hiển thị tất cả voucher, trừ voucher đã sử dụng"). Không chọn được.
     @Published private(set) var voucherChuaDung: [VoucherCuaToi] = []
-    /// Ngày sinh khách — để voucher sinh nhật ở sheet "Chọn voucher" nhắc nhập ngày sinh / hiện "Dùng được từ 01/MM".
-    /// nil = chưa tải được (khi đó dùng lý do server trả).
-    @Published private(set) var sinhNhatInfo: SinhNhatInfo?
+    /// Thứ tự nhóm trên sheet "Chọn voucher" do backend quyết định (dungDuoc/chuaDung/thieuDieuKien).
+    @Published private(set) var thuTuNhomVoucher: [String] = []
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
     /// SanPhamId món không pha chế (nước lon, ăn vặt, nhóm Khác...) — voucher bỏ qua hẳn các dòng này,
@@ -130,7 +129,7 @@ final class CartStore: ObservableObject {
         vi = nil
         vouchers = []
         voucherChuaDung = []
-        sinhNhatInfo = nil
+        thuTuNhomVoucher = []
         sanPhamDaTungDat = []
         uuDaiLoaded = false
     }
@@ -253,12 +252,11 @@ final class CartStore: ObservableObject {
         }
         uuDaiLoaded = true
         async let viTask: KhachHangVi? = APIClient.shared.getVi()
-        async let voucherTask: [Voucher] = APIClient.shared.getVoucherKhaDung()
+        async let voucherTask: VoucherChon? = APIClient.shared.getVoucherChon()
         async let spTask: [String] = APIClient.shared.getSanPhamDaTungDat()
         async let loaiTruTask: [String] = APIClient.shared.getSanPhamKhongApDungVoucher()
         // 09/11/2026: voucher hiện trước, không chờ /vi (API chậm nhất).
-        vouchers = await voucherTask
-        Task { await taiVoucherChuaDung() }
+        apDungVoucherChon(await voucherTask)
         sanPhamDaTungDat = await spTask
         spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
         validateSelectedVoucher()
@@ -269,24 +267,13 @@ final class CartStore: ObservableObject {
     /// nút "Thử tải lại" ở VoucherPickerSheet khi lần tải đầu bị rớt mạng giữa chừng (feedback
     /// 2026-09-28: sheet trắng tinh không rõ đang lỗi hay thật sự hết voucher, xem VoucherPickerSheet).
     func reloadVouchers() async {
-        vouchers = await APIClient.shared.getVoucherKhaDung()
-        await taiVoucherChuaDung()
+        apDungVoucherChon(await APIClient.shared.getVoucherChon())
     }
 
-    /// Gộp voucher của tài khoản chưa dùng (cua-toi, bỏ daSuDung) + voucher hệ thống chưa đủ điều kiện (sap-co), bỏ
-    /// những cái đã có trong `vouchers` (dùng được → hiện bình thường) và trùng id.
-    private func taiVoucherChuaDung() async {
-        async let cuaToiTask = APIClient.shared.getVoucherCuaToi()
-        async let sapCoTask = APIClient.shared.getVoucherSapCo()
-        async let sinhNhatTask = APIClient.shared.getSinhNhat()
-        let cuaToi = await cuaToiTask, sapCo = await sapCoTask
-        if let sn = await sinhNhatTask { sinhNhatInfo = sn; BoNhoTam.ngaySinhInfo = sn }
-        var daCo = Set(vouchers.map(\.id))
-        var kq: [VoucherCuaToi] = []
-        for v in cuaToi.filter({ !$0.daSuDung }) + sapCo where !daCo.contains(v.id) {
-            daCo.insert(v.id)
-            kq.append(v)
-        }
-        voucherChuaDung = kq
+    /// Server lỗi → để trống (sheet hiện nút "Thử tải lại").
+    private func apDungVoucherChon(_ kq: VoucherChon?) {
+        vouchers = kq?.khaDung ?? []
+        voucherChuaDung = kq?.chuaDung ?? []
+        thuTuNhomVoucher = kq?.thuTuNhom ?? []
     }
 }

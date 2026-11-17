@@ -9,8 +9,9 @@ struct VoucherPickerSheet: View {
     /// Voucher chưa dùng được (chưa tới ngày / chưa đủ hạng-điều kiện), KHÔNG gồm voucher đã dùng — hiện dưới cùng để
     /// khách biết có gì đang chờ (chủ quán 2026-11-17). Bấm chỉ hiện lý do, không chọn được. Xem CartStore.voucherChuaDung.
     var voucherChuaDung: [VoucherCuaToi] = []
-    /// Ngày sinh khách (CartStore.sinhNhatInfo) — cho dòng nhắc của voucher sinh nhật. nil = chưa tải được.
-    var sinhNhatInfo: SinhNhatInfo? = nil
+    /// Thứ tự nhóm do backend quyết định (CartStore.thuTuNhomVoucher): "dungDuoc", "chuaDung", "thieuDieuKien". Thiếu
+    /// nhóm nào thì nhóm đó nối cuối theo thứ tự mặc định.
+    var thuTuNhom: [String] = []
     let duDieuKien: (Voucher) -> Bool
     /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
     /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
@@ -28,52 +29,17 @@ struct VoucherPickerSheet: View {
     var onRetry: () async -> Void
     @State private var retrying = false
 
-    /// Voucher DÙNG ĐƯỢC NGAY lên trước, voucher chưa đủ điều kiện xuống dưới (feedback 2026-09-27) —
-    /// trong nhóm ĐÃ đủ điều kiện, giá trị giảm thực tế cho đơn hiện tại càng cao càng lên trên
-    /// (feedback tiếp theo cùng ngày).
-    ///
-    /// Nhóm CHƯA đủ điều kiện: voucher KHÔNG có ngưỡng đơn tối thiểu (topping/upsize/đặt lại...) lên
-    /// trước — không phụ thuộc khách mua thêm bao nhiêu tiền, chỉ cần đúng hành động là dùng được, nên
-    /// "gần đạt" hơn nhóm có ngưỡng. Trong đó xếp theo giá trị tham khảo giamToiDa/soTienGiam. Nhóm CÓ
-    /// ngưỡng xuống dưới, sắp theo ngưỡng THẤP nhất lên trước (đổi 2026-09-28, feedback: "nhìn không
-    /// có thứ tự gì") — voucher càng gần đạt ngưỡng càng đáng khuyến khích thêm món hơn. KHÔNG dùng
-    /// giaTriGiam(v) làm khoá cho nhóm ngưỡng vì hàm đó tính như đơn ĐÃ đạt ngưỡng (soTienGiamThucTe
-    /// không tự kiểm donToiThieu), nên nhiều voucher bậc thang (DON300K/500K/1000K) ra cùng 1 số tiền
-    /// giảm tại đơn hiện tại — trông như KHÔNG sắp xếp gì.
-    private var sortedVouchers: [Voucher] {
-        vouchers.sorted { a, b in
-            let okA = duDieuKien(a), okB = duDieuKien(b)
-            if okA != okB { return okA }
-            if okA { return giaTriGiam(a) > giaTriGiam(b) }
-            switch (a.donToiThieu, b.donToiThieu) {
-            case let (da?, db?): return da < db
-            case (.some, nil): return false
-            case (nil, .some): return true
-            case (nil, nil): return a.giaTriGiamThamKhao > b.giaTriGiamThamKhao
-            }
-        }
+    /// Thứ tự trong nhóm do backend quyết định (GET /voucher/chon, chủ quán 2026-11-17: đổi thứ tự không phải đẩy app) —
+    /// app chỉ tự xếp nhóm "dùng được ngay" theo số tiền giảm THẬT cho giỏ hiện tại (server không biết giỏ).
+    private var dungDuocNgay: [Voucher] {
+        vouchers.filter(duDieuKien).sorted { giaTriGiam($0) > giaTriGiam($1) }
     }
+    private var thieuDieuKien: [Voucher] { vouchers.filter { !duDieuKien($0) } }
 
-    /// Chưa tới ngày lên trước (ngày gần nhất trước — biết dịp nào tới trước), rồi tới voucher chưa đủ điều kiện.
-    private var voucherChuaDungSapXep: [VoucherCuaToi] {
-        let chuaToiNgay = voucherChuaDung.filter(\.chuaBatDau).sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") }
-        let conLai = voucherChuaDung.filter { !$0.chuaBatDau }.sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
-        return chuaToiNgay + conLai
-    }
-
-    /// Dòng lý do dưới thẻ voucher chưa dùng được. Voucher sinh nhật (chủ quán 2026-11-17): chưa nhập ngày sinh thì nhắc
-    /// nhập, có rồi thì "Dùng được từ 01/MM" (đầu tháng sinh nhật kế tiếp — voucher dùng trong cả tháng sinh nhật).
-    private func lyDoChuaDung(_ v: VoucherCuaToi) -> String {
-        if let tu = v.nhanSapDienRa { return "Dùng được từ " + String(tu.dropFirst(3)) + "." }
-        if v.laSinhNhat == true, let sinhNhatInfo {
-            guard let ns = sinhNhatInfo.ngaySinh, let thang = Int(ns.prefix(7).suffix(2)), (1...12).contains(thang) else {
-                return "Nhập ngày sinh ở tab Tài khoản để nhận quà sinh nhật."
-            }
-            return String(format: "Dùng được từ 01/%02d.", thang)
-        }
-        if let lyDo = v.lyDoChuaKhaDung, !lyDo.isEmpty { return lyDo }
-        if let hang = v.hangToiThieu, !hang.isEmpty { return "Cần hạng \(hang) trở lên." }
-        return "Chưa đủ điều kiện dùng."
+    private var nhomHienThi: [String] {
+        let macDinh = ["dungDuoc", "chuaDung", "thieuDieuKien"]
+        let tuServer = thuTuNhom.filter(macDinh.contains)
+        return tuServer + macDinh.filter { !tuServer.contains($0) }
     }
 
     var body: some View {
@@ -178,6 +144,38 @@ struct VoucherPickerSheet: View {
         }
     }
 
+    /// Voucher chưa dùng được (chưa tới ngày / chưa đủ hạng-điều kiện) — bấm chỉ hiện lý do. Dòng lý do = lyDoChuaKhaDung
+    /// server soạn sẵn (gồm cả nhắc nhập ngày sinh cho voucher sinh nhật).
+    private func dongVoucherChuaDung(_ v: VoucherCuaToi) -> some View {
+        let lyDo = v.lyDoChuaKhaDung ?? "Chưa đủ điều kiện dùng."
+        return cardRow {
+            Button {
+                huongDan = (v.ten, lyDo)
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    VoucherTicketCard(
+                        ten: v.ten, moTa: v.moTa, ma: v.ma,
+                        nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                        donToiThieu: v.donToiThieu,
+                        nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+                        applyDim: false,
+                        hangYeuCau: v.hangToiThieu
+                    )
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Image(systemName: "info.circle.fill").font(.system(size: 12))
+                        Text(lyDo)
+                            .font(.system(size: 12, weight: .semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .foregroundColor(Theme.xuTangChu)
+                    .padding(.leading, 6)
+                }
+                .padding(.horizontal).padding(.vertical, 6)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var voucherList: some View {
         List {
                 // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
@@ -185,37 +183,13 @@ struct VoucherPickerSheet: View {
                 // voucher đều phải ăn liền, không bắt bấm thêm 1 nút mới có hiệu lực). Hiện TẤT CẢ
                 // voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn để khách biết
                 // có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
-                // Thứ tự (chủ quán 2026-11-17): dùng được ngay → chưa tới ngày/chưa đủ điều kiện → thiếu tiền đơn (DON…K).
-                ForEach(sortedVouchers.filter(duDieuKien)) { dongVoucher($0) }
-                ForEach(voucherChuaDungSapXep) { v in
-                    cardRow {
-                        Button {
-                            huongDan = (v.ten, lyDoChuaDung(v))
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                VoucherTicketCard(
-                                    ten: v.ten, moTa: v.moTa, ma: v.ma,
-                                    nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
-                                    donToiThieu: v.donToiThieu,
-                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
-                                    applyDim: false,
-                                    hangYeuCau: v.hangToiThieu
-                                )
-                                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                    Image(systemName: "info.circle.fill").font(.system(size: 12))
-                                    Text(lyDoChuaDung(v))
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                .foregroundColor(Theme.xuTangChu)
-                                .padding(.leading, 6)
-                            }
-                            .padding(.horizontal).padding(.vertical, 6)
-                        }
-                        .buttonStyle(.plain)
+                ForEach(nhomHienThi, id: \.self) { nhom in
+                    switch nhom {
+                    case "dungDuoc": ForEach(dungDuocNgay) { dongVoucher($0) }
+                    case "thieuDieuKien": ForEach(thieuDieuKien) { dongVoucher($0) }
+                    default: ForEach(voucherChuaDung) { dongVoucherChuaDung($0) }
                     }
                 }
-                ForEach(sortedVouchers.filter { !duDieuKien($0) }) { dongVoucher($0) }
         }
         .cardListBackground()
         .popupHost { host in

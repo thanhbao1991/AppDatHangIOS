@@ -206,6 +206,14 @@ struct Voucher: Decodable, Identifiable, Equatable {
 
 /// Voucher của tài khoản cho tab Ưu đãi — CẢ đã dùng lẫn chưa, khác Voucher (chỉ còn dùng được) ở
 /// CheckoutView. Xem DatHangService.GetVoucherCuaToiAsync.
+/// GET /dat-hang/voucher/chon — sheet "Chọn voucher": thứ tự nhóm, thứ tự voucher và dòng lý do do backend quyết định
+/// (chủ quán 2026-11-17: đổi thứ tự không phải đẩy app). Xem VoucherChonDto bên Backend.
+struct VoucherChon: Decodable {
+    var thuTuNhom: [String] = []
+    var khaDung: [Voucher] = []
+    var chuaDung: [VoucherCuaToi] = []
+}
+
 struct VoucherCuaToi: Decodable, Identifiable {
     let id: String
     var thuTu: Int?
