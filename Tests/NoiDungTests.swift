@@ -6,9 +6,13 @@ final class NoiDungTests: XCTestCase {
     func test_coCauMacDinh() {
         for k in ["napXuGhiChu", "xoaTaiKhoanMoTa", "hangGhiChu", "hopQuaTaiTro", "chucMungHangTieuDe", "chucMungHangPhu", "chucMungTopTieuDe", "chucMungTopPhu",
                   "shipMienPhiGhiChu", "muaHoGiam", "muaHoGiuVoucher", "tangLuotQuaKhiHoanThanh", "napLanDauTieuDe",
-                  "napLanDauMoTa", "voucherKhongApDung", "donTinhHangGiaiThich", "sinhNhatDaNhan", "otpGhiChu",
+                  "voucherKhongApDung", "donTinhHangGiaiThich", "sinhNhatDaNhan",
                   "otpNhapMa", "qrNhacNoiDung", "napXuGiuNoiDung"] {
             XCTAssertFalse(NoiDung.text(k).isEmpty, k)
+        }
+        // 17/11/2026 (app gọn gàng): cố ý để trống → màn ẩn dòng đó.
+        for k in ["napLanDauMoTa", "otpGhiChu", "napXuBannerPhu"] {
+            XCTAssertEqual(NoiDung.text(k), "", k)
         }
         XCTAssertTrue(NoiDung.hopQuaTaiTro.contains("Apple"))
         XCTAssertEqual(NoiDung.text("khongCo"), "")
