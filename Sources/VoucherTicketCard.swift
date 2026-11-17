@@ -40,6 +40,10 @@ struct VoucherTicketCard: View {
     /// Đặt CUỐI danh sách tham số (không chen giữa) — Swift bắt buộc thứ tự argument tại nơi gọi khớp
     /// đúng thứ tự khai báo dù có default value, chen giữa đã gây lỗi biên dịch thật ở 1 nơi gọi cũ.
     var hangYeuCau: String? = nil
+    /// Hướng dẫn để dùng được voucher (sheet "Chọn voucher": "Thêm 55.000đ nữa là dùng được.", "Dùng được từ 20/11."…) —
+    /// vẽ TRONG thẻ, dải màu cuối khối phải (chủ quán 2026-11-17: để ngoài thẻ dễ nhầm sang thẻ dưới, rối mắt). Đặt cuối
+    /// danh sách tham số (xem ghi chú hangYeuCau).
+    var huongDan: String? = nil
 
     /// Card không bấm/dùng được lúc này — gộp 3 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
     private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil || forceMo) }
@@ -100,6 +104,25 @@ struct VoucherTicketCard: View {
     }
 
     private var rightBlock: some View {
+        VStack(spacing: 0) {
+            noiDungPhai
+            if let huongDan, !huongDan.isEmpty {
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    Image(systemName: "info.circle.fill").font(.system(size: 11))
+                    Text(huongDan)
+                        .font(.system(size: 11, weight: .semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .foregroundColor(Theme.xuTangChu)
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.xuTangChu.opacity(0.08))
+            }
+        }
+    }
+
+    private var noiDungPhai: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .top) {
                 Text(ten)

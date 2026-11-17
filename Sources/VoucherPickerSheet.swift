@@ -146,19 +146,10 @@ struct VoucherPickerSheet: View {
                         nhanGiam: v.nhanGiamGia,
                         nhanGiamToiDa: v.nhanGiamToiDa,
                         donToiThieu: v.donToiThieu,
-                        daChon: selected?.id == v.id
+                        daChon: selected?.id == v.id,
+                        // 11/11/2026: hiện LUÔN cách dùng; 17/11/2026: đưa vào TRONG thẻ (để ngoài dễ nhầm thẻ dưới).
+                        huongDan: ok ? nil : Self.cachDungNgan(lyDo(v))
                     )
-                    // 11/11/2026 (chủ quán): hiện LUÔN cách dùng dưới thẻ, không bắt bấm mới xem.
-                    if !ok {
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            Image(systemName: "info.circle.fill").font(.system(size: 12))
-                            Text(Self.cachDungNgan(lyDo(v)))
-                                .font(.system(size: 12, weight: .semibold))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .foregroundColor(Theme.xuTangChu)
-                        .padding(.leading, 6)
-                    }
                 }
                 .padding(.horizontal).padding(.vertical, 6)
             }
@@ -181,16 +172,9 @@ struct VoucherPickerSheet: View {
                         donToiThieu: v.donToiThieu,
                         nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
                         applyDim: false,
-                        hangYeuCau: v.hangToiThieu
+                        hangYeuCau: v.hangToiThieu,
+                        huongDan: lyDo
                     )
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Image(systemName: "info.circle.fill").font(.system(size: 12))
-                        Text(lyDo)
-                            .font(.system(size: 12, weight: .semibold))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .foregroundColor(Theme.xuTangChu)
-                    .padding(.leading, 6)
                 }
                 .padding(.horizontal).padding(.vertical, 6)
             }
