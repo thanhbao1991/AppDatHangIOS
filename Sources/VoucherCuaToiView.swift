@@ -1,85 +1,56 @@
 import SwiftUI
 
-/// Tab "Voucher" riêng — TÁCH ra khỏi tab Ưu đãi (2026-09-15, trước đó nằm chung trong 1 ô nhỏ ở
-/// UuDaiView) để voucher trang trọng hơn, mỗi voucher là 1 card riêng kiểu "vé" (tham khảo card mã
-/// giảm giá Shopee: khối giá trị giảm bên trái + đường đứt nét có khoét tròn ở giữa + thông tin bên
-/// phải), thay vì list rời rạc chữ-với-chữ trong 1 card chung.
-///
-/// 2026-09-26: từng thử đổi hẳn sang dòng chữ phẳng (bỏ VoucherTicketCard) nhưng nhìn không còn
-/// giống bản gốc (phản hồi thực tế kèm ảnh so sánh) — LẤY LẠI đúng VoucherTicketCard cũ.
-/// 2026-10-11: bỏ thanh tab TẤT CẢ/ĐANG CÓ/SẮP CÓ, gom thành 1 danh sách (đồng bộ Android).
+/// Tab "Voucher" — card kiểu vé (VoucherTicketCard). 17/11/2026 (chủ quán): làm GIỐNG sheet "Chọn voucher" cho gọn —
+/// cùng nguồn GET /voucher/chon (thứ tự kéo-thả ở AppQuanLyIOS, tên/mô tả đã bỏ mức giảm vì khối trái thẻ đã ghi, dòng
+/// hướng dẫn cam trong thẻ cho voucher chưa dùng được, không dòng mã). Khác sheet: không có giỏ hàng nên mọi voucher
+/// tài khoản dùng được đều xếp nhóm "dùng được"; voucher ĐÃ dùng vẫn hiện cuối (mờ, nhãn "Đã sử dụng") để khách xem lại.
 struct VoucherCuaToiView: View {
     var notificationBell: AnyView
     /// false khi nhúng trong UuDaiVoucherView (thanh tiêu đề do view cha vẽ).
     var showHeader: Bool = true
 
-    @State private var vouchers: [VoucherCuaToi] = []
-    @State private var voucherSapCo: [VoucherCuaToi] = []
+    @State private var chon: VoucherChon? = CartStore.docVoucherChonDaLuu()
+    @State private var cuaToi: [VoucherCuaToi] = []
     @State private var loading = true
+    @State private var huongDan: (ten: String, lyDo: String)?
 
-    /// Sắp theo LOẠI trước: voucher SoTien (giảm theo GIÁ TRỊ cố định) lên trên, sắp giảm dần theo
-    /// soTienGiam; voucher PhanTram (giảm theo %) xuống dưới, sắp giảm dần theo phanTramGiam. Đổi
-    /// 2026-09-29 (feedback "khả dụng trên/không khả dụng dưới, trong mỗi nhóm sắp theo giảm theo
-    /// giá trị ở trên, theo % ở dưới") — trước đó trộn chung 2 loại vào 1 tiêu chí quy đổi
-    /// (giaTriGiamThamKhao: PhanTram lấy trần giamToiDa) nên 1 voucher PhanTram trần cao có thể chen
-    /// vào giữa các voucher SoTien, không tách bạch rõ 2 loại. Dùng chung cho MỌI nhóm sắp theo "giá
-    /// trị" (khả dụng lẫn không khả dụng) — KHÔNG áp cho chuaToiNgay (nhóm đó cố tình sắp theo NGÀY
-    /// gần nhất, xem property riêng bên dưới).
-    private func sapXepGiaTriRoiPhanTram(_ list: [VoucherCuaToi]) -> [VoucherCuaToi] {
-        let soTien = list.filter { $0.loaiGiam != "PhanTram" }.sorted { $0.soTienGiam > $1.soTienGiam }
-        let phanTram = list.filter { $0.loaiGiam == "PhanTram" }.sorted { ($0.phanTramGiam ?? 0) > ($1.phanTramGiam ?? 0) }
-        return uuTienThuTu(soTien + phanTram)
-    }
-
-    /// Số thứ tự do quán tự đặt (Voucher.ThuTu): có số thì lên trước, nhỏ trước; chưa đặt giữ nguyên
-    /// thứ tự cũ phía sau. sorted của Swift KHÔNG ổn định nên phải tự ràng buộc theo vị trí ban đầu.
-    private func uuTienThuTu(_ list: [VoucherCuaToi]) -> [VoucherCuaToi] {
-        list.enumerated().sorted { a, b in
-            switch (a.element.thuTu, b.element.thuTu) {
-            case let (x?, y?): return x != y ? x < y : a.offset < b.offset
-            case (.some, nil): return true
-            case (nil, .some): return false
-            case (nil, nil): return a.offset < b.offset
+    private enum Dong: Identifiable {
+        case khaDung(Voucher), chuaDung(VoucherCuaToi), daDung(VoucherCuaToi)
+        var id: String {
+            switch self {
+            case .khaDung(let v): return v.id
+            case .chuaDung(let v), .daDung(let v): return v.id
             }
-        }.map(\.element)
+        }
     }
 
-    /// Khả dụng — xem sapXepGiaTriRoiPhanTram phía trên cho tiêu chí sắp xếp.
-    private var dangCo: [VoucherCuaToi] {
-        sapXepGiaTriRoiPhanTram(vouchers.filter { !$0.chuaBatDau && !$0.daSuDung })
-    }
-
-    /// Voucher "chưa tới ngày" (lễ tết còn xa) — server trả sẵn qua cờ chuaBatDau (dùng chung 1 cửa sổ
-    /// SoNgayHienTruoc/voucher, gom về 1 nguồn 2026-09-27, xem DatHangService.GetVoucherSapCoAsync).
-    /// Sắp theo NGÀY GẦN NHẤT lên trước (feedback 2026-09-27) — khác các voucher "không khả dụng"
-    /// khác: lễ tết cần biết dịp nào TỚI TRƯỚC để canh quay lại, không phải giảm nhiều hay ít.
-    private var chuaToiNgay: [VoucherCuaToi] {
-        uuTienThuTu(vouchers.filter { $0.chuaBatDau }
-            .sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") })
-    }
-
-    /// Đã dùng (KHÔNG tính voucher lễ tết chuaBatDau=true trùng lặp — vd voucher lặp hằng năm vừa
-    /// dùng xong năm nay vừa chờ năm sau, đã thuộc chuaToiNgay ở trên, tránh hiện 2 lần). Xem
-    /// sapXepGiaTriRoiPhanTram cho tiêu chí sắp xếp.
-    private var daDungKhongLeTet: [VoucherCuaToi] {
-        sapXepGiaTriRoiPhanTram(vouchers.filter { $0.daSuDung && !$0.chuaBatDau })
-    }
-
-    /// Chưa đủ điều kiện dù đã tới ngày — xem sapXepGiaTriRoiPhanTram cho tiêu chí sắp xếp.
-    private var voucherSapCoSapXep: [VoucherCuaToi] {
-        sapXepGiaTriRoiPhanTram(voucherSapCo)
-    }
-
-    /// ID các voucher "Sắp có" (gộp cả 2 lý do: chưa tới ngày + chưa đủ điều kiện) — dùng để làm MỜ
-    /// đúng những dòng này khi chúng xuất hiện gộp chung trong danh sách (voucherSapCo tự thân không
-    /// mang cờ daSuDung/chuaBatDau nào để VoucherTicketCard tự mờ qua nhanSapDienRa, phải đánh dấu từ
-    /// bên ngoài qua forceMo — chuaToiNgay thì tự có nhanSapDienRa nên không cần trong set này).
-    private var sapCoIds: Set<String> { Set(voucherSapCo.map(\.id)) }
-
-    /// Gộp 1 danh sách duy nhất (2026-10-11, bỏ thanh TẤT CẢ/ĐANG CÓ/SẮP CÓ theo feedback): khả dụng lên
-    /// đầu, chưa khả dụng (đã dùng/chưa tới ngày/chưa đủ điều kiện) dồn xuống dưới và mờ đi.
-    private var hienThi: [VoucherCuaToi] {
-        dangCo + uuTienThuTu(daDungKhongLeTet + chuaToiNgay + voucherSapCoSapXep)
+    /// Lấy lần lượt từng nhóm theo thuTuNhom server (như sheet "Chọn voucher"), mỗi nhóm giữ thứ tự kéo-thả (thuTuId).
+    /// Không có giỏ: "dungDuoc" = mọi voucher tài khoản dùng được; "thieuDieuKien" không có gì. Voucher đã dùng nối cuối.
+    private var hienThi: [Dong] {
+        let thuTuId = chon?.thuTuId ?? []
+        let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+        func xep(_ ds: [Dong]) -> [Dong] {
+            ds.enumerated()
+                .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
+                .map(\.element)
+        }
+        var conLai = xep((chon?.khaDung ?? []).map(Dong.khaDung) + (chon?.chuaDung ?? []).map(Dong.chuaDung))
+        let nhom = (chon?.thuTuNhom.isEmpty ?? true) ? ["dungDuoc", "chuaDung"] : chon!.thuTuNhom
+        var kq: [Dong] = []
+        for n in nhom + ["tatCa"] {
+            let lay: (Dong) -> Bool
+            switch n {
+            case "dungDuoc": lay = { if case .khaDung = $0 { return true } else { return false } }
+            case "chuaDung": lay = { if case .chuaDung = $0 { return true } else { return false } }
+            case "tatCa": lay = { _ in true }
+            default: continue
+            }
+            kq += conLai.filter(lay)
+            conLai.removeAll(where: lay)
+        }
+        let daCo = Set(kq.map(\.id))
+        let daDung = cuaToi.filter { $0.daSuDung && !$0.chuaBatDau && !daCo.contains($0.id) }.map(Dong.daDung)
+        return kq + xep(daDung)
     }
 
     var body: some View {
@@ -87,19 +58,16 @@ struct VoucherCuaToiView: View {
             if showHeader { TitleBar(title: "Voucher", icon: "ticket", centerTitle: true, trailing: notificationBell) }
 
             Group {
-                if loading {
+                if loading && hienThi.isEmpty {
                     fullScreenLoading()
                 } else if hienThi.isEmpty {
-                    // Bọc ScrollView để .refreshable hoạt động cả khi rỗng (không thì khách kẹt
-                    // "chưa có voucher" không vuốt xuống tải lại được).
+                    // Bọc ScrollView để .refreshable hoạt động cả khi rỗng.
                     ScrollView { emptyState }
                         .refreshable { await load() }
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(hienThi) { v in
-                                card(for: v)
-                            }
+                            ForEach(hienThi) { d in card(for: d) }
                         }
                         .padding(.horizontal)
                         .padding(.top, 12)
@@ -112,34 +80,48 @@ struct VoucherCuaToiView: View {
             .background(Theme.bg)
         }
         .task { await load() }
+        .alert(huongDan?.ten ?? "", isPresented: Binding(get: { huongDan != nil }, set: { if !$0 { huongDan = nil } })) {
+            Button("Đã hiểu") {}
+        } message: {
+            Text(huongDan?.lyDo ?? "")
+        }
     }
 
-    /// 2026-09-27: BỎ hẳn phần ghép "— Cần: ..." theo phản hồi (dòng lý do chưa mở khoá làm rối card,
-    /// nhãn "SẮP CÓ"/mờ card đã đủ ngụ ý "chưa dùng được") — chỉ còn hiện moTa gốc staff gõ sẵn, không
-    /// đụng gì tới lyDoChuaKhaDung ở nơi khác (model vẫn giữ field này).
-    private func moTaHienThi(_ v: VoucherCuaToi) -> String? { v.moTa }
-
-    /// Tách khỏi `body` thành hàm trả về KIỂU CỤ THỂ (không phải `some View`) — gộp thẳng vào ForEach
-    /// trong `body` khiến Swift type-checker vượt quá thời gian suy luận cho phép ("unable to
-    /// type-check this expression in reasonable time") sau khi thêm tham số `hangYeuCau` 2026-10-04,
-    /// vì toàn bộ cây VStack/ScrollView/if-else trong `body` vốn đã là 1 biểu thức lớn. Tách constructor
-    /// voucher ra khỏi cây đó giúp mỗi phần tự suy luận kiểu độc lập, nhanh hơn nhiều.
-    private func card(for v: VoucherCuaToi) -> VoucherTicketCard {
-        VoucherTicketCard(
-            ten: v.ten, moTa: moTaHienThi(v), ma: v.ma,
-            nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
-            donToiThieu: v.donToiThieu, daSuDung: v.daSuDung,
-            nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
-            // Danh sách trộn khả dụng/chưa khả dụng nên mờ để phân biệt.
-            applyDim: true,
-            // Voucher "sắp có" loại "chưa đủ điều kiện" (không có nhanSapDienRa) không tự mờ được từ
-            // card qua daSuDung/nhanSapDienRa — ép mờ qua forceMo, KHÔNG dùng .opacity() overlay riêng
-            // nữa (2026-09-27 fix: overlay riêng chỉ nhân mờ lên khối trái vẫn tô đậm primaryGradient,
-            // nhìn ĐẬM HƠN hẳn card mờ kiểu textFaint dù cùng hệ số — "2 độ mờ khác nhau"). forceMo đi
-            // qua chung `mo` nên khối trái cũng đổi màu xám textFaint đồng bộ.
-            forceMo: sapCoIds.contains(v.id) && v.nhanSapDienRa == nil && !v.daSuDung,
-            hangYeuCau: v.hangToiThieu
-        )
+    /// Hàm trả về KIỂU CỤ THỂ (AnyView) thay vì gộp vào ForEach trong body — tránh Swift type-checker quá thời gian.
+    private func card(for d: Dong) -> AnyView {
+        switch d {
+        case .khaDung(let v):
+            return AnyView(VoucherTicketCard(
+                ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
+                nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                donToiThieu: v.donToiThieu,
+                hienMa: false
+            ))
+        case .chuaDung(let v):
+            let lyDo = v.lyDoChuaKhaDung ?? "Chưa đủ điều kiện dùng."
+            return AnyView(Button { huongDan = (v.ten, lyDo) } label: {
+                VoucherTicketCard(
+                    ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
+                    nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                    donToiThieu: v.donToiThieu,
+                    nhanSoLan: v.nhanSoLan,
+                    applyDim: false,
+                    hangYeuCau: v.hangToiThieu,
+                    huongDan: lyDo,
+                    hienMa: false,
+                    hienMoTa: false
+                )
+            }
+            .buttonStyle(.plain))
+        case .daDung(let v):
+            return AnyView(VoucherTicketCard(
+                ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
+                nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                donToiThieu: v.donToiThieu, daSuDung: true,
+                nhanSoLan: v.nhanSoLan,
+                hienMa: false
+            ))
+        }
     }
 
     private var emptyState: some View {
@@ -152,13 +134,10 @@ struct VoucherCuaToiView: View {
     }
 
     private func load() async {
-        async let vouchersTask = APIClient.shared.getVoucherCuaToi()
-        async let sapCoTask = APIClient.shared.getVoucherSapCo()
-        vouchers = await vouchersTask
-        voucherSapCo = await sapCoTask
+        async let chonTask = APIClient.shared.getVoucherChon()
+        async let cuaToiTask = APIClient.shared.getVoucherCuaToi()
+        if let moi = await chonTask { chon = moi; CartStore.luuVoucherChon(moi) }
+        cuaToi = await cuaToiTask
         loading = false
     }
 }
-
-// Card hiển thị (VoucherTicketCard) đã tách sang file riêng — dùng chung với sheet "Chọn voucher"
-// ở CheckoutView. Xem VoucherTicketCard.swift.

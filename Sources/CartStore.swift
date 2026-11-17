@@ -287,12 +287,12 @@ final class CartStore: ObservableObject {
     /// Lưu theo tài khoản (đổi tài khoản không thấy voucher của người trước). Chỉ để hiện nhanh — đặt đơn server vẫn kiểm lại.
     private static func khoaVoucherChon() -> String? { Prefs.khachHangId.map { "voucherChon_\($0)" } }
 
-    private static func luuVoucherChon(_ kq: VoucherChon) {
+    static func luuVoucherChon(_ kq: VoucherChon) {
         guard let khoa = khoaVoucherChon(), let data = try? JSONEncoder().encode(kq) else { return }
         UserDefaults.standard.set(data, forKey: khoa)
     }
 
-    private static func docVoucherChonDaLuu() -> VoucherChon? {
+    static func docVoucherChonDaLuu() -> VoucherChon? {
         guard let khoa = khoaVoucherChon(), let data = UserDefaults.standard.data(forKey: khoa) else { return nil }
         return try? JSONDecoder().decode(VoucherChon.self, from: data)
     }
