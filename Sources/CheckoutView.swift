@@ -539,8 +539,7 @@ struct CheckoutView: View {
             if soTienDungXu > 0 {
                 chiTietRow("Dùng Xu", "-" + formatTien(soTienDungXu), color: Theme.danger)
             }
-            Divider()
-            chiTietRow("Tổng thanh toán", formatTien(conLaiPhaiTra), bold: true)
+            // 17/11/2026: bỏ "Tổng thanh toán" — trùng "Tổng cộng" ở thanh dưới.
         }
     }
 
@@ -580,8 +579,9 @@ struct CheckoutView: View {
                     Text(formatTien(conLaiPhaiTra)).font(.system(size: 18, weight: .bold))
                 }
                 Spacer()
+                // 17/11/2026 (chủ quán duyệt): bỏ bảng "Xác nhận đặt hàng" — nhắc lại đúng màn này, bấm là đặt luôn.
                 Button {
-                    showXacNhan = true
+                    Task { await datHang() }
                 } label: {
                     if loading { ProgressView().tint(.white) } else { Text(nutDatText).fontWeight(.bold) }
                 }

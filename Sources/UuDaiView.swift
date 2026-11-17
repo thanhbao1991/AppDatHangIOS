@@ -232,7 +232,7 @@ struct UuDaiView: View {
                     Text("Mời bạn quay lại vào ngày mai nhé")
                         .font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 } else if soLuotConLai > 0 {
-                    Text("👆 Chạm vào hộp quà để mở — còn \(soLuotConLai) lượt")
+                    Text("Còn \(soLuotConLai) lượt mở")
                         .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                 }
                 Button {

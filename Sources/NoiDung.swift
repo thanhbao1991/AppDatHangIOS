@@ -33,9 +33,9 @@ enum NoiDung {
         "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",
         "tangLuotQuaKhiHoanThanh": "🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn",
         "napLanDauTieuDe": "Lần nạp đầu tiên: nhân đôi Xu tặng",
-        "napLanDauMoTa": "Lần sau nạp vẫn được tặng Xu, không giới hạn số lần.",
+        "napLanDauMoTa": "",
         "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
-        "napXuBannerPhu": "Thanh toán nhanh chóng, tiện lợi ngay trên App",
+        "napXuBannerPhu": "",
         "goiYVoucherSize":"Nâng {size} miễn phí",
         "goiYVoucherSizeGiam": "Nâng {size} có voucher",
         "goiYVoucherSizePhu": "Bấm để đổi {mon} sang {size}",
@@ -43,9 +43,9 @@ enum NoiDung {
         "goiYVoucherToppingPhu": "Thêm 1 topping đến {tien} cho {mon}",
         "donTinhHangGiaiThich": "Đơn đặt qua app và đơn đặt tại quầy đều được tính vào hạng thành viên; đặt qua app được Xu gấp đôi. Nước lon, ăn vặt và món không pha chế không được tính.",
         "sinhNhatDaNhan": "Bạn đã dùng Voucher Chúc Mừng Sinh Nhật năm nay, nên năm sau mới sửa được ngày sinh.",
-        "otpGhiChu": "Mã xác thực sẽ được gửi qua Zalo, vui lòng nhập số điện thoại đang dùng Zalo.",
+        "otpGhiChu": "",
         "otpNhapMa": "Nhập mã OTP đã gửi qua Zalo",
-        "qrNhacNoiDung": "Quý khách vui lòng không thay đổi nội dung chuyển khoản (ghi chú)!",
+        "qrNhacNoiDung": "Giữ nguyên số tiền và nội dung chuyển khoản.",
         "napXuGiuNoiDung": "Giữ nguyên số tiền và nội dung \"{noiDung}\" để Xu được cộng tự động.",
     ]
 

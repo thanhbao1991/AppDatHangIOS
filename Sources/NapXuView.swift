@@ -209,7 +209,7 @@ struct NapXuQrView: View {
                 ProgressView().frame(width: 240, height: 240)
             }
         }
-        NhacGiuNoiDungCk()
+        // 17/11/2026: bỏ NhacGiuNoiDungCk ở đây — trùng ý câu napXuGiuNoiDung bên dưới.
 
         Text(formatTien(goi.soTien)).font(.system(size: 32, weight: .bold))
         Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(formatXu(goi.soXuTang)))")

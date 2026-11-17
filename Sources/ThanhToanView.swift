@@ -87,18 +87,10 @@ struct ThanhToanView: View {
 
     @ViewBuilder
     private func content(for info: ThanhToanInfoDto) -> some View {
-        // Bỏ hiện tên khách (feedback 2026-09-28) — thay bằng lời cảm ơn 2 dòng, không cần đọc
-        // tenKhachHangText nữa.
-        VStack(spacing: 2) {
-            Text("Quán nhỏ cảm ơn to").font(.system(size: 15, weight: .semibold))
-            Text("Cảm ơn bạn đã tin yêu quán!").font(.system(size: 13))
-        }
-        .foregroundColor(Theme.textMuted)
-        .multilineTextAlignment(.center)
-
+        // 17/11/2026 (chủ quán: app gọn gàng): bỏ 2 dòng cảm ơn, chỉ còn 1 câu mời quét.
         // Đổi bố cục (feedback 2026-09-28): thêm câu mời NGAY TRÊN mã QR, số tiền chuyển XUỐNG DƯỚI
         // mã QR (trước đây số tiền nằm trên, ngay dưới lời cảm ơn).
-        Text("Mời bạn quét mã QR").font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
+        Text("Quét mã QR để thanh toán").font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
 
         Group {
             if let qrImage {
@@ -142,7 +134,7 @@ struct ThanhToanView: View {
             .disabled(qrImage == nil)
 
         if laTraNo {
-            Text("Chuyển khoản xong, công nợ tự được gạch sau vài giây.")
+            Text("Công nợ tự gạch sau vài giây.")
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 .multilineTextAlignment(.center).frame(maxWidth: 300)
         }

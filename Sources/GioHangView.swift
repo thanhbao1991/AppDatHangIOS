@@ -16,7 +16,7 @@ private struct NhacVoucherRow: View {
 
     var body: some View {
         BannerCamNoiBat(icon: "ticket.fill", tieuDe: "Bạn có \(soVoucher) voucher dùng được",
-                        phu: giamToiDa > 0 ? "Tiết kiệm đến \(formatTien(giamToiDa)) cho đơn này" : nil,
+                        phu: giamToiDa > 0 ? "Giảm đến \(formatTien(giamToiDa))" : nil,
                         nut: "Chọn", iconNut: "ticket.fill")
     }
 }

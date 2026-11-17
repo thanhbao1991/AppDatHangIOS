@@ -317,7 +317,7 @@ struct SettingsView: View {
             // Chủ quán 11/11/2026: Nạp Xu dùng chung thẻ cam nổi bật với thẻ "Bạn có N voucher dùng được" ở Giỏ hàng.
             Button { showNapXu = true } label: {
                 BannerCamNoiBat(icon: "gift.fill", tieuDe: "Nạp Xu", nhan: vi.nhanNapXu,
-                                phu: NoiDung.text("napXuBannerPhu"), nut: "Nạp", iconNut: "plus.circle.fill")
+                                phu: NoiDung.text("napXuBannerPhu").isEmpty ? nil : NoiDung.text("napXuBannerPhu"), nut: "Nạp", iconNut: "plus.circle.fill")
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

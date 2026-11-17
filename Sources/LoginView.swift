@@ -130,10 +130,13 @@ struct LoginView: View {
             }
             // OTP chỉ gửi qua Zalo ZNS (backend đã gỡ SMS 2026-09-29) — số không dùng Zalo sẽ không
             // bao giờ nhận được mã, nên nói rõ ngay từ bước nhập SĐT.
-            Text(NoiDung.text("otpGhiChu"))
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Theme.textMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // 17/11/2026: server để trống (ô nhập đã ghi "Số điện thoại Zalo") thì ẩn hẳn.
+            if !NoiDung.text("otpGhiChu").isEmpty {
+                Text(NoiDung.text("otpGhiChu"))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Theme.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             primaryButton("Tiếp tục", disabled: loading || !isPhoneValid) { Task { await continuePhone() } }
             #endif
         }
