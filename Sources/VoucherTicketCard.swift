@@ -41,7 +41,7 @@ struct VoucherTicketCard: View {
     /// đúng thứ tự khai báo dù có default value, chen giữa đã gây lỗi biên dịch thật ở 1 nơi gọi cũ.
     var hangYeuCau: String? = nil
     /// Hướng dẫn để dùng được voucher (sheet "Chọn voucher": "Thêm 55.000đ nữa là dùng được.", "Dùng được từ 20/11."…) —
-    /// vẽ TRONG thẻ, dải màu cuối khối phải (chủ quán 2026-11-17: để ngoài thẻ dễ nhầm sang thẻ dưới, rối mắt). Đặt cuối
+    /// vẽ TRONG thẻ, 1 dòng chữ dưới mã voucher (chủ quán 2026-11-17: để ngoài thẻ dễ nhầm sang thẻ dưới, rối mắt). Đặt cuối
     /// danh sách tham số (xem ghi chú hangYeuCau).
     var huongDan: String? = nil
 
@@ -103,24 +103,7 @@ struct VoucherTicketCard: View {
         .frame(width: 1)
     }
 
-    private var rightBlock: some View {
-        VStack(spacing: 0) {
-            noiDungPhai
-            if let huongDan, !huongDan.isEmpty {
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Image(systemName: "info.circle.fill").font(.system(size: 11))
-                    Text(huongDan)
-                        .font(.system(size: 11, weight: .semibold))
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-                .foregroundColor(Theme.xuTangChu)
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.xuTangChu.opacity(0.08))
-            }
-        }
-    }
+    private var rightBlock: some View { noiDungPhai }
 
     private var noiDungPhai: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -175,6 +158,14 @@ struct VoucherTicketCard: View {
                         .font(.system(size: 10))
                         .foregroundColor(Theme.textFaint)
                 }
+            }
+            // 17/11/2026: hướng dẫn nằm trong thẻ, chỉ 1 dòng chữ (bản dải nền màu bị chê "xấu lắm").
+            if let huongDan, !huongDan.isEmpty {
+                Text(huongDan)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.xuTangChu)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
             }
         }
         .padding(12)
