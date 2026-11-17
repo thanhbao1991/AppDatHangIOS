@@ -151,7 +151,7 @@ struct VoucherTicketCard: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Theme.primary)
             }
-            Spacer(minLength: 4)
+            if hienMa { Spacer(minLength: 4) }
             if hienMa {
                 HStack(spacing: 6) {
                     Image(systemName: "tag.fill").font(.system(size: 10)).foregroundColor(Theme.primary)
@@ -176,6 +176,7 @@ struct VoucherTicketCard: View {
             }
         }
         .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
+        // Không dòng mã (sheet "Chọn voucher"): gom nội dung vào giữa, thẻ thấp hơn — 17/11/2026 chủ quán: "hơi trống".
+        .frame(maxWidth: .infinity, minHeight: hienMa ? 88 : 76, alignment: hienMa ? .topLeading : .leading)
     }
 }

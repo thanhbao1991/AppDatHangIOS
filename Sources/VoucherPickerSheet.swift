@@ -150,7 +150,9 @@ struct VoucherPickerSheet: View {
                         // 11/11/2026: hiện LUÔN cách dùng; 17/11/2026: đưa vào TRONG thẻ (để ngoài dễ nhầm thẻ dưới).
                         huongDan: ok ? nil : Self.cachDungNgan(lyDo(v)),
                         hienMa: false,
-                        hienMoTa: false
+                        // Dùng được ngay (không dòng hướng dẫn) thì hiện mô tả cho thẻ khỏi trống; chưa dùng được thì dòng
+                        // hướng dẫn thay mô tả (tránh lặp ý).
+                        hienMoTa: ok
                     )
                 }
                 .padding(.horizontal).padding(.vertical, 6)
