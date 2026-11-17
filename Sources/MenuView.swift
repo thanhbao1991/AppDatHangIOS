@@ -66,6 +66,25 @@ struct MenuView: View {
     /// phải (sectionHeader) — trước đây mỗi bên tự co theo nội dung (sidebar minHeight 44, header
     /// card ~50pt, header rỗng ~33pt) nên 2 bên lệch chiều cao ở hàng đầu tiên, nhìn mất cân đối.
     private static let categoryHeaderHeight: CGFloat = 52
+    /// ⚠️ 3 hằng số chiều cao cột món (header nhóm, dòng món, khoảng cách dưới thẻ nhóm) là NGUỒN DUY NHẤT để
+    /// offsetNhom tính toạ độ nhóm khi bấm sidebar (18/11/2026). Thêm/bớt bất cứ thứ gì làm đổi chiều cao 1 nhóm
+    /// (đệm, dòng phụ, banner trong cột phải...) mà không sửa offsetNhom thì bấm nhóm lại nhảy lệch.
+    private static let rowHeight: CGFloat = 72
+    private static let khoangCachNhom: CGFloat = 8
+
+    /// Bắt UIScrollView gốc của cột món để cuộn tới toạ độ tính sẵn (iOS 16 chưa có API cuộn theo toạ độ).
+    @StateObject private var menuScroll = UIScrollViewRef()
+
+    /// Toạ độ đỉnh nhóm `id` trong cột món = tổng chiều cao các nhóm phía trên (header + số món × rowHeight +
+    /// khoảng cách). Chính xác vì mọi phần tử đều cao cố định — xem rowHeight.
+    private func offsetNhom(_ id: String) -> CGFloat? {
+        var y: CGFloat = 0
+        for s in sections {
+            if s.nhom.id == id { return y }
+            y += Self.categoryHeaderHeight + CGFloat(s.items.count) * Self.rowHeight + Self.khoangCachNhom
+        }
+        return nil
+    }
 
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
     /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
@@ -246,13 +265,17 @@ struct MenuView: View {
                                             VStack(spacing: 0) {
                                                 ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
                                                     productRow(sp)
+                                                        // Kẻ giữa các món vẽ bằng overlay (KHÔNG chiếm chiều cao) — chiều
+                                                        // cao nhóm phải đúng = số món × rowHeight, xem offsetNhom.
+                                                        .overlay(alignment: .bottom) {
+                                                            if itemIndex < section.items.count - 1 {
+                                                                Divider().padding(.leading, 84)
+                                                            }
+                                                        }
                                                         // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở CẢ mục "Yêu
                                                         // thích" lẫn mục "Bạc Xỉu" thật (cùng 1 sp.id); trùng id giữa
                                                         // 2 section gây lẫn/tráo render (dòng trống).
                                                         .id("\(section.nhom.id)|\(sp.id)")
-                                                    if itemIndex < section.items.count - 1 {
-                                                        Divider().padding(.leading, 84)
-                                                    }
                                                 }
                                             }
                                             .background(
@@ -260,7 +283,7 @@ struct MenuView: View {
                                                     .fill(Color(.systemBackground))
                                                     .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
                                             )
-                                            .padding(.horizontal, 10).padding(.bottom, 8)
+                                            .padding(.horizontal, 10).padding(.bottom, Self.khoangCachNhom)
                                         } header: {
                                             sectionHeader(section.nhom, items: section.items)
                                                 .id(section.nhom.id)
@@ -271,11 +294,25 @@ struct MenuView: View {
                                         }
                                     }
                                 }
+                                .background(UIScrollViewFinder(ref: menuScroll))
                             }
                             .onChange(of: scrollRequest) { req in
                                 guard let req else { return }
-                                withAnimation { proxy.scrollTo(req.id, anchor: .top) }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { isJumpingToSection = false }
+                                // 18/11/2026: KHÔNG dùng proxy.scrollTo — LazyVStack chỉ biết chiều cao THẬT của nhóm đã
+                                // dựng, nhóm xa thì ƯỚC nên dừng lệch (bấm #Sinh Tố trở đi rơi vào giữa Nước Ép). Mọi phần
+                                // tử trong cột phải giờ cao CỐ ĐỊNH (xem Self.rowHeight) → tự cộng ra đúng toạ độ nhóm rồi
+                                // cuộn thẳng UIScrollView tới đó: chính xác tuyệt đối, không chỉnh lại, không giật.
+                                if let y = offsetNhom(req.id), let sv = menuScroll.view {
+                                    let minY = -sv.adjustedContentInset.top
+                                    let maxY = max(minY, sv.contentSize.height - sv.bounds.height + sv.adjustedContentInset.bottom)
+                                    sv.setContentOffset(CGPoint(x: 0, y: min(max(y, minY), maxY)), animated: true)
+                                } else {
+                                    withAnimation { proxy.scrollTo(req.id, anchor: .top) }  // dự phòng: chưa bắt được UIScrollView
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                    guard scrollRequest?.tick == req.tick else { return }  // khách đã bấm nhóm khác
+                                    isJumpingToSection = false
+                                }
                             }
                             .background(Theme.bg)
                             .refreshable {
@@ -477,10 +514,12 @@ struct MenuView: View {
             .buttonStyle(.plain)
             .disabled(togglingYeuThichIds.contains(item.id))
         }
-        .padding(.horizontal, 16).padding(.vertical, 8)
+        .padding(.horizontal, 16)
         // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
         // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (offsetNhom). Ảnh 56 + đệm 8×2 = 72;
+        // tên 2 dòng (15pt) + giá vừa đúng 56 — mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
+        .frame(maxWidth: .infinity, minHeight: Self.rowHeight, maxHeight: Self.rowHeight, alignment: .leading)
     }
 
     /// Số món hiện trọn vẹn trong dải đề xuất — 3 + hé 1 phần món thứ 4 để khách biết còn cuộn được
@@ -1137,5 +1176,48 @@ struct ProductPickerSheet: View {
         }
         onConfirm(bienThe, soLuong, ghiChu.trimmingCharacters(in: .whitespaces).isEmpty ? nil : ghiChu, chosen)
         onDone()
+    }
+}
+
+// MARK: - Bắt UIScrollView gốc (bấm nhóm sidebar nhảy chính xác, 18/11/2026)
+
+/// Giữ tham chiếu YẾU tới UIScrollView của cột món. Không @Published — đổi ref không cần vẽ lại view.
+final class UIScrollViewRef: ObservableObject {
+    weak var view: UIScrollView?
+}
+
+/// View rỗng đặt ở .background của nội dung ScrollView: khi gắn vào cửa sổ thì lần ngược superview tới
+/// UIScrollView gần nhất (chính là ScrollView SwiftUI đang chứa nó) và lưu vào `ref`.
+struct UIScrollViewFinder: UIViewRepresentable {
+    let ref: UIScrollViewRef
+
+    func makeUIView(context: Context) -> FinderView {
+        let v = FinderView()
+        v.ref = ref
+        v.isUserInteractionEnabled = false
+        return v
+    }
+
+    func updateUIView(_ uiView: FinderView, context: Context) {
+        uiView.ref = ref
+        uiView.timScrollView()
+    }
+
+    final class FinderView: UIView {
+        weak var ref: UIScrollViewRef?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            timScrollView()
+        }
+
+        func timScrollView() {
+            guard let ref, ref.view == nil || ref.view?.window == nil else { return }
+            var v = superview
+            while let cur = v {
+                if let sv = cur as? UIScrollView { ref.view = sv; return }
+                v = cur.superview
+            }
+        }
     }
 }
