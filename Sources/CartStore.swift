@@ -49,6 +49,9 @@ final class CartStore: ObservableObject {
     /// Ghi chú chung cho cả đơn — nhập ở tab Giỏ hàng, CheckoutView chỉ đọc lại. Không persist.
     @Published var ghiChuDon = ""
     @Published private(set) var vouchers: [Voucher] = []
+    /// Voucher CHƯA dùng được (chưa tới ngày / chưa đủ hạng-điều kiện) — chỉ để hiện thêm ở sheet "Chọn voucher" cho khách
+    /// biết có gì đang chờ (chủ quán 2026-11-17: "hiển thị tất cả voucher, trừ voucher đã sử dụng"). Không chọn được.
+    @Published private(set) var voucherChuaDung: [VoucherCuaToi] = []
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
     /// SanPhamId món không pha chế (nước lon, ăn vặt, nhóm Khác...) — voucher bỏ qua hẳn các dòng này,
@@ -123,6 +126,7 @@ final class CartStore: ObservableObject {
         dungXu = false
         vi = nil
         vouchers = []
+        voucherChuaDung = []
         sanPhamDaTungDat = []
         uuDaiLoaded = false
     }
@@ -250,6 +254,7 @@ final class CartStore: ObservableObject {
         async let loaiTruTask: [String] = APIClient.shared.getSanPhamKhongApDungVoucher()
         // 09/11/2026: voucher hiện trước, không chờ /vi (API chậm nhất).
         vouchers = await voucherTask
+        Task { await taiVoucherChuaDung() }
         sanPhamDaTungDat = await spTask
         spKhongApDungVoucher = Set(await loaiTruTask.map { $0.lowercased() })
         validateSelectedVoucher()
@@ -261,5 +266,21 @@ final class CartStore: ObservableObject {
     /// 2026-09-28: sheet trắng tinh không rõ đang lỗi hay thật sự hết voucher, xem VoucherPickerSheet).
     func reloadVouchers() async {
         vouchers = await APIClient.shared.getVoucherKhaDung()
+        await taiVoucherChuaDung()
+    }
+
+    /// Gộp voucher của tài khoản chưa dùng (cua-toi, bỏ daSuDung) + voucher hệ thống chưa đủ điều kiện (sap-co), bỏ
+    /// những cái đã có trong `vouchers` (dùng được → hiện bình thường) và trùng id.
+    private func taiVoucherChuaDung() async {
+        async let cuaToiTask = APIClient.shared.getVoucherCuaToi()
+        async let sapCoTask = APIClient.shared.getVoucherSapCo()
+        let cuaToi = await cuaToiTask, sapCo = await sapCoTask
+        var daCo = Set(vouchers.map(\.id))
+        var kq: [VoucherCuaToi] = []
+        for v in cuaToi.filter({ !$0.daSuDung }) + sapCo where !daCo.contains(v.id) {
+            daCo.insert(v.id)
+            kq.append(v)
+        }
+        voucherChuaDung = kq
     }
 }

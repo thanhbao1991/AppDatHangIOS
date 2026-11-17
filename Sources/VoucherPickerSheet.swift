@@ -6,6 +6,9 @@ import SwiftUI
 /// riêng ở tầng gọi, tránh 2 nơi lệch nhau.
 struct VoucherPickerSheet: View {
     let vouchers: [Voucher]
+    /// Voucher chưa dùng được (chưa tới ngày / chưa đủ hạng-điều kiện), KHÔNG gồm voucher đã dùng — hiện dưới cùng để
+    /// khách biết có gì đang chờ (chủ quán 2026-11-17). Bấm chỉ hiện lý do, không chọn được. Xem CartStore.voucherChuaDung.
+    var voucherChuaDung: [VoucherCuaToi] = []
     let duDieuKien: (Voucher) -> Bool
     /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
     /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
@@ -49,10 +52,25 @@ struct VoucherPickerSheet: View {
         }
     }
 
+    /// Chưa tới ngày lên trước (ngày gần nhất trước — biết dịp nào tới trước), rồi tới voucher chưa đủ điều kiện.
+    private var voucherChuaDungSapXep: [VoucherCuaToi] {
+        let chuaToiNgay = voucherChuaDung.filter(\.chuaBatDau).sorted { ($0.ngayBatDau ?? "") < ($1.ngayBatDau ?? "") }
+        let conLai = voucherChuaDung.filter { !$0.chuaBatDau }.sorted { $0.giaTriGiamThamKhao > $1.giaTriGiamThamKhao }
+        return chuaToiNgay + conLai
+    }
+
+    /// Dòng lý do dưới thẻ voucher chưa dùng được.
+    static func lyDoChuaDung(_ v: VoucherCuaToi) -> String {
+        if let tu = v.nhanSapDienRa { return "Dùng được từ " + String(tu.dropFirst(3)) + "." }
+        if let lyDo = v.lyDoChuaKhaDung, !lyDo.isEmpty { return lyDo }
+        if let hang = v.hangToiThieu, !hang.isEmpty { return "Cần hạng \(hang) trở lên." }
+        return "Chưa đủ điều kiện dùng."
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if vouchers.isEmpty {
+                if vouchers.isEmpty && voucherChuaDung.isEmpty {
                     emptyState
                 } else {
                     voucherList
@@ -149,6 +167,34 @@ struct VoucherPickerSheet: View {
                                     .foregroundColor(Theme.xuTangChu)
                                     .padding(.leading, 6)
                                 }
+                            }
+                            .padding(.horizontal).padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                ForEach(voucherChuaDungSapXep) { v in
+                    cardRow {
+                        Button {
+                            huongDan = (v.ten, Self.lyDoChuaDung(v))
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                VoucherTicketCard(
+                                    ten: v.ten, moTa: v.moTa, ma: v.ma,
+                                    nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                                    donToiThieu: v.donToiThieu,
+                                    nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+                                    applyDim: false,
+                                    hangYeuCau: v.hangToiThieu
+                                )
+                                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                                    Image(systemName: "info.circle.fill").font(.system(size: 12))
+                                    Text(Self.lyDoChuaDung(v))
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .foregroundColor(Theme.xuTangChu)
+                                .padding(.leading, 6)
                             }
                             .padding(.horizontal).padding(.vertical, 6)
                         }

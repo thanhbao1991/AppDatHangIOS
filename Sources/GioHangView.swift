@@ -203,7 +203,7 @@ struct GioHangView: View {
         }
         .sheet(isPresented: $showVoucherSheet) {
             VoucherPickerSheet(
-                vouchers: cart.vouchers, duDieuKien: cart.voucherDuDieuKien,
+                vouchers: cart.vouchers, voucherChuaDung: cart.voucherChuaDung, duDieuKien: cart.voucherDuDieuKien,
                 giaTriGiam: { cart.soTienGiam($0) },
                 lyDo: { cart.lyDoChuaDuDieuKien($0) },
                 selected: $cart.selectedVoucher,
