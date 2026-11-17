@@ -9,6 +9,8 @@ struct VoucherPickerSheet: View {
     /// Voucher chưa dùng được (chưa tới ngày / chưa đủ hạng-điều kiện), KHÔNG gồm voucher đã dùng — hiện dưới cùng để
     /// khách biết có gì đang chờ (chủ quán 2026-11-17). Bấm chỉ hiện lý do, không chọn được. Xem CartStore.voucherChuaDung.
     var voucherChuaDung: [VoucherCuaToi] = []
+    /// Ngày sinh khách (CartStore.sinhNhatInfo) — cho dòng nhắc của voucher sinh nhật. nil = chưa tải được.
+    var sinhNhatInfo: SinhNhatInfo? = nil
     let duDieuKien: (Voucher) -> Bool
     /// Số tiền giảm thực tế cho đơn hiện tại (Voucher.soTienGiamThucTe áp cho tongTienHang của giỏ) —
     /// dùng để xếp hạng trong mỗi nhóm, KHÔNG dùng để quyết định khả dụng (đã có duDieuKien riêng).
@@ -59,9 +61,16 @@ struct VoucherPickerSheet: View {
         return chuaToiNgay + conLai
     }
 
-    /// Dòng lý do dưới thẻ voucher chưa dùng được.
-    static func lyDoChuaDung(_ v: VoucherCuaToi) -> String {
+    /// Dòng lý do dưới thẻ voucher chưa dùng được. Voucher sinh nhật (chủ quán 2026-11-17): chưa nhập ngày sinh thì nhắc
+    /// nhập, có rồi thì "Dùng được từ 01/MM" (đầu tháng sinh nhật kế tiếp — voucher dùng trong cả tháng sinh nhật).
+    private func lyDoChuaDung(_ v: VoucherCuaToi) -> String {
         if let tu = v.nhanSapDienRa { return "Dùng được từ " + String(tu.dropFirst(3)) + "." }
+        if v.laSinhNhat == true, let sinhNhatInfo {
+            guard let ns = sinhNhatInfo.ngaySinh, let thang = Int(ns.prefix(7).suffix(2)), (1...12).contains(thang) else {
+                return "Nhập ngày sinh ở tab Tài khoản để nhận quà sinh nhật."
+            }
+            return String(format: "Dùng được từ 01/%02d.", thang)
+        }
         if let lyDo = v.lyDoChuaKhaDung, !lyDo.isEmpty { return lyDo }
         if let hang = v.hangToiThieu, !hang.isEmpty { return "Cần hạng \(hang) trở lên." }
         return "Chưa đủ điều kiện dùng."
@@ -117,6 +126,58 @@ struct VoucherPickerSheet: View {
         return dau.uppercased() + bo.dropFirst()
     }
 
+    /// 1 dòng voucher của `vouchers` (dùng được ngay hoặc thiếu tiền đơn).
+    @ViewBuilder
+    private func dongVoucher(_ v: Voucher) -> some View {
+        let ok = duDieuKien(v)
+        cardRow {
+            Button {
+                // 09/11/2026: voucher chưa đủ điều kiện KHÔNG mờ/khoá nữa — bấm vào hiện lý do + cách dùng.
+                guard ok else {
+                    huongDan = (v.ten, lyDo(v) ?? "Voucher này chưa áp dụng được cho giỏ hàng hiện tại.")
+                    return
+                }
+                // Đóng sheet TRƯỚC, chỉ ghi `selected` SAU khi sheet đã đóng xong (~0.35s,
+                // khớp thời gian dismiss mặc định của sheet) — nếu ghi ngay rồi đóng cùng
+                // lúc, số tiền ở màn dưới đổi trong lúc sheet còn che nên hiệu ứng đếm giảm
+                // (contentTransition numericText ở GioHangView/CheckoutView) chạy xong mà
+                // khách không thấy được (feedback 2026-09-27: "chọn voucher chưa thấy hiệu
+                // ứng, tại xảy ra nhanh quá").
+                let newValue: Voucher? = (selected?.id == v.id) ? nil : v
+                onClose()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    selected = newValue
+                }
+            } label: {
+                // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
+                // tiền quy đổi riêng cho đơn hiện tại, tránh cùng 1 voucher trông như 2
+                // voucher khác nhau giữa 2 màn.
+                VStack(alignment: .leading, spacing: 6) {
+                    VoucherTicketCard(
+                        ten: v.ten, moTa: v.moTa, ma: v.ma,
+                        nhanGiam: v.nhanGiamGia,
+                        nhanGiamToiDa: v.nhanGiamToiDa,
+                        donToiThieu: v.donToiThieu,
+                        daChon: selected?.id == v.id
+                    )
+                    // 11/11/2026 (chủ quán): hiện LUÔN cách dùng dưới thẻ, không bắt bấm mới xem.
+                    if !ok {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            Image(systemName: "info.circle.fill").font(.system(size: 12))
+                            Text(Self.cachDungNgan(lyDo(v)))
+                                .font(.system(size: 12, weight: .semibold))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .foregroundColor(Theme.xuTangChu)
+                        .padding(.leading, 6)
+                    }
+                }
+                .padding(.horizontal).padding(.vertical, 6)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var voucherList: some View {
         List {
                 // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
@@ -124,59 +185,12 @@ struct VoucherPickerSheet: View {
                 // voucher đều phải ăn liền, không bắt bấm thêm 1 nút mới có hiệu lực). Hiện TẤT CẢ
                 // voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn để khách biết
                 // có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
-                ForEach(sortedVouchers) { v in
-                    let ok = duDieuKien(v)
-                    cardRow {
-                        Button {
-                            // 09/11/2026: voucher chưa đủ điều kiện KHÔNG mờ/khoá nữa — bấm vào hiện lý do + cách dùng.
-                            guard ok else {
-                                huongDan = (v.ten, lyDo(v) ?? "Voucher này chưa áp dụng được cho giỏ hàng hiện tại.")
-                                return
-                            }
-                            // Đóng sheet TRƯỚC, chỉ ghi `selected` SAU khi sheet đã đóng xong (~0.35s,
-                            // khớp thời gian dismiss mặc định của sheet) — nếu ghi ngay rồi đóng cùng
-                            // lúc, số tiền ở màn dưới đổi trong lúc sheet còn che nên hiệu ứng đếm giảm
-                            // (contentTransition numericText ở GioHangView/CheckoutView) chạy xong mà
-                            // khách không thấy được (feedback 2026-09-27: "chọn voucher chưa thấy hiệu
-                            // ứng, tại xảy ra nhanh quá").
-                            let newValue: Voucher? = (selected?.id == v.id) ? nil : v
-                            onClose()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                                selected = newValue
-                            }
-                        } label: {
-                            // Hiện Y HỆT card ở tab Voucher (nhanGiam/nhanGiamToiDa) — không hiện số
-                            // tiền quy đổi riêng cho đơn hiện tại, tránh cùng 1 voucher trông như 2
-                            // voucher khác nhau giữa 2 màn.
-                            VStack(alignment: .leading, spacing: 6) {
-                                VoucherTicketCard(
-                                    ten: v.ten, moTa: v.moTa, ma: v.ma,
-                                    nhanGiam: v.nhanGiamGia,
-                                    nhanGiamToiDa: v.nhanGiamToiDa,
-                                    donToiThieu: v.donToiThieu,
-                                    daChon: selected?.id == v.id
-                                )
-                                // 11/11/2026 (chủ quán): hiện LUÔN cách dùng dưới thẻ, không bắt bấm mới xem.
-                                if !ok {
-                                    HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                        Image(systemName: "info.circle.fill").font(.system(size: 12))
-                                        Text(Self.cachDungNgan(lyDo(v)))
-                                            .font(.system(size: 12, weight: .semibold))
-                                            .fixedSize(horizontal: false, vertical: true)
-                                    }
-                                    .foregroundColor(Theme.xuTangChu)
-                                    .padding(.leading, 6)
-                                }
-                            }
-                            .padding(.horizontal).padding(.vertical, 6)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+                // Thứ tự (chủ quán 2026-11-17): dùng được ngay → chưa tới ngày/chưa đủ điều kiện → thiếu tiền đơn (DON…K).
+                ForEach(sortedVouchers.filter(duDieuKien)) { dongVoucher($0) }
                 ForEach(voucherChuaDungSapXep) { v in
                     cardRow {
                         Button {
-                            huongDan = (v.ten, Self.lyDoChuaDung(v))
+                            huongDan = (v.ten, lyDoChuaDung(v))
                         } label: {
                             VStack(alignment: .leading, spacing: 6) {
                                 VoucherTicketCard(
@@ -189,7 +203,7 @@ struct VoucherPickerSheet: View {
                                 )
                                 HStack(alignment: .firstTextBaseline, spacing: 5) {
                                     Image(systemName: "info.circle.fill").font(.system(size: 12))
-                                    Text(Self.lyDoChuaDung(v))
+                                    Text(lyDoChuaDung(v))
                                         .font(.system(size: 12, weight: .semibold))
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -201,6 +215,7 @@ struct VoucherPickerSheet: View {
                         .buttonStyle(.plain)
                     }
                 }
+                ForEach(sortedVouchers.filter { !duDieuKien($0) }) { dongVoucher($0) }
         }
         .cardListBackground()
         .popupHost { host in

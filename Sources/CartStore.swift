@@ -52,6 +52,9 @@ final class CartStore: ObservableObject {
     /// Voucher CHƯA dùng được (chưa tới ngày / chưa đủ hạng-điều kiện) — chỉ để hiện thêm ở sheet "Chọn voucher" cho khách
     /// biết có gì đang chờ (chủ quán 2026-11-17: "hiển thị tất cả voucher, trừ voucher đã sử dụng"). Không chọn được.
     @Published private(set) var voucherChuaDung: [VoucherCuaToi] = []
+    /// Ngày sinh khách — để voucher sinh nhật ở sheet "Chọn voucher" nhắc nhập ngày sinh / hiện "Dùng được từ 01/MM".
+    /// nil = chưa tải được (khi đó dùng lý do server trả).
+    @Published private(set) var sinhNhatInfo: SinhNhatInfo?
     @Published private(set) var vi: KhachHangVi?
     private var sanPhamDaTungDat: [String] = []
     /// SanPhamId món không pha chế (nước lon, ăn vặt, nhóm Khác...) — voucher bỏ qua hẳn các dòng này,
@@ -127,6 +130,7 @@ final class CartStore: ObservableObject {
         vi = nil
         vouchers = []
         voucherChuaDung = []
+        sinhNhatInfo = nil
         sanPhamDaTungDat = []
         uuDaiLoaded = false
     }
@@ -274,7 +278,9 @@ final class CartStore: ObservableObject {
     private func taiVoucherChuaDung() async {
         async let cuaToiTask = APIClient.shared.getVoucherCuaToi()
         async let sapCoTask = APIClient.shared.getVoucherSapCo()
+        async let sinhNhatTask = APIClient.shared.getSinhNhat()
         let cuaToi = await cuaToiTask, sapCo = await sapCoTask
+        if let sn = await sinhNhatTask { sinhNhatInfo = sn; BoNhoTam.ngaySinhInfo = sn }
         var daCo = Set(vouchers.map(\.id))
         var kq: [VoucherCuaToi] = []
         for v in cuaToi.filter({ !$0.daSuDung }) + sapCo where !daCo.contains(v.id) {
