@@ -148,7 +148,8 @@ struct VoucherPickerSheet: View {
                         donToiThieu: v.donToiThieu,
                         daChon: selected?.id == v.id,
                         // 11/11/2026: hiện LUÔN cách dùng; 17/11/2026: đưa vào TRONG thẻ (để ngoài dễ nhầm thẻ dưới).
-                        huongDan: ok ? nil : Self.cachDungNgan(lyDo(v))
+                        huongDan: ok ? nil : Self.cachDungNgan(lyDo(v)),
+                        hienMa: false
                     )
                 }
                 .padding(.horizontal).padding(.vertical, 6)
@@ -173,7 +174,8 @@ struct VoucherPickerSheet: View {
                         nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
                         applyDim: false,
                         hangYeuCau: v.hangToiThieu,
-                        huongDan: lyDo
+                        huongDan: lyDo,
+                        hienMa: false
                     )
                 }
                 .padding(.horizontal).padding(.vertical, 6)

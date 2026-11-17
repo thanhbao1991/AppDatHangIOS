@@ -44,6 +44,8 @@ struct VoucherTicketCard: View {
     /// vẽ TRONG thẻ, 1 dòng chữ dưới mã voucher (chủ quán 2026-11-17: để ngoài thẻ dễ nhầm sang thẻ dưới, rối mắt). Đặt cuối
     /// danh sách tham số (xem ghi chú hangYeuCau).
     var huongDan: String? = nil
+    /// false = ẩn dòng mã voucher + "Đơn từ X" (sheet "Chọn voucher", chủ quán 2026-11-17: bỏ cho gọn — khách không cần gõ mã).
+    var hienMa: Bool = true
 
     /// Card không bấm/dùng được lúc này — gộp 3 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
     private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil || forceMo) }
@@ -147,16 +149,18 @@ struct VoucherTicketCard: View {
                     .foregroundColor(Theme.primary)
             }
             Spacer(minLength: 4)
-            HStack(spacing: 6) {
-                Image(systemName: "tag.fill").font(.system(size: 10)).foregroundColor(Theme.primary)
-                Text(ma)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(Theme.primary)
-                Spacer()
-                if let donToiThieu, donToiThieu > 0 {
-                    Text("Đơn từ \(formatTien(donToiThieu))")
-                        .font(.system(size: 10))
-                        .foregroundColor(Theme.textFaint)
+            if hienMa {
+                HStack(spacing: 6) {
+                    Image(systemName: "tag.fill").font(.system(size: 10)).foregroundColor(Theme.primary)
+                    Text(ma)
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(Theme.primary)
+                    Spacer()
+                    if let donToiThieu, donToiThieu > 0 {
+                        Text("Đơn từ \(formatTien(donToiThieu))")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.textFaint)
+                    }
                 }
             }
             // 17/11/2026: hướng dẫn nằm trong thẻ, chỉ 1 dòng chữ (bản dải nền màu bị chê "xấu lắm").
