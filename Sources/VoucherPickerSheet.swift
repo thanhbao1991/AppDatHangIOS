@@ -149,7 +149,8 @@ struct VoucherPickerSheet: View {
                         daChon: selected?.id == v.id,
                         // 11/11/2026: hiện LUÔN cách dùng; 17/11/2026: đưa vào TRONG thẻ (để ngoài dễ nhầm thẻ dưới).
                         huongDan: ok ? nil : Self.cachDungNgan(lyDo(v)),
-                        hienMa: false
+                        hienMa: false,
+                        hienMoTa: false
                     )
                 }
                 .padding(.horizontal).padding(.vertical, 6)
@@ -171,11 +172,13 @@ struct VoucherPickerSheet: View {
                         ten: v.ten, moTa: v.moTa, ma: v.ma,
                         nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
                         donToiThieu: v.donToiThieu,
-                        nhanSoLan: v.nhanSoLan, nhanSapDienRa: v.nhanSapDienRa,
+                        // Không nhãn "Từ dd/MM" — dòng hướng dẫn đã ghi "Dùng được từ dd/MM." (tránh lặp).
+                        nhanSoLan: v.nhanSoLan,
                         applyDim: false,
                         hangYeuCau: v.hangToiThieu,
                         huongDan: lyDo,
-                        hienMa: false
+                        hienMa: false,
+                        hienMoTa: false
                     )
                 }
                 .padding(.horizontal).padding(.vertical, 6)

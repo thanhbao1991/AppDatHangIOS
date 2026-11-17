@@ -46,6 +46,9 @@ struct VoucherTicketCard: View {
     var huongDan: String? = nil
     /// false = ẩn dòng mã voucher + "Đơn từ X" (sheet "Chọn voucher", chủ quán 2026-11-17: bỏ cho gọn — khách không cần gõ mã).
     var hienMa: Bool = true
+    /// false = ẩn mô tả (sheet "Chọn voucher", chủ quán 2026-11-17: "nội dung lặp lại rất nhiều" — tên + khối giảm bên trái
+    /// đã đủ ý, mô tả chỉ nhắc lại).
+    var hienMoTa: Bool = true
 
     /// Card không bấm/dùng được lúc này — gộp 3 trạng thái để phần hiển thị mờ dùng chung 1 chỗ.
     private var mo: Bool { applyDim && (daSuDung || nhanSapDienRa != nil || forceMo) }
@@ -132,7 +135,7 @@ struct VoucherTicketCard: View {
                         .foregroundColor(Theme.primary)
                 }
             }
-            if let moTa, !moTa.isEmpty {
+            if hienMoTa, let moTa, !moTa.isEmpty {
                 Text(moTa)
                     .font(.system(size: 12))
                     .foregroundColor(Theme.textMuted)
