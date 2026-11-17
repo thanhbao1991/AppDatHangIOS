@@ -9,7 +9,7 @@ struct VoucherPickerSheet: View {
     /// Voucher chưa dùng được (chưa tới ngày / chưa đủ hạng-điều kiện), KHÔNG gồm voucher đã dùng — hiện dưới cùng để
     /// khách biết có gì đang chờ (chủ quán 2026-11-17). Bấm chỉ hiện lý do, không chọn được. Xem CartStore.voucherChuaDung.
     var voucherChuaDung: [VoucherCuaToi] = []
-    /// Thứ tự nhóm do backend quyết định (CartStore.thuTuNhomVoucher): "dungDuoc", "chuaDung", "thieuDieuKien". Thiếu
+    /// Thứ tự nhóm do backend quyết định (CartStore.thuTuNhomVoucher), xem dongHienThi. Thiếu
     /// nhóm nào thì nhóm đó nối cuối theo thứ tự mặc định.
     var thuTuNhom: [String] = []
     /// Thứ tự toàn bộ voucher (Id) khi thuTuNhom = ["tatCa"] — xem VoucherChon.thuTuId.
@@ -31,13 +31,6 @@ struct VoucherPickerSheet: View {
     var onRetry: () async -> Void
     @State private var retrying = false
 
-    /// Thứ tự trong nhóm do backend quyết định (GET /voucher/chon, chủ quán 2026-11-17: đổi thứ tự không phải đẩy app) —
-    /// app chỉ tự xếp nhóm "dùng được ngay" theo số tiền giảm THẬT cho giỏ hiện tại (server không biết giỏ).
-    private var dungDuocNgay: [Voucher] {
-        vouchers.filter(duDieuKien).sorted { giaTriGiam($0) > giaTriGiam($1) }
-    }
-    private var thieuDieuKien: [Voucher] { vouchers.filter { !duDieuKien($0) } }
-
     private enum Dong: Identifiable {
         case khaDung(Voucher), chuaDung(VoucherCuaToi)
         var id: String {
@@ -45,21 +38,30 @@ struct VoucherPickerSheet: View {
         }
     }
 
-    /// Không chia nhóm (server gửi "tatCa"): mọi voucher xếp đúng thứ tự kéo-thả ở AppQuanLyIOS; voucher lạ (không có trong
-    /// thuTuId) xuống cuối, giữ thứ tự cũ.
-    private var tatCaTheoThuTu: [Dong] {
+    /// Thứ tự hiển thị do backend quyết định (GET /voucher/chon): `thuTuId` = thứ tự kéo-thả ở AppQuanLyIOS, `thuTuNhom` =
+    /// lần lượt lấy nhóm nào trước — "dungDuoc" (đủ điều kiện với giỏ), "chuaDung", "thieuDieuKien", "tatCa" (mọi voucher
+    /// còn lại). Trong mỗi nhóm giữ thứ tự `thuTuId`. Voucher chưa nhóm nào lấy thì nối cuối. Chủ quán 2026-11-17: dùng
+    /// được lên đầu, còn lại theo thứ tự server → server gửi ["dungDuoc", "tatCa"].
+    private var dongHienThi: [Dong] {
         let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
-        let tatCa = vouchers.map(Dong.khaDung) + voucherChuaDung.map(Dong.chuaDung)
-        return tatCa.enumerated()
+        var conLai = (vouchers.map(Dong.khaDung) + voucherChuaDung.map(Dong.chuaDung)).enumerated()
             .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
             .map(\.element)
-    }
-
-    private var nhomHienThi: [String] {
-        if thuTuNhom.contains("tatCa") { return ["tatCa"] }
-        let macDinh = ["dungDuoc", "chuaDung", "thieuDieuKien"]
-        let tuServer = thuTuNhom.filter(macDinh.contains)
-        return tuServer + macDinh.filter { !tuServer.contains($0) }
+        let nhom = thuTuNhom.isEmpty ? ["dungDuoc", "chuaDung", "thieuDieuKien"] : thuTuNhom
+        var kq: [Dong] = []
+        for n in nhom + ["tatCa"] {
+            let lay: (Dong) -> Bool
+            switch n {
+            case "dungDuoc": lay = { if case .khaDung(let v) = $0 { return duDieuKien(v) } else { return false } }
+            case "thieuDieuKien": lay = { if case .khaDung(let v) = $0 { return !duDieuKien(v) } else { return false } }
+            case "chuaDung": lay = { if case .chuaDung = $0 { return true } else { return false } }
+            case "tatCa": lay = { _ in true }
+            default: continue
+            }
+            kq += conLai.filter(lay)
+            conLai.removeAll(where: lay)
+        }
+        return kq
     }
 
     var body: some View {
@@ -203,18 +205,10 @@ struct VoucherPickerSheet: View {
                 // voucher đều phải ăn liền, không bắt bấm thêm 1 nút mới có hiệu lực). Hiện TẤT CẢ
                 // voucher (kể cả chưa đủ điều kiện Size L/topping) — mờ đi thay vì ẩn hẳn để khách biết
                 // có voucher đang chờ, tạo động lực thêm món vào giỏ cho đủ điều kiện.
-                ForEach(nhomHienThi, id: \.self) { nhom in
-                    switch nhom {
-                    case "dungDuoc": ForEach(dungDuocNgay) { dongVoucher($0) }
-                    case "thieuDieuKien": ForEach(thieuDieuKien) { dongVoucher($0) }
-                    case "tatCa":
-                        ForEach(tatCaTheoThuTu) { d in
-                            switch d {
-                            case .khaDung(let v): dongVoucher(v)
-                            case .chuaDung(let v): dongVoucherChuaDung(v)
-                            }
-                        }
-                    default: ForEach(voucherChuaDung) { dongVoucherChuaDung($0) }
+                ForEach(dongHienThi) { d in
+                    switch d {
+                    case .khaDung(let v): dongVoucher(v)
+                    case .chuaDung(let v): dongVoucherChuaDung(v)
                     }
                 }
         }
