@@ -142,7 +142,7 @@ struct VoucherPickerSheet: View {
                 // voucher khác nhau giữa 2 màn.
                 VStack(alignment: .leading, spacing: 6) {
                     VoucherTicketCard(
-                        ten: v.ten, moTa: v.moTa, ma: v.ma,
+                        ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
                         nhanGiam: v.nhanGiamGia,
                         nhanGiamToiDa: v.nhanGiamToiDa,
                         donToiThieu: v.donToiThieu,
@@ -171,7 +171,7 @@ struct VoucherPickerSheet: View {
             } label: {
                 VStack(alignment: .leading, spacing: 6) {
                     VoucherTicketCard(
-                        ten: v.ten, moTa: v.moTa, ma: v.ma,
+                        ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
                         nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
                         donToiThieu: v.donToiThieu,
                         // Không nhãn "Từ dd/MM" — dòng hướng dẫn đã ghi "Dùng được từ dd/MM." (tránh lặp).

@@ -137,6 +137,9 @@ struct DipLeHienThi: Decodable, Equatable {
 /// DatHangService.GetVoucherKhaDungAsync), không có dieuKien/dangHoatDong vì đó là chi tiết nội bộ.
 struct Voucher: Codable, Identifiable, Equatable {
     let id: String
+    /// Tên/mô tả đã bỏ mức giảm (chỉ ở /voucher/chon — sheet "Chọn voucher", khối trái thẻ đã ghi mức giảm). nil = dùng ten/moTa.
+    var tenNgan: String?
+    var moTaNgan: String?
     let ma: String
     let ten: String
     let moTa: String?
@@ -218,6 +221,9 @@ struct VoucherChon: Codable {
 
 struct VoucherCuaToi: Codable, Identifiable {
     let id: String
+    /// Tên/mô tả đã bỏ mức giảm (chỉ ở /voucher/chon — sheet "Chọn voucher", khối trái thẻ đã ghi mức giảm). nil = dùng ten/moTa.
+    var tenNgan: String?
+    var moTaNgan: String?
     var thuTu: Int?
     let ma: String
     let ten: String
