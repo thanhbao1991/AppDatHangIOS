@@ -471,6 +471,14 @@ struct MenuView: View {
         return (giaHienThi(b), giaRiengMap[b.id] != nil)
     }
 
+    /// Giá theo nghìn, không ".000đ": 25000 → "25", 25500 → "25,5".
+    private static func giaNghin(_ gia: Double) -> String {
+        let nghin = (gia / 100).rounded() / 10
+        return nghin == nghin.rounded()
+            ? String(Int(nghin))
+            : String(format: "%.1f", nghin).replacingOccurrences(of: ".", with: ",")
+    }
+
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
         let gia = giaMacDinhVaCoGiaRieng(item)
@@ -483,8 +491,9 @@ struct MenuView: View {
                     AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
                         .overlay(alignment: .bottom) {
                             if let gia {
-                                Text(formatTien(gia.gia))
-                                    .font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                                // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25", lẻ nghìn 25.500 → "25,5".
+                                Text(Self.giaNghin(gia.gia))
+                                    .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                                     .padding(.horizontal, 4).padding(.vertical, 1)
                                     .background(Capsule().fill(Theme.primary.opacity(0.92)))
