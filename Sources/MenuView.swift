@@ -228,13 +228,10 @@ struct MenuView: View {
                     // thường như mọi nội dung khác, không còn "dính" ở đỉnh khi cuộn qua — né toàn bộ
                     // lớp bug này, đơn giản và ổn định hơn hẳn.
                     VStack(alignment: .leading, spacing: 0) {
-                        // Title ngay trên menu. 19/11/2026: bỏ emoji đầu mục → ảnh món thật (xem anhMuc).
-                        HStack(spacing: 6) {
-                            anhMuc("menu-2026", sanPhams, co: 22)
-                            Text("Menu 2026")
-                                .accessibilityIdentifier("tieu-de-menu")  // UITests/BamNhomMenuUITests đo đỉnh cột món từ đây
-                                .font(.system(size: 15, weight: .bold))
-                        }
+                        // Title ngay trên menu — GIỮ emoji (chủ quán 19/11: chỉ tiêu đề nhóm đổi sang ảnh món).
+                        Text("⭐ Menu 2026")
+                            .accessibilityIdentifier("tieu-de-menu")  // UITests/BamNhomMenuUITests đo đỉnh cột món từ đây
+                            .font(.system(size: 15, weight: .bold))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -662,10 +659,10 @@ struct MenuView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 18) {
                 if !noiBatSanPhams.isEmpty {
-                    tabDeXuatTieuDe("Best Sellers", anh: Self.anhDaiDienMuc("best-sellers", noiBatSanPhams), chon: tab == 0) { tabDeXuat = 0 }
+                    tabDeXuatTieuDe("🔥 Best Sellers", chon: tab == 0) { tabDeXuat = 0 }
                 }
                 if !sale.isEmpty {
-                    tabDeXuatTieuDe("Flash sale", anh: Self.anhDaiDienMuc("sale-off", sale), chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
+                    tabDeXuatTieuDe("⚡ Flash sale", chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
                 }
             }
             .padding(.horizontal, 16)
@@ -694,12 +691,10 @@ struct MenuView: View {
     }
 
     /// Tiêu đề tab của dải đề xuất — tab đang chọn chữ đậm + gạch chân màu theme, tab kia chữ xám.
-    private func tabDeXuatTieuDe(_ ten: String, anh: String, chon: Bool, dem: Int? = nil, onTap: @escaping () -> Void) -> some View {
+    private func tabDeXuatTieuDe(_ ten: String, chon: Bool, dem: Int? = nil, onTap: @escaping () -> Void) -> some View {
         Button(action: onTap) {
             VStack(spacing: 4) {
                 HStack(spacing: 4) {
-                    Self.anhLyKhongNen(anh, co: 22)
-                        .opacity(chon ? 1 : 0.6)
                     Text(ten)
                         .font(.system(size: 15, weight: chon ? .bold : .semibold))
                         .foregroundColor(chon ? .primary : Theme.textFaint)
