@@ -478,14 +478,15 @@ struct MenuView: View {
         HStack(spacing: 12) {
             Button { picking = item } label: {
                 HStack(spacing: 12) {
-                    // 19/11/2026 (thử, chủ quán): giá nằm DƯỚI ảnh món thay vì dưới tên. Ảnh 56 + 3 + giá ~15 = 74 → rowHeight 84.
+                    // 19/11/2026 (thử, chủ quán): giá nằm TRÊN ảnh món (lần thử trước: dưới ảnh). Giá ~15 + 3 + ảnh 56 = 74
+                    // → rowHeight 84.
                     VStack(spacing: 3) {
-                        AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
                         if let gia {
                             Text(formatTien(gia.gia))
                                 .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
                                 .lineLimit(1).minimumScaleFactor(0.8)
                         }
+                        AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
                     }
                     .frame(width: 64)
                     VStack(alignment: .leading, spacing: 4) {
@@ -525,7 +526,7 @@ struct MenuView: View {
         .padding(.horizontal, 16)
         // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
         // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
-        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Ảnh 56 + giá dưới ảnh ~18 + đệm 5×2 = 84;
+        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Giá trên ảnh ~18 + ảnh 56 + đệm 5×2 = 84;
         // mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
         .frame(maxWidth: .infinity, minHeight: Self.rowHeight, maxHeight: Self.rowHeight, alignment: .leading)
     }
