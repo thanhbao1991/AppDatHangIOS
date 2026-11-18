@@ -86,6 +86,12 @@ struct MenuView: View {
         return nil
     }
 
+    /// Tổng chiều cao THẬT của cột món (cùng công thức offsetNhom) — dùng làm đáy cuộn thay sv.contentSize
+    /// (LazyVStack chưa dựng hết nhóm thì contentSize chỉ là số ước).
+    private var tongChieuCaoMenu: CGFloat {
+        sections.reduce(0) { $0 + Self.categoryHeaderHeight + CGFloat($1.items.count) * Self.rowHeight + Self.khoangCachNhom }
+    }
+
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
     /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
     private static let nhomShortLabels: [String: String] = [:]
@@ -302,14 +308,28 @@ struct MenuView: View {
                                 // dựng, nhóm xa thì ƯỚC nên dừng lệch (bấm #Sinh Tố trở đi rơi vào giữa Nước Ép). Mọi phần
                                 // tử trong cột phải giờ cao CỐ ĐỊNH (xem Self.rowHeight) → tự cộng ra đúng toạ độ nhóm rồi
                                 // cuộn thẳng UIScrollView tới đó: chính xác tuyệt đối, không chỉnh lại, không giật.
+                                //
+                                // 18/11 (lần 2): đáy cuộn KHÔNG lấy sv.contentSize — LazyVStack chưa dựng nhóm xa thì
+                                // contentSize cũng là số ƯỚC, nhảy thẳng xuống #Khác bị cắt sớm (bấm lần lượt thì đúng vì
+                                // nhóm đã dựng hết). Dùng tổng chiều cao tự tính; cuộn xong kiểm lại, lệch thì đặt lại
+                                // không animation (lúc dựng nhóm thật SwiftUI có thể kẹp offset theo contentSize cũ).
                                 if let y = offsetNhom(req.id), let sv = menuScroll.view {
                                     let minY = -sv.adjustedContentInset.top
-                                    let maxY = max(minY, sv.contentSize.height - sv.bounds.height + sv.adjustedContentInset.bottom)
-                                    sv.setContentOffset(CGPoint(x: 0, y: min(max(y, minY), maxY)), animated: true)
+                                    let maxY = max(minY, tongChieuCaoMenu - sv.bounds.height + sv.adjustedContentInset.bottom)
+                                    let dich = CGPoint(x: 0, y: min(max(y, minY), maxY))
+                                    sv.setContentOffset(dich, animated: true)
+                                    for tre in [0.4, 0.7] {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + tre) {
+                                            guard scrollRequest?.tick == req.tick,      // khách đã bấm nhóm khác
+                                                  !sv.isDragging, !sv.isDecelerating,   // khách đang tự vuốt
+                                                  abs(sv.contentOffset.y - dich.y) > 0.5 else { return }
+                                            sv.setContentOffset(dich, animated: false)
+                                        }
+                                    }
                                 } else {
                                     withAnimation { proxy.scrollTo(req.id, anchor: .top) }  // dự phòng: chưa bắt được UIScrollView
                                 }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                                     guard scrollRequest?.tick == req.tick else { return }  // khách đã bấm nhóm khác
                                     isJumpingToSection = false
                                 }
