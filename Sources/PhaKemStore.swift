@@ -62,10 +62,33 @@ final class PhaKemStore: ObservableObject {
         for m in ds where m.conGiay > 0 && m.giamGia > 0 {
             moi[m.sanPhamId] = (m.giamGia, bayGio.addingTimeInterval(TimeInterval(m.conGiay)))
         }
-        PhaKemBang.ganMoi(moi)
+        tuServer = moi
+        apDung()
+    }
+
+    private var tuServer: [String: (giam: Double, hetLuc: Date)] = [:]
+
+    private func apDung() {
+        var bang = tuServer
+        #if DEV_LOGIN
+        for (id, m) in xemThu where m.hetLuc > Date() { bang[id] = m }
+        #endif
+        PhaKemBang.ganMoi(bang)
         phienBan += 1
         henLanHetGioKeTiep()
     }
+
+    #if DEV_LOGIN
+    /// Bản dev "🧪 Xem thử Sale off": giả vài món đang pha 3 phút, CHỈ trên máy này (server không biết — đặt đơn sẽ bị
+    /// báo hết giờ, đúng như khách thật đặt trễ).
+    private var xemThu: [String: (giam: Double, hetLuc: Date)] = [:]
+
+    func batXemThu(_ sanPhamIds: [String]) {
+        let het = Date().addingTimeInterval(180)
+        xemThu = Dictionary(sanPhamIds.map { ($0, (giam: 3000.0, hetLuc: het)) }, uniquingKeysWith: { a, _ in a })
+        apDung()
+    }
+    #endif
 
     /// Món sớm hết giờ nhất hết thì vẽ lại ngay (giá trong giỏ/menu trở về giá thường đúng lúc).
     private func henLanHetGioKeTiep() {

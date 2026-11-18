@@ -14,6 +14,8 @@ extension Notification.Name {
     static let xemTruocSplash = Notification.Name("xemTruocSplash")
     /// DEV_LOGIN only — nút xem trước màn chúc mừng sinh nhật (voucher mẫu, không cần đúng ngày sinh).
     static let xemTruocSinhNhat = Notification.Name("xemTruocSinhNhat")
+    /// Bản dev: MenuView chọn vài món rồi gọi PhaKemStore.batXemThu — xem DevXemThu.
+    static let xemThuSaleOff = Notification.Name("xemThuSaleOff")
 }
 
 /// Host app THẬT được khởi động khi chạy unit test — xem giải thích chi tiết ở Prefs.swift của

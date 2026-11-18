@@ -324,6 +324,14 @@ struct MenuView: View {
         }
         .task { if sanPhams.isEmpty { await load() } }
         .task { await phaKem.chay() }
+        #if DEV_LOGIN
+        // 🧪 Xem thử Sale off: 2 món Best Sellers + món đầu nhóm đang chọn, giảm 3K trong 3 phút (chỉ máy này).
+        .onReceive(NotificationCenter.default.publisher(for: .xemThuSaleOff)) { _ in
+            var ids = noiBatSanPhams.prefix(2).map(\.id)
+            if let mon = sections.first(where: { $0.nhom.id == selectedNhomId })?.items.first { ids.append(mon.id) }
+            phaKem.batXemThu(ids)
+        }
+        #endif
         .task { await SeasonalEvent.load() }
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
             seasonalPreviewTick += 1
