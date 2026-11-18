@@ -103,3 +103,26 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.denncoffee.appdathang.tests
         SWIFT_VERSION: "5.0"
+  # UI test (19/11/2026) — scheme riêng, KHÔNG nằm trong scheme AppDatHangIOS: cần mạng thật + chậm nên job `test` mỗi lần
+  # push không chạy; chỉ job `uitest` (dispatch ui_test=true) chạy, trên simulator iOS 18.
+  AppDatHangIOSUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: AppDatHangIOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.denncoffee.appdathang.uitests
+        SWIFT_VERSION: "5.0"
+        TEST_TARGET_NAME: AppDatHangIOS
+schemes:
+  AppDatHangIOSUITests:
+    build:
+      targets:
+        AppDatHangIOS: all
+        AppDatHangIOSUITests: [test]
+    test:
+      targets:
+        - AppDatHangIOSUITests
