@@ -228,10 +228,13 @@ struct MenuView: View {
                     // thường như mọi nội dung khác, không còn "dính" ở đỉnh khi cuộn qua — né toàn bộ
                     // lớp bug này, đơn giản và ổn định hơn hẳn.
                     VStack(alignment: .leading, spacing: 0) {
-                        // Title ngay trên menu — cùng style "🔥 Món quán đề xuất" (noiBatCarousel).
-                        Text("⭐ Menu 2026")
-                            .accessibilityIdentifier("tieu-de-menu")  // UITests/BamNhomMenuUITests đo đỉnh cột món từ đây
-                            .font(.system(size: 15, weight: .bold))
+                        // Title ngay trên menu. 19/11/2026: bỏ emoji đầu mục → ảnh món thật (xem anhMuc).
+                        HStack(spacing: 6) {
+                            anhMuc("menu-2026", sanPhams, co: 22)
+                            Text("Menu 2026")
+                                .accessibilityIdentifier("tieu-de-menu")  // UITests/BamNhomMenuUITests đo đỉnh cột món từ đây
+                                .font(.system(size: 15, weight: .bold))
+                        }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -372,11 +375,8 @@ struct MenuView: View {
     /// nhóm sidebar bên trái đã có nền tô đậm cho mục đang chọn.
     private func sectionHeader(_ nhom: NhomSanPham, items: [SanPham]) -> some View {
         HStack(spacing: 8) {
-            // Ô icon kiểu TK (vuông bo góc tô nhạt) như tiêu đề thẻ toàn app.
-            Text(Theme.nhomIcons[nhom.ten] ?? Theme.defaultNhomIcon)
-                .font(.system(size: 15))
-                .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primaryTint))
+            // 19/11/2026: bỏ emoji nhóm → ảnh 1 món ngẫu nhiên của nhóm (xem anhMuc).
+            anhMuc(nhom.id, items, co: 28)
             Text(nhom.ten).font(.system(size: 16, weight: .bold)).foregroundColor(.primary)
                 .accessibilityIdentifier("header|\(nhom.ten)")  // UITests/BamNhomMenuUITests
             Spacer()
@@ -488,6 +488,34 @@ struct MenuView: View {
         return (giaHienThi(b), giaRiengMap[b.id] != nil)
     }
 
+    /// Nhãn giá "25K" đè góc dưới phải ảnh món — dùng chung dòng món + thẻ Best Sellers/Sale off. Món pha kèm: giá đã
+    /// giảm, nền đỏ. Nền trong 65% để còn thấy ảnh.
+    private static func nhanGiaK(_ gia: Double, giam: Double, co: CGFloat) -> some View {
+        Text(giaNghin(gia - giam) + "K")
+            .font(.system(size: co, weight: .bold)).foregroundColor(.white)
+            .lineLimit(1).fixedSize()
+            .padding(.horizontal, co / 3).padding(.vertical, 1)
+            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(giam > 0 ? Theme.danger : Theme.primary.opacity(0.65)))
+    }
+
+    /// Ảnh đại diện đầu mục (thay emoji, chủ quán 19/11/2026): ảnh THẬT logo mới (có bản tách nền, không phải ảnh
+    /// mặc định) của 1 món ngẫu nhiên trong mục; mục chưa món nào có → ảnh mặc định ly đá. Ngẫu nhiên theo hạt giống
+    /// mỗi lần mở app — đổi giữa các lần mở nhưng không nhảy khi màn vẽ lại.
+    private static let hatGiongAnhMuc = UInt64.random(in: 0...UInt64.max)
+    private static let anhMacDinhDa = "https://api.denncoffee.com/menu-images-cat/mac-dinh.webp?v=2"
+    private static func anhDaiDienMuc(_ khoa: String, _ items: [SanPham]) -> String {
+        var thay = Set<String>()
+        let co = items.compactMap(\.hinhAnhCat).filter { !$0.contains("/mac-dinh") && thay.insert($0).inserted }
+        guard !co.isEmpty else { return anhMacDinhDa }
+        var h = hatGiongAnhMuc
+        for u in khoa.unicodeScalars { h = h &* 31 &+ UInt64(u.value) }
+        return co[Int(h % UInt64(co.count))]
+    }
+
+    private func anhMuc(_ khoa: String, _ items: [SanPham], co: CGFloat) -> some View {
+        AnhMonView(hinhAnh: nil, hinhAnhCat: Self.anhDaiDienMuc(khoa, items), width: co, height: co, cornerRadius: co * 0.28)
+    }
+
     /// Giá theo nghìn, không ".000đ": 25000 → "25", 25500 → "25,5".
     private static func giaNghin(_ gia: Double) -> String {
         let nghin = (gia / 100).rounded() / 10
@@ -516,11 +544,7 @@ struct MenuView: View {
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
                                 // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25K", lẻ nghìn 25.500 → "25,5K".
-                                Text(Self.giaNghin(gia.gia - giam) + "K") // pha kèm: giá đã giảm, nền đỏ
-                                    .font(.system(size: 9, weight: .bold)).foregroundColor(.white)
-                                    .lineLimit(1).fixedSize()
-                                    .padding(.horizontal, 3).padding(.vertical, 1)
-                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(giam > 0 ? Theme.danger : Theme.primary.opacity(0.65)))
+                                Self.nhanGiaK(gia.gia, giam: giam, co: 9) // pha kèm: giá đã giảm, nền đỏ
                             }
                         }
                         .overlay(alignment: .topLeading) {
@@ -632,10 +656,10 @@ struct MenuView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 18) {
                 if !noiBatSanPhams.isEmpty {
-                    tabDeXuatTieuDe("🔥 Best Sellers", chon: tab == 0) { tabDeXuat = 0 }
+                    tabDeXuatTieuDe("Best Sellers", anh: Self.anhDaiDienMuc("best-sellers", noiBatSanPhams), chon: tab == 0) { tabDeXuat = 0 }
                 }
                 if !sale.isEmpty {
-                    tabDeXuatTieuDe("⚡ Sale off", chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
+                    tabDeXuatTieuDe("Sale off", anh: Self.anhDaiDienMuc("sale-off", sale), chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
                 }
             }
             .padding(.horizontal, 16)
@@ -657,17 +681,19 @@ struct MenuView: View {
             // Chiều cao cố định cho GeometryReader — nó tự thân không có kích thước "tự nhiên" như
             // VStack thường, phải khai rõ để không chiếm hết phần còn lại của màn hình (GeometryReader
             // mặc định tham lam .frame(maxHeight: .infinity)). Khớp ảnh 90 + spacing 6 + 2 dòng chữ.
-            .frame(height: 90 + 6 + 16 + 4 + 15)
+            .frame(height: 90 + 6 + 18)
         }
         .padding(.vertical, 10)
         .background(Theme.bg) // 09/11/2026: cùng nền xám toàn app
     }
 
     /// Tiêu đề tab của dải đề xuất — tab đang chọn chữ đậm + gạch chân màu theme, tab kia chữ xám.
-    private func tabDeXuatTieuDe(_ ten: String, chon: Bool, dem: Int? = nil, onTap: @escaping () -> Void) -> some View {
+    private func tabDeXuatTieuDe(_ ten: String, anh: String, chon: Bool, dem: Int? = nil, onTap: @escaping () -> Void) -> some View {
         Button(action: onTap) {
             VStack(spacing: 4) {
                 HStack(spacing: 4) {
+                    AnhMonView(hinhAnh: nil, hinhAnhCat: anh, width: 20, height: 20, cornerRadius: 6)
+                        .opacity(chon ? 1 : 0.6)
                     Text(ten)
                         .font(.system(size: 15, weight: chon ? .bold : .semibold))
                         .foregroundColor(chon ? .primary : Theme.textFaint)
@@ -706,30 +732,17 @@ struct MenuView: View {
                             .padding(5)
                         }
                     }
-                Text(item.ten)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                if let gia = giaMacDinhVaCoGiaRieng(item) {
-                    HStack(spacing: 4) {
-                        if giam > 0 {
-                            Text(formatTien(gia.gia - giam))
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(Theme.danger)
-                            Text(formatTien(gia.gia))
-                                .font(.system(size: 10))
-                                .strikethrough()
-                                .foregroundColor(Theme.textFaint)
-                                .lineLimit(1).minimumScaleFactor(0.8)
-                        } else {
-                            Text(formatTien(gia.gia))
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(Theme.primary)
-                        }
-                        if gia.coGiaRieng {
-                            giaRiengBadge()
-                        }
+                    // 19/11/2026: giá "25K" góc dưới phải ảnh, đồng bộ dòng món (bỏ dòng giá dưới tên).
+                    .overlay(alignment: .bottomTrailing) {
+                        if let gia = giaMacDinhVaCoGiaRieng(item) { Self.nhanGiaK(gia.gia, giam: giam, co: 11) }
                     }
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                HStack(spacing: 4) {
+                    Text(item.ten)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    if giaMacDinhVaCoGiaRieng(item)?.coGiaRieng == true { giaRiengBadge() }
                 }
             }
             .frame(width: cardWidth, alignment: .leading)
