@@ -69,7 +69,7 @@ struct MenuView: View {
     /// ⚠️ Dòng món cao CỐ ĐỊNH — khung mỗi nhóm ở cột món khai thẳng chiều cao = header + số món × rowHeight (xem
     /// body, 19/11/2026) để iOS biết trước toạ độ mọi nhóm. Thêm thứ gì làm đổi chiều cao dòng/nhóm mà không sửa
     /// khung đó thì món bị cắt/chồng và bấm nhóm lại nhảy lệch.
-    private static let rowHeight: CGFloat = 72
+    private static let rowHeight: CGFloat = 84
     private static let khoangCachNhom: CGFloat = 8
 
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
@@ -274,7 +274,7 @@ struct MenuView: View {
                                                         // cao nhóm phải đúng = số món × rowHeight, xem khung bên dưới.
                                                         .overlay(alignment: .bottom) {
                                                             if itemIndex < section.items.count - 1 {
-                                                                Divider().padding(.leading, 84)
+                                                                Divider().padding(.leading, 92)
                                                             }
                                                         }
                                                         // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở CẢ mục "Yêu
@@ -478,11 +478,20 @@ struct MenuView: View {
         HStack(spacing: 12) {
             Button { picking = item } label: {
                 HStack(spacing: 12) {
-                    AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
+                    // 19/11/2026 (thử, chủ quán): giá nằm DƯỚI ảnh món thay vì dưới tên. Ảnh 56 + 3 + giá ~15 = 74 → rowHeight 84.
+                    VStack(spacing: 3) {
+                        AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
+                        if let gia {
+                            Text(formatTien(gia.gia))
+                                .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                                .lineLimit(1).minimumScaleFactor(0.8)
+                        }
+                    }
+                    .frame(width: 64)
                     VStack(alignment: .leading, spacing: 4) {
                         // 19/11/2026 (thử, chủ quán: tên dài thì chữ nhỏ lại): vừa 1 dòng cỡ 15 thì giữ, không vừa
                         // thì xuống cỡ 13 tối đa 2 dòng. Căn trái tường minh — chữ trong Button mặc định căn giữa
-                        // (dòng 2 bị thụt vào). Cỡ 13 × 2 dòng + giá vẫn vừa rowHeight 72.
+                        // (dòng 2 bị thụt vào). Cỡ 13 × 2 dòng vừa rowHeight.
                         ViewThatFits(in: .horizontal) {
                             Text(item.ten)
                                 .font(.system(size: 15, weight: .semibold))
@@ -494,13 +503,7 @@ struct MenuView: View {
                         }
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
-                        if let gia {
-                            HStack(spacing: 6) {
-                                Text(formatTien(gia.gia))
-                                    .font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
-                                if gia.coGiaRieng { giaRiengBadge() }
-                            }
-                        }
+                        if let gia, gia.coGiaRieng { giaRiengBadge() }
                     }
                     Spacer(minLength: 0)
                 }
@@ -522,8 +525,8 @@ struct MenuView: View {
         .padding(.horizontal, 16)
         // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
         // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
-        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Ảnh 56 + đệm 8×2 = 72;
-        // tên 2 dòng (15pt) + giá vừa đúng 56 — mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
+        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Ảnh 56 + giá dưới ảnh ~18 + đệm 5×2 = 84;
+        // mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
         .frame(maxWidth: .infinity, minHeight: Self.rowHeight, maxHeight: Self.rowHeight, alignment: .leading)
     }
 
