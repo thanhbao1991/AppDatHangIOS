@@ -512,8 +512,14 @@ struct MenuView: View {
         return co[Int(h % UInt64(co.count))]
     }
 
+    /// Ảnh ly tách nền KHÔNG vẽ nền theme (chủ quán 19/11: bỏ nền ảnh đầu mục) — chỉ cái ly trong suốt.
+    private static func anhLyKhongNen(_ url: String, co: CGFloat) -> some View {
+        CachedAsyncImage(url: URL(string: url)) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
+            .frame(width: co, height: co)
+    }
+
     private func anhMuc(_ khoa: String, _ items: [SanPham], co: CGFloat) -> some View {
-        AnhMonView(hinhAnh: nil, hinhAnhCat: Self.anhDaiDienMuc(khoa, items), width: co, height: co, cornerRadius: co * 0.28)
+        Self.anhLyKhongNen(Self.anhDaiDienMuc(khoa, items), co: co)
     }
 
     /// Giá theo nghìn, không ".000đ": 25000 → "25", 25500 → "25,5".
@@ -692,7 +698,7 @@ struct MenuView: View {
         Button(action: onTap) {
             VStack(spacing: 4) {
                 HStack(spacing: 4) {
-                    AnhMonView(hinhAnh: nil, hinhAnhCat: anh, width: 20, height: 20, cornerRadius: 6)
+                    Self.anhLyKhongNen(anh, co: 22)
                         .opacity(chon ? 1 : 0.6)
                     Text(ten)
                         .font(.system(size: 15, weight: chon ? .bold : .semibold))
