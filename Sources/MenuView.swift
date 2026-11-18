@@ -504,9 +504,10 @@ struct MenuView: View {
                                     .lineLimit(1).fixedSize()
                                     .padding(.horizontal, 3).padding(.vertical, 1)
                                     .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.primary.opacity(0.65)))
-                                    .padding(2)
                             }
                         }
+                        // Nhãn sát mép dưới + mép phải (chủ quán 19/11) — cắt lại theo góc bo của ảnh để góc nhãn không lòi ra.
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     VStack(alignment: .leading, spacing: 4) {
                         // 19/11/2026 (thử, chủ quán: tên dài thì chữ nhỏ lại): vừa 1 dòng cỡ 15 thì giữ, không vừa
                         // thì xuống cỡ 13 tối đa 2 dòng. Căn trái tường minh — chữ trong Button mặc định căn giữa
