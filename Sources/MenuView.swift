@@ -271,7 +271,10 @@ struct MenuView: View {
                                             // 09/11/2026 (đồng bộ toàn app theo bộ khung TK — KHÔNG theo ảnh mẫu): món
                                             // của mỗi nhóm gom vào 1 thẻ trắng bo 18 có bóng nhẹ, kẻ mảnh giữa các món
                                             // (kiểu nhóm dòng ở tab Tài khoản), trên nền xám Theme.bg.
-                                            LazyVStack(spacing: 0) {
+                                            // 19/11/2026: món là VStack THƯỜNG — LazyVStack ở đây vẫn ĐOÁN vị trí món khi cuộn
+                                            // ngược từ dưới lên vào giữa nhóm → món cuối tràn ra khỏi khung, đè tiêu đề nhóm sau.
+                                            // Chỉ ẢNH món còn lazy (xem productRow) để không tải hết ảnh lúc mở.
+                                            VStack(spacing: 0) {
                                                 ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
                                                     productRow(sp)
                                                         // Kẻ giữa các món vẽ bằng overlay (KHÔNG chiếm chiều cao) — chiều
@@ -495,7 +498,12 @@ struct MenuView: View {
                 HStack(spacing: 12) {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
-                    AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
+                    // Ảnh bọc LazyVStack 1 phần tử, khung cố định: chỉ tải ảnh khi dòng cuộn tới (cột món là VStack
+                    // thường), 1 phần tử luôn nằm ở 0 nên không có chuyện đoán sai vị trí.
+                    LazyVStack(spacing: 0) {
+                        AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
+                    }
+                    .frame(width: 56, height: 56)
                         // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
