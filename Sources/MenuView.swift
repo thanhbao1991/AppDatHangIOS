@@ -489,15 +489,16 @@ struct MenuView: View {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
                     AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
-                        .overlay(alignment: .bottom) {
+                        // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
+                        .overlay(alignment: .bottomTrailing) {
                             if let gia {
-                                // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25", lẻ nghìn 25.500 → "25,5".
-                                Text(Self.giaNghin(gia.gia))
-                                    .font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                                    .padding(.horizontal, 4).padding(.vertical, 1)
-                                    .background(Capsule().fill(Theme.primary.opacity(0.92)))
-                                    .padding(.horizontal, 2).padding(.bottom, 3)
+                                // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25K", lẻ nghìn 25.500 → "25,5K".
+                                Text(Self.giaNghin(gia.gia) + "K")
+                                    .font(.system(size: 9, weight: .bold)).foregroundColor(.white)
+                                    .lineLimit(1).fixedSize()
+                                    .padding(.horizontal, 3).padding(.vertical, 1)
+                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.primary.opacity(0.92)))
+                                    .padding(2)
                             }
                         }
                     VStack(alignment: .leading, spacing: 4) {
