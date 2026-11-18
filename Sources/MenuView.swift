@@ -34,6 +34,10 @@ struct MenuView: View {
     @State private var togglingYeuThichIds: Set<String> = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
+    /// "Pha kèm" (19/11/2026): món đang có đơn khác pha → giảm 3K trong 3 phút, xem PhaKemStore. Đọc để vẽ lại khi đổi.
+    @ObservedObject private var phaKem = PhaKemStore.shared
+    /// Tab dải đề xuất: 0 = Best Sellers (mặc định, chủ quán chốt), 1 = Sale off (chỉ hiện khi có món đang pha).
+    @State private var tabDeXuat = 0
     /// Giá riêng của khách đang đăng nhập (key sanPhamBienTheId) — feedback 2026-09-29 "áp giá riêng
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
@@ -190,7 +194,7 @@ struct MenuView: View {
             // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
             // khách mở ra đầu tiên và thấy 100% lượt vào app. Ẩn lúc đang tìm kiếm (kết quả tìm nên
             // chiếm trọn màn, không cạnh tranh chỗ với dải quảng bá không liên quan tới từ khoá gõ).
-            if !loading && error.isEmpty && !isSearching && !noiBatSanPhams.isEmpty {
+            if !loading && error.isEmpty && !isSearching && (!noiBatSanPhams.isEmpty || !monSale.isEmpty) {
                 noiBatCarousel
             }
 
@@ -316,6 +320,7 @@ struct MenuView: View {
             }
         }
         .task { if sanPhams.isEmpty { await load() } }
+        .task { await phaKem.chay() }
         .task { await SeasonalEvent.load() }
         .onReceive(NotificationCenter.default.publisher(for: .christmasPreviewToggled)) { _ in
             seasonalPreviewTick += 1
@@ -329,6 +334,7 @@ struct MenuView: View {
                 khongChoKhongDa: khongChoKhongDaNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 giaRiengMap: giaRiengMap,
+                giamPhaKem: PhaKemBang.giam(sp.id),
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     cart.addItem(sanPhamBienTheId: bienThe.id, tenSanPham: sp.ten, tenBienThe: bienThe.tenBienThe, giaBan: giaHienThi(bienThe), soLuong: soLuong, ghiChu: ghiChu, toppings: toppings, hinhAnh: sp.hinhAnh, sanPhamId: sp.id)
                 }
@@ -497,7 +503,7 @@ struct MenuView: View {
                                     .font(.system(size: 9, weight: .bold)).foregroundColor(.white)
                                     .lineLimit(1).fixedSize()
                                     .padding(.horizontal, 3).padding(.vertical, 1)
-                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.primary.opacity(0.92)))
+                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.primary.opacity(0.65)))
                                     .padding(2)
                             }
                         }
@@ -754,12 +760,14 @@ struct ProductPickerSheet: View {
     /// MenuView.giaHienThi. Mặc định rỗng cho nơi gọi cũ chưa kịp cập nhật (an toàn, rơi về giá
     /// catalog như trước).
     var giaRiengMap: [String: Double] = [:]
+    /// "Pha kèm" đang giảm cho món này (mỗi ly, mọi size) — 0 khi không. Chỉ để HIỆN giá; giỏ hàng tự tính sống theo PhaKemBang.
+    var giamPhaKem: Double = 0
     let onConfirm: (_ bienThe: SanPhamBienThe, _ soLuong: Int, _ ghiChu: String?, _ toppings: [CartTopping]) -> Void
     let onDone: () -> Void
 
     /// Giá THẬT sẽ bị tính — khớp MenuView.giaHienThi, tách riêng vì struct này độc lập không share
     /// state với MenuView.
-    private func giaHienThi(_ b: SanPhamBienThe) -> Double { giaRiengMap[b.id] ?? b.giaBan }
+    private func giaHienThi(_ b: SanPhamBienThe) -> Double { (giaRiengMap[b.id] ?? b.giaBan) - giamPhaKem }
 
     @State private var bienThe: SanPhamBienThe?
     @State private var toppingQty: [String: Int] = [:]
