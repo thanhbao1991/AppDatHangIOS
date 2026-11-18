@@ -488,6 +488,7 @@ struct MenuView: View {
     @ViewBuilder
     private func productRow(_ item: SanPham) -> some View {
         let gia = giaMacDinhVaCoGiaRieng(item)
+        let giam = giamPhaKem(item)
         let isFavorite = yeuThichIds.contains(item.id)
         HStack(spacing: 12) {
             Button { picking = item } label: {
@@ -499,12 +500,15 @@ struct MenuView: View {
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
                                 // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25K", lẻ nghìn 25.500 → "25,5K".
-                                Text(Self.giaNghin(gia.gia) + "K")
+                                Text(Self.giaNghin(gia.gia - giam) + "K") // pha kèm: giá đã giảm, nền đỏ
                                     .font(.system(size: 9, weight: .bold)).foregroundColor(.white)
                                     .lineLimit(1).fixedSize()
                                     .padding(.horizontal, 3).padding(.vertical, 1)
-                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.primary.opacity(0.65)))
+                                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(giam > 0 ? Theme.danger : Theme.primary.opacity(0.65)))
                             }
+                        }
+                        .overlay(alignment: .topLeading) {
+                            if giam > 0 { Self.nhanGiam(giam, co: 9).padding(2) }
                         }
                         // Nhãn sát mép dưới + mép phải (chủ quán 19/11) — cắt lại theo góc bo của ảnh để góc nhãn không lòi ra.
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -605,10 +609,20 @@ struct MenuView: View {
     /// noiBatSanPhams. Card gọn hơn productRow (dọc, ảnh lớn hơn) để tách biệt rõ với List món bên
     /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
     private var noiBatCarousel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("🔥 Best Sellers")
-                .font(.system(size: 15, weight: .bold))
-                .padding(.horizontal, 16)
+        let sale = monSale
+        // Sale off chỉ có khi đang có món pha kèm; hết món thì tự về Best Sellers (mặc định, chủ quán chốt 19/11).
+        let tab = sale.isEmpty ? 0 : (noiBatSanPhams.isEmpty ? 1 : tabDeXuat)
+        let ds = tab == 1 ? sale : noiBatSanPhams
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 18) {
+                if !noiBatSanPhams.isEmpty {
+                    tabDeXuatTieuDe("🔥 Best Sellers", chon: tab == 0) { tabDeXuat = 0 }
+                }
+                if !sale.isEmpty {
+                    tabDeXuatTieuDe("⚡ Sale off", chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
+                }
+            }
+            .padding(.horizontal, 16)
             GeometryReader { geo in
                 // 3 món trọn vẹn = 3 chiều rộng card + 2 khoảng cách giữa chúng (khoảng cách thứ 3,
                 // trước món thứ 4, KHÔNG tính vào vì món thứ 4 chỉ hé 1 phần, không cần đủ khoảng
@@ -617,28 +631,8 @@ struct MenuView: View {
                     / floor(Self.noiBatCarouselVisibleCount)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Self.noiBatCarouselSpacing) {
-                        ForEach(noiBatSanPhams) { item in
-                            Button { picking = item } label: {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: cardWidth, height: 90)
-                                    Text(item.ten)
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.primary)
-                                        .lineLimit(1)
-                                    if let gia = giaMacDinhVaCoGiaRieng(item) {
-                                        HStack(spacing: 4) {
-                                            Text(formatTien(gia.gia))
-                                                .font(.system(size: 12, weight: .semibold))
-                                                .foregroundColor(Theme.primary)
-                                            if gia.coGiaRieng {
-                                                giaRiengBadge()
-                                            }
-                                        }
-                                    }
-                                }
-                                .frame(width: cardWidth, alignment: .leading)
-                            }
-                            .buttonStyle(.plain)
+                        ForEach(ds) { item in
+                            deXuatCard(item, cardWidth: cardWidth)
                         }
                     }
                     .padding(.horizontal, Self.noiBatCarouselPadding)
@@ -651,6 +645,100 @@ struct MenuView: View {
         }
         .padding(.vertical, 10)
         .background(Theme.bg) // 09/11/2026: cùng nền xám toàn app
+    }
+
+    /// Tiêu đề tab của dải đề xuất — tab đang chọn chữ đậm + gạch chân màu theme, tab kia chữ xám.
+    private func tabDeXuatTieuDe(_ ten: String, chon: Bool, dem: Int? = nil, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            VStack(spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(ten)
+                        .font(.system(size: 15, weight: chon ? .bold : .semibold))
+                        .foregroundColor(chon ? .primary : Theme.textFaint)
+                    if let dem {
+                        Text("\(dem)")
+                            .font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Circle().fill(Theme.danger))
+                    }
+                }
+                Capsule().fill(chon ? Theme.primary : Color.clear).frame(height: 2)
+            }
+            .fixedSize()
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Thẻ món trong dải đề xuất (Best Sellers / Sale off). Món đang pha kèm: nhãn "-3K", đồng hồ đếm ngược,
+    /// giá đỏ + giá cũ gạch ngang.
+    private func deXuatCard(_ item: SanPham, cardWidth: CGFloat) -> some View {
+        let giam = giamPhaKem(item)
+        return Button { picking = item } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: cardWidth, height: 90)
+                    .overlay(alignment: .topLeading) {
+                        if giam > 0 { Self.nhanGiam(giam, co: 11).padding(5) }
+                    }
+                    .overlay(alignment: .bottomLeading) {
+                        if giam > 0, let het = PhaKemBang.hetLuc(item.id) {
+                            TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                                Text("⚡ \(PhaKemStore.demNguoc(het, luc: ctx.date))")
+                                    .font(.system(size: 11, weight: .bold).monospacedDigit()).foregroundColor(.white)
+                                    .padding(.horizontal, 6).padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.black.opacity(0.75)))
+                            }
+                            .padding(5)
+                        }
+                    }
+                Text(item.ten)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                if let gia = giaMacDinhVaCoGiaRieng(item) {
+                    HStack(spacing: 4) {
+                        if giam > 0 {
+                            Text(formatTien(gia.gia - giam))
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Theme.danger)
+                            Text(formatTien(gia.gia))
+                                .font(.system(size: 10))
+                                .strikethrough()
+                                .foregroundColor(Theme.textFaint)
+                                .lineLimit(1).minimumScaleFactor(0.8)
+                        } else {
+                            Text(formatTien(gia.gia))
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.primary)
+                        }
+                        if gia.coGiaRieng {
+                            giaRiengBadge()
+                        }
+                    }
+                }
+            }
+            .frame(width: cardWidth, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Món đang pha kèm còn trong thực đơn app, sắp hết giờ đứng trước.
+    private var monSale: [SanPham] {
+        let _ = phaKem.phienBan
+        return PhaKemBang.dangPha().compactMap { d in sanPhams.first { $0.id == d.sanPhamId } }
+    }
+
+    private func giamPhaKem(_ item: SanPham) -> Double {
+        let _ = phaKem.phienBan
+        return PhaKemBang.giam(item.id)
+    }
+
+    /// Nhãn đỏ "-3K".
+    private static func nhanGiam(_ giam: Double, co: CGFloat) -> some View {
+        Text("-\(Int((giam / 1000).rounded()))K")
+            .font(.system(size: co, weight: .bold)).foregroundColor(.white)
+            .lineLimit(1).fixedSize()
+            .padding(.horizontal, co * 0.45).padding(.vertical, 1)
+            .background(Capsule().fill(Theme.danger))
     }
 
     /// Gộp món "Nổi bật" (chọn tay qua AppQuanLyIOS) VÀ top bán chạy 30 ngày (tự động, banChayIds) —

@@ -145,6 +145,8 @@ private struct GoiYVoucherRow: View {
 
 struct GioHangView: View {
     @EnvironmentObject var cart: CartStore
+    /// Vẽ lại khi món pha kèm đổi / hết giờ (giá dòng giỏ tính sống theo PhaKemBang).
+    @ObservedObject private var phaKem = PhaKemStore.shared
     @Binding var path: [HomeRoute]
     var notificationBell: AnyView
 
@@ -201,6 +203,7 @@ struct GioHangView: View {
             await loadCatalog()
             await cart.loadUuDaiIfNeeded()
         }
+        .task { await phaKem.chay() }
         .sheet(isPresented: $showVoucherSheet) {
             VoucherPickerSheet(
                 vouchers: cart.vouchers, voucherChuaDung: cart.voucherChuaDung, thuTuNhom: cart.thuTuNhomVoucher, thuTuId: cart.thuTuIdVoucher, duDieuKien: cart.voucherDuDieuKien,
@@ -223,6 +226,7 @@ struct GioHangView: View {
                 showTraNote: caPheNhomIds.contains(sp.nhomSanPhamId ?? ""),
                 existing: item,
                 giaRiengMap: giaRiengMap,
+                giamPhaKem: item.giamPhaKem,
                 onConfirm: { bienThe, soLuong, ghiChu, toppings in
                     if soLuong <= 0 {
                         cart.removeItem(item.id)
@@ -514,6 +518,11 @@ struct GioHangView: View {
                     }
                     if let itemGhiChu = item.ghiChu, !itemGhiChu.trimmingCharacters(in: .whitespaces).isEmpty {
                         Text(itemGhiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
+                    }
+                    if item.giamPhaKem > 0 {
+                        // Pha kèm: giá dòng đã trừ sẵn (CartItem.donGia), nhãn cho khách biết vì sao rẻ hơn.
+                        Text("⚡ Đang pha, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
+                            .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
                     }
                 }
             }

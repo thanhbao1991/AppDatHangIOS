@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import CoreLocation
 
 /// Bước 2 = trang "Thanh toán" sau khi khách bấm "Đặt hàng" ở tab Giỏ hàng (GioHangView) — trình bày
@@ -8,6 +8,8 @@ import CoreLocation
 /// hàng cố định dưới cùng.
 struct CheckoutView: View {
     @EnvironmentObject var cart: CartStore
+    /// Vẽ lại khi món pha kèm đổi / hết giờ (giá dòng giỏ tính sống theo PhaKemBang).
+    @ObservedObject private var phaKem = PhaKemStore.shared
     @Binding var path: [HomeRoute]
     @Binding var selectedTab: AppTab
     /// Shipper đặt "Mua hộ" (nút ở Giỏ hàng) — khoá Nhận tại quán, giảm 5% hoặc voucher nếu lớn hơn
@@ -180,6 +182,7 @@ struct CheckoutView: View {
                     Text("Bạn đã từ chối quyền vị trí trước đó nên iOS không hỏi lại được. Vào Cài đặt > Đenn Coffee > Vị trí, chọn \"Khi dùng ứng dụng\" để dùng vị trí hiện tại.")
                 }
         }
+        .task { await phaKem.chay() }
         .task {
             // Shipper mặc định "Nhận tại quán" (26/10) — địa chỉ mặc định của shipper là nhãn "App Shipping"
             // vô nghĩa, trước đây shipper để nguyên mà bấm đặt giao tận nơi. Vẫn đổi sang giao được.
@@ -461,6 +464,11 @@ struct CheckoutView: View {
                         if let ghiChu = item.ghiChu, !ghiChu.trimmingCharacters(in: .whitespaces).isEmpty {
                             Text(ghiChu).font(.system(size: 12)).italic().foregroundColor(Theme.warning)
                         }
+                        if item.giamPhaKem > 0 {
+                            // Pha kèm: giá dòng đã trừ sẵn (CartItem.donGia), nhãn cho khách biết vì sao rẻ hơn.
+                            Text("⚡ Đang pha, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
+                                .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
+                        }
                     }
                     Spacer()
                     Text(formatTien(item.thanhTien)).font(.system(size: 13, weight: .semibold))
@@ -715,7 +723,7 @@ struct CheckoutView: View {
         loading = true; error = ""
         defer { loading = false }
         if clientOrderId == nil { clientOrderId = UUID().uuidString }
-        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }) }
+        let items = cart.items.map { DatMonItem(sanPhamBienTheId: $0.sanPhamBienTheId, soLuong: $0.soLuong, ghiChu: $0.ghiChu, toppings: $0.toppings.map { DatMonToppingItem(toppingId: $0.id, soLuong: $0.soLuong) }, giamPhaKem: $0.giamPhaKem > 0 ? $0.giamPhaKem : nil) }
         // Chỉ gửi ghi chú thật của khách — tiền tố hình thức thanh toán server tự gắn từ hinhThucThanhToan/
         // dungVi (02/11/2026, xem GhiChuThanhToanApp bên Backend), API trả về vẫn kèm emoji như cũ nên
         // DonHangKhach.hinhThucThanhToanPrefixes không đổi.
@@ -746,6 +754,10 @@ struct CheckoutView: View {
             } else {
                 navigate()
             }
+        } else if let msg = result.message, msg.hasPrefix(PhaKemStore.tienToHetGio) {
+            // Món đang pha vừa hết giờ giảm: tải lại để giá trong giỏ về giá thường, khách xem rồi bấm đặt lại.
+            await PhaKemStore.shared.taiLai(batBuoc: true)
+            error = String(msg.dropFirst(PhaKemStore.tienToHetGio.count))
         } else {
             error = result.message ?? "Đặt hàng thất bại."
         }

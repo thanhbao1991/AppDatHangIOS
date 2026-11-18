@@ -302,7 +302,14 @@ struct Topping: Decodable, Identifiable { let id: String; let ten: String; let g
 // ---- Đặt món ----
 
 struct DatMonToppingItem: Encodable { let toppingId: String; let soLuong: Int }
-struct DatMonItem: Encodable { let sanPhamBienTheId: String; let soLuong: Int; let ghiChu: String?; let toppings: [DatMonToppingItem] }
+struct DatMonItem: Encodable {
+    let sanPhamBienTheId: String; let soLuong: Int; let ghiChu: String?; let toppings: [DatMonToppingItem]
+    /// Tiền "Pha kèm" app đang hiện cho dòng này (nil = không) — server kiểm lại, hết giờ thì báo HET_PHA_KEM.
+    var giamPhaKem: Double? = nil
+}
+
+/// GET /dat-hang/menu/pha-kem — xem PhaKemStore.
+struct PhaKemMon: Decodable { let sanPhamId: String; let giamGia: Double; let conGiay: Int }
 struct DatMonRequest: Encodable {
     let items: [DatMonItem]
     let ghiChu: String?

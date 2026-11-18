@@ -19,7 +19,9 @@ struct CartItem: Identifiable, Hashable, Codable {
     /// (không nên xảy ra ở luồng thêm mới từ MenuView, chỉ có thể ở dữ liệu giỏ cũ trước bản này).
     var sanPhamId: String?
 
-    var donGia: Double { giaBan + toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) } }
+    /// Giảm "Pha kèm" mỗi ly đang còn hiệu lực (0 khi không) — tính sống theo PhaKemBang, hết giờ tự về giá thường.
+    var giamPhaKem: Double { PhaKemBang.giam(sanPhamId) }
+    var donGia: Double { giaBan - giamPhaKem + toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) } }
     var thanhTien: Double { donGia * Double(soLuong) }
 }
 

@@ -410,6 +410,12 @@ actor APIClient {
     /// sanPhams/giaBan catalog cũng bị đúng rủi ro staleness y hệt mà vẫn cache đĩa bình thường:
     /// snapshot đĩa chỉ hiện tạm vài trăm ms-vài giây lúc cold-start, network thật luôn chạy nền
     /// và ghi đè ngay sau đó (xem MenuView.load) — không phải nguồn sự thật lâu dài.
+    /// Món đang "Pha kèm" (giảm 3K/ly trong 3 phút) — KHÔNG cache, xem PhaKemStore. nil = lỗi mạng.
+    func getPhaKem() async -> [PhaKemMon]? {
+        let env: ApiEnvelope<[PhaKemMon]> = await decode("/dat-hang/menu/pha-kem", authorized: false)
+        return env.isSuccess ? (env.data ?? []) : nil
+    }
+
     func getGiaRieng() async -> [String: Double] {
         guard Prefs.isLoggedIn else { return [:] }
         let env: ApiEnvelope<[String: Double]> = await decode("/dat-hang/gia-rieng", onRawData: { raw in self.saveDiskCache("/dat-hang/gia-rieng", data: raw) })
