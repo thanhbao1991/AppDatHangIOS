@@ -140,8 +140,14 @@ final class BamNhomMenuUITests: XCTestCase {
         let nut = nutNhom(t)
         let iT = ds.ten.firstIndex(of: t) ?? 0
         for _ in 0..<15 where !(nut.exists && nut.isHittable) {
-            let dangHien = cacNutNhom.allElementsBoundByIndex.compactMap { ds.ten.firstIndex(of: tenNhom($0)) }
-            keoCotTrai(len: (dangHien.max() ?? 0) < iT)
+            if nut.exists {
+                // Cột trái lazy GIỮ nút đã dựng kể cả khi đã cuộn khỏi màn → xét vị trí thật của nút (dưới màn/sau
+                // thanh tab thì kéo lên, trên đỉnh cột thì kéo xuống).
+                keoCotTrai(len: nut.frame.midY > tieuDeMenu.frame.maxY + 150)
+            } else {
+                let daDung = cacNutNhom.allElementsBoundByIndex.compactMap { ds.ten.firstIndex(of: tenNhom($0)) }
+                keoCotTrai(len: (daDung.max() ?? 0) < iT)
+            }
         }
         XCTAssertTrue(nut.exists && nut.isHittable, "Không bấm được nút #\(t) ở cột trái")
         nut.tap()
