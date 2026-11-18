@@ -480,10 +480,20 @@ struct MenuView: View {
                 HStack(spacing: 12) {
                     AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(item.ten)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .lineLimit(2)
+                        // 19/11/2026 (thử, chủ quán: tên dài thì chữ nhỏ lại): vừa 1 dòng cỡ 15 thì giữ, không vừa
+                        // thì xuống cỡ 13 tối đa 2 dòng. Căn trái tường minh — chữ trong Button mặc định căn giữa
+                        // (dòng 2 bị thụt vào). Cỡ 13 × 2 dòng + giá vẫn vừa rowHeight 72.
+                        ViewThatFits(in: .horizontal) {
+                            Text(item.ten)
+                                .font(.system(size: 15, weight: .semibold))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                            Text(item.ten)
+                                .font(.system(size: 13, weight: .semibold))
+                                .lineLimit(2)
+                        }
+                        .foregroundColor(.primary)
+                        .multilineTextAlignment(.leading)
                         if let gia {
                             HStack(spacing: 6) {
                                 Text(formatTien(gia.gia))
