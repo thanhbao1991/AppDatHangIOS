@@ -70,7 +70,7 @@ struct DevMenuButton: View {
                 x.buocDiemDanh()
                 if x.thuNgay > 0 { moTab(.sanThuong) }
             }
-            Button("🧪 Xem thử Sale off (3 phút)") {
+            Button("🧪 Xem thử Flash sale (99 giây)") {
                 moTab(.home)
                 NotificationCenter.default.post(name: .xemThuSaleOff, object: nil)
             }

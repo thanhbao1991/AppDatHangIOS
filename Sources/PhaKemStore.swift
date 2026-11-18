@@ -1,6 +1,6 @@
 import Foundation
 
-/// "Pha kèm" (chủ quán 19/11/2026): món vừa có đơn khác đặt thì trong 3 phút khách đặt thêm đúng món đó được giảm 3K/ly
+/// "Pha kèm" (chủ quán 19/11/2026): món vừa có đơn khác đặt thì trong 99 giây khách (app gọi là "Flash sale") đặt thêm đúng món đó được giảm 3K/ly
 /// (bất kể size, không giảm topping) — quán pha gộp cùng mẻ. Server quyết định món nào/còn bao lâu
 /// (GET /dat-hang/menu/pha-kem, DatHangService.PhaKem bên Backend); app chỉ hiện + báo lại số giảm lúc đặt.
 ///
@@ -41,7 +41,7 @@ final class PhaKemStore: ObservableObject {
 
     private var lanTaiCuoi: Date?
     private var henHetGio: Task<Void, Never>?
-    /// Hỏi lại server mỗi 10s khi màn Thực đơn / Giỏ hàng đang mở (không cần realtime: món giữ giá 3 phút).
+    /// Hỏi lại server mỗi 10s khi màn Thực đơn / Giỏ hàng đang mở (không cần realtime: món giữ giá 99 giây).
     private static let chuKy: UInt64 = 10
 
     /// Gọi trong `.task {}` của màn cần — SwiftUI tự huỷ khi rời màn nên vòng lặp dừng theo.
@@ -79,12 +79,12 @@ final class PhaKemStore: ObservableObject {
     }
 
     #if DEV_LOGIN
-    /// Bản dev "🧪 Xem thử Sale off": giả vài món đang pha 3 phút, CHỈ trên máy này (server không biết — đặt đơn sẽ bị
+    /// Bản dev "🧪 Xem thử Sale off": giả vài món đang pha 99 giây, CHỈ trên máy này (server không biết — đặt đơn sẽ bị
     /// báo hết giờ, đúng như khách thật đặt trễ).
     private var xemThu: [String: (giam: Double, hetLuc: Date)] = [:]
 
     func batXemThu(_ sanPhamIds: [String]) {
-        let het = Date().addingTimeInterval(180)
+        let het = Date().addingTimeInterval(99)
         xemThu = Dictionary(sanPhamIds.map { ($0, (giam: 3000.0, hetLuc: het)) }, uniquingKeysWith: { a, _ in a })
         apDung()
     }
@@ -103,10 +103,9 @@ final class PhaKemStore: ObservableObject {
         }
     }
 
-    /// "2:41"
+    /// "99s" — chủ quán 19/11: flash sale 99 giây, đếm ngược theo giây.
     static func demNguoc(_ hetLuc: Date, luc: Date) -> String {
-        let s = max(0, Int(hetLuc.timeIntervalSince(luc).rounded(.up)))
-        return String(format: "%d:%02d", s / 60, s % 60)
+        "\(max(0, Int(hetLuc.timeIntervalSince(luc).rounded(.up))))s"
     }
 
     /// Server trả lỗi này khi app báo giảm mà món vừa hết giờ (Messages.DatHang.HetPhaKem).

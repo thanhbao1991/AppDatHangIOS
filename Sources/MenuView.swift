@@ -34,7 +34,7 @@ struct MenuView: View {
     @State private var togglingYeuThichIds: Set<String> = []
     /// SanPhamId theo bán chạy giảm dần (30 ngày gần nhất) — xem APIClient.getBanChayIds.
     @State private var banChayIds: [String] = []
-    /// "Pha kèm" (19/11/2026): món đang có đơn khác pha → giảm 3K trong 3 phút, xem PhaKemStore. Đọc để vẽ lại khi đổi.
+    /// "Pha kèm" (19/11/2026): món đang có đơn khác pha → giảm 3K trong 99 giây, xem PhaKemStore. Đọc để vẽ lại khi đổi.
     @ObservedObject private var phaKem = PhaKemStore.shared
     /// Tab dải đề xuất: 0 = Best Sellers (mặc định, chủ quán chốt), 1 = Sale off (chỉ hiện khi có món đang pha).
     @State private var tabDeXuat = 0
@@ -328,7 +328,7 @@ struct MenuView: View {
         .task { if sanPhams.isEmpty { await load() } }
         .task { await phaKem.chay() }
         #if DEV_LOGIN
-        // 🧪 Xem thử Sale off: 2 món Best Sellers + món đầu nhóm đang chọn, giảm 3K trong 3 phút (chỉ máy này).
+        // 🧪 Xem thử Sale off: 2 món Best Sellers + món đầu nhóm đang chọn, giảm 3K trong 99 giây (chỉ máy này).
         .onReceive(NotificationCenter.default.publisher(for: .xemThuSaleOff)) { _ in
             var ids = noiBatSanPhams.prefix(2).map(\.id)
             if let mon = sections.first(where: { $0.nhom.id == selectedNhomId })?.items.first { ids.append(mon.id) }
@@ -665,7 +665,7 @@ struct MenuView: View {
                     tabDeXuatTieuDe("Best Sellers", anh: Self.anhDaiDienMuc("best-sellers", noiBatSanPhams), chon: tab == 0) { tabDeXuat = 0 }
                 }
                 if !sale.isEmpty {
-                    tabDeXuatTieuDe("Sale off", anh: Self.anhDaiDienMuc("sale-off", sale), chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
+                    tabDeXuatTieuDe("Flash sale", anh: Self.anhDaiDienMuc("sale-off", sale), chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
                 }
             }
             .padding(.horizontal, 16)
