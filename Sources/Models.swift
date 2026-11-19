@@ -73,7 +73,8 @@ struct SanPhamBienThe: Decodable, Identifiable, Hashable {
     let macDinh: Bool
 }
 
-struct SanPham: Decodable, Identifiable {
+/// Equatable: cột món (CotMonView) so dữ liệu để biết khi nào phải vẽ lại ô đang hiện.
+struct SanPham: Decodable, Identifiable, Equatable {
     let id: String
     let ten: String
     let ngungBan: Bool
@@ -89,7 +90,7 @@ struct SanPham: Decodable, Identifiable {
     var hinhAnhCat: String? = nil
 }
 
-struct NhomSanPham: Decodable, Identifiable { let id: String; let ten: String }
+struct NhomSanPham: Decodable, Identifiable, Equatable { let id: String; let ten: String }
 /// Danh sách tên đường dùng gợi ý khi khách gõ địa chỉ giao hàng — cùng nguồn TenDuong Desktop dùng
 /// cho TenDuongBox (nhân viên tạo đơn), xem CheckoutView.diaChiSuggestions.
 struct ToaDoDiaChi: Decodable { let lat: Double; let long: Double }

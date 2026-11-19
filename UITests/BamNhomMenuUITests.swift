@@ -65,8 +65,8 @@ final class BamNhomMenuUITests: XCTestCase {
         }
     }
 
-    /// Khách tự cuộn cột món (không bấm cột trái) thì cột trái phải chọn theo nhóm đang xem. Khung nhóm là VStack thường
-    /// (19/11) — nếu header không còn lazy thì .onAppear chạy hết lúc mở → cột trái nhảy ngay xuống nhóm cuối.
+    /// Khách tự cuộn cột món (không bấm cột trái) thì cột trái phải chọn theo nhóm đang xem (từ 19/11 tối: cột món là
+    /// UICollectionView, nhóm ở mép trên cột khi khách tự cuộn — CotMonView.scrollViewDidScroll).
     func testCuonTayCotTraiChonTheo() throws {
         let ds = try choThucDon()
         guard let dau = dangChon(), let iDau = ds.ten.firstIndex(of: dau) else {

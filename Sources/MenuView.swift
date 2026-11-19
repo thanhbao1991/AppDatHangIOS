@@ -18,14 +18,9 @@ struct MenuView: View {
     @State private var query = ""
     @State private var picking: SanPham?
     @State private var selectedNhomId: String = ""
-    /// true trong lúc đang scrollTo do BẤM sidebar (không phải khách tự cuộn tay) — chặn header
-    /// .onAppear (do chính animation cuộn gây ra) ghi đè lại lựa chọn giữa chừng, gây nhấp nháy.
-    @State private var isJumpingToSection = false
-    /// Yêu cầu scrollTo tới 1 nhóm — kèm `tick` tăng dần để .onChange bên List LUÔN bắt được kể cả
-    /// bấm lại đúng nhóm cũ (vd khách cuộn tay đi chỗ khác rồi bấm lại đúng nhóm đang chọn, muốn
-    /// cuộn về) — String đơn thuần sẽ không đổi giá trị nên .onChange không fire lại được.
-    private struct ScrollRequest: Equatable { let id: String; let tick: Int }
-    @State private var scrollRequest: ScrollRequest?
+    /// Yêu cầu cuộn cột món tới 1 nhóm — kèm `tick` tăng dần để bấm lại đúng nhóm cũ (khách cuộn tay đi chỗ khác rồi
+    /// bấm lại nhóm đang chọn, muốn cuộn về) vẫn cuộn. Cuộn do bấm thì CotMonView không đổi nhóm đang chọn giữa chừng.
+    @State private var scrollRequest: YeuCauCuonNhom?
     /// SanPhamId khách TỰ CHỌN yêu thích (nút tim ở productRow) — nguồn cho mục "Yêu thích" ở
     /// sidebar, thay cho cách cũ tính động theo món mua nhiều nhất.
     @State private var yeuThichIds: Set<String> = []
@@ -73,12 +68,13 @@ struct MenuView: View {
     /// Chiều cao CỐ ĐỊNH dùng chung cho hàng nhóm bên sidebar (nhomSidebar) VÀ header nhóm bên cột
     /// phải (sectionHeader) — trước đây mỗi bên tự co theo nội dung (sidebar minHeight 44, header
     /// card ~50pt, header rỗng ~33pt) nên 2 bên lệch chiều cao ở hàng đầu tiên, nhìn mất cân đối.
-    private static let categoryHeaderHeight: CGFloat = 52
-    /// ⚠️ Dòng món cao CỐ ĐỊNH — khung mỗi nhóm ở cột món khai thẳng chiều cao = header + số món × rowHeight (xem
-    /// body, 19/11/2026) để iOS biết trước toạ độ mọi nhóm. Thêm thứ gì làm đổi chiều cao dòng/nhóm mà không sửa
-    /// khung đó thì món bị cắt/chồng và bấm nhóm lại nhảy lệch.
-    fileprivate static let rowHeight: CGFloat = 72
-    private static let khoangCachNhom: CGFloat = 8
+    static let categoryHeaderHeight: CGFloat = 52
+    /// ⚠️ Dòng món cao CỐ ĐỊNH — cột món (CotMonView, 19/11/2026) tính thẳng toạ độ mọi nhóm = tiêu đề + số món ×
+    /// rowHeight (+ khoangCachNhom) để bấm nhóm nhảy đúng ngay cả nhóm chưa từng hiện. Nội dung dòng cao hơn thì bị cắt.
+    static let rowHeight: CGFloat = 72
+    static let khoangCachNhom: CGFloat = 8
+    /// Lề trái/phải thẻ trắng chứa món của mỗi nhóm trong cột món.
+    static let leTheNhom: CGFloat = 10
 
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
     /// minimumScaleFactor bên nhomSidebar để tên dài vẫn vừa khung hẹp).
@@ -138,34 +134,34 @@ struct MenuView: View {
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
     /// Lưu sẵn (19/11/2026, sửa lag) — trước là computed property, MỖI lần body vẽ lại (cuộn qua nhóm…) phải gom +
     /// sắp xếp lại toàn bộ ~200 món 2–3 lần (cột món + sidebar). Gọi capNhatSections() khi món/nhóm/bán chạy/yêu thích đổi.
-    @State private var sections: [(nhom: NhomSanPham, items: [SanPham])] = []
+    @State private var sections: [NhomCotMon] = []
 
     private func capNhatSections() { sections = tinhSections() }
 
-    private func tinhSections() -> [(nhom: NhomSanPham, items: [SanPham])] {
+    private func tinhSections() -> [NhomCotMon] {
         var byNhom: [String: [SanPham]] = [:]
         for sp in sanPhams { byNhom[sp.nhomSanPhamId ?? "", default: []].append(sp) }
 
         var gomChung: [SanPham] = byNhom[""] ?? []
-        var result: [(nhom: NhomSanPham, items: [SanPham])] = []
+        var result: [NhomCotMon] = []
         for nhom in nhoms {
             guard let items = byNhom[nhom.id] else { continue }
             if Self.nhomGomChung.contains(nhom.ten) {
                 gomChung.append(contentsOf: items)
             } else {
-                result.append((nhom: nhom, items: sortedByBanChay(items)))
+                result.append(NhomCotMon(nhom: nhom, items: sortedByBanChay(items)))
             }
         }
         result.sort { $0.nhom.ten.localizedStandardCompare($1.nhom.ten) == .orderedAscending }
 
         if !gomChung.isEmpty {
-            result.append((nhom: NhomSanPham(id: "#", ten: "Khác"), items: sortedByBanChay(gomChung)))
+            result.append(NhomCotMon(nhom: NhomSanPham(id: "#", ten: "Khác"), items: sortedByBanChay(gomChung)))
         }
 
         // Chỉ hiện mục "Yêu thích" khi đã có ít nhất 1 món — rỗng thì ẩn hẳn, đỡ chiếm 1 mục sidebar
         // vô nghĩa với khách chưa bấm tim món nào (feedback 2026-09-24).
         if !favoriteSanPhams.isEmpty {
-            result.insert((nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favoriteSanPhams), at: 0)
+            result.insert(NhomCotMon(nhom: NhomSanPham(id: Self.yeuThichNhomId, ten: "Yêu thích"), items: favoriteSanPhams), at: 0)
         }
         return result
     }
@@ -224,21 +220,10 @@ struct MenuView: View {
                     List(searchResults) { sp in productRow(sp) }
                         .listStyle(.plain)
                 } else {
-                    // 2026-09-25: đổi từ List(Section) sang ScrollView+LazyVStack — GIỐNG HỆT cách
-                    // sidebar bên trái đã làm (ScrollView thường), thay vì List (UITableView/
-                    // UICollectionView). Lý do đổi: List luôn có 1 khoảng trống lạ phía trên header
-                    // đầu tiên lúc mới mở tab (chỉ tự hết sau khi khách vuốt tay 1 cái), gây LỆCH với
-                    // sidebar (ScrollView thường, luôn bám sát đỉnh ngay từ đầu) — đã thử rất nhiều
-                    // cách vá (nhử scrollTo nhiều biến thể, can thiệp thẳng UIScrollView.contentInset
-                    // qua UIViewRepresentable) đều không ăn, có lần còn làm tệ hơn.
-                    //
-                    // Ban đầu thử pinnedViews: [.sectionHeaders] để ghim header y hệt List, nhưng
-                    // header ghim (nổi đè lên nội dung đã cuộn qua) lộ ra thêm 1 lớp bug khác: nền
-                    // header (Theme.primaryTint chỉ đục 12%) để lộ nội dung bên dưới xuyên qua, chồng
-                    // lấn/nhoè khi header snap vào vị trí ghim — sau khi thử vá (nền đục hơn, ép chiều
-                    // cao cố định) vẫn còn thấy lỗi, BỎ HẲN ghim theo yêu cầu: header giờ cuộn bình
-                    // thường như mọi nội dung khác, không còn "dính" ở đỉnh khi cuộn qua — né toàn bộ
-                    // lớp bug này, đơn giản và ổn định hơn hẳn.
+                    // Cột món qua các đời: List(Section) (bỏ 2026-09-25: khoảng trống lạ trên header đầu) → ScrollView +
+                    // LazyVStack (bỏ 19/11: đoán chiều cao → bấm nhóm lệch, món đè tiêu đề) → ScrollView + VStack thường
+                    // (bỏ 19/11 tối: dựng sẵn cả ~226 dòng, cuộn giật) → UICollectionView dòng cao cố định (CotMonView).
+                    // Tiêu đề nhóm KHÔNG ghim (đã bỏ ghim từ 2026-09-25: nền nhạt để lộ món phía dưới khi chồng lên).
                     VStack(alignment: .leading, spacing: 0) {
                         // Title ngay trên menu — GIỮ emoji (chủ quán 19/11: chỉ tiêu đề nhóm đổi sang ảnh món).
                         Text("⭐ Menu 2026")
@@ -249,86 +234,11 @@ struct MenuView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Theme.bg)
                         HStack(spacing: 0) {
-                        nhomSidebar(onTap: { id in
-                            isJumpingToSection = true
-                            selectedNhomId = id
-                            scrollRequest = ScrollRequest(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
-                        })
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                // 19/11/2026 — GỐC lỗi bấm nhóm nhảy lệch trên iOS 16–18: trước đây CẢ cột là 1 LazyVStack,
-                                // nhóm chưa vẽ thì iOS ĐOÁN chiều cao (nhóm 2 món, nhóm 20 món đoán như nhau) → toạ độ
-                                // nhóm xa và cả chiều dài cột đều là số đoán: scrollTo dừng lệch, cuộn tới toạ độ thật thì
-                                // rơi ra ngoài phần iOS nghĩ là có nội dung → màn trắng. Bấm lần lượt từ trên xuống thì
-                                // đúng vì nhóm nào cũng đã vẽ qua. Giờ: khung nhóm là VStack THƯỜNG, mỗi khung khai
-                                // thẳng chiều cao (header + số món × rowHeight) → iOS biết chính xác toạ độ mọi nhóm
-                                // ngay từ đầu; món BÊN TRONG mỗi nhóm vẫn là LazyVStack nên chỉ vẽ món đang hiện.
-                                VStack(spacing: 0) {
-                                    ForEach(sections, id: \.nhom.id) { section in
-                                        VStack(spacing: 0) {
-                                            // Header bọc LazyVStack riêng để .onAppear chỉ chạy khi header thật sự cuộn
-                                            // tới (VStack thường gọi onAppear MỌI header ngay lúc mở) — giữ cách cột trái
-                                            // tự chọn nhóm theo cuộn tay như cũ.
-                                            LazyVStack(spacing: 0) {
-                                                sectionHeader(section.nhom, items: section.items)
-                                                    .onAppear {
-                                                        guard !isJumpingToSection else { return }
-                                                        selectedNhomId = section.nhom.id
-                                                    }
-                                            }
-                                            .frame(height: Self.categoryHeaderHeight)
-                                            // Mọi section trong `sections` đều đảm bảo có ít nhất 1 món
-                                            // (Yêu thích rỗng bị lọc hẳn khỏi danh sách, xem sections) —
-                                            // không cần nhánh rỗng riêng nữa.
-                                            // 09/11/2026 (đồng bộ toàn app theo bộ khung TK — KHÔNG theo ảnh mẫu): món
-                                            // của mỗi nhóm gom vào 1 thẻ trắng bo 18 có bóng nhẹ, kẻ mảnh giữa các món
-                                            // (kiểu nhóm dòng ở tab Tài khoản), trên nền xám Theme.bg.
-                                            // 19/11/2026: món là VStack THƯỜNG — LazyVStack ở đây vẫn ĐOÁN vị trí món khi cuộn
-                                            // ngược từ dưới lên vào giữa nhóm → món cuối tràn ra khỏi khung, đè tiêu đề nhóm sau.
-                                            // Chỉ ẢNH món còn lazy (xem productRow) để không tải hết ảnh lúc mở.
-                                            VStack(spacing: 0) {
-                                                ForEach(Array(section.items.enumerated()), id: \.offset) { itemIndex, sp in
-                                                    productRow(sp)
-                                                        // Kẻ giữa các món vẽ bằng overlay (KHÔNG chiếm chiều cao) — chiều
-                                                        // cao nhóm phải đúng = số món × rowHeight, xem khung bên dưới.
-                                                        .overlay(alignment: .bottom) {
-                                                            if itemIndex < section.items.count - 1 {
-                                                                Divider().padding(.leading, 84)
-                                                            }
-                                                        }
-                                                        // id ghép section+món — "Bạc Xỉu Đá" xuất hiện ở CẢ mục "Yêu
-                                                        // thích" lẫn mục "Bạc Xỉu" thật (cùng 1 sp.id); trùng id giữa
-                                                        // 2 section gây lẫn/tráo render (dòng trống).
-                                                        .id("\(section.nhom.id)|\(sp.id)")
-                                                }
-                                            }
-                                            .frame(height: CGFloat(section.items.count) * Self.rowHeight, alignment: .top)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: TK.bo, style: .continuous)
-                                                    .fill(Color(.systemBackground))
-                                                    .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
-                                            )
-                                            .padding(.horizontal, 10).padding(.bottom, Self.khoangCachNhom)
-                                        }
-                                        .id(section.nhom.id)
-                                    }
-                                }
-                            }
-                            .onChange(of: scrollRequest) { req in
-                                guard let req else { return }
-                                // Khung nhóm là VStack thường cao xác định (xem trên) nên scrollTo tính đúng toạ độ
-                                // thật, kể cả nhóm xa chưa từng vẽ; nhóm cuối ngắn thì tự dừng ở đáy cột.
-                                withAnimation { proxy.scrollTo(req.id, anchor: .top) }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                    guard scrollRequest?.tick == req.tick else { return }  // khách đã bấm nhóm khác
-                                    isJumpingToSection = false
-                                }
-                            }
-                            .background(Theme.bg)
-                            .refreshable {
-                                await load(silent: true)
-                            }
-                        }
+                            nhomSidebar(onTap: { id in
+                                selectedNhomId = id
+                                scrollRequest = YeuCauCuonNhom(id: id, tick: (scrollRequest?.tick ?? 0) + 1)
+                            })
+                            cotMon
                         }
                     }
                 }
@@ -376,8 +286,30 @@ struct MenuView: View {
         index % 2 == 0 ? Color(.systemBackground) : Color(.secondarySystemGroupedBackground).opacity(0.5)
     }
 
-    /// Header đầu mỗi nhóm — dùng làm header của Section trong List nên tự ghim (pinned) khi cuộn
-    /// (hành vi mặc định của UITableView .plain style, không cần code thêm). Nút "Chọn ngẫu nhiên"
+    /// Cột món (19/11/2026: UICollectionView, chỉ dựng ô đang hiện — xem CotMonView vì sao). Mỗi nhóm: tiêu đề + thẻ trắng
+    /// bo 18 có bóng nhẹ chứa các món, kẻ mảnh giữa các món (bộ khung TK 09/11/2026), trên nền xám Theme.bg.
+    private var cotMon: some View {
+        CotMonView(
+            nhoms: sections,
+            // Đọc NGAY trong body: SwiftUI chỉ vẽ lại (→ CotMonView vẽ lại ô đang hiện) khi trạng thái body đã đọc đổi.
+            trangThai: TrangThaiDongMon(yeuThich: yeuThichIds, dangDoiTim: togglingYeuThichIds, giaRieng: giaRiengMap,
+                                        phaKem: phaKem.phienBan),
+            nhomDangChon: selectedNhomId,
+            yeuCauCuon: scrollRequest,
+            tieuDe: { n in sectionHeader(n.nhom, items: n.items) },
+            dong: { sp, laCuoi in
+                productRow(sp)
+                    // Kẻ giữa các món vẽ bằng overlay (KHÔNG chiếm chiều cao — dòng phải cao đúng rowHeight).
+                    .overlay(alignment: .bottom) {
+                        if !laCuoi { Divider().padding(.leading, 84) }
+                    }
+            },
+            onNhomTrenCung: { id in selectedNhomId = id },
+            onKeoLamMoi: { await load(silent: true) }
+        )
+    }
+
+    /// Header đầu mỗi nhóm — KHÔNG ghim (cuộn theo nội dung, xem body). Nút "Chọn ngẫu nhiên"
     /// GIỮ LẠI (feedback 2026-09-27: bỏ hẳn là quá tay, chỉ cần bớt nổi bật) nhưng đổi hẳn sang dạng
     /// FLAT — icon shuffle + chữ nhỏ màu primary trên nền trong suốt, không còn pill nền đậm
     /// primaryGradient như bản trước, đỡ cạnh tranh thị giác với tên nhóm.
@@ -542,9 +474,8 @@ struct MenuView: View {
             : String(format: "%.1f", nghin).replacingOccurrences(of: ".", with: ",")
     }
 
-    /// Dòng món = MonRow Equatable (19/11/2026, sửa lag): cột món là VStack thường (~200 dòng dựng cùng lúc), mỗi lần
-    /// MenuView vẽ lại (cuộn qua nhóm đổi selectedNhomId, Flash sale đổi…) SwiftUI chỉ so dữ liệu từng dòng, dòng nào
-    /// không đổi thì bỏ qua — không dựng lại cả 200 dòng.
+    /// Dòng món = MonRow Equatable (19/11/2026, sửa lag): mỗi lần trạng thái đổi (tim, Flash sale…) CotMonView cấu hình lại
+    /// các ô đang hiện — SwiftUI chỉ so dữ liệu từng dòng, dòng nào không đổi thì bỏ qua không vẽ lại.
     private func productRow(_ item: SanPham) -> some View {
         let gia = giaMacDinhVaCoGiaRieng(item)
         return MonRow(
@@ -581,12 +512,9 @@ private struct MonRow: View, Equatable {
                 HStack(spacing: 12) {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
-                    // Ảnh bọc LazyVStack 1 phần tử, khung cố định: chỉ tải ảnh khi dòng cuộn tới (cột món là VStack thường).
-                    // 19/11/2026: đã thử bỏ để đỡ tính toán khi cuộn → app xếp hàng tải ~200 ảnh cùng lúc, ảnh đang hiện
-                    // phải chờ cuối, màn trống ảnh (ảnh chụp chủ quán) — GIỮ lại.
-                    LazyVStack(spacing: 0) {
-                        AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
-                    }
+                    // Ảnh chỉ tải khi dòng hiện ra: cột món (CotMonView) và kết quả tìm (List) đều chỉ dựng ô đang hiện —
+                    // hết cần bọc LazyVStack 1 phần tử như hồi cột món còn là VStack thường (19/11/2026).
+                    AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
                     .frame(width: 56, height: 56)
                         // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
                         .overlay(alignment: .bottomTrailing) {
@@ -633,12 +561,19 @@ private struct MonRow: View, Equatable {
             .disabled(dangDoiTim)
         }
         .padding(.horizontal, 16)
-        // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
-        // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
-        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Ảnh 56 (giá đè lên ảnh) + đệm 8×2 = 72;
-        // mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
+        // maxWidth: .infinity — tự khai full-width để Divider phủ hết ngang ô.
+        // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (CotMonView tính toạ độ từ đây). Ảnh 56
+        // (giá đè lên ảnh) + đệm 8×2 = 72; mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
         .frame(maxWidth: .infinity, minHeight: MenuView.rowHeight, maxHeight: MenuView.rowHeight, alignment: .leading)
     }
+}
+
+/// Thứ ngoài dữ liệu món làm đổi nội dung dòng món — CotMonView so cái này để biết phải vẽ lại các ô đang hiện.
+private struct TrangThaiDongMon: Equatable {
+    let yeuThich: Set<String>
+    let dangDoiTim: Set<String>
+    let giaRieng: [String: Double]
+    let phaKem: Int
 }
 
 extension MenuView {
