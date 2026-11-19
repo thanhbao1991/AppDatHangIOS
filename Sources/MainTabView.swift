@@ -52,19 +52,28 @@ struct MainTabView: View {
     var body: some View {
         let _ = seasonalPreviewTick
         VStack(spacing: 0) {
-            Group {
+            ZStack {
+                // 19/11/2026 (tăng độ mượt): tab Thực đơn GIỮ SỐNG — trước đây đổi tab là huỷ MenuView, quay lại thì dựng
+                // lại cả ~230 món, hiện vòng chờ, mất vị trí đang cuộn, Best Sellers xáo lại. Giờ chỉ ẩn đi (không nhận
+                // chạm, VoiceOver bỏ qua); MenuView tự tải lại ngầm khi quay lại sau >5 phút (xem MenuView).
+                NavigationStack(path: $homePath) {
+                    MenuView(path: $homePath, selectedTab: $selectedTab, notificationBell: AnyView(notificationBell))
+                        .navigationDestination(for: HomeRoute.self) { route in
+                            switch route {
+                            case .checkout: CheckoutView(path: $homePath, selectedTab: $selectedTab)
+                            case .checkoutMuaHo: CheckoutView(path: $homePath, selectedTab: $selectedTab, muaHo: true)
+                            case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
+                            }
+                        }
+                }
+                .opacity(selectedTab == .home ? 1 : 0)
+                .allowsHitTesting(selectedTab == .home)
+                .accessibilityHidden(selectedTab != .home)
+
+                if selectedTab != .home {
                 switch selectedTab {
                 case .home:
-                    NavigationStack(path: $homePath) {
-                        MenuView(path: $homePath, selectedTab: $selectedTab, notificationBell: AnyView(notificationBell))
-                            .navigationDestination(for: HomeRoute.self) { route in
-                                switch route {
-                                case .checkout: CheckoutView(path: $homePath, selectedTab: $selectedTab)
-                                case .checkoutMuaHo: CheckoutView(path: $homePath, selectedTab: $selectedTab, muaHo: true)
-                                case .thanhToan(let hoaDonId): ThanhToanView(hoaDonId: hoaDonId) { selectedTab = .donHang; homePath = [] }
-                                }
-                            }
-                    }
+                    EmptyView()
                 case .cart:
                     NavigationStack(path: $cartPath) {
                         GioHangView(path: $cartPath, notificationBell: AnyView(notificationBell))
@@ -102,6 +111,7 @@ struct MainTabView: View {
                     NavigationStack {
                         SettingsView(isLoggedIn: $isLoggedIn, notificationBell: AnyView(notificationBell), accountSettingsGear: AnyView(accountSettingsGear))
                     }
+                }
                 }
             }
             // Chevron back button do SwiftUI tự vẽ (không đi qua UINavigationBarAppearance ở
@@ -302,6 +312,8 @@ struct MainTabView: View {
     private func tabButton(_ tab: AppTab, label: String, icon: String, badgeText: String? = nil, badgeCount: Int = 0, showDot: Bool = false) -> some View {
         let isSelected = selectedTab == tab
         Button {
+            // Tab Thực đơn giờ giữ sống (chỉ ẩn) — ô tìm món đang gõ phải tự nhả bàn phím khi đổi tab.
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             selectedTab = tab
         } label: {
             VStack(spacing: 3) {

@@ -38,6 +38,10 @@ struct MenuView: View {
     @ObservedObject private var phaKem = PhaKemStore.shared
     /// Tab dải đề xuất: 0 = Best Sellers (mặc định, chủ quán chốt), 1 = Sale off (chỉ hiện khi có món đang pha).
     @State private var tabDeXuat = 0
+    /// Lần tải thực đơn thành công gần nhất — tab Thực đơn giờ GIỮ SỐNG (MainTabView, 19/11/2026) nên không còn tự tải
+    /// lại mỗi lần quay lại tab; quay lại tab / mở lại app sau >5 phút thì tải lại NGẦM (xem taiLaiNeuCu).
+    @State private var lanTaiCuoi: Date?
+    @Environment(\.scenePhase) private var scenePhase
     /// Giá riêng của khách đang đăng nhập (key sanPhamBienTheId) — feedback 2026-09-29 "áp giá riêng
     /// vào app". Server đã tính tiền thật theo giá này lúc đặt (DatHangService.DatMonAsync), tải ở
     /// đây chỉ để HIỂN THỊ đúng ngay từ menu, khớp số sẽ bị trừ lúc thanh toán.
@@ -331,7 +335,10 @@ struct MenuView: View {
             }
         }
         .task { if sanPhams.isEmpty { await load() } }
-        .task { await phaKem.chay() }
+        // Flash Sale chỉ hỏi server khi đang ĐỨNG ở tab Thực đơn (tab giữ sống nên .task không tự huỷ khi đổi tab).
+        .task(id: selectedTab == .home) { if selectedTab == .home { await phaKem.chay() } }
+        .onChange(of: selectedTab) { tab in if tab == .home { taiLaiNeuCu() } }
+        .onChange(of: scenePhase) { phase in if phase == .active && selectedTab == .home { taiLaiNeuCu() } }
         #if DEV_LOGIN
         // 🧪 Xem thử Sale off: 2 món Best Sellers + món đầu nhóm đang chọn, giảm 3K trong 99 giây (chỉ máy này).
         .onReceive(NotificationCenter.default.publisher(for: .xemThuSaleOff)) { _ in
@@ -837,6 +844,12 @@ extension MenuView {
         return (chonTay + banChay).shuffled()
     }
 
+    /// Quay lại tab / mở lại app: dữ liệu cũ hơn 5 phút thì tải lại ngầm (không vòng chờ, giữ nguyên vị trí cuộn).
+    private func taiLaiNeuCu() {
+        guard !loading, let t = lanTaiCuoi, Date().timeIntervalSince(t) > 5 * 60 else { return }
+        Task { await load(silent: true) }
+    }
+
     private func load(silent: Bool = false) async {
         let lanDau = selectedNhomId.isEmpty
         // Cache RAM (APIClient.catalogCache, 5 phút) mất sạch mỗi lần app bị kill — khách tắt mở lại
@@ -880,7 +893,10 @@ extension MenuView {
             nhoms = nhom
             toppings = top.filter { !$0.ngungBan }
             banChayIds = banChay
-            noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
+            // Tải lại ngầm mà vẫn đúng các món đó thì GIỮ thứ tự đang hiện — không xáo lại trước mắt khách.
+            let deXuatMoi = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
+            if Set(deXuatMoi.map(\.id)) != Set(noiBatSanPhams.map(\.id)) { noiBatSanPhams = deXuatMoi }
+            lanTaiCuoi = Date()
             // Tải ngầm ảnh mọi món vào đĩa (chỉ ảnh chưa có) — cuộn tới đâu cũng có sẵn, không chờ mạng.
             ImageCache.shared.taiNgam(sanPhams.compactMap { URL(string: $0.hinhAnhCat ?? $0.hinhAnh ?? "") })
         } else if sanPhams.isEmpty {
