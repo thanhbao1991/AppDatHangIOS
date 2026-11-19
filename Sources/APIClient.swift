@@ -595,8 +595,10 @@ actor APIClient {
     }
 
     /// Câu chữ giải thích trong app (NoiDung.swift) — công khai, không cần đăng nhập.
-    func getNoiDung() async -> [String: String]? {
-        let env: ApiEnvelope<[String: String]> = await decode("/dat-hang/noi-dung?nenTang=ios")
+    /// phienBan: bản đang lưu — server trả rỗng nếu không đổi (xem NoiDung.taiLai).
+    func getNoiDung(phienBan: String? = nil) async -> [String: String]? {
+        let v = phienBan.flatMap { $0.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) }.map { "&v=\($0)" } ?? ""
+        let env: ApiEnvelope<[String: String]> = await decode("/dat-hang/noi-dung?nenTang=ios" + v)
         return env.isSuccess ? env.data : nil
     }
 

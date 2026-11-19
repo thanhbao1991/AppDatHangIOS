@@ -58,17 +58,40 @@ enum NoiDung {
         return macDinh[k] ?? ""
     }
 
-    /// Gọi lúc mở app — lỗi mạng thì giữ bản đã lưu.
-    static func taiLai() async {
-        guard let moi = await APIClient.shared.getNoiDung(), !moi.isEmpty else { return }
+    /// TẢI NGẦM (chủ quán 19/11/2026: "không bắt người dùng đợi tải"): chữ luôn đọc ngay từ bản lưu máy; hàm này gửi
+    /// phiên bản đang có, server trả rỗng nếu không đổi (vài byte) → giữ nguyên. Gọi lúc mở app + mỗi lần quay lại app,
+    /// tối đa 1 lần/30 phút. Lỗi mạng thì giữ bản đã lưu.
+    private static var lanTaiCuoi: Date?
+    static func taiLai(batBuoc: Bool = true) async {
+        if !batBuoc, let t = lanTaiCuoi, Date().timeIntervalSince(t) < 30 * 60 { return }
+        lanTaiCuoi = Date()
+        guard let moi = await APIClient.shared.getNoiDung(phienBan: daLuu["_phienBan"]), !moi.isEmpty else { return }
         await MainActor.run {
             daLuu = moi
             UserDefaults.standard.set(moi, forKey: key)
         }
     }
 
+    /// Đổi BẤT KỲ chữ nào viết thẳng trong giao diện (Text("…"), Button("…"), navigationTitle("…")…): backend gửi khoá
+    /// "=câu gốc" → câu mới (NoiDungApp.DoiChu). Áp qua NoiDungBundle bên dưới — không phải sửa từng màn.
+    static func doiChu(_ goc: String) -> String? {
+        guard let s = daLuu["=" + goc], !s.isEmpty else { return nil }
+        return s
+    }
+
+    /// Gọi 1 lần lúc khởi động (AppDatHangIOSApp.init) — trước khi vẽ view nào.
+    static func batDoiChu() { object_setClass(Bundle.main, NoiDungBundle.self) }
+
     static var napXuGhiChu: String { text("napXuGhiChu") }
     static var xoaTaiKhoanMoTa: String { text("xoaTaiKhoanMoTa") }
     static var hangGhiChu: String { text("hangGhiChu") }
     static var hopQuaTaiTro: String { text("hopQuaTaiTro") }
+}
+
+/// SwiftUI tra mọi chữ viết thẳng (LocalizedStringKey) qua Bundle.main.localizedString — lớp con này chen vào trả câu backend
+/// đã đổi (nếu có), không thì như cũ. Câu có biến: khoá là dạng định dạng ("Còn %lld món").
+private final class NoiDungBundle: Bundle, @unchecked Sendable {
+    override func localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
+        NoiDung.doiChu(key) ?? super.localizedString(forKey: key, value: value, table: tableName)
+    }
 }
