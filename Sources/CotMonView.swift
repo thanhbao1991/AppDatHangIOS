@@ -105,6 +105,7 @@ struct CotMonView<TieuDe: View, Dong: View, TrangThai: Equatable>: UIViewReprese
                 // Section món không có lề → khung nền = đúng vùng các ô món, chỉ thụt 2 bên khớp lề ô.
                 let nen = NSCollectionLayoutDecorationItem.background(elementKind: TheNhomNen.kind)
                 nen.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: MenuView.leTheNhom, bottom: 0, trailing: MenuView.leTheNhom)
+                nen.zIndex = -1  // luôn nằm DƯỚI ô món (mặc định 0 = ngang ô, thứ tự vẽ không chắc)
                 s.decorationItems = [nen]
             }
             return s
