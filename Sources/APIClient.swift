@@ -47,7 +47,24 @@ actor APIClient {
     // bị BE từ chối refresh token cũ (đã tiêu) → xoá sạch luôn token mới vừa refresh thành công.
     private var refreshTask: Task<String?, Never>?
 
+    // 19/11/2026 (rà API chậm): lúc mở app 5 màn cùng gọi /vi (22% lượt /vi là trùng cùng giây), điểm danh/vòng quay/sinh
+    // nhật cũng vậy → GET cùng URL + cùng token đang chạy thì dùng chung 1 request (kết quả "mới tại lúc này" như nhau).
+    private var getDangChay: [String: Task<(data: Data?, status: Int), Never>] = [:]
+
     private func send(_ req: URLRequest, allowRefresh: Bool = true) async -> (data: Data?, status: Int) {
+        guard allowRefresh, req.httpMethod == "GET", let url = req.url?.absoluteString else {
+            return await sendThat(req, allowRefresh: allowRefresh)
+        }
+        let khoa = url + "|" + (req.value(forHTTPHeaderField: "Authorization") ?? "")
+        if let dangChay = getDangChay[khoa] { return await dangChay.value }
+        let task = Task { await self.sendThat(req, allowRefresh: true) }
+        getDangChay[khoa] = task
+        let kq = await task.value
+        getDangChay[khoa] = nil
+        return kq
+    }
+
+    private func sendThat(_ req: URLRequest, allowRefresh: Bool) async -> (data: Data?, status: Int) {
         do {
             let (data, resp) = try await URLSession.shared.data(for: req)
             let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
