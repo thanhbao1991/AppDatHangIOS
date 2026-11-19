@@ -574,10 +574,13 @@ private struct MonRow: View, Equatable {
                 HStack(spacing: 12) {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
-                    // 19/11/2026 (sửa lag cuộn): bỏ LazyVStack bọc ảnh từng dòng — ~200 LazyVStack lồng trong ScrollView
-                    // phải tính lại vùng hiện MỖI khung hình khi cuộn. Ảnh giờ đọc/giải nén/thu nhỏ ở luồng nền
-                    // (ImageCache) nên tải hết lúc mở không làm khựng giao diện.
-                    AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
+                    // Ảnh bọc LazyVStack 1 phần tử, khung cố định: chỉ tải ảnh khi dòng cuộn tới (cột món là VStack thường).
+                    // 19/11/2026: đã thử bỏ để đỡ tính toán khi cuộn → app xếp hàng tải ~200 ảnh cùng lúc, ảnh đang hiện
+                    // phải chờ cuối, màn trống ảnh (ảnh chụp chủ quán) — GIỮ lại.
+                    LazyVStack(spacing: 0) {
+                        AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
+                    }
+                    .frame(width: 56, height: 56)
                         // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
