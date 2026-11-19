@@ -699,7 +699,7 @@ extension MenuView {
                 if !noiBatSanPhams.isEmpty {
                     tabDeXuatTieuDe("🔥 Best Sellers", chon: tab == 0) { tabDeXuat = 0 }
                 }
-                tabDeXuatTieuDe("⚡ Flash sale", chon: tab == 1, dem: sale.isEmpty ? nil : sale.count) { tabDeXuat = 1 }
+                tabDeXuatTieuDe("⚡ Flash Sale", chon: tab == 1, dem: sale.isEmpty ? nil : sale.count) { tabDeXuat = 1 }
             }
             .padding(.horizontal, 16)
             if ds.isEmpty {

@@ -47,7 +47,7 @@ enum NoiDung {
         "otpNhapMa": "Nhập mã OTP đã gửi qua Zalo",
         "qrNhacNoiDung": "Giữ nguyên số tiền và nội dung chuyển khoản.",
         "napXuGiuNoiDung": "Giữ nguyên số tiền và nội dung \"{noiDung}\" để Xu được cộng tự động.",
-        "flashSaleTrong": "Món vừa có người đặt sẽ giảm 3K/ly trong 99 giây.",
+        "flashSaleTrong": "Chưa có món Flash Sale",
     ]
 
     private static var daLuu: [String: String] =

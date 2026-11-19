@@ -466,7 +466,7 @@ struct CheckoutView: View {
                         }
                         if item.giamPhaKem > 0 {
                             // Pha kèm: giá dòng đã trừ sẵn (CartItem.donGia), nhãn cho khách biết vì sao rẻ hơn.
-                            Text("⚡ Flash sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
+                            Text("⚡ Flash Sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
                                 .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
                         }
                     }
