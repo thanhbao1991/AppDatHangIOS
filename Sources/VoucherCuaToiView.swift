@@ -65,14 +65,10 @@ struct VoucherCuaToiView: View {
                     ScrollView { emptyState }
                         .refreshable { await load() }
                 } else {
-                    ScrollView {
-                        VStack(spacing: 12) {
-                            ForEach(hienThi) { d in card(for: d) }
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 12)
-                        .padding(.bottom, 20)
+                    List {
+                        ForEach(hienThi) { d in card(for: d).tkDongList(cach: 12) }
                     }
+                    .tkList(cach: 12)
                     .refreshable { await load() }
                 }
             }

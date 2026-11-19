@@ -21,17 +21,14 @@ struct LichSuCongNoView: View {
             if loading {
                 fullScreenLoading()
             } else {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        if conNo.isEmpty {
-                            TKTrong(icon: "checkmark.seal.fill", mau: Theme.success, chu: "Bạn không còn công nợ nào.")
-                        } else {
-                            ForEach(conNo) { item in hoaDonThe(item) }
-                        }
+                List {
+                    if conNo.isEmpty {
+                        TKTrong(icon: "checkmark.seal.fill", mau: Theme.success, chu: "Bạn không còn công nợ nào.").tkDongList()
+                    } else {
+                        ForEach(conNo) { item in hoaDonThe(item).tkDongList() }
                     }
-                    .tkManHinh()
                 }
-                .background(Theme.bg)
+                .tkList()
                 .refreshable { await load() }
                 // Nút trả nợ nổi đáy: safeAreaInset + nền đặc (Material bị nháy — xem memory nút nổi SwiftUI).
                 .safeAreaInset(edge: .bottom) {

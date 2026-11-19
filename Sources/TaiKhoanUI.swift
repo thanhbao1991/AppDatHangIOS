@@ -27,6 +27,25 @@ extension View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .top)
     }
+
+    /// Danh sách DÀI các thẻ (19/11/2026, chủ quán: đồng bộ về List như tab Đơn hàng) — List là UIKit tái dùng ô, chỉ dựng
+    /// thẻ đang hiện; ScrollView dựng/giữ cả danh sách. Dùng cặp: `List { ForEach … { the.tkDongList() } }.tkList()`.
+    /// Bố cục y như tkManHinh: lề 16, thẻ cách nhau `cach`, đệm trên/dưới 12, nền xám Theme.bg, không kẻ dòng.
+    func tkDongList(cach: CGFloat = 10) -> some View {
+        self
+            .listRowInsets(EdgeInsets(top: cach / 2, leading: 16, bottom: cach / 2, trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+
+    func tkList(dem: CGFloat = 12, cach: CGFloat = 10) -> some View {
+        self
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Theme.bg)
+            .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: dem - cach / 2) }
+            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: dem - cach / 2) }
+    }
 }
 
 /// Ô icon vuông bo góc tô màu nhạt (kiểu Cài đặt iOS).

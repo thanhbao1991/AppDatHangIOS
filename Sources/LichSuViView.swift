@@ -33,10 +33,9 @@ struct LichSuViView: View {
                 if loading {
                     fullScreenLoading()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 10) {
+                    List {
                             if filteredItems.isEmpty {
-                                TKTrong(icon: "tray", chu: "Chưa có giao dịch nào.")
+                                TKTrong(icon: "tray", chu: "Chưa có giao dịch nào.").tkDongList()
                             }
                             ForEach(filteredItems) { item in
                                 HStack(spacing: 12) {
@@ -54,10 +53,10 @@ struct LichSuViView: View {
                                         .foregroundColor(item.soTienThayDoi >= 0 ? Theme.success : Theme.danger)
                                 }
                                 .tkThe(dem: 14)
+                                .tkDongList()
                             }
-                        }
-                        .tkManHinh()
                     }
+                    .tkList()
                     .refreshable { await load() }
                 }
             }
