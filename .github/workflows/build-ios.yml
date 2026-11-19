@@ -64,12 +64,15 @@ jobs:
           sys.exit(1)
           ') || { echo "Khong co simulator iOS 18"; xcrun simctl list runtimes; exit 1; }
           echo "Dung simulator: $UDID"
+          # Release (19/11/2026): UITests/CuonMenuDoGiatUITests đo CPU khi cuộn — bản Debug không tối ưu làm sai lệch số đo.
           xcodebuild test \
             -project AppDatHangIOS.xcodeproj \
             -scheme AppDatHangIOSUITests \
+            -configuration Release \
             -destination "id=$UDID" \
             -resultBundlePath UITest.xcresult \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee uitest.log | grep -E "^Test Case|error:|LECH\||NHOM\||SO_NUT|XCTAssert|\*\* TEST" || true
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee uitest.log | grep -E "^Test Case|error:|LECH\||NHOM\||SO_NUT|XCTAssert|measured \[|\*\* TEST" || true
           grep -q "\*\* TEST SUCCEEDED \*\*" uitest.log
 
       - name: Export screenshots
