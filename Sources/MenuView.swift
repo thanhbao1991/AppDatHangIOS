@@ -73,7 +73,7 @@ struct MenuView: View {
     /// ⚠️ Dòng món cao CỐ ĐỊNH — khung mỗi nhóm ở cột món khai thẳng chiều cao = header + số món × rowHeight (xem
     /// body, 19/11/2026) để iOS biết trước toạ độ mọi nhóm. Thêm thứ gì làm đổi chiều cao dòng/nhóm mà không sửa
     /// khung đó thì món bị cắt/chồng và bấm nhóm lại nhảy lệch.
-    private static let rowHeight: CGFloat = 72
+    fileprivate static let rowHeight: CGFloat = 72
     private static let khoangCachNhom: CGFloat = 8
 
     /// Tên hiển thị rút gọn ở sidebar — hiện không có nhóm nào cần rút gọn (giữ tên đầy đủ, dựa vào
@@ -98,6 +98,7 @@ struct MenuView: View {
     private func toggleYeuThich(_ item: SanPham) {
         let dangYeuThich = yeuThichIds.contains(item.id)
         if dangYeuThich { yeuThichIds.remove(item.id) } else { yeuThichIds.insert(item.id) }
+        capNhatSections()
         togglingYeuThichIds.insert(item.id)
         Task {
             let result = dangYeuThich
@@ -105,6 +106,7 @@ struct MenuView: View {
                 : await APIClient.shared.themYeuThich(item.id)
             if !result.success {
                 if dangYeuThich { yeuThichIds.insert(item.id) } else { yeuThichIds.remove(item.id) }
+                capNhatSections()
             }
             togglingYeuThichIds.remove(item.id)
         }
@@ -130,7 +132,13 @@ struct MenuView: View {
 
     /// Toàn bộ nhóm có món (không lọc theo tìm kiếm) — nguồn cho sidebar, luôn hiện đủ để bấm
     /// chuyển nhóm bất kể đang lọc gì ở cột phải.
-    private var sections: [(nhom: NhomSanPham, items: [SanPham])] {
+    /// Lưu sẵn (19/11/2026, sửa lag) — trước là computed property, MỖI lần body vẽ lại (cuộn qua nhóm…) phải gom +
+    /// sắp xếp lại toàn bộ ~200 món 2–3 lần (cột món + sidebar). Gọi capNhatSections() khi món/nhóm/bán chạy/yêu thích đổi.
+    @State private var sections: [(nhom: NhomSanPham, items: [SanPham])] = []
+
+    private func capNhatSections() { sections = tinhSections() }
+
+    private func tinhSections() -> [(nhom: NhomSanPham, items: [SanPham])] {
         var byNhom: [String: [SanPham]] = [:]
         for sp in sanPhams { byNhom[sp.nhomSanPhamId ?? "", default: []].append(sp) }
 
@@ -487,7 +495,7 @@ struct MenuView: View {
 
     /// Nhãn giá "25K" đè góc dưới phải ảnh món — dùng chung dòng món + thẻ Best Sellers/Sale off. Món pha kèm: giá đã
     /// giảm, nền đỏ. Nền trong 65% để còn thấy ảnh.
-    private static func nhanGiaK(_ gia: Double, giam: Double, co: CGFloat) -> some View {
+    fileprivate static func nhanGiaK(_ gia: Double, giam: Double, co: CGFloat) -> some View {
         Text(giaNghin(gia - giam) + "K")
             .font(.system(size: co, weight: .bold)).foregroundColor(.white)
             .lineLimit(1).fixedSize()
@@ -527,31 +535,60 @@ struct MenuView: View {
             : String(format: "%.1f", nghin).replacingOccurrences(of: ".", with: ",")
     }
 
-    @ViewBuilder
+    /// Dòng món = MonRow Equatable (19/11/2026, sửa lag): cột món là VStack thường (~200 dòng dựng cùng lúc), mỗi lần
+    /// MenuView vẽ lại (cuộn qua nhóm đổi selectedNhomId, Flash sale đổi…) SwiftUI chỉ so dữ liệu từng dòng, dòng nào
+    /// không đổi thì bỏ qua — không dựng lại cả 200 dòng.
     private func productRow(_ item: SanPham) -> some View {
         let gia = giaMacDinhVaCoGiaRieng(item)
-        let giam = giamPhaKem(item)
-        let isFavorite = yeuThichIds.contains(item.id)
+        return MonRow(
+            id: item.id, ten: item.ten, hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat,
+            gia: gia?.gia, coGiaRieng: gia?.coGiaRieng ?? false, giam: giamPhaKem(item),
+            isFavorite: yeuThichIds.contains(item.id), dangDoiTim: togglingYeuThichIds.contains(item.id),
+            onChon: { picking = item }, onTim: { toggleYeuThich(item) }
+        ).equatable()
+    }
+}
+
+/// Một dòng món ở cột món tab Thực đơn — xem MenuView.productRow. Chỉ chứa dữ liệu Equatable (closure bỏ qua khi so).
+private struct MonRow: View, Equatable {
+    let id: String
+    let ten: String
+    let hinhAnh: String?
+    let hinhAnhCat: String?
+    let gia: Double?
+    let coGiaRieng: Bool
+    let giam: Double
+    let isFavorite: Bool
+    let dangDoiTim: Bool
+    let onChon: () -> Void
+    let onTim: () -> Void
+
+    static func == (a: MonRow, b: MonRow) -> Bool {
+        a.id == b.id && a.ten == b.ten && a.hinhAnh == b.hinhAnh && a.hinhAnhCat == b.hinhAnhCat && a.gia == b.gia
+            && a.coGiaRieng == b.coGiaRieng && a.giam == b.giam && a.isFavorite == b.isFavorite && a.dangDoiTim == b.dangDoiTim
+    }
+
+    var body: some View {
         HStack(spacing: 12) {
-            Button { picking = item } label: {
+            Button(action: onChon) {
                 HStack(spacing: 12) {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
                     // Ảnh bọc LazyVStack 1 phần tử, khung cố định: chỉ tải ảnh khi dòng cuộn tới (cột món là VStack
                     // thường), 1 phần tử luôn nằm ở 0 nên không có chuyện đoán sai vị trí.
                     LazyVStack(spacing: 0) {
-                        AnhMonView(hinhAnh: item.hinhAnh, hinhAnhCat: item.hinhAnhCat, width: 56, height: 56)
+                        AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
                     }
                     .frame(width: 56, height: 56)
                         // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
                                 // Bỏ ".000đ" (chủ quán 19/11): 25.000 → "25K", lẻ nghìn 25.500 → "25,5K".
-                                Self.nhanGiaK(gia.gia, giam: giam, co: 9) // pha kèm: giá đã giảm, nền đỏ
+                                MenuView.nhanGiaK(gia, giam: giam, co: 9) // pha kèm: giá đã giảm, nền đỏ
                             }
                         }
                         .overlay(alignment: .topLeading) {
-                            if giam > 0 { Self.nhanGiam(giam, co: 9).padding(2) }
+                            if giam > 0 { MenuView.nhanGiam(giam, co: 9).padding(2) }
                         }
                         // Nhãn sát mép dưới + mép phải (chủ quán 19/11) — cắt lại theo góc bo của ảnh để góc nhãn không lòi ra.
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -560,17 +597,17 @@ struct MenuView: View {
                         // thì xuống cỡ 13 tối đa 2 dòng. Căn trái tường minh — chữ trong Button mặc định căn giữa
                         // (dòng 2 bị thụt vào). Cỡ 13 × 2 dòng vừa rowHeight.
                         ViewThatFits(in: .horizontal) {
-                            Text(item.ten)
+                            Text(ten)
                                 .font(.system(size: 15, weight: .semibold))
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
-                            Text(item.ten)
+                            Text(ten)
                                 .font(.system(size: 13, weight: .semibold))
                                 .lineLimit(2)
                         }
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
-                        if let gia, gia.coGiaRieng { giaRiengBadge() }
+                        if coGiaRieng { giaRiengBadge() }
                     }
                     Spacer(minLength: 0)
                 }
@@ -578,25 +615,25 @@ struct MenuView: View {
             .foregroundColor(.primary)
             // Nút tim tách riêng khỏi Button mở picker — bấm tim không được kích hoạt luôn modal chọn
             // size/topping phía trên.
-            Button {
-                toggleYeuThich(item)
-            } label: {
+            Button(action: onTim) {
                 Image(systemName: isFavorite ? "heart.fill" : "heart")
                     .font(.system(size: 18))
                     .foregroundColor(isFavorite ? Theme.primary : .secondary)
                     .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)
-            .disabled(togglingYeuThichIds.contains(item.id))
+            .disabled(dangDoiTim)
         }
         .padding(.horizontal, 16)
         // maxWidth: .infinity — ra khỏi List (giờ dùng LazyVStack thường) không còn tự ép full-width
         // theo hàng như List nữa, phải tự khai để background(sectionBackground)/Divider phủ hết ngang.
         // Cao CỐ ĐỊNH rowHeight (18/11/2026) để bấm nhóm ở sidebar nhảy chính xác (khung nhóm cao xác định, xem body). Ảnh 56 (giá đè lên ảnh) + đệm 8×2 = 72;
         // mọi chữ trong dòng là cỡ cố định (.system(size:)) nên không bị tràn.
-        .frame(maxWidth: .infinity, minHeight: Self.rowHeight, maxHeight: Self.rowHeight, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: MenuView.rowHeight, maxHeight: MenuView.rowHeight, alignment: .leading)
     }
+}
 
+extension MenuView {
     /// Số món hiện trọn vẹn trong dải đề xuất — 3 + hé 1 phần món thứ 4 để khách biết còn cuộn được
     /// tiếp, tránh tưởng đã hết chỉ vì vừa khít đúng 3 món tràn viền phải.
     private static let noiBatCarouselVisibleCount: CGFloat = 3.4
@@ -763,7 +800,7 @@ struct MenuView: View {
     }
 
     /// Nhãn đỏ "-3K".
-    private static func nhanGiam(_ giam: Double, co: CGFloat) -> some View {
+    fileprivate static func nhanGiam(_ giam: Double, co: CGFloat) -> some View {
         Text("-\(Int((giam / 1000).rounded()))K")
             .font(.system(size: co, weight: .bold)).foregroundColor(.white)
             .lineLimit(1).fixedSize()
@@ -805,6 +842,7 @@ struct MenuView: View {
             banChayIds = snapshot.banChayIds
             giaRiengMap = snapshot.giaRieng
             noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
+            capNhatSections()
             if selectedNhomId.isEmpty { selectedNhomId = Self.yeuThichNhomId }
             loading = false
         } else if !silent {
@@ -844,6 +882,7 @@ struct MenuView: View {
         if selectedNhomId.isEmpty {
             selectedNhomId = Self.yeuThichNhomId
         }
+        capNhatSections()
         if !sections.contains(where: { $0.nhom.id == selectedNhomId }) {
             selectedNhomId = sections.first?.nhom.id ?? ""
         }
@@ -853,6 +892,7 @@ struct MenuView: View {
             BoNhoTam.vi = vi
             let truocRong = yeuThichIds.isEmpty
             yeuThichIds = Set(vi.yeuThichSanPhamIds)
+            capNhatSections()
             KhachHangSession.shared.capNhatHang(vi.hang)
             if lanDau && truocRong && !yeuThichIds.isEmpty { selectedNhomId = Self.yeuThichNhomId }
         }

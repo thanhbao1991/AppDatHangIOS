@@ -62,6 +62,13 @@ final class PhaKemStore: ObservableObject {
         for m in ds where m.conGiay > 0 && m.giamGia > 0 {
             moi[m.sanPhamId] = (m.giamGia, bayGio.addingTimeInterval(TimeInterval(m.conGiay)))
         }
+        // Hỏi 10s/lần nhưng hầu hết lần không có gì đổi — chỉ báo vẽ lại khi bảng THẬT SỰ đổi (món/số giảm khác, hoặc
+        // giờ hết lệch > 2s). Trước đây lần nào cũng phienBan += 1 → cả tab Thực đơn (~200 dòng) vẽ lại mỗi 10s, giật khi cuộn.
+        let giongCu = moi.count == tuServer.count && moi.allSatisfy { id, m in
+            guard let c = tuServer[id] else { return false }
+            return c.giam == m.giam && abs(c.hetLuc.timeIntervalSince(m.hetLuc)) < 2
+        }
+        if giongCu { return }
         tuServer = moi
         apDung()
     }
