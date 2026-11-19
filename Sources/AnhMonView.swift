@@ -27,13 +27,13 @@ struct AnhMonView: View {
         if let cat = hinhAnhCat, let url = URL(string: cat) {
             ZStack {
                 nen
-                CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
+                CachedAsyncImage(url: url, kichThuoc: max(width, height)) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
                     .padding(min(width, height) * 0.06)
             }
             .frame(width: width, height: height)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         } else if let hinhAnh, let url = URL(string: hinhAnh) {
-            CachedAsyncImage(url: url) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
+            CachedAsyncImage(url: url, kichThuoc: max(width, height)) { $0.resizable().aspectRatio(contentMode: .fill) } placeholder: { Color(white: 0.93) }
                 .frame(width: width, height: height)
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         } else {

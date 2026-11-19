@@ -519,7 +519,7 @@ struct MenuView: View {
 
     /// Ảnh ly tách nền KHÔNG vẽ nền theme (chủ quán 19/11: bỏ nền ảnh đầu mục) — chỉ cái ly trong suốt.
     private static func anhLyKhongNen(_ url: String, co: CGFloat) -> some View {
-        CachedAsyncImage(url: URL(string: url)) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
+        CachedAsyncImage(url: URL(string: url), kichThuoc: co) { $0.resizable().aspectRatio(contentMode: .fit) } placeholder: { Color.clear }
             .frame(width: co, height: co)
     }
 
@@ -574,12 +574,10 @@ private struct MonRow: View, Equatable {
                 HStack(spacing: 12) {
                     // 19/11/2026 (thử, chủ quán): giá ĐÈ LÊN đáy ảnh món (nhãn nền màu theme, chữ trắng) — đã thử giá dưới
                     // ảnh (1080) / trên ảnh (1082). Đè lên nên dòng giữ cao 72 như cũ.
-                    // Ảnh bọc LazyVStack 1 phần tử, khung cố định: chỉ tải ảnh khi dòng cuộn tới (cột món là VStack
-                    // thường), 1 phần tử luôn nằm ở 0 nên không có chuyện đoán sai vị trí.
-                    LazyVStack(spacing: 0) {
-                        AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
-                    }
-                    .frame(width: 56, height: 56)
+                    // 19/11/2026 (sửa lag cuộn): bỏ LazyVStack bọc ảnh từng dòng — ~200 LazyVStack lồng trong ScrollView
+                    // phải tính lại vùng hiện MỖI khung hình khi cuộn. Ảnh giờ đọc/giải nén/thu nhỏ ở luồng nền
+                    // (ImageCache) nên tải hết lúc mở không làm khựng giao diện.
+                    AnhMonView(hinhAnh: hinhAnh, hinhAnhCat: hinhAnhCat, width: 56, height: 56)
                         // Góc dưới phải, nhãn nhỏ "25K" để che ảnh ít nhất (chủ quán 19/11).
                         .overlay(alignment: .bottomTrailing) {
                             if let gia {
