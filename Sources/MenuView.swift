@@ -202,7 +202,7 @@ struct MenuView: View {
             // Dải "Món quán đề xuất" — NGAY ĐẦU tab, trên cả sidebar nhóm/Yêu thích, vì đây là màn
             // khách mở ra đầu tiên và thấy 100% lượt vào app. Ẩn lúc đang tìm kiếm (kết quả tìm nên
             // chiếm trọn màn, không cạnh tranh chỗ với dải quảng bá không liên quan tới từ khoá gõ).
-            if !loading && error.isEmpty && !isSearching && (!noiBatSanPhams.isEmpty || !monSale.isEmpty) {
+            if !loading && error.isEmpty && !isSearching {  // luôn hiện (tab Flash sale luôn có, chủ quán 19/11)
                 noiBatCarousel
             }
 
@@ -690,19 +690,25 @@ extension MenuView {
     /// dưới, giống pattern banner đề xuất của Shopee Food/GrabFood.
     private var noiBatCarousel: some View {
         let sale = monSale
-        // Sale off chỉ có khi đang có món pha kèm; hết món thì tự về Best Sellers (mặc định, chủ quán chốt 19/11).
-        let tab = sale.isEmpty ? 0 : (noiBatSanPhams.isEmpty ? 1 : tabDeXuat)
+        // Tab Flash sale LUÔN hiện kể cả chưa có món (chủ quán 19/11) — trống thì hiện câu giải thích. Mặc định Best Sellers.
+        let tab = noiBatSanPhams.isEmpty ? 1 : tabDeXuat
         let ds = tab == 1 ? sale : noiBatSanPhams
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 18) {
                 if !noiBatSanPhams.isEmpty {
                     tabDeXuatTieuDe("🔥 Best Sellers", chon: tab == 0) { tabDeXuat = 0 }
                 }
-                if !sale.isEmpty {
-                    tabDeXuatTieuDe("⚡ Flash sale", chon: tab == 1, dem: sale.count) { tabDeXuat = 1 }
-                }
+                tabDeXuatTieuDe("⚡ Flash sale", chon: tab == 1, dem: sale.isEmpty ? nil : sale.count) { tabDeXuat = 1 }
             }
             .padding(.horizontal, 16)
+            if ds.isEmpty {
+                Text(NoiDung.text("flashSaleTrong"))
+                    .font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 24)
+                    .frame(height: 90 + 6 + 18)
+            } else {
             GeometryReader { geo in
                 // 3 món trọn vẹn = 3 chiều rộng card + 2 khoảng cách giữa chúng (khoảng cách thứ 3,
                 // trước món thứ 4, KHÔNG tính vào vì món thứ 4 chỉ hé 1 phần, không cần đủ khoảng
@@ -722,6 +728,7 @@ extension MenuView {
             // VStack thường, phải khai rõ để không chiếm hết phần còn lại của màn hình (GeometryReader
             // mặc định tham lam .frame(maxHeight: .infinity)). Khớp ảnh 90 + spacing 6 + 2 dòng chữ.
             .frame(height: 90 + 6 + 18)
+            }
         }
         .padding(.vertical, 10)
         .background(Theme.bg) // 09/11/2026: cùng nền xám toàn app
