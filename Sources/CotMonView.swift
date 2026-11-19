@@ -222,15 +222,18 @@ struct CotMonView<TieuDe: View, Dong: View, TrangThai: Equatable>: UIViewReprese
             return o
         }
 
+        /// `.id(...)`: ô tái dùng cho món KHÁC thì SwiftUI coi là view mới — bỏ @State của món cũ (ảnh đã tải trong
+        /// CachedAsyncImage…), không thì ảnh món cũ hiện thoáng qua trên dòng mới tới khi ảnh mới tải xong. Cùng món (vẽ
+        /// lại vì tim/giá đổi) thì giữ nguyên, SwiftUI chỉ so dữ liệu.
         private func cauHinh(_ o: OCotMon, _ ip: IndexPath) {
             let cha = self.cha
             let n = nhoms[ip.section / 2]
             if ip.section % 2 == 0 {
-                o.contentConfiguration = UIHostingConfiguration { cha.tieuDe(n) }.margins(.all, 0)
+                o.contentConfiguration = UIHostingConfiguration { cha.tieuDe(n).id(n.nhom.id) }.margins(.all, 0)
             } else {
                 let mon = n.items[ip.item]
                 let laCuoi = ip.item == n.items.count - 1
-                o.contentConfiguration = UIHostingConfiguration { cha.dong(mon, laCuoi) }.margins(.all, 0)
+                o.contentConfiguration = UIHostingConfiguration { cha.dong(mon, laCuoi).id(mon.id) }.margins(.all, 0)
             }
             o.phienBan = phienBan
         }
