@@ -7,12 +7,23 @@ import SwiftUI
 struct SeasonalSplashView: View {
     let theme: SeasonalTheme
     let onDone: () -> Void
+    /// Ảnh màn chào đọc + giải nén 1 lần lúc dựng (trước đây đọc đĩa mỗi lần body vẽ, giải nén lúc vẽ khung đầu).
+    private let toanMan: UIImage?
 
-    @State private var visible = false
+    @State private var visible: Bool
+
+    /// `hienNgay` (19/11/2026, khớp AppQuanLyIOS): màn chào bật từ dịp lưu máy lúc mở app → hiện ĐẦY ngay khung hình đầu,
+    /// không mờ dần vào — trước đây bắt đầu trong suốt rồi hiện dần 0,25s nên khách thấy thực đơn thoáng qua trước.
+    init(theme: SeasonalTheme, hienNgay: Bool = false, onDone: @escaping () -> Void) {
+        self.theme = theme
+        self.onDone = onDone
+        self.toanMan = ManChaoCache.anh(ma: theme.maDaiDien).map { $0.preparingForDisplay() ?? $0 }
+        _visible = State(initialValue: hienNgay)
+    }
 
     var body: some View {
         ZStack {
-            if let toanMan = ManChaoCache.anh(ma: theme.maDaiDien) {
+            if let toanMan {
                 manChaoAnhRieng(toanMan)
             } else {
                 manChaoTuIcon
@@ -22,7 +33,7 @@ struct SeasonalSplashView: View {
         .contentShape(Rectangle())
         .onTapGesture { dismiss() }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.25)) { visible = true }
+            if !visible { withAnimation(.easeOut(duration: 0.25)) { visible = true } }
             let thoiGian = SeasonalEvent.layThoiGianSplashVaDem(theme)
             DispatchQueue.main.asyncAfter(deadline: .now() + thoiGian) { dismiss() }
         }

@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var batBuocCapNhat: AppVersionPolicy?
     /// Có dịp lưu máy → màn chào hiện ngay khung hình đầu (không chờ server), xem SeasonalEvent.dipLe.
     @State private var seasonalSplash: SeasonalTheme? = SeasonalEvent.canHienSplash() ? SeasonalEvent.active : nil
+    /// Màn chào đang hiện là bản bật sẵn từ dịp lưu máy lúc mở app → hiện đầy ngay, không mờ dần vào (SeasonalSplashView).
+    @State private var splashHienNgay = SeasonalEvent.canHienSplash()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -27,9 +29,10 @@ struct ContentView: View {
         // động (hiếm, nhưng không nên để splash kẹt dưới cổng chặn không đóng được).
         .overlay {
             if let theme = seasonalSplash {
-                SeasonalSplashView(theme: theme) {
+                SeasonalSplashView(theme: theme, hienNgay: splashHienNgay) {
                     SeasonalEvent.danhDauDaHienSplash()
                     seasonalSplash = nil
+                    splashHienNgay = false
                     SeasonalEvent.doiIconSauManChao()
                     // Màn sinh nhật chờ màn chào dịp lễ — kiểm lại ngay khi màn chào đóng.
                     Task { try? await Task.sleep(nanoseconds: 400_000_000); await kiemTraQua() }
