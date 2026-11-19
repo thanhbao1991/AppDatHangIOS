@@ -51,6 +51,24 @@ final class ImageCache: @unchecked Sendable {
         return img
     }
 
+    /// Tải NGẦM vào đĩa mọi ảnh chưa có (19/11/2026, chủ quán: "ảnh ít đổi, tải ngầm được mà") — gọi sau khi có thực
+    /// đơn. Chỉ tải byte xuống đĩa (không giải nén), lần lượt từng ảnh, ưu tiên thấp; ảnh đã có thì bỏ qua (URL có ?v=
+    /// nên ảnh đổi là URL mới). Nhờ vậy cuộn tới món nào cũng đọc từ đĩa, không phải chờ mạng.
+    private var dangTaiNgam = false
+    func taiNgam(_ urls: [URL]) {
+        if dangTaiNgam { return }
+        dangTaiNgam = true
+        let ds = urls.map { ($0, diskPath(for: $0)) }
+        Task.detached(priority: .background) { [weak self] in
+            for (url, path) in ds where !FileManager.default.fileExists(atPath: path.path) {
+                guard let (data, res) = try? await URLSession.shared.data(from: url),
+                      (res as? HTTPURLResponse)?.statusCode == 200, UIImage(data: data) != nil else { continue }
+                try? data.write(to: path, options: .atomic)
+            }
+            self?.dangTaiNgam = false
+        }
+    }
+
     /// Giải nén sẵn (không để dành tới lúc vẽ trên main thread); px > 0 thì thu nhỏ để cạnh dài nhất = px.
     private static func giaiNen(_ data: Data, px: Int) -> UIImage? {
         guard let img = UIImage(data: data) else { return nil }

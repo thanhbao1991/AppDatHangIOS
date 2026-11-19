@@ -881,6 +881,8 @@ extension MenuView {
             toppings = top.filter { !$0.ngungBan }
             banChayIds = banChay
             noiBatSanPhams = Self.tinhDeXuat(sanPhams: sanPhams, banChayIds: banChayIds)
+            // Tải ngầm ảnh mọi món vào đĩa (chỉ ảnh chưa có) — cuộn tới đâu cũng có sẵn, không chờ mạng.
+            ImageCache.shared.taiNgam(sanPhams.compactMap { URL(string: $0.hinhAnhCat ?? $0.hinhAnh ?? "") })
         } else if sanPhams.isEmpty {
             error = spResult.message ?? "Không tải được thực đơn, vui lòng thử lại."
         }
