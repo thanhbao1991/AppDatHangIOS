@@ -84,11 +84,22 @@ enum ChucMungHang {
                 tieuDe: dien(NoiDung.text("chucMungTopKhachTieuDe"), ["viTri": "\(t.viTri)", "thang": tenThang(t.thangDat)]),
                 mauHang: "Vàng", soXu: t.soXu, ghiChu: NoiDung.text("chucMungTopKhachPhu"), daCong: daCong, khoaDaXem: "topKhach-\(t.id ?? "")"))
         }
-        return ds
+        return ds.filter { !boQuaPhienNay.contains(khoaPhien($0)) }
     }
 
-    /// Gọi API nhận quà. Lỗi mạng thì thôi — màn sẽ hiện lại lần sau.
+    /// Quà bấm nút mà API nhận lỗi (lỗi mạng, hoặc phiên dev "xem thử" bị backend chặn ghi — 20/11/2026: màn hiện lại
+    /// liên tục mỗi lần tải ví) → không hiện lại tới lần mở app sau. Chỉ nhớ trong RAM nên quà thật không bị mất.
+    private static var boQuaPhienNay: Set<String> = []
+    private static func khoaPhien(_ q: QuaChucMung) -> String { "\(Prefs.khachHangId ?? "")|\(q.id)|\(q.tieuDe)" }
+
+    /// Gọi API nhận quà. Lỗi thì màn sẽ hiện lại ở lần mở app sau (không hiện lại ngay trong phiên này).
     static func nhan(_ qua: QuaChucMung) async -> Bool {
+        let ok = await nhanAPI(qua)
+        if !ok { boQuaPhienNay.insert(khoaPhien(qua)) }
+        return ok
+    }
+
+    private static func nhanAPI(_ qua: QuaChucMung) async -> Bool {
         if qua.daCong {
             if let k = qua.khoaDaXem {
                 var ds = UserDefaults.standard.stringArray(forKey: khoaDaXemTuDong) ?? []
