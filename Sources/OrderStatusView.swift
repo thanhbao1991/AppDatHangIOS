@@ -277,9 +277,8 @@ struct OrderStatusView: View {
                 actionButton("☎ Hỗ trợ") { goiHotline() }
                     .disabled(hotlineQuan?.isEmpty != false)
             }
-            if item.trangThai == .hoanTat && !item.daDanhGia && isLastOrder(item) {
-                actionButton("⭐ Đánh giá", filled: true) { danhGiaTarget = item }
-            } else if item.trangThai != .hoanTat && item.trangThai != .huy && item.conLai > 0 {
+            // 21/11/2026 chủ quán: ẩn nút "⭐ Đánh giá" trên thẻ đơn.
+            if item.trangThai != .hoanTat && item.trangThai != .huy && item.conLai > 0 {
                 actionButton("💳 Thanh toán", filled: true) { path.append(.thanhToan(hoaDonId: item.id)) }
             }
             actionButton("Đặt lại", filled: true) { datLai(item) }

@@ -317,8 +317,8 @@ struct BangXepHangView: View {
     /// chữ "Xu"; điểm ghi "Tích luỹ 20.050" (không đơn vị) để không lẫn với quà.
     private func giaTri(_ xu: Double?, soDon: Int) -> String {
         if let xu, xu > 0 {
-            let so = formatXu(xu).replacingOccurrences(of: " Xu", with: "")
-            return "Tích luỹ \(so)"
+            // 21/11/2026: bỏ chữ "Tích luỹ", chỉ còn số.
+            return formatXu(xu).replacingOccurrences(of: " Xu", with: "")
         }
         return "\(soDon) đơn"
     }
