@@ -3,10 +3,10 @@
 # "You have changed the icon" của iOS). Chạy trên CI sau xcodegen, trước khi archive. (Chủ quán 2026-11-07: kết hợp
 # icon theo bản cập nhật khi tiện + đổi theo server có popup khi bản cài chưa kịp.)
 #
-# - Lấy ĐÚNG icon server đang hiển thị lúc build (GET /dip-le/hien-thi → maIconHienTai: dịp trong cửa sổ 30 ngày trước →
-#   3 ngày sau lễ, hoặc dịp vừa qua đang được giữ tới khi dịp kế vào cửa sổ) → chép ảnh
+# - Lấy ĐÚNG icon server đang hiển thị lúc build (GET /dip-le/hien-thi → maIconHienTai: dịp CHƯA KẾT THÚC gần nhất —
+#   hết lễ là sang dịp kế ngay, chủ quán 2026-11-21; Android làm y vậy trong app/build.gradle.kts) → chép ảnh
 #   Assets.xcassets/AppIcon-<MA>.appiconset đè lên AppIcon.appiconset (cùng tên file). Khớp server nên khách cài mới /
-#   cập nhật KHÔNG bị popup đổi icon ngay lần mở đầu. Nộp cuối tháng 11 → Noel (server đổi sang Noel từ 24/11).
+#   cập nhật KHÔNG bị popup đổi icon ngay lần mở đầu. Build sau 20/11 → Noel, sau 25/12 → Tết Dương…
 #   Không có dịp / lỗi mạng → icon quán, KHÔNG làm hỏng build.
 # - Ghi DennIconDip (<MA> hoặc rỗng) vào Info.plist — app đọc để biết icon chính đang đóng gói là dịp nào
 #   (xem AppIconSwitcher.iconMucTieu): server muốn đúng icon đó thì khỏi đổi (không popup), lệch thì app tự đổi
