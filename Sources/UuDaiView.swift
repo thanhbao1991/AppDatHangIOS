@@ -180,7 +180,8 @@ struct UuDaiView: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
                 if isDay7 {
-                    Text("🏆").font(.system(size: 22))
+                    // Ngày 7 = Xu + voucher + 1 lượt mở quà (chủ quán 22/11/2026: thay cúp bằng 2 quà thêm).
+                    Text(verbatim: "🎟️🎁").font(.system(size: 17)).lineLimit(1).minimumScaleFactor(0.6).frame(height: 24)
                 } else {
                     xuIcon(24)
                 }

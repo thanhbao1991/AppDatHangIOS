@@ -31,7 +31,7 @@ enum NoiDung {
         "shipMienPhiGhiChu": "Freeship mọi đơn đến hết 31/12/2026 🎉",
         "muaHoGiam": "Giảm 5% hoặc Voucher, ưu tiên giảm nhiều hơn!",
         "muaHoGiuVoucher": "Giảm 5% nhiều hơn voucher đã chọn — voucher được giữ lại cho lần sau.",
-        "tangLuotQuaKhiHoanThanh": "🎁 Tặng 1 lượt quà Xu khi hoàn thành đơn",
+        "tangLuotQuaKhiHoanThanh": "Đến quán lấy món khi đơn đã sẵn sàng.",
         "napLanDauTieuDe": "Lần nạp đầu tiên: nhân đôi Xu tặng",
         "napLanDauMoTa": "",
         "voucherKhongApDung": "Nước lon, ăn vặt và món không pha chế không áp dụng voucher.",
