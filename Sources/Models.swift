@@ -802,6 +802,8 @@ struct DiemDanhInfo: Decodable {
     let daDiemDanhHomNay: Bool
     let thuongThuong: Double
     let thuongNgay7: Double
+    /// Mức giảm voucher ngày 7 do server ghi sẵn ("-10%" / "-5K"); nil = không có voucher (bản server cũ / tắt voucher).
+    var voucherNgay7: String? = nil
 }
 
 /// POST /dat-hang/diem-danh

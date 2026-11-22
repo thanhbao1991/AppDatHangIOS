@@ -108,7 +108,7 @@ struct UuDaiView: View {
                     HStack(spacing: 6) {
                         // Đang thử (bản dev): ô ngày tick tới ngày đang thử.
                         let hienThi = thuNgay > 0
-                            ? DiemDanhInfo(ngayTiepTheo: thuNgay, daDiemDanhHomNay: true, thuongThuong: dd.thuongThuong, thuongNgay7: dd.thuongNgay7)
+                            ? DiemDanhInfo(ngayTiepTheo: thuNgay, daDiemDanhHomNay: true, thuongThuong: dd.thuongThuong, thuongNgay7: dd.thuongNgay7, voucherNgay7: dd.voucherNgay7)
                             : dd
                         ForEach(1...7, id: \.self) { day in
                             diemDanhDayBox(day: day, info: hienThi)
@@ -175,18 +175,25 @@ struct UuDaiView: View {
         let isDay7 = day == 7
 
         VStack(spacing: 6) {
-            VStack(spacing: 4) {
+            VStack(spacing: isDay7 ? 2 : 4) {
                 Text("+\(soNgan(thuongChoDay(day, info)))")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
                 if isDay7 {
-                    // Ngày 7 = Xu + voucher + 1 lượt mở quà (chủ quán 22/11/2026: thay cúp bằng 2 quà thêm).
-                    Text(verbatim: "🎟️🎁").font(.system(size: 17)).lineLimit(1).minimumScaleFactor(0.6).frame(height: 24)
+                    // Ngày 7 xếp dọc 3 quà (chủ quán 22/11/2026): Xu (dòng trên) · voucher (mức giảm server gửi) · 1 lượt mở quà.
+                    if let v = info.voucherNgay7 {
+                        Text(verbatim: v)
+                            .font(.system(size: 10, weight: .heavy)).foregroundColor(Theme.primary)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                            .padding(.horizontal, 4).padding(.vertical, 1)
+                            .background(Capsule().fill(.white))
+                    }
+                    Text(verbatim: "🎁").font(.system(size: 16))
                 } else {
                     xuIcon(24)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 50)
             .padding(.vertical, 10)
             .opacity(daXongNgayNay ? 0.45 : 1)
             .background(isDay7 ? Theme.primary : Theme.bg)
