@@ -42,7 +42,7 @@ struct OrderStatusView: View {
                 if loading {
                     fullScreenLoading()
                 } else if orders.isEmpty {
-                    Text("Chưa có đơn hàng nào.").foregroundColor(Theme.textFaint)
+                    Text(chu("Chưa có đơn hàng nào.")).foregroundColor(Theme.textFaint)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     // 2026-09-26: thử đổi sang dạng PHẲNG (không card trắng bo góc) giống Lịch sử Xu
@@ -55,7 +55,7 @@ struct OrderStatusView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                         if filteredOrders.isEmpty {
-                            Text("Không có đơn nào ở mục này.")
+                            Text(chu("Không có đơn nào ở mục này."))
                                 .font(.system(size: 13)).foregroundColor(Theme.textFaint)
                                 .frame(maxWidth: .infinity).padding(.vertical, 24)
                                 .listRowSeparator(.hidden)
@@ -84,7 +84,7 @@ struct OrderStatusView: View {
         .onDisappear { pollTask?.cancel() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
-                Button("OK") {}
+                Button(chu("OK")) {}
             } message: {
                 Text(alertMessage?.message ?? "")
             }
@@ -130,7 +130,7 @@ struct OrderStatusView: View {
                         HStack(spacing: 3) {
                             Text("🏅").font(.system(size: 13))
                             if item.xuGapDoi == true {
-                                Text("x2")
+                                Text(chu("x2"))
                                     .font(.system(size: 10, weight: .heavy))
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 4)
@@ -156,7 +156,7 @@ struct OrderStatusView: View {
                     // tenMonSummary server join sẵn bằng ", " — dễ đọc hơn khi đơn có nhiều món/size
                     // khác nhau, khỏi phải soi dấu phẩy để tách từng món.
                     ForEach(item.items) { it in
-                        Text("\(it.soLuong)x \(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))")
+                        Text(chu("\(it.soLuong)x \(it.tenSanPham)\(bienTheSuffix(it.tenBienThe))"))
                             .font(.system(size: 14))
                             .foregroundColor(.primary)
                             .lineLimit(1)

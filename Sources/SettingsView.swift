@@ -124,7 +124,7 @@ struct SettingsView: View {
         .popupHost { host in
             host
                 .alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
-                    Button("OK") {}
+                    Button(chu("OK")) {}
                 } message: {
                     Text(alertMessage?.message ?? "")
                 }
@@ -133,17 +133,17 @@ struct SettingsView: View {
                     isPresented: Binding(get: { diaChiChoXoa != nil }, set: { if !$0 { diaChiChoXoa = nil } }),
                     titleVisibility: .visible
                 ) {
-                    Button("Xoá", role: .destructive) {
+                    Button(chu("Xoá"), role: .destructive) {
                         if let id = diaChiChoXoa?.id { Task { await xoaDiaChi(id) } }
                     }
-                    Button("Huỷ", role: .cancel) {}
+                    Button(chu("Huỷ"), role: .cancel) {}
                 }
-                .alert("Đổi tên hiển thị", isPresented: $showEditTen) {
-                    TextField("Tên hiển thị trong app", text: $tenHienThi)
-                    Button("Lưu") { Task { await luuTenHienThi() } }
-                    Button("Huỷ", role: .cancel) { tenHienThi = Prefs.tenKhachHang ?? "" }
+                .alert(chu("Đổi tên hiển thị"), isPresented: $showEditTen) {
+                    TextField(chu("Tên hiển thị trong app"), text: $tenHienThi)
+                    Button(chu("Lưu")) { Task { await luuTenHienThi() } }
+                    Button(chu("Huỷ"), role: .cancel) { tenHienThi = Prefs.tenKhachHang ?? "" }
                 } message: {
-                    Text("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán.")
+                    Text(chu("Để trống + Lưu sẽ xoá biệt danh, quay lại tên thật lưu ở quán."))
                 }
         }
         .sheet(isPresented: $moBangXepHang) { BangXepHangView() }
@@ -301,13 +301,13 @@ struct SettingsView: View {
                     // Chủ quán 09/11/2026: icon đồng xu ảnh lạc lõng → ô icon TK (ví, cam) cùng kiểu ô icon thẻ Công nợ.
                     TKIcon(ten: "wallet.pass.fill", mau: .orange, co: 42)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Ví Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        Text(chu("Ví Xu")).font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
                         (Text(SoDuCard.so(vi.soDu)).font(.system(size: 24, weight: .heavy, design: .rounded))
-                            + Text(" Xu").font(.system(size: 14, weight: .bold)))
+                            + Text(chu(" Xu")).font(.system(size: 14, weight: .bold)))
                             .monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                     }
                     Spacer(minLength: 8)
-                    Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Text(chu("Xem chi tiết")).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
                 }
                 .contentShape(Rectangle())
@@ -338,13 +338,13 @@ struct SettingsView: View {
                 HStack(spacing: 12) {
                     TKIcon(ten: "exclamationmark.circle.fill", mau: Theme.danger, co: 42)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Công nợ").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        Text(chu("Công nợ")).font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textMuted)
                         (Text(SoDuCard.so(vi.tongNo)).font(.system(size: 24, weight: .heavy, design: .rounded))
-                            + Text(" đ").font(.system(size: 14, weight: .bold)))
+                            + Text(chu(" đ")).font(.system(size: 14, weight: .bold)))
                             .monospacedDigit().foregroundColor(Theme.danger)
                     }
                     Spacer(minLength: 8)
-                    Text("Xem chi tiết").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
+                    Text(chu("Xem chi tiết")).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.primary)
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.textFaint)
                 }
                 .contentShape(Rectangle())
@@ -408,7 +408,7 @@ struct SettingsView: View {
                     .lineLimit(1).minimumScaleFactor(0.8)
                 if x2 {
                     Spacer(minLength: 0)
-                    Text("x2")
+                    Text(chu("x2"))
                         .font(.system(size: 11, weight: .black, design: .rounded))
                         .foregroundColor(Color(red: 0.35, green: 0.22, blue: 0.0))
                         .padding(.horizontal, 6).padding(.vertical, 2)
@@ -501,7 +501,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: 3) {
                         Image(systemName: "plus").font(.system(size: 11, weight: .bold))
-                        Text("Thêm").font(.system(size: 13, weight: .semibold))
+                        Text(chu("Thêm")).font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(Theme.primary)
                     .padding(.horizontal, 10).padding(.vertical, 5)
@@ -516,7 +516,7 @@ struct SettingsView: View {
             // CheckoutView (chọn địa chỉ lúc đặt hàng) vẫn dùng danh sách gốc đầy đủ, không lọc theo
             // yêu cầu.
             if diaChiHienThi.isEmpty {
-                Text("Chưa có địa chỉ — bấm Thêm để thêm")
+                Text(chu("Chưa có địa chỉ — bấm Thêm để thêm"))
                     .font(.system(size: 13)).foregroundColor(Theme.textFaint)
             } else {
                 ForEach(diaChiHienThi) { item in
@@ -589,7 +589,7 @@ struct SettingsView: View {
                 ProgressView()
             } else if let ns = ngaySinhInfo?.ngaySinh, ngaySinhInfo?.coTheSua == false {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                    Label(chu("Sinh nhật: \(formatNgaySinh(ns))"), systemImage: "checkmark.seal.fill")
                         .font(.system(size: 13)).foregroundColor(Theme.success)
                     Text(NoiDung.text("sinhNhatDaNhan"))
                         .font(.system(size: 12)).foregroundColor(Theme.textFaint)
@@ -600,10 +600,10 @@ struct SettingsView: View {
                 // 2026-09-27: "bao giờ bấm mới hiện cái này ra chứ", trước hiện thẳng luôn).
                 HStack {
                     if let ns = ngaySinhInfo?.ngaySinh {
-                        Label("Sinh nhật: \(formatNgaySinh(ns))", systemImage: "checkmark.seal.fill")
+                        Label(chu("Sinh nhật: \(formatNgaySinh(ns))"), systemImage: "checkmark.seal.fill")
                             .font(.system(size: 13)).foregroundColor(Theme.success)
                     } else {
-                        Text("Chưa nhập").font(.system(size: 13)).foregroundColor(Theme.textFaint)
+                        Text(chu("Chưa nhập")).font(.system(size: 13)).foregroundColor(Theme.textFaint)
                     }
                     Spacer()
                     Button { showDobPicker = true } label: {
@@ -629,7 +629,7 @@ struct SettingsView: View {
                     .environment(\.locale, Locale(identifier: "vi_VN"))
                 HStack(spacing: 10) {
                     Button { showDobPicker = false; dobError = nil } label: {
-                        Text("Huỷ").font(.system(size: 15, weight: .semibold)).foregroundColor(Theme.textMuted)
+                        Text(chu("Huỷ")).font(.system(size: 15, weight: .semibold)).foregroundColor(Theme.textMuted)
                             .frame(maxWidth: .infinity).padding(.vertical, 12)
                             .background(Capsule().fill(Theme.bg))
                     }
@@ -638,7 +638,7 @@ struct SettingsView: View {
                     Button {
                         Task { await xacNhanNgaySinh() }
                     } label: {
-                        Group { if savingDob { ProgressView().tint(.white) } else { Text("Lưu").font(.system(size: 15, weight: .bold)) } }
+                        Group { if savingDob { ProgressView().tint(.white) } else { Text(chu("Lưu")).font(.system(size: 15, weight: .bold)) } }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity).padding(.vertical, 12)
                             .background(Capsule().fill(Theme.primaryGradient))

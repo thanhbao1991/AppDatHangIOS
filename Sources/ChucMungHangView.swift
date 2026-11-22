@@ -170,7 +170,7 @@ struct ChucMungHangView: View {
                     .rotationEffect(.degrees(hien ? 0 : -30))
                     .animation(.spring(response: 0.6, dampingFraction: 0.55), value: hien)
 
-                Text("CHÚC MỪNG!")
+                Text(chu("CHÚC MỪNG!"))
                     .font(.system(size: 15, weight: .heavy)).tracking(3)
                     .foregroundColor(.white.opacity(0.85))
                     .padding(.top, 24)

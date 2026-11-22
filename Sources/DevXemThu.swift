@@ -57,24 +57,24 @@ struct DevMenuButton: View {
             }
             Menu(SeasonalEvent.previewOverride.map { "🧪 Đang xem: \($0.previewTen)" } ?? "🧪 Xem trước dịp lễ") {
                 if SeasonalEvent.previewOverride != nil {
-                    Button("Tắt xem trước", role: .destructive) { x.chonDipLe(nil) }
+                    Button(chu("Tắt xem trước"), role: .destructive) { x.chonDipLe(nil) }
                 }
                 ForEach(SeasonalTheme.allCases, id: \.self) { dip in
                     Button(dip.previewTen) { x.chonDipLe(dip) }
                 }
             }
-            Button("🧪 Xem trước chúc mừng sinh nhật") {
+            Button(chu("🧪 Xem trước chúc mừng sinh nhật")) {
                 NotificationCenter.default.post(name: .xemTruocSinhNhat, object: nil)
             }
             Button(x.thuNgay == 0 ? "🧪 Thử điểm danh: ngày 1" : x.thuNgay < 7 ? "🧪 Thử điểm danh: ngày \(x.thuNgay + 1)" : "🧪 Tắt thử điểm danh") {
                 x.buocDiemDanh()
                 if x.thuNgay > 0 { moTab(.sanThuong) }
             }
-            Button("🧪 Xem thử Flash sale (99 giây)") {
+            Button(chu("🧪 Xem thử Flash sale (99 giây)")) {
                 moTab(.home)
                 NotificationCenter.default.post(name: .xemThuSaleOff, object: nil)
             }
-            Button("🧪 Xem thử hiệu ứng mở quà") {
+            Button(chu("🧪 Xem thử hiệu ứng mở quà")) {
                 moTab(.sanThuong)
                 x.moQua = true
             }

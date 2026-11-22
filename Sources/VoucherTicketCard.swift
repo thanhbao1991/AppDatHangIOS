@@ -118,7 +118,7 @@ struct VoucherTicketCard: View {
                     .foregroundColor(.primary)
                 Spacer()
                 if daSuDung {
-                    Text("Đã sử dụng")
+                    Text(chu("Đã sử dụng"))
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 8).padding(.vertical, 3)
@@ -147,7 +147,7 @@ struct VoucherTicketCard: View {
                     .foregroundColor(Theme.primary)
             }
             if let hangYeuCau {
-                Text("🏅 Yêu cầu hạng \(hangYeuCau) trở lên")
+                Text(chu("🏅 Yêu cầu hạng \(hangYeuCau) trở lên"))
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Theme.primary)
             }
@@ -160,7 +160,7 @@ struct VoucherTicketCard: View {
                         .foregroundColor(Theme.primary)
                     Spacer()
                     if let donToiThieu, donToiThieu > 0 {
-                        Text("Đơn từ \(formatTien(donToiThieu))")
+                        Text(chu("Đơn từ \(formatTien(donToiThieu))"))
                             .font(.system(size: 10))
                             .foregroundColor(Theme.textFaint)
                     }

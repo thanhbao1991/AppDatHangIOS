@@ -5,9 +5,6 @@ struct AppDatHangIOSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     init() {
-        // Chữ giao diện do backend quản lý (chủ quán 19/11/2026) — bật trước khi vẽ view nào, xem NoiDung.doiChu.
-        NoiDung.batDoiChu()
-
         // iOS 15+ tự thêm 1 khoảng trống phía trên header ghim (pinned) ĐẦU TIÊN của List — lỗi
         // đã biết của UITableView, thấy rõ nhất ở tab Thực đơn (header "Yêu thích" bị đẩy xuống
         // khi mới mở tab). Set 0 app-wide vì AppDatHangIOS không dùng List section header nào

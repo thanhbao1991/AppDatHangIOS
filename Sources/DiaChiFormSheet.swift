@@ -31,7 +31,7 @@ struct DiaChiFormSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 // Đồng bộ bộ khung TK (09/11/2026): ô nhập nền xám bo góc.
                 TKTieuDe(icon: "mappin.and.ellipse", mau: .blue, tieuDe: "Địa chỉ giao hàng")
-                TextField("Số nhà, tên đường…", text: $text, axis: .vertical)
+                TextField(chu("Số nhà, tên đường…"), text: $text, axis: .vertical)
                     .tkONhap()
                     .focused($focused)
 
@@ -63,9 +63,9 @@ struct DiaChiFormSheet: View {
             .navigationTitle(isEditing ? "Sửa địa chỉ" : "Thêm địa chỉ")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onCancel) }
+                ToolbarItem(placement: .cancellationAction) { Button(chu("Huỷ"), action: onCancel) }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Lưu") {
+                    Button(chu("Lưu")) {
                         let trimmed = text.trimmingCharacters(in: .whitespaces)
                         guard !trimmed.isEmpty else { return }
                         onSave(trimmed)

@@ -14,9 +14,9 @@ struct DoiMatKhauView: View {
             VStack(spacing: TK.khoangCach) {
                 VStack(alignment: .leading, spacing: 12) {
                     TKTieuDe(icon: "key.fill", mau: .orange, tieuDe: "Mật khẩu")
-                    SecureField("Mật khẩu hiện tại", text: $matKhauCu).tkONhap()
-                    SecureField("Mật khẩu mới (tối thiểu 6 ký tự)", text: $matKhauMoi).tkONhap()
-                    SecureField("Nhập lại mật khẩu mới", text: $matKhauXacNhan).tkONhap()
+                    SecureField(chu("Mật khẩu hiện tại"), text: $matKhauCu).tkONhap()
+                    SecureField(chu("Mật khẩu mới (tối thiểu 6 ký tự)"), text: $matKhauMoi).tkONhap()
+                    SecureField(chu("Nhập lại mật khẩu mới"), text: $matKhauXacNhan).tkONhap()
                     if let message {
                         Label(message.text, systemImage: message.isError ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
                             .font(.system(size: 13))
@@ -29,7 +29,7 @@ struct DoiMatKhauView: View {
                     Task { await doiMatKhau() }
                 } label: {
                     Group {
-                        if dangDoiMatKhau { ProgressView().tint(.white) } else { Text("Đổi mật khẩu").font(.system(size: 16, weight: .bold)) }
+                        if dangDoiMatKhau { ProgressView().tint(.white) } else { Text(chu("Đổi mật khẩu")).font(.system(size: 16, weight: .bold)) }
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -39,7 +39,7 @@ struct DoiMatKhauView: View {
             .tkManHinh()
         }
         .background(Theme.bg)
-        .navigationTitle("Đổi mật khẩu")
+        .navigationTitle(chu("Đổi mật khẩu"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

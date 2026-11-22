@@ -72,15 +72,11 @@ enum NoiDung {
         }
     }
 
-    /// Đổi BẤT KỲ chữ nào viết thẳng trong giao diện (Text("…"), Button("…"), navigationTitle("…")…): backend gửi khoá
-    /// "=câu gốc" → câu mới (NoiDungApp.DoiChu). Áp qua NoiDungBundle bên dưới — không phải sửa từng màn.
+    /// Câu mới backend gửi cho chữ giao diện (khoá "=câu gốc", NoiDungApp.DoiChu) — dùng qua chu("…") bên dưới.
     static func doiChu(_ goc: String) -> String? {
         guard let s = daLuu["=" + goc], !s.isEmpty else { return nil }
         return s
     }
-
-    /// Gọi 1 lần lúc khởi động (AppDatHangIOSApp.init) — trước khi vẽ view nào.
-    static func batDoiChu() { object_setClass(Bundle.main, NoiDungBundle.self) }
 
     static var napXuGhiChu: String { text("napXuGhiChu") }
     static var xoaTaiKhoanMoTa: String { text("xoaTaiKhoanMoTa") }
@@ -88,10 +84,48 @@ enum NoiDung {
     static var hopQuaTaiTro: String { text("hopQuaTaiTro") }
 }
 
-/// SwiftUI tra mọi chữ viết thẳng (LocalizedStringKey) qua Bundle.main.localizedString — lớp con này chen vào trả câu backend
-/// đã đổi (nếu có), không thì như cũ. Câu có biến: khoá là dạng định dạng ("Còn %lld món").
-private final class NoiDungBundle: Bundle, @unchecked Sendable {
-    override func localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
-        NoiDung.doiChu(key) ?? super.localizedString(forKey: key, value: value, table: tableName)
+/// Chữ giao diện backend đổi được: Text(chu("Còn \(n) lượt mở")) — khoá gửi từ server là câu gốc, biến thay bằng %lld (số
+/// nguyên) hoặc %@ (còn lại), vd "=Còn %lld lượt mở" → "Bạn còn %lld lượt". Không có câu đổi thì trả đúng câu gốc.
+/// (22/11/2026: thay cách cũ object_setClass(Bundle.main) — SwiftUI KHÔNG tra Text("…") qua Bundle.localizedString,
+/// thử trên máy thật câu server gửi không hiện. Script bọc: scripts/chu-app-khach/boc_chu_ios.py.)
+func chu(_ c: Chu) -> String {
+    guard let mau = NoiDung.doiChu(c.khoa) else { return c.goc }
+    return Chu.dien(mau, c.giaTri)
+}
+
+struct Chu: ExpressibleByStringInterpolation {
+    let khoa: String
+    let goc: String
+    let giaTri: [String]
+
+    init(stringLiteral s: String) { khoa = s; goc = s; giaTri = [] }
+    init(stringInterpolation p: Noi) { khoa = p.khoa; goc = p.goc; giaTri = p.giaTri }
+
+    struct Noi: StringInterpolationProtocol {
+        var khoa = "", goc = "", giaTri: [String] = []
+        init(literalCapacity: Int, interpolationCount: Int) {}
+        mutating func appendLiteral(_ s: String) { khoa += s; goc += s }
+        mutating func appendInterpolation<T: BinaryInteger>(_ v: T) { them("%lld", String(v)) }
+        mutating func appendInterpolation<T>(_ v: T) { them("%@", String(describing: v)) }
+        private mutating func them(_ dinhDang: String, _ s: String) { khoa += dinhDang; goc += s; giaTri.append(s) }
+    }
+
+    /// Thay lần lượt %@ / %lld trong câu mới bằng giá trị biến (không dùng String(format:) — câu có "%" lẻ không vỡ).
+    static func dien(_ mau: String, _ giaTri: [String]) -> String {
+        var ra = "", con = Substring(mau), i = 0
+        while let r = con.range(of: "%") {
+            ra += con[..<r.lowerBound]
+            let sau = con[r.upperBound...]
+            let the = sau.hasPrefix("@") ? 1 : sau.hasPrefix("lld") ? 3 : 0
+            if the > 0 {
+                ra += i < giaTri.count ? giaTri[i] : ""
+                i += 1
+                con = sau.dropFirst(the)
+            } else {
+                ra += "%"
+                con = sau
+            }
+        }
+        return ra + con
     }
 }

@@ -62,7 +62,7 @@ struct LichSuViView: View {
             }
         }
         .background(Theme.bg)
-        .navigationTitle("Lịch sử Xu")
+        .navigationTitle(chu("Lịch sử Xu"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }

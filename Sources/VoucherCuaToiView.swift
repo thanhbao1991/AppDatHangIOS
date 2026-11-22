@@ -77,7 +77,7 @@ struct VoucherCuaToiView: View {
         }
         .task { await load() }
         .alert(huongDan?.ten ?? "", isPresented: Binding(get: { huongDan != nil }, set: { if !$0 { huongDan = nil } })) {
-            Button("Đã hiểu") {}
+            Button(chu("Đã hiểu")) {}
         } message: {
             Text(huongDan?.lyDo ?? "")
         }
@@ -123,7 +123,7 @@ struct VoucherCuaToiView: View {
     private var emptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "ticket").font(.system(size: 40)).foregroundColor(Theme.textFaint)
-            Text("Bạn chưa có voucher nào")
+            Text(chu("Bạn chưa có voucher nào"))
                 .font(.system(size: 14)).foregroundColor(Theme.textMuted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

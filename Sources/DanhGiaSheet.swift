@@ -29,7 +29,7 @@ struct DanhGiaSheet: View {
                 }
                 .padding(.top, 12)
 
-                TextField("Nhận xét (không bắt buộc)", text: $nhanXet, axis: .vertical)
+                TextField(chu("Nhận xét (không bắt buộc)"), text: $nhanXet, axis: .vertical)
                     .tkONhap() // 09/11/2026: cùng kiểu ô nhập TK toàn app
                     .lineLimit(3...6)
 
@@ -40,17 +40,17 @@ struct DanhGiaSheet: View {
                 Button {
                     Task { await gui() }
                 } label: {
-                    if dangGui { ProgressView().tint(.white) } else { Text("Gửi đánh giá").frame(maxWidth: .infinity) }
+                    if dangGui { ProgressView().tint(.white) } else { Text(chu("Gửi đánh giá")).frame(maxWidth: .infinity) }
                 }
                 .buttonStyle(.gradientProminent).disabled(pickSao == 0 || dangGui)
 
                 Spacer()
             }
             .padding()
-            .navigationTitle("Đánh giá đơn hàng")
+            .navigationTitle(chu("Đánh giá đơn hàng"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onCancel) }
+                ToolbarItem(placement: .cancellationAction) { Button(chu("Huỷ"), action: onCancel) }
             }
         }
         .presentationDetents([.medium])

@@ -49,7 +49,7 @@ struct TaiKhoanBaoMatView: View {
                     Button { Task { await logout() } } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "rectangle.portrait.and.arrow.right").font(.system(size: 15, weight: .semibold))
-                            Text("Đăng xuất").font(.system(size: 16, weight: .bold))
+                            Text(chu("Đăng xuất")).font(.system(size: 16, weight: .bold))
                         }
                         .foregroundColor(Theme.danger)
                         .frame(maxWidth: .infinity).padding(.vertical, 15)
@@ -64,7 +64,7 @@ struct TaiKhoanBaoMatView: View {
                     .padding(.top, 6)
 
                     NavigationLink { XoaTaiKhoanView(isLoggedIn: $isLoggedIn) } label: {
-                        Text("Xoá tài khoản").font(.system(size: 13)).foregroundColor(Theme.textFaint).underline()
+                        Text(chu("Xoá tài khoản")).font(.system(size: 13)).foregroundColor(Theme.textFaint).underline()
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 8)

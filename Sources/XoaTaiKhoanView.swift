@@ -33,7 +33,7 @@ struct XoaTaiKhoanView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     TKTieuDe(icon: "lock.fill", mau: .orange, tieuDe: "Xác nhận")
-                    SecureField("Mật khẩu hiện tại", text: $matKhau)
+                    SecureField(chu("Mật khẩu hiện tại"), text: $matKhau)
                         .disabled(step == .nhapOtp)
                         .tkONhap()
                     if step == .nhapOtp {
@@ -52,7 +52,7 @@ struct XoaTaiKhoanView: View {
                     Button {
                         Task { await guiOtp() }
                     } label: {
-                        Group { if dangGuiOtp { ProgressView().tint(.white) } else { Text("Gửi mã xác nhận").font(.system(size: 16, weight: .bold)) } }
+                        Group { if dangGuiOtp { ProgressView().tint(.white) } else { Text(chu("Gửi mã xác nhận")).font(.system(size: 16, weight: .bold)) } }
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.gradientProminent)
@@ -61,7 +61,7 @@ struct XoaTaiKhoanView: View {
                     Button {
                         showConfirm = true
                     } label: {
-                        Group { if dangXoa { ProgressView().tint(.white) } else { Text("Xoá tài khoản").font(.system(size: 16, weight: .bold)) } }
+                        Group { if dangXoa { ProgressView().tint(.white) } else { Text(chu("Xoá tài khoản")).font(.system(size: 16, weight: .bold)) } }
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.gradientProminent(danger: true))
@@ -71,14 +71,14 @@ struct XoaTaiKhoanView: View {
             .tkManHinh()
         }
         .background(Theme.bg)
-        .navigationTitle("Xoá tài khoản")
+        .navigationTitle(chu("Xoá tài khoản"))
         .navigationBarTitleDisplayMode(.inline)
         .popupHost { host in
-            host.confirmationDialog("Xoá tài khoản?", isPresented: $showConfirm, titleVisibility: .visible) {
-                Button("Xoá tài khoản", role: .destructive) { Task { await xoaTaiKhoan() } }
-                Button("Huỷ", role: .cancel) {}
+            host.confirmationDialog(chu("Xoá tài khoản?"), isPresented: $showConfirm, titleVisibility: .visible) {
+                Button(chu("Xoá tài khoản"), role: .destructive) { Task { await xoaTaiKhoan() } }
+                Button(chu("Huỷ"), role: .cancel) {}
             } message: {
-                Text("Mật khẩu và phiên đăng nhập hiện tại sẽ bị xoá vĩnh viễn. Không thể hoàn tác.")
+                Text(chu("Mật khẩu và phiên đăng nhập hiện tại sẽ bị xoá vĩnh viễn. Không thể hoàn tác."))
             }
         }
     }

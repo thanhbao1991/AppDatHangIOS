@@ -66,7 +66,7 @@ struct ForceUpdateView: View {
                 Image(systemName: "arrow.down.app.fill")
                     .font(.system(size: 56))
                     .foregroundColor(.white)
-                Text("Cần cập nhật ứng dụng")
+                Text(chu("Cần cập nhật ứng dụng"))
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.white)
                 Text(policy.thongBao ?? "Đã có phiên bản mới của Đenn Coffee. Vui lòng cập nhật để tiếp tục đặt món.")
@@ -78,7 +78,7 @@ struct ForceUpdateView: View {
                         UIApplication.shared.open(url)
                     }
                 } label: {
-                    Text("Cập nhật ngay")
+                    Text(chu("Cập nhật ngay"))
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Theme.primary)
                         .frame(maxWidth: .infinity)

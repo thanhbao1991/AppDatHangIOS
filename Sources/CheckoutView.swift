@@ -119,7 +119,7 @@ struct CheckoutView: View {
             Spacer(minLength: 20)
             HStack(spacing: 12) {
                 Button { showXacNhan = false } label: {
-                    Text("Kiểm tra lại").fontWeight(.semibold).frame(maxWidth: .infinity).padding(.vertical, 14)
+                    Text(chu("Kiểm tra lại")).fontWeight(.semibold).frame(maxWidth: .infinity).padding(.vertical, 14)
                 }
                 .background(Color(.secondarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                 Button {
@@ -163,8 +163,8 @@ struct CheckoutView: View {
         .toolbar(.hidden, for: .navigationBar)
         .popupHost { host in
             host
-                .alert("Lưu ý về voucher", isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
-                    Button("Đã hiểu") {
+                .alert(chu("Lưu ý về voucher"), isPresented: Binding(get: { voucherWarning != nil }, set: { if !$0 { voucherWarning = nil } })) {
+                    Button(chu("Đã hiểu")) {
                         voucherWarning = nil
                         pendingNavigationAfterOrder?()
                         pendingNavigationAfterOrder = nil
@@ -173,13 +173,13 @@ struct CheckoutView: View {
                     Text(voucherWarning ?? "")
                 }
                 .sheet(isPresented: $showXacNhan) { xacNhanSheet }
-                .alert("Chưa cho phép định vị", isPresented: $showLocationSettings) {
-                    Button("Mở Cài đặt") {
+                .alert(chu("Chưa cho phép định vị"), isPresented: $showLocationSettings) {
+                    Button(chu("Mở Cài đặt")) {
                         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                     }
-                    Button("Để sau", role: .cancel) {}
+                    Button(chu("Để sau"), role: .cancel) {}
                 } message: {
-                    Text("Bạn đã từ chối quyền vị trí trước đó nên iOS không hỏi lại được. Vào Cài đặt > Đenn Coffee > Vị trí, chọn \"Khi dùng ứng dụng\" để dùng vị trí hiện tại.")
+                    Text(chu("Bạn đã từ chối quyền vị trí trước đó nên iOS không hỏi lại được. Vào Cài đặt > Đenn Coffee > Vị trí, chọn \"Khi dùng ứng dụng\" để dùng vị trí hiện tại."))
                 }
         }
         .task { await phaKem.chay() }
@@ -238,15 +238,15 @@ struct CheckoutView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "bag.fill").foregroundColor(Theme.primary)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Mua hộ — nhận tại quán").font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
+                        Text(chu("Mua hộ — nhận tại quán")).font(.system(size: 15, weight: .bold)).foregroundColor(.primary)
                         Text(NoiDung.text("muaHoGiam"))
                             .font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     }
                 }
             } else {
                 Picker("", selection: $nhanTaiQuan) {
-                    Text("Giao tận nơi").tag(false)
-                    Text("Nhận tại quán").tag(true)
+                    Text(chu("Giao tận nơi")).tag(false)
+                    Text(chu("Nhận tại quán")).tag(true)
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: nhanTaiQuan) { nhan in
@@ -283,7 +283,7 @@ struct CheckoutView: View {
         HStack(spacing: 8) {
             Image(systemName: icon).font(.system(size: 13))
             if editing {
-                TextField("Nhập địa chỉ giao hàng...", text: $diaChi, axis: .vertical)
+                TextField(chu("Nhập địa chỉ giao hàng..."), text: $diaChi, axis: .vertical)
                     .font(.system(size: 13))
                     .tint(Theme.primary)
                     .focused($diaChiFocused)
@@ -301,7 +301,7 @@ struct CheckoutView: View {
             Spacer(minLength: 0)
             if editing {
                 Button { luuDiaChi() } label: {
-                    Text("Lưu").font(.system(size: 13, weight: .bold))
+                    Text(chu("Lưu")).font(.system(size: 13, weight: .bold))
                         .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(Theme.primary).foregroundColor(.white)
                         .clipShape(Capsule())
@@ -406,7 +406,7 @@ struct CheckoutView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "location.fill").font(.system(size: 13))
-                        Text("Dùng vị trí hiện tại của tôi").font(.system(size: 13, weight: .medium))
+                        Text(chu("Dùng vị trí hiện tại của tôi")).font(.system(size: 13, weight: .medium))
                         if locLoading { ProgressView().scaleEffect(0.8) }
                     }
                     .foregroundColor(Theme.primary)
@@ -422,7 +422,7 @@ struct CheckoutView: View {
                     )
                     .frame(height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    Text("Kéo ghim để chọn đúng chỗ giao hàng")
+                    Text(chu("Kéo ghim để chọn đúng chỗ giao hàng"))
                         .font(.system(size: 11)).foregroundColor(Theme.textMuted)
                         .padding(.horizontal, 10)
                 }
@@ -445,7 +445,7 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 8) {
             TKTieuDe(icon: "cup.and.saucer.fill", mau: .brown, tieuDe: "Chi tiết đơn hàng") {
                 Image(systemName: "lock.fill").font(.system(size: 11)).foregroundColor(Theme.textFaint)
-                Text("\(cart.totalCount) ly")
+                Text(chu("\(cart.totalCount) ly"))
                     .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(Theme.primaryTint).clipShape(Capsule())
@@ -454,7 +454,7 @@ struct CheckoutView: View {
             ForEach(Array(cart.items.enumerated()), id: \.element.id) { index, item in
                 if index > 0 { Divider() }
                 HStack(alignment: .top, spacing: 8) {
-                    Text("\(item.soLuong)x").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
+                    Text(chu("\(item.soLuong)x")).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textMuted)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(item.tenSanPham)\(bienTheSuffix(item.tenBienThe))").font(.system(size: 14)).foregroundColor(.primary)
                         if !item.toppings.isEmpty {
@@ -466,7 +466,7 @@ struct CheckoutView: View {
                         }
                         if item.giamPhaKem > 0 {
                             // Pha kèm: giá dòng đã trừ sẵn (CartItem.donGia), nhãn cho khách biết vì sao rẻ hơn.
-                            Text("⚡ Flash Sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
+                            Text(chu("⚡ Flash Sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly"))
                                 .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
                         }
                     }
@@ -524,7 +524,7 @@ struct CheckoutView: View {
             }
             if !nhanTaiQuan {
                 HStack {
-                    Text("Phí vận chuyển").font(.system(size: 13)).foregroundColor(Theme.textMuted)
+                    Text(chu("Phí vận chuyển")).font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     Spacer()
                     HStack(spacing: 6) {
                         // phiShipGoc = phí nếu KHÔNG có ưu đãi miễn phí ly/hạng — chỉ hiện gạch ngang
@@ -534,7 +534,7 @@ struct CheckoutView: View {
                                 .strikethrough(color: Theme.textMuted)
                         }
                         if phiShip <= 0 {
-                            Text("Miễn phí").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.success)
+                            Text(chu("Miễn phí")).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.success)
                         } else {
                             Text(formatTien(phiShip)).font(.system(size: 13)).foregroundColor(.primary)
                         }
@@ -583,7 +583,7 @@ struct CheckoutView: View {
             if !error.isEmpty { Text(error).font(.system(size: 13)).foregroundColor(Theme.danger) }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Tổng cộng").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    Text(chu("Tổng cộng")).font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     Text(formatTien(conLaiPhaiTra)).font(.system(size: 18, weight: .bold))
                 }
                 Spacer()

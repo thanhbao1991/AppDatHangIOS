@@ -212,7 +212,7 @@ struct MenuView: View {
                 } else if !error.isEmpty {
                     VStack(spacing: 12) {
                         Text(error).foregroundColor(Theme.danger)
-                        Button("Thử lại") { Task { await load() } }
+                        Button(chu("Thử lại")) { Task { await load() } }
                             .buttonStyle(.gradientProminent)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -226,7 +226,7 @@ struct MenuView: View {
                     // Tiêu đề nhóm KHÔNG ghim (đã bỏ ghim từ 2026-09-25: nền nhạt để lộ món phía dưới khi chồng lên).
                     VStack(alignment: .leading, spacing: 0) {
                         // Title ngay trên menu — GIỮ emoji (chủ quán 19/11: chỉ tiêu đề nhóm đổi sang ảnh món).
-                        Text("⭐ Menu 2026")
+                        Text(chu("⭐ Menu 2026"))
                             .accessibilityIdentifier("tieu-de-menu")  // UITests/BamNhomMenuUITests đo đỉnh cột món từ đây
                             .font(.system(size: 15, weight: .bold))
                             .padding(.horizontal, 16)
@@ -330,7 +330,7 @@ struct MenuView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "shuffle").font(.system(size: 11, weight: .semibold))
-                        Text("Ngẫu nhiên").font(.system(size: 12, weight: .semibold))
+                        Text(chu("Ngẫu nhiên")).font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(Theme.primary)
                     .padding(.vertical, 6).padding(.leading, 8)
@@ -751,7 +751,7 @@ extension MenuView {
 
     /// Nhãn đỏ "-3K".
     fileprivate static func nhanGiam(_ giam: Double, co: CGFloat) -> some View {
-        Text("-\(Int((giam / 1000).rounded()))K")
+        Text(chu("-\(Int((giam / 1000).rounded()))K"))
             .font(.system(size: co, weight: .bold)).foregroundColor(.white)
             .lineLimit(1).fixedSize()
             .padding(.horizontal, co * 0.45).padding(.vertical, 1)
@@ -1046,7 +1046,7 @@ struct ProductPickerSheet: View {
 
                     if isThuocLa {
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật.", systemImage: "exclamationmark.triangle.fill")
+                            Label(chu("Sản phẩm thuốc lá — chỉ bán cho người từ 18 tuổi trở lên theo quy định pháp luật."), systemImage: "exclamationmark.triangle.fill")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(Theme.danger)
 
@@ -1054,10 +1054,10 @@ struct ProductPickerSheet: View {
                                 ProgressView()
                             } else if let ns = ngaySinhInfo?.ngaySinh, tuoi(from: ns) != nil {
                                 if duTuoiMuaThuocLa {
-                                    Label("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))", systemImage: "checkmark.seal.fill")
+                                    Label(chu("Đã xác minh đủ 18 tuổi (ngày sinh \(formatDateVN(ns)))"), systemImage: "checkmark.seal.fill")
                                         .foregroundColor(Theme.success)
                                 } else {
-                                    Label("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này.", systemImage: "xmark.octagon.fill")
+                                    Label(chu("Tài khoản chưa đủ 18 tuổi — không thể mua sản phẩm này."), systemImage: "xmark.octagon.fill")
                                         .foregroundColor(Theme.danger)
                                 }
                             } else {
@@ -1080,7 +1080,7 @@ struct ProductPickerSheet: View {
                                 Button {
                                     Task { await xacNhanNgaySinh() }
                                 } label: {
-                                    if savingDob { ProgressView() } else { Text("Xác nhận ngày sinh") }
+                                    if savingDob { ProgressView() } else { Text(chu("Xác nhận ngày sinh")) }
                                 }
                                 .buttonStyle(.bordered)
                                 .disabled(savingDob)
@@ -1092,7 +1092,7 @@ struct ProductPickerSheet: View {
                     }
 
                     HStack {
-                        Text("Số lượng").font(.subheadline)
+                        Text(chu("Số lượng")).font(.subheadline)
                         Spacer()
                         // Stepper hệ thống — vùng chạm to hơn hẳn 2 icon minus/plus.circle.fill
                         // trước đây (khó bấm trúng), khớp UI đã dùng cho từng dòng topping. Chỉ cho
@@ -1107,7 +1107,7 @@ struct ProductPickerSheet: View {
 
                     if !toppings.isEmpty {
                         Picker("", selection: $tab) {
-                            Text("Ghi chú").tag(0)
+                            Text(chu("Ghi chú")).tag(0)
                             Text("Topping\(toppingCount > 0 ? " (\(toppingCount))" : "")").tag(1)
                         }
                         .pickerStyle(.segmented)
@@ -1123,7 +1123,7 @@ struct ProductPickerSheet: View {
                 .navigationTitle(existing == nil ? "Thêm món" : "Sửa món")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Huỷ", action: onDone) }
+                    ToolbarItem(placement: .cancellationAction) { Button(chu("Huỷ"), action: onDone) }
                 }
             }
 
@@ -1135,7 +1135,7 @@ struct ProductPickerSheet: View {
                 confirmAdd()
             } label: {
                 if isDeleting {
-                    Text("Xoá món")
+                    Text(chu("Xoá món"))
                 } else {
                     // Trước ghép chuỗi vô điều kiện "· \(...)" — bienThe nil (khung hình đầu tiên
                     // trước khi .onAppear kịp set) thì hiện dấu "·" trơ trọi không có gì theo sau,
@@ -1269,7 +1269,7 @@ struct ProductPickerSheet: View {
 
             ZStack(alignment: .topLeading) {
                 if ghiChu.isEmpty {
-                    Text("Ghi chú món...")
+                    Text(chu("Ghi chú món..."))
                         .font(.system(size: 15))
                         .foregroundColor(Theme.textFaint)
                         .padding(.horizontal, 5)

@@ -44,7 +44,7 @@ struct BangXepHangView: View {
                     ScrollView {
                         VStack(spacing: 18) {
                             if bang.dong.isEmpty {
-                                Text("Chưa có ai trong bảng tháng này.")
+                                Text(chu("Chưa có ai trong bảng tháng này."))
                                     .foregroundColor(.secondary).padding(.vertical, 60)
                             } else {
                                 buc(bang.dong.filter { $0.viTri <= 3 })
@@ -71,8 +71,8 @@ struct BangXepHangView: View {
                     )
                 } else if loi {
                     VStack(spacing: 12) {
-                        Text("Chưa tải được bảng xếp hạng.").foregroundColor(.secondary)
-                        Button("Thử lại") { Task { await tai() } }
+                        Text(chu("Chưa tải được bảng xếp hạng.")).foregroundColor(.secondary)
+                        Button(chu("Thử lại")) { Task { await tai() } }
                     }
                 } else {
                     ProgressView()
@@ -80,7 +80,7 @@ struct BangXepHangView: View {
             }
             .navigationTitle(bang?.tieuDe ?? "Bảng xếp hạng")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(chu("Xong")) { dismiss() } } }
         }
         .task { await tai() }
     }

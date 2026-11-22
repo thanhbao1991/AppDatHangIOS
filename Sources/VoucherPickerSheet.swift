@@ -73,11 +73,11 @@ struct VoucherPickerSheet: View {
                     voucherList
                 }
             }
-            .navigationTitle("Chọn voucher")
+            .navigationTitle(chu("Chọn voucher"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Đóng") { onClose() }
+                    Button(chu("Đóng")) { onClose() }
                 }
             }
         }
@@ -89,14 +89,14 @@ struct VoucherPickerSheet: View {
     private var emptyState: some View {
         VStack(spacing: 14) {
             Image(systemName: "ticket").font(.system(size: 40)).foregroundColor(Theme.textFaint)
-            Text("Chưa tải được voucher, hoặc hiện không có voucher nào khả dụng.")
+            Text(chu("Chưa tải được voucher, hoặc hiện không có voucher nào khả dụng."))
                 .font(.system(size: 14)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
             Button {
                 retrying = true
                 Task { await onRetry(); retrying = false }
             } label: {
-                if retrying { ProgressView().tint(.white) } else { Text("Thử tải lại") }
+                if retrying { ProgressView().tint(.white) } else { Text(chu("Thử tải lại")) }
             }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 200)
@@ -206,7 +206,7 @@ struct VoucherPickerSheet: View {
         .cardListBackground()
         .popupHost { host in
             host.alert(huongDan?.ten ?? "", isPresented: Binding(get: { huongDan != nil }, set: { if !$0 { huongDan = nil } })) {
-                Button("Đã hiểu") {}
+                Button(chu("Đã hiểu")) {}
             } message: {
                 Text(huongDan?.lyDo ?? "")
             }

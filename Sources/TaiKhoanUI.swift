@@ -210,7 +210,7 @@ struct RuongXuDau<Phai: View>: View {
                         HStack(alignment: .firstTextBaseline, spacing: 0) {
                             SoXuChay(value: soHienThi)
                                 .font(.system(size: 30, weight: .heavy, design: .rounded))
-                            Text(" Xu").font(.system(size: 15, weight: .bold))
+                            Text(chu(" Xu")).font(.system(size: 15, weight: .bold))
                         }
                         .monospacedDigit().foregroundColor(Theme.xuTangChu)
                         .lineLimit(1).minimumScaleFactor(0.6)

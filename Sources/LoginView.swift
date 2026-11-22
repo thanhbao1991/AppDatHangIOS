@@ -49,10 +49,10 @@ struct LoginView: View {
                             .frame(width: 64, height: 64)
                             .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white.opacity(0.18)))
                             .padding(.bottom, 6)
-                        Text("Đenn Coffee")
+                        Text(chu("Đenn Coffee"))
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(.white)
-                        Text("Quán nhỏ cảm ơn to")
+                        Text(chu("Quán nhỏ cảm ơn to"))
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.white.opacity(0.85))
                     }
@@ -88,7 +88,7 @@ struct LoginView: View {
                     // Chính sách bảo mật phải xem được TRƯỚC khi tạo tài khoản (App Store 5.1.1) —
                     // trước chỉ có trong Tài khoản > Bảo mật, tức phải đăng nhập xong mới đọc được.
                     Button { showChinhSach = true } label: {
-                        Text("Chính sách bảo mật")
+                        Text(chu("Chính sách bảo mật"))
                             .font(.system(size: 13, weight: .semibold))
                             .underline()
                             .foregroundColor(.white.opacity(0.9))
@@ -107,7 +107,7 @@ struct LoginView: View {
                 ChinhSachBaoMatView()
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button("Đóng") { showChinhSach = false }
+                            Button(chu("Đóng")) { showChinhSach = false }
                         }
                     }
             }
@@ -122,7 +122,7 @@ struct LoginView: View {
             devKhachSearch
             #else
             fieldBox(icon: "phone") {
-                TextField("Số điện thoại Zalo", text: $phone)
+                TextField(chu("Số điện thoại Zalo"), text: $phone)
                     .keyboardType(.numberPad)
                     .textContentType(.telephoneNumber)
                     .focused($focusedField, equals: "phone")
@@ -150,7 +150,7 @@ struct LoginView: View {
     private var devKhachSearch: some View {
         VStack(spacing: 8) {
             fieldBox(icon: "magnifyingglass") {
-                TextField("Tìm khách theo tên", text: $devQuery)
+                TextField(chu("Tìm khách theo tên"), text: $devQuery)
                     .autocorrectionDisabled()
                     .onChange(of: devQuery) { q in
                         devSearchTask?.cancel()
@@ -173,7 +173,7 @@ struct LoginView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(k.ten).fontWeight(.semibold)
                             if let tenDat = k.tenKhachDat, !tenDat.isEmpty, tenDat != k.ten {
-                                Text("Khách đặt: \(tenDat)").font(.caption).foregroundColor(Theme.textMuted)
+                                Text(chu("Khách đặt: \(tenDat)")).font(.caption).foregroundColor(Theme.textMuted)
                             }
                         }
                         Spacer()
@@ -193,8 +193,8 @@ struct LoginView: View {
             fieldBox(icon: "checkmark.circle") { Text(phone) }
             fieldBox(icon: "lock") {
                 Group {
-                    if showPassword { TextField("Mật khẩu", text: $password) }
-                    else { SecureField("Mật khẩu", text: $password) }
+                    if showPassword { TextField(chu("Mật khẩu"), text: $password) }
+                    else { SecureField(chu("Mật khẩu"), text: $password) }
                 }
                 .focused($focusedField, equals: "password")
                 Button { showPassword.toggle() } label: {
@@ -205,17 +205,17 @@ struct LoginView: View {
             // Quên mật khẩu = đi lại đúng luồng OTP → đặt mật khẩu mới như lần đăng ký đầu. Backend
             // (KhachHangAuthService.CompletePhoneVerifiedLoginAsync) thấy SĐT đã có mật khẩu + gửi kèm
             // mật khẩu mới sau OTP đúng thì đặt lại và thu hồi mọi phiên cũ.
-            Button("Quên mật khẩu?") { Task { await forgotPassword() } }
+            Button(chu("Quên mật khẩu?")) { Task { await forgotPassword() } }
                 .foregroundColor(Theme.primary).fontWeight(.semibold)
                 .disabled(loading)
-            Button("Đổi SĐT khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
+            Button(chu("Đổi SĐT khác")) { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
 
     private var otpCodeStep: some View {
         VStack(spacing: 14) {
             fieldBox(icon: "number") {
-                TextField("Mã xác thực (Zalo)", text: $otpCode)
+                TextField(chu("Mã xác thực (Zalo)"), text: $otpCode)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: "otpCode")
                     .onChange(of: otpCode) { otpCode = String($0.filter(\.isNumber).prefix(6)) }
@@ -227,7 +227,7 @@ struct LoginView: View {
                 .foregroundColor(resendConLai > 0 ? Theme.textFaint : Theme.primary)
                 .fontWeight(.semibold)
                 .disabled(loading || resendConLai > 0)
-            Button("Đổi SĐT khác") { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
+            Button(chu("Đổi SĐT khác")) { backToPhone() }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
 
@@ -235,7 +235,7 @@ struct LoginView: View {
         VStack(spacing: 14) {
             if laDangKy {
                 fieldBox(icon: "person") {
-                    TextField("Tên gọi của bạn", text: $tenGoi)
+                    TextField(chu("Tên gọi của bạn"), text: $tenGoi)
                         .textContentType(.givenName)
                         .focused($focusedField, equals: "tenGoi")
                         .onChange(of: tenGoi) { if $0.count > 50 { tenGoi = String($0.prefix(50)) } }
@@ -243,8 +243,8 @@ struct LoginView: View {
             }
             fieldBox(icon: "lock") {
                 Group {
-                    if showNewPassword { TextField("Mật khẩu mới", text: $newPassword) }
-                    else { SecureField("Mật khẩu mới", text: $newPassword) }
+                    if showNewPassword { TextField(chu("Mật khẩu mới"), text: $newPassword) }
+                    else { SecureField(chu("Mật khẩu mới"), text: $newPassword) }
                 }
                 .focused($focusedField, equals: "newPassword")
                 Button { showNewPassword.toggle() } label: {
@@ -253,8 +253,8 @@ struct LoginView: View {
             }
             fieldBox(icon: "lock") {
                 Group {
-                    if showNewPassword { TextField("Nhập lại mật khẩu mới", text: $confirmPassword) }
-                    else { SecureField("Nhập lại mật khẩu mới", text: $confirmPassword) }
+                    if showNewPassword { TextField(chu("Nhập lại mật khẩu mới"), text: $confirmPassword) }
+                    else { SecureField(chu("Nhập lại mật khẩu mới"), text: $confirmPassword) }
                 }
                 .focused($focusedField, equals: "confirmPassword")
             }
@@ -262,7 +262,7 @@ struct LoginView: View {
                           || (laDangKy && tenGoi.trimmingCharacters(in: .whitespaces).isEmpty)) {
                 Task { await submitOtpPassword() }
             }
-            Button("Quay lại") { step = .otpCode }.foregroundColor(Theme.primary).fontWeight(.semibold)
+            Button(chu("Quay lại")) { step = .otpCode }.foregroundColor(Theme.primary).fontWeight(.semibold)
         }
     }
 

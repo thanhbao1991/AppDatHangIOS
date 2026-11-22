@@ -35,7 +35,7 @@ struct NapXuView: View {
                                 .font(.system(size: 11))
                                 .foregroundColor(Theme.textFaint)
                             NavigationLink { TheLeXuView() } label: {
-                                Text("Thể lệ Xu").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
+                                Text(chu("Thể lệ Xu")).font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
                             }
                         }
                         .multilineTextAlignment(.center)
@@ -48,7 +48,7 @@ struct NapXuView: View {
             } else if let errorMessage {
                 VStack(spacing: 12) {
                     Text(errorMessage).foregroundColor(Theme.danger).multilineTextAlignment(.center)
-                    Button("Thử lại") { Task { await load() } }.buttonStyle(.gradientProminent)
+                    Button(chu("Thử lại")) { Task { await load() } }.buttonStyle(.gradientProminent)
                 }
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -56,7 +56,7 @@ struct NapXuView: View {
                 fullScreenLoading()
             }
         }
-        .navigationTitle("Nạp Xu")
+        .navigationTitle(chu("Nạp Xu"))
         .navigationBarTitleDisplayMode(.inline)
         .task { if info == nil { await load() } }
         .navigationDestination(isPresented: Binding(get: { goiChon != nil }, set: { if !$0 { goiChon = nil } })) {
@@ -167,13 +167,13 @@ struct NapXuQrView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.bg)
-        .navigationTitle("Nạp \(formatTien(goi.soTien))")
+        .navigationTitle(chu("Nạp \(formatTien(goi.soTien))"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadQr() }
         .task { await doSoDu() }
         .popupHost { host in
-            host.alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
-                Button("OK") { saveMessage = nil }
+            host.alert(chu("Lưu ảnh"), isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
+                Button(chu("OK")) { saveMessage = nil }
             } message: {
                 Text(saveMessage ?? "")
             }
@@ -182,7 +182,7 @@ struct NapXuQrView: View {
 
     @ViewBuilder
     private var qrContent: some View {
-        Text("Mời bạn quét mã QR").font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
+        Text(chu("Mời bạn quét mã QR")).font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
 
         Group {
             if let qrImage {
@@ -196,9 +196,9 @@ struct NapXuQrView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
             } else if qrFailed {
                 VStack(spacing: 10) {
-                    Text("Không tải được ảnh QR, mạng có thể đang chậm.")
+                    Text(chu("Không tải được ảnh QR, mạng có thể đang chậm."))
                         .font(.system(size: 13)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
-                    Button("Thử tải lại") { Task { await loadQr() } }
+                    Button(chu("Thử tải lại")) { Task { await loadQr() } }
                         .buttonStyle(.gradientProminent)
                 }
                 .frame(width: 240, height: 240)
@@ -212,7 +212,7 @@ struct NapXuQrView: View {
         // 17/11/2026: bỏ NhacGiuNoiDungCk ở đây — trùng ý câu napXuGiuNoiDung bên dưới.
 
         Text(formatTien(goi.soTien)).font(.system(size: 32, weight: .bold))
-        Text("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(formatXu(goi.soXuTang)))")
+        Text(chu("Nhận \(formatXu(goi.tongXuNhan)) (tặng \(formatXu(goi.soXuTang)))"))
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(Theme.success)
 
@@ -222,14 +222,14 @@ struct NapXuQrView: View {
             .multilineTextAlignment(.center)
             .frame(maxWidth: 320)
 
-        Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
+        Button(chu("⬇️ Tải mã QR về máy")) { saveQrToPhotos() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
             .disabled(qrImage == nil)
 
         HStack(spacing: 6) {
             ProgressView().scaleEffect(0.8)
-            Text("Đang chờ tiền về…").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+            Text(chu("Đang chờ tiền về…")).font(.system(size: 12)).foregroundColor(Theme.textMuted)
         }
     }
 
@@ -239,10 +239,10 @@ struct NapXuQrView: View {
             .font(.system(size: 64))
             .foregroundColor(Theme.success)
             .padding(.top, 30)
-        Text("Nạp Xu thành công").font(.system(size: 20, weight: .bold))
-        Text("+\(formatXu(goi.tongXuNhan)) đã vào ví của bạn.")
+        Text(chu("Nạp Xu thành công")).font(.system(size: 20, weight: .bold))
+        Text(chu("+\(formatXu(goi.tongXuNhan)) đã vào ví của bạn."))
             .font(.system(size: 14)).foregroundColor(Theme.textMuted)
-        Button("Xong") { onXong() }
+        Button(chu("Xong")) { onXong() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
     }

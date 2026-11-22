@@ -281,7 +281,7 @@ struct MainTabView: View {
                 Text(message).font(.system(size: 15)).foregroundColor(Theme.textMuted)
                     .multilineTextAlignment(.center).padding(.horizontal, 32)
                 Button { showLogin = true } label: {
-                    Text("Đăng nhập / Đăng ký").fontWeight(.bold).frame(minWidth: 220)
+                    Text(chu("Đăng nhập / Đăng ký")).fontWeight(.bold).frame(minWidth: 220)
                 }
                 .buttonStyle(.gradientProminent)
                 Spacer()

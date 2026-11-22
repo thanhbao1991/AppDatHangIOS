@@ -407,7 +407,7 @@ func bienTheSuffix(_ ten: String) -> String {
 /// catalog tuỳ thoả thuận). Dùng chung MenuView (danh sách món/chip size/dải đề xuất) và
 /// GioHangView (dòng giỏ hàng) để không lệch style.
 func giaRiengBadge() -> some View {
-    Text("Giá riêng")
+    Text(chu("Giá riêng"))
         .font(.system(size: 9, weight: .bold))
         .foregroundColor(.white)
         .padding(.horizontal, 5).padding(.vertical, 2)

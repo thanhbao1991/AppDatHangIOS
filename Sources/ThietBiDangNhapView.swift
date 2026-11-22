@@ -23,17 +23,17 @@ struct ThietBiDangNhapView: View {
                 .refreshable { await load() }
             }
         }
-        .navigationTitle("Thiết bị đăng nhập")
+        .navigationTitle(chu("Thiết bị đăng nhập"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .popupHost { host in
             host.confirmationDialog(revokingSession?.thietBi ?? "Thiết bị không rõ", isPresented: Binding(get: { revokingSession != nil }, set: { if !$0 { revokingSession = nil } }), titleVisibility: .visible) {
-                Button("Đăng xuất", role: .destructive) {
+                Button(chu("Đăng xuất"), role: .destructive) {
                     if let s = revokingSession { Task { await revoke(s) } }
                 }
-                Button("Huỷ", role: .cancel) {}
+                Button(chu("Huỷ"), role: .cancel) {}
             } message: {
-                Text("Đăng xuất thiết bị này?")
+                Text(chu("Đăng xuất thiết bị này?"))
             }
         }
     }
@@ -46,18 +46,18 @@ struct ThietBiDangNhapView: View {
                 HStack(spacing: 6) {
                     Text(item.thietBi ?? "Thiết bị không rõ").font(.system(size: 15, weight: .bold)).lineLimit(1)
                     if item.laThietBiHienTai {
-                        Text("Thiết bị này").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                        Text(chu("Thiết bị này")).font(.system(size: 10, weight: .bold)).foregroundColor(.white)
                             .padding(.horizontal, 7).padding(.vertical, 2).background(Theme.success).clipShape(Capsule())
                     }
                 }
                 Text(item.nenTang ?? "?").font(.system(size: 12, weight: .semibold)).foregroundColor(mau)
-                Text("Đăng nhập \(formatUtcShort(item.ngayTao)) · Hết hạn \(formatUtcShort(item.hetHan))")
+                Text(chu("Đăng nhập \(formatUtcShort(item.ngayTao)) · Hết hạn \(formatUtcShort(item.hetHan))"))
                     .font(.system(size: 11)).foregroundColor(Theme.textFaint)
             }
             Spacer(minLength: 8)
             if !item.laThietBiHienTai {
                 Button { revokingSession = item } label: {
-                    Text("Đăng xuất").font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
+                    Text(chu("Đăng xuất")).font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
                         .padding(.horizontal, 10).padding(.vertical, 6)
                         .background(Capsule().fill(Theme.danger.opacity(0.1)))
                 }

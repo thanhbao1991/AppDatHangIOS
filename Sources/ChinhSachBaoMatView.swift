@@ -10,7 +10,7 @@ struct ChinhSachBaoMatView: View {
             WebView(url: URL(string: "https://api.denncoffee.com/privacy/dat-hang.html")!) { loading = false }
             if loading { ProgressView().tint(Theme.primary) }
         }
-        .navigationTitle("Chính sách bảo mật")
+        .navigationTitle(chu("Chính sách bảo mật"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -24,7 +24,7 @@ struct HoTroKhachHangView: View {
             WebView(url: URL(string: "https://api.denncoffee.com/support/dat-hang.html")!) { loading = false }
             if loading { ProgressView().tint(Theme.primary) }
         }
-        .navigationTitle("Hỗ trợ khách hàng")
+        .navigationTitle(chu("Hỗ trợ khách hàng"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -40,7 +40,7 @@ struct TheLeXuView: View {
             WebView(url: URL(string: "https://api.denncoffee.com/the-le/xu")!) { loading = false }
             if loading { ProgressView().tint(Theme.primary) }
         }
-        .navigationTitle("Thể lệ Xu")
+        .navigationTitle(chu("Thể lệ Xu"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

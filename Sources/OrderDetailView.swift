@@ -48,7 +48,7 @@ struct OrderDetailView: View {
                     if order.trangThai == .huy {
                         HStack(spacing: 6) {
                             Image(systemName: "xmark.circle.fill").foregroundColor(Theme.textFaint)
-                            Text("Đơn đã huỷ").font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
+                            Text(chu("Đơn đã huỷ")).font(.system(size: 13, weight: .semibold)).foregroundColor(Theme.textFaint)
                         }
                     } else {
                         timeline
@@ -79,7 +79,7 @@ struct OrderDetailView: View {
                     section {
                         TKTieuDe(icon: "creditcard.fill", mau: .green, tieuDe: "Hình thức thanh toán") {
                             if order.conLai <= 0 {
-                                Label("Đã thanh toán", systemImage: "checkmark.circle.fill")
+                                Label(chu("Đã thanh toán"), systemImage: "checkmark.circle.fill")
                                     .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.success)
                             }
                         }
@@ -99,7 +99,7 @@ struct OrderDetailView: View {
                 // loi giữa khoảng trống bên phải như bản trước, khớp cách bố trí ở ảnh mẫu tham khảo hơn.
                 section {
                     TKTieuDe(icon: "cup.and.saucer.fill", mau: .brown, tieuDe: "Danh sách sản phẩm") {
-                        Text("\(order.items.reduce(0) { $0 + $1.soLuong }) ly")
+                        Text(chu("\(order.items.reduce(0) { $0 + $1.soLuong }) ly"))
                             .font(.system(size: 12, weight: .bold)).foregroundColor(Theme.primary)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(Theme.primaryTint).clipShape(Capsule())
                     }
@@ -112,7 +112,7 @@ struct OrderDetailView: View {
                                 itemThumbnail(it)
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(alignment: .top, spacing: 6) {
-                                        Text("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe)) x\(it.soLuong)")
+                                        Text(chu("\(it.tenSanPham)\(bienTheSuffix(it.tenBienThe)) x\(it.soLuong)"))
                                             .font(.system(size: 15, weight: .bold))
                                         Spacer(minLength: 6)
                                         Text(formatTien(Double(it.soLuong) * (it.donGia + it.toppings.reduce(0) { $0 + $1.gia * Double($1.soLuong) })))
@@ -122,7 +122,7 @@ struct OrderDetailView: View {
                                         Text("+ " + it.toppings.map { $0.soLuong > 1 ? "\($0.ten) x\($0.soLuong)" : $0.ten }.joined(separator: ", ")).font(.system(size: 12)).foregroundColor(Theme.primary)
                                     }
                                     if let ghiChu = it.ghiChu, !ghiChu.isEmpty {
-                                        Text("Ghi chú: \(ghiChu)").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                                        Text(chu("Ghi chú: \(ghiChu)")).font(.system(size: 12)).foregroundColor(Theme.textMuted)
                                     }
                                 }
                             }
@@ -145,7 +145,7 @@ struct OrderDetailView: View {
                     infoRow("Đã thu", order.daThu)
                     Divider()
                     HStack {
-                        Text("CÒN LẠI").font(.system(size: 12, weight: .bold)).foregroundColor(Theme.textMuted)
+                        Text(chu("CÒN LẠI")).font(.system(size: 12, weight: .bold)).foregroundColor(Theme.textMuted)
                         Spacer()
                         Text(formatTien(order.conLai)).font(.system(size: 20, weight: .bold))
                             .foregroundColor(order.conLai > 0 ? Theme.danger : Theme.success)
@@ -163,13 +163,13 @@ struct OrderDetailView: View {
             .padding(.vertical, 12)
         }
         .background(Theme.bg)
-        .navigationTitle("Chi tiết đơn hàng")
+        .navigationTitle(chu("Chi tiết đơn hàng"))
         .navigationBarTitleDisplayMode(.inline)
         // "Đặt lại" chuyển lên toolbar góc trên phải — LUÔN NỔI khi cuộn (feedback 2026-09-28), thay
         // vì nằm cuối mục "Thông tin thanh toán" như trước (phải cuộn hết trang mới thấy).
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Đặt lại") { datLai() }
+                Button(chu("Đặt lại")) { datLai() }
                     .font(.system(size: 15, weight: .semibold))
             }
         }
@@ -179,7 +179,7 @@ struct OrderDetailView: View {
         }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
-                Button("OK") {}
+                Button(chu("OK")) {}
             } message: {
                 Text(alertMessage?.message ?? "")
             }
@@ -288,9 +288,9 @@ struct OrderDetailView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
             } else if qrFailed {
                 VStack(spacing: 10) {
-                    Text("Không tải được ảnh QR, mạng có thể đang chậm.")
+                    Text(chu("Không tải được ảnh QR, mạng có thể đang chậm."))
                         .font(.system(size: 13)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
-                    Button("Thử tải lại") { Task { await loadQr() } }
+                    Button(chu("Thử tải lại")) { Task { await loadQr() } }
                         .buttonStyle(.gradientProminent)
                 }
                 .frame(width: 220, height: 220)
@@ -301,7 +301,7 @@ struct OrderDetailView: View {
                 ProgressView().frame(width: 220, height: 220)
             }
             NhacGiuNoiDungCk()
-            Button("⬇️ Lưu mã QR về máy") { saveQrToPhotos() }
+            Button(chu("⬇️ Lưu mã QR về máy")) { saveQrToPhotos() }
                 .buttonStyle(.gradientProminent)
                 .frame(maxWidth: .infinity)
                 .disabled(qrImage == nil)

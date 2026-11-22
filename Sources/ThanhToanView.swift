@@ -48,14 +48,14 @@ struct ThanhToanView: View {
                         Text(errorMessage)
                             .foregroundColor(Theme.danger)
                             .multilineTextAlignment(.center)
-                        Button("Thử lại") { Task { await load() } }
+                        Button(chu("Thử lại")) { Task { await load() } }
                             .buttonStyle(.gradientProminent)
                     }
                     .padding(.top, 60)
                 } else {
                     VStack(spacing: 12) {
                         ProgressView().scaleEffect(1.3)
-                        Text("Đang tải thông tin thanh toán...")
+                        Text(chu("Đang tải thông tin thanh toán..."))
                             .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                     }
                     .padding(.top, 100)
@@ -77,8 +77,8 @@ struct ThanhToanView: View {
         .navigationBarBackButtonHidden(!laTraNo)
         .task { await load() }
         .popupHost { host in
-            host.alert("Lưu ảnh", isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
-                Button("OK") { saveMessage = nil }
+            host.alert(chu("Lưu ảnh"), isPresented: Binding(get: { saveMessage != nil }, set: { if !$0 { saveMessage = nil } })) {
+                Button(chu("OK")) { saveMessage = nil }
             } message: {
                 Text(saveMessage ?? "")
             }
@@ -90,7 +90,7 @@ struct ThanhToanView: View {
         // 17/11/2026 (chủ quán: app gọn gàng): bỏ 2 dòng cảm ơn, chỉ còn 1 câu mời quét.
         // Đổi bố cục (feedback 2026-09-28): thêm câu mời NGAY TRÊN mã QR, số tiền chuyển XUỐNG DƯỚI
         // mã QR (trước đây số tiền nằm trên, ngay dưới lời cảm ơn).
-        Text("Quét mã QR để thanh toán").font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
+        Text(chu("Quét mã QR để thanh toán")).font(.system(size: 15, weight: .medium)).foregroundColor(Theme.textMuted)
 
         Group {
             if let qrImage {
@@ -104,9 +104,9 @@ struct ThanhToanView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.divider))
             } else if qrFailed {
                 VStack(spacing: 10) {
-                    Text("Không tải được ảnh QR, mạng có thể đang chậm.")
+                    Text(chu("Không tải được ảnh QR, mạng có thể đang chậm."))
                         .font(.system(size: 13)).foregroundColor(Theme.textMuted).multilineTextAlignment(.center)
-                    Button("Thử tải lại") { Task { await loadQr(for: info) } }
+                    Button(chu("Thử tải lại")) { Task { await loadQr(for: info) } }
                         .buttonStyle(.gradientProminent)
                 }
                 .frame(width: 240, height: 240)
@@ -123,18 +123,18 @@ struct ThanhToanView: View {
 
         // Số QR có thể lớn hơn tổng nợ: backend gộp cả đơn đang giao chưa trả (TongDonKhacDangGiao).
         if let tongNo, info.amount > tongNo + 0.5 {
-            Text("Đã gồm \(formatVnd(info.amount - tongNo)) của đơn đang giao")
+            Text(chu("Đã gồm \(formatVnd(info.amount - tongNo)) của đơn đang giao"))
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 .multilineTextAlignment(.center).frame(maxWidth: 300)
         }
 
-        Button("⬇️ Tải mã QR về máy") { saveQrToPhotos() }
+        Button(chu("⬇️ Tải mã QR về máy")) { saveQrToPhotos() }
             .buttonStyle(.gradientProminent)
             .frame(maxWidth: 320)
             .disabled(qrImage == nil)
 
         if laTraNo {
-            Text("Công nợ tự gạch sau vài giây.")
+            Text(chu("Công nợ tự gạch sau vài giây."))
                 .font(.system(size: 13)).foregroundColor(Theme.textMuted)
                 .multilineTextAlignment(.center).frame(maxWidth: 300)
         }

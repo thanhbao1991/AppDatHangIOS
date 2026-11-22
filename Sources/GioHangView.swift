@@ -129,7 +129,7 @@ private struct GoiYVoucherRow: View {
             Spacer(minLength: 6)
             HStack(spacing: 3) {
                 Image(systemName: icon).font(.system(size: 11, weight: .bold))
-                Text("Đổi").font(.system(size: 13, weight: .bold))
+                Text(chu("Đổi")).font(.system(size: 13, weight: .bold))
                 Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
             }
             .foregroundColor(.white)
@@ -166,7 +166,7 @@ struct GioHangView: View {
             TitleBar(title: "Giỏ hàng", icon: "cart", centerTitle: true, trailing: notificationBell)
 
             if cart.items.isEmpty {
-                Text("Giỏ hàng trống.").foregroundColor(Theme.textFaint)
+                Text(chu("Giỏ hàng trống.")).foregroundColor(Theme.textFaint)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
                 // 2026-09-26: đổi sang dạng PHẲNG (List(.plain) + đường kẻ mặc định) giống Đơn hàng/
@@ -181,7 +181,7 @@ struct GioHangView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     }
-                    TextField("Ghi chú thêm", text: $cart.ghiChuDon)
+                    TextField(chu("Ghi chú thêm"), text: $cart.ghiChuDon)
                         .padding(.horizontal, 14).padding(.vertical, 13)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -247,7 +247,7 @@ struct GioHangView: View {
                 Button { NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil) } label: {
                     HStack {
                         Image(systemName: "ticket").foregroundColor(Theme.primary)
-                        Text("Đăng nhập để dùng voucher và Xu").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
+                        Text(chu("Đăng nhập để dùng voucher và Xu")).font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
                         Spacer()
                         Image(systemName: "chevron.right").font(.system(size: 12)).foregroundColor(Theme.textFaint)
                     }
@@ -257,7 +257,7 @@ struct GioHangView: View {
             Divider()
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Tạm tính").font(.system(size: 12)).foregroundColor(Theme.textMuted)
+                    Text(chu("Tạm tính")).font(.system(size: 12)).foregroundColor(Theme.textMuted)
                     // Số tiền tự "đếm chạy" qua từng số trung gian khi áp voucher/đổi Xu (xem
                     // AnimatableTienText — Theme.swift) đã tự nói lên "có giảm giá" qua animation, nên
                     // KHÔNG cần hiện thêm giá gốc gạch ngang bên cạnh nữa (feedback 2026-09-27) — chỉ
@@ -270,7 +270,7 @@ struct GioHangView: View {
                 // Chỉ tài khoản shipper — đặt hộ khách, nhận tại quán, giảm 5% (xem CheckoutView muaHo).
                 if Prefs.isLoggedIn && cart.laShipper {
                     Button { path.append(.checkoutMuaHo) } label: {
-                        Text("Mua hộ").fontWeight(.bold).foregroundColor(Theme.primary)
+                        Text(chu("Mua hộ")).fontWeight(.bold).foregroundColor(Theme.primary)
                             .padding(.horizontal, 16).padding(.vertical, 12)
                             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.primary, lineWidth: 1.5))
                             .contentShape(Rectangle())
@@ -284,7 +284,7 @@ struct GioHangView: View {
                         NotificationCenter.default.post(name: .yeuCauDangNhap, object: nil)
                     }
                 } label: {
-                    Text("Đặt hàng").fontWeight(.bold).frame(minWidth: cart.laShipper ? 90 : 120)
+                    Text(chu("Đặt hàng")).fontWeight(.bold).frame(minWidth: cart.laShipper ? 90 : 120)
                 }
                 .buttonStyle(.gradientProminent)
             }
@@ -330,15 +330,15 @@ struct GioHangView: View {
                     // Ghi rõ giá trị giảm ngay sau khi chọn (feedback 2026-09-27) thay vì chỉ đếm số
                     // lượng ưu đãi trần trụi như bản trước.
                     if voucherGiam > 0 {
-                        Text("Đã áp dụng voucher (-\(formatTien(voucherGiam)))")
+                        Text(chu("Đã áp dụng voucher (-\(formatTien(voucherGiam)))"))
                             .font(.system(size: 14)).foregroundColor(Theme.textMuted)
                     } else {
-                        Text("Chưa áp dụng voucher")
+                        Text(chu("Chưa áp dụng voucher"))
                             .font(.system(size: 14)).foregroundColor(Theme.textMuted)
                     }
                     Spacer()
                     HStack(spacing: 2) {
-                        Text("Chọn voucher").font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
+                        Text(chu("Chọn voucher")).font(.system(size: 14, weight: .semibold)).foregroundColor(Theme.primary)
                         Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundColor(Theme.primary)
                     }
                 }
@@ -362,7 +362,7 @@ struct GioHangView: View {
                     // 1 Xu = 1đ (quy đổi thẳng) — hiện cả 2 đơn vị để khách thấy rõ Xu quy ra tiền thật
                     // bao nhiêu, khớp yêu cầu "xu ~ đ". Không chèn khoảng trắng trước "đ" (feedback
                     // 2026-09-27) — formatTien đã tự ghép liền số+đ.
-                    Text("Dùng \(formatXu(cart.soDuXu))")
+                    Text(chu("Dùng \(formatXu(cart.soDuXu))"))
                         .font(.system(size: 14)).foregroundColor(.primary)
                 }
             }
@@ -371,7 +371,7 @@ struct GioHangView: View {
 
             // Bật Xu thì nói rõ trừ bao nhiêu, còn lại bao nhiêu (feedback 26/10: "bật toggle chưa rõ ràng").
             if cart.dungXu && cart.soDuXu - xuGiam > 0 {
-                Text("Còn lại \(formatXu(cart.soDuXu - xuGiam))")
+                Text(chu("Còn lại \(formatXu(cart.soDuXu - xuGiam))"))
                     .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 30)
@@ -521,7 +521,7 @@ struct GioHangView: View {
                     }
                     if item.giamPhaKem > 0 {
                         // Pha kèm: giá dòng đã trừ sẵn (CartItem.donGia), nhãn cho khách biết vì sao rẻ hơn.
-                        Text("⚡ Flash Sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly")
+                        Text(chu("⚡ Flash Sale, giảm \(formatTienShort(item.giamPhaKem).uppercased())/ly"))
                             .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.danger)
                     }
                 }

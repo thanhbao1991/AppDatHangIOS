@@ -87,7 +87,7 @@ struct UuDaiView: View {
         .navigationDestination(isPresented: $showTheLe) { TheLeXuView() }
         .popupHost { host in
             host.alert(alertMessage?.title ?? "", isPresented: Binding(get: { alertMessage != nil }, set: { if !$0 { alertMessage = nil } })) {
-                Button("OK") {}
+                Button(chu("OK")) {}
             } message: {
                 Text(alertMessage?.message ?? "")
             }
@@ -121,7 +121,7 @@ struct UuDaiView: View {
                     if dd.daDiemDanhHomNay {
                         HStack(spacing: 6) {
                             Image(systemName: "checkmark.circle.fill")
-                            Text("Bạn đã điểm danh hôm nay").fontWeight(.bold)
+                            Text(chu("Bạn đã điểm danh hôm nay")).fontWeight(.bold)
                         }
                         .foregroundColor(Theme.success)
                         .frame(maxWidth: .infinity)
@@ -135,7 +135,7 @@ struct UuDaiView: View {
                             if dangDiemDanh {
                                 ProgressView().tint(.white)
                             } else {
-                                Text("Điểm danh nhận \(formatXu(thuongChoDay(dd.ngayTiepTheo, dd)))").fontWeight(.bold)
+                                Text(chu("Điểm danh nhận \(formatXu(thuongChoDay(dd.ngayTiepTheo, dd)))")).fontWeight(.bold)
                             }
                         }
                         .buttonStyle(.gradientProminent).frame(maxWidth: .infinity)
@@ -226,13 +226,13 @@ struct UuDaiView: View {
             // trợ chương trình quà tặng — App Store Review Guideline 5.3.2 (26/10/2026) — nên hiện ở mọi trạng thái.
             HStack(spacing: 5) {
                 if dangQuay {
-                    Text("Đang mở...")
+                    Text(chu("Đang mở..."))
                         .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.primary)
                 } else if soLuotConLai == 0 {
-                    Text("Mời bạn quay lại vào ngày mai nhé")
+                    Text(chu("Mời bạn quay lại vào ngày mai nhé"))
                         .font(.system(size: 12)).foregroundColor(Theme.textFaint)
                 } else if soLuotConLai > 0 {
-                    Text("Còn \(soLuotConLai) lượt mở")
+                    Text(chu("Còn \(soLuotConLai) lượt mở"))
                         .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                 }
                 Button {
@@ -248,7 +248,7 @@ struct UuDaiView: View {
 
             // Công khai tỉ lệ trúng (hộp quà có yếu tố ngẫu nhiên) — bảng tỉ lệ nằm trong trang Thể lệ Xu.
             Button { showTheLe = true } label: {
-                Text("Tỉ lệ trúng · Thể lệ Xu")
+                Text(chu("Tỉ lệ trúng · Thể lệ Xu"))
                     .font(.system(size: 12, weight: .semibold)).foregroundColor(Theme.primary)
             }
             .buttonStyle(.plain)

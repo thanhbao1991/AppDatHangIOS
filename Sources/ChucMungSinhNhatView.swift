@@ -58,15 +58,15 @@ struct ChucMungSinhNhatView: View {
                     .rotationEffect(.degrees(hien ? 0 : -30))
                     .animation(.spring(response: 0.6, dampingFraction: 0.55), value: hien)
 
-                Text("CHÚC MỪNG!")
+                Text(chu("CHÚC MỪNG!"))
                     .font(.system(size: 15, weight: .heavy)).tracking(3)
                     .foregroundColor(.white.opacity(0.85))
                     .padding(.top, 24)
-                Text("Sinh nhật vui vẻ")
+                Text(chu("Sinh nhật vui vẻ"))
                     .font(.system(size: 30, weight: .heavy))
                     .foregroundColor(.white)
                     .padding(.top, 6)
-                Text("Đenn Coffee có quà nhỏ tặng riêng bạn")
+                Text(chu("Đenn Coffee có quà nhỏ tặng riêng bạn"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.9))
                     .padding(.top, 6)
@@ -79,7 +79,7 @@ struct ChucMungSinhNhatView: View {
                     if let toiDa = voucher.nhanGiamToiDa {
                         Text(toiDa).font(.system(size: 14, weight: .semibold)).foregroundColor(.white.opacity(0.9))
                     }
-                    Text("Voucher Chúc Mừng Sinh Nhật")
+                    Text(chu("Voucher Chúc Mừng Sinh Nhật"))
                         .font(.system(size: 15, weight: .bold)).foregroundColor(.white)
                         .padding(.top, 2)
                 }
@@ -97,7 +97,7 @@ struct ChucMungSinhNhatView: View {
                 Spacer()
 
                 Button(action: dong) {
-                    Text("Tuyệt vời")
+                    Text(chu("Tuyệt vời"))
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(hongDam)
                         .frame(maxWidth: .infinity)

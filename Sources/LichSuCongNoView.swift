@@ -36,7 +36,7 @@ struct LichSuCongNoView: View {
                 }
             }
         }
-        .navigationTitle("Công nợ hiện tại")
+        .navigationTitle(chu("Công nợ hiện tại"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showThanhToan) {
             // Đơn nợ mới nhất (API sắp NgayNo giảm dần) làm "đơn chính" của mã QR — backend cộng phần nợ còn lại.
@@ -53,7 +53,7 @@ struct LichSuCongNoView: View {
 
     private var nutThanhToan: some View {
         Button { showThanhToan = true } label: {
-            Text("Thanh toán công nợ · \(formatTien(tongNo))")
+            Text(chu("Thanh toán công nợ · \(formatTien(tongNo))"))
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity)
         }
@@ -80,7 +80,7 @@ struct LichSuCongNoView: View {
                     .lineLimit(6)
                 // Đã trả 1 phần thì thanhTien > conLai mới cần dòng "Tổng" để phân biệt (feedback 2026-09-22).
                 if item.conLai < item.thanhTien {
-                    Text("Tổng: \(formatTien(item.thanhTien))").font(.system(size: 11)).foregroundColor(Theme.textFaint)
+                    Text(chu("Tổng: \(formatTien(item.thanhTien))")).font(.system(size: 11)).foregroundColor(Theme.textFaint)
                 }
                 Text(formatUtcShort(item.ngayNo)).font(.system(size: 11)).foregroundColor(Theme.textFaint)
             }
