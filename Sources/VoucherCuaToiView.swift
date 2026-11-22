@@ -14,43 +14,15 @@ struct VoucherCuaToiView: View {
     @State private var loading = true
     @State private var huongDan: (ten: String, lyDo: String)?
 
-    private enum Dong: Identifiable {
-        case khaDung(Voucher), chuaDung(VoucherCuaToi), daDung(VoucherCuaToi)
-        var id: String {
-            switch self {
-            case .khaDung(let v): return v.id
-            case .chuaDung(let v), .daDung(let v): return v.id
-            }
-        }
-    }
+    @EnvironmentObject private var cart: CartStore
 
-    /// Lấy lần lượt từng nhóm theo thuTuNhom server (như sheet "Chọn voucher"), mỗi nhóm giữ thứ tự kéo-thả (thuTuId).
-    /// Không có giỏ: "dungDuoc" = mọi voucher tài khoản dùng được; "thieuDieuKien" không có gì. Voucher đã dùng nối cuối.
-    private var hienThi: [Dong] {
-        let thuTuId = chon?.thuTuId ?? []
-        let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
-        func xep(_ ds: [Dong]) -> [Dong] {
-            ds.enumerated()
-                .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
-                .map(\.element)
-        }
-        var conLai = xep((chon?.khaDung ?? []).map(Dong.khaDung) + (chon?.chuaDung ?? []).map(Dong.chuaDung))
-        let nhom = (chon?.thuTuNhom.isEmpty ?? true) ? ["dungDuoc", "chuaDung"] : chon!.thuTuNhom
-        var kq: [Dong] = []
-        for n in nhom + ["tatCa"] {
-            let lay: (Dong) -> Bool
-            switch n {
-            case "dungDuoc": lay = { if case .khaDung = $0 { return true } else { return false } }
-            case "chuaDung": lay = { if case .chuaDung = $0 { return true } else { return false } }
-            case "tatCa": lay = { _ in true }
-            default: continue
-            }
-            kq += conLai.filter(lay)
-            conLai.removeAll(where: lay)
-        }
-        let daCo = Set(kq.map(\.id))
-        let daDung = cuaToi.filter { $0.daSuDung && !$0.chuaBatDau && !daCo.contains($0.id) }.map(Dong.daDung)
-        return kq + xep(daDung)
+    /// CÙNG hàm xếp với sheet "Chọn voucher" (DongVoucher.xep) và CÙNG giỏ hàng hiện tại để quyết định "dùng được" —
+    /// 2 màn giống hệt nhau (chủ quán 22/11/2026). Voucher đã dùng hẳn: server gửi chon.daDung (bản server cũ thì lọc cuaToi).
+    private var hienThi: [DongVoucher] {
+        let daDung = chon?.daDung ?? cuaToi.filter { $0.daSuDung && !$0.chuaBatDau }
+        return DongVoucher.xep(khaDung: chon?.khaDung ?? [], chuaDung: chon?.chuaDung ?? [], daDung: daDung,
+                               thuTuNhom: chon?.thuTuNhom ?? [], thuTuId: chon?.thuTuId ?? [],
+                               duDieuKien: cart.voucherDuDieuKien)
     }
 
     var body: some View {
@@ -84,15 +56,23 @@ struct VoucherCuaToiView: View {
     }
 
     /// Hàm trả về KIỂU CỤ THỂ (AnyView) thay vì gộp vào ForEach trong body — tránh Swift type-checker quá thời gian.
-    private func card(for d: Dong) -> AnyView {
+    private func card(for d: DongVoucher) -> AnyView {
         switch d {
         case .khaDung(let v):
-            return AnyView(VoucherTicketCard(
-                ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
-                nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
-                donToiThieu: v.donToiThieu,
-                hienMa: false
-            ))
+            // Giống sheet: chưa đủ điều kiện với giỏ thì ghi cách dùng trong thẻ, bấm xem lý do.
+            let ok = cart.voucherDuDieuKien(v)
+            let lyDo = cart.lyDoChuaDuDieuKien(v)
+            return AnyView(Button { if !ok { huongDan = (v.ten, lyDo ?? "Voucher này chưa áp dụng được cho giỏ hàng hiện tại.") } } label: {
+                VoucherTicketCard(
+                    ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
+                    nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                    donToiThieu: v.donToiThieu,
+                    huongDan: ok ? nil : VoucherPickerSheet.cachDungNgan(lyDo),
+                    hienMa: false,
+                    hienMoTa: ok
+                )
+            }
+            .buttonStyle(.plain))
         case .chuaDung(let v):
             let lyDo = v.lyDoChuaKhaDung ?? "Chưa đủ điều kiện dùng."
             return AnyView(Button { huongDan = (v.ten, lyDo) } label: {

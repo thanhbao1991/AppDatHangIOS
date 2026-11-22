@@ -218,6 +218,8 @@ struct VoucherChon: Codable {
     var thuTuId: [String]?
     var khaDung: [Voucher] = []
     var chuaDung: [VoucherCuaToi] = []
+    /// Voucher đã dùng hẳn (server từ 22/11/2026; bản server cũ không có).
+    var daDung: [VoucherCuaToi]?
 }
 
 struct VoucherCuaToi: Codable, Identifiable {

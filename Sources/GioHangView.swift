@@ -177,7 +177,8 @@ struct GioHangView: View {
                 lyDo: { cart.lyDoChuaDuDieuKien($0) },
                 selected: $cart.selectedVoucher,
                 onClose: { showVoucherSheet = false },
-                onRetry: { await cart.reloadVouchers() }
+                onRetry: { await cart.reloadVouchers() },
+                voucherDaDung: cart.voucherDaDung
             )
         }
         .sheet(item: $editingItem) { item in

@@ -31,43 +31,18 @@ struct VoucherPickerSheet: View {
     var onRetry: () async -> Void
     @State private var retrying = false
 
-    private enum Dong: Identifiable {
-        case khaDung(Voucher), chuaDung(VoucherCuaToi)
-        var id: String {
-            switch self { case .khaDung(let v): return v.id; case .chuaDung(let v): return v.id }
-        }
-    }
+    /// Voucher đã dùng HẲN (VoucherChon.daDung) — hiện cuối, mờ, không chọn được; cùng danh sách với tab Voucher (22/11/2026).
+    var voucherDaDung: [VoucherCuaToi] = []
 
-    /// Thứ tự hiển thị do backend quyết định (GET /voucher/chon): `thuTuId` = thứ tự kéo-thả ở AppQuanLyIOS, `thuTuNhom` =
-    /// lần lượt lấy nhóm nào trước — "dungDuoc" (đủ điều kiện với giỏ), "chuaDung", "thieuDieuKien", "tatCa" (mọi voucher
-    /// còn lại). Trong mỗi nhóm giữ thứ tự `thuTuId`. Voucher chưa nhóm nào lấy thì nối cuối. Chủ quán 2026-11-17: dùng
-    /// được lên đầu, còn lại theo thứ tự server → server gửi ["dungDuoc", "tatCa"].
-    private var dongHienThi: [Dong] {
-        let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
-        var conLai = (vouchers.map(Dong.khaDung) + voucherChuaDung.map(Dong.chuaDung)).enumerated()
-            .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
-            .map(\.element)
-        let nhom = thuTuNhom.isEmpty ? ["dungDuoc", "chuaDung", "thieuDieuKien"] : thuTuNhom
-        var kq: [Dong] = []
-        for n in nhom + ["tatCa"] {
-            let lay: (Dong) -> Bool
-            switch n {
-            case "dungDuoc": lay = { if case .khaDung(let v) = $0 { return duDieuKien(v) } else { return false } }
-            case "thieuDieuKien": lay = { if case .khaDung(let v) = $0 { return !duDieuKien(v) } else { return false } }
-            case "chuaDung": lay = { if case .chuaDung = $0 { return true } else { return false } }
-            case "tatCa": lay = { _ in true }
-            default: continue
-            }
-            kq += conLai.filter(lay)
-            conLai.removeAll(where: lay)
-        }
-        return kq
+    private var dongHienThi: [DongVoucher] {
+        DongVoucher.xep(khaDung: vouchers, chuaDung: voucherChuaDung, daDung: voucherDaDung,
+                        thuTuNhom: thuTuNhom, thuTuId: thuTuId, duDieuKien: duDieuKien)
     }
 
     var body: some View {
         NavigationStack {
             Group {
-                if vouchers.isEmpty && voucherChuaDung.isEmpty {
+                if vouchers.isEmpty && voucherChuaDung.isEmpty && voucherDaDung.isEmpty {
                     emptyState
                 } else {
                     voucherList
@@ -189,6 +164,19 @@ struct VoucherPickerSheet: View {
         }
     }
 
+    private func dongVoucherDaDung(_ v: VoucherCuaToi) -> some View {
+        cardRow {
+            VoucherTicketCard(
+                ten: v.tenNgan ?? v.ten, moTa: v.moTaNgan ?? v.moTa, ma: v.ma,
+                nhanGiam: v.nhanGiamGia, nhanGiamToiDa: v.nhanGiamToiDa,
+                donToiThieu: v.donToiThieu, daSuDung: true,
+                nhanSoLan: v.nhanSoLan,
+                hienMa: false
+            )
+            .padding(.horizontal).padding(.vertical, 6)
+        }
+    }
+
     private var voucherList: some View {
         List {
                 // Bấm THẲNG vào voucher là chọn/áp dụng ngay, bấm lại voucher đang chọn là bỏ chọn NGAY
@@ -200,6 +188,7 @@ struct VoucherPickerSheet: View {
                     switch d {
                     case .khaDung(let v): dongVoucher(v)
                     case .chuaDung(let v): dongVoucherChuaDung(v)
+                    case .daDung(let v): dongVoucherDaDung(v)
                     }
                 }
         }
@@ -211,5 +200,47 @@ struct VoucherPickerSheet: View {
                 Text(huongDan?.lyDo ?? "")
             }
         }
+    }
+}
+
+/// 1 dòng voucher ở sheet "Chọn voucher" và tab Voucher — 2 màn dùng CHUNG hàm xếp bên dưới để cùng thứ tự, cùng danh sách
+/// (chủ quán 22/11/2026: thứ tự lấy sheet làm chuẩn, số lượng lấy tab làm chuẩn).
+enum DongVoucher: Identifiable {
+    case khaDung(Voucher), chuaDung(VoucherCuaToi), daDung(VoucherCuaToi)
+    var id: String {
+        switch self {
+        case .khaDung(let v): return v.id
+        case .chuaDung(let v), .daDung(let v): return v.id
+        }
+    }
+
+    /// Thứ tự do backend quyết định (GET /voucher/chon): `thuTuId` = thứ tự kéo-thả ở AppQuanLyIOS, `thuTuNhom` = lần lượt lấy
+    /// nhóm nào trước — "dungDuoc" (đủ điều kiện với giỏ hiện tại), "chuaDung", "thieuDieuKien", "tatCa" (mọi voucher còn lại).
+    /// Mỗi nhóm giữ thứ tự `thuTuId`. Voucher đã dùng hẳn luôn nối cuối.
+    static func xep(khaDung: [Voucher], chuaDung: [VoucherCuaToi], daDung: [VoucherCuaToi],
+                    thuTuNhom: [String], thuTuId: [String], duDieuKien: (Voucher) -> Bool) -> [DongVoucher] {
+        let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+        func xepId(_ ds: [DongVoucher]) -> [DongVoucher] {
+            ds.enumerated()
+                .sorted { (viTri[$0.element.id] ?? Int.max, $0.offset) < (viTri[$1.element.id] ?? Int.max, $1.offset) }
+                .map(\.element)
+        }
+        var conLai = xepId(khaDung.map(DongVoucher.khaDung) + chuaDung.map(DongVoucher.chuaDung))
+        let nhom = thuTuNhom.isEmpty ? ["dungDuoc", "chuaDung", "thieuDieuKien"] : thuTuNhom
+        var kq: [DongVoucher] = []
+        for n in nhom + ["tatCa"] {
+            let lay: (DongVoucher) -> Bool
+            switch n {
+            case "dungDuoc": lay = { if case .khaDung(let v) = $0 { return duDieuKien(v) } else { return false } }
+            case "thieuDieuKien": lay = { if case .khaDung(let v) = $0 { return !duDieuKien(v) } else { return false } }
+            case "chuaDung": lay = { if case .chuaDung = $0 { return true } else { return false } }
+            case "tatCa": lay = { _ in true }
+            default: continue
+            }
+            kq += conLai.filter(lay)
+            conLai.removeAll(where: lay)
+        }
+        let daCo = Set(kq.map(\.id))
+        return kq + xepId(daDung.filter { !daCo.contains($0.id) }.map(DongVoucher.daDung))
     }
 }

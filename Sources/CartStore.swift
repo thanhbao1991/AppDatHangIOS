@@ -54,6 +54,7 @@ final class CartStore: ObservableObject {
     /// Voucher CHƯA dùng được (chưa tới ngày / chưa đủ hạng-điều kiện) — chỉ để hiện thêm ở sheet "Chọn voucher" cho khách
     /// biết có gì đang chờ (chủ quán 2026-11-17: "hiển thị tất cả voucher, trừ voucher đã sử dụng"). Không chọn được.
     @Published private(set) var voucherChuaDung: [VoucherCuaToi] = []
+    @Published private(set) var voucherDaDung: [VoucherCuaToi] = []
     /// Thứ tự nhóm trên sheet "Chọn voucher" do backend quyết định (dungDuoc/chuaDung/thieuDieuKien).
     @Published private(set) var thuTuNhomVoucher: [String] = []
     @Published private(set) var thuTuIdVoucher: [String] = []
@@ -132,6 +133,7 @@ final class CartStore: ObservableObject {
         vi = nil
         vouchers = []
         voucherChuaDung = []
+        voucherDaDung = []
         thuTuNhomVoucher = []
         sanPhamDaTungDat = []
         uuDaiLoaded = false
@@ -281,6 +283,7 @@ final class CartStore: ObservableObject {
     private func apDungVoucherChon(_ kq: VoucherChon) {
         vouchers = kq.khaDung
         voucherChuaDung = kq.chuaDung
+        voucherDaDung = kq.daDung ?? []
         thuTuNhomVoucher = kq.thuTuNhom
         thuTuIdVoucher = kq.thuTuId ?? []
         validateSelectedVoucher()

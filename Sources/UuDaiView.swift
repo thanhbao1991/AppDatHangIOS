@@ -182,13 +182,14 @@ struct UuDaiView: View {
                 if isDay7 {
                     // Ngày 7 xếp dọc 3 quà (chủ quán 22/11/2026): Xu (dòng trên) · voucher (mức giảm server gửi) · 1 lượt mở quà.
                     if let v = info.voucherNgay7 {
+                        // Hình vé voucher thu nhỏ (khuyết 2 bên như thẻ voucher) — chủ quán 22/11: "không giống icon voucher".
                         Text(verbatim: v)
-                            .font(.system(size: 10, weight: .heavy)).foregroundColor(Theme.primary)
+                            .font(.system(size: 9, weight: .heavy)).foregroundColor(Theme.primary)
                             .lineLimit(1).minimumScaleFactor(0.7)
-                            .padding(.horizontal, 4).padding(.vertical, 1)
-                            .background(Capsule().fill(.white))
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(VeVoucherNho())
                     }
-                    Text(verbatim: "🎁").font(.system(size: 16))
+                    Text(verbatim: "🎁").font(.system(size: 12))
                 } else {
                     xuIcon(24)
                 }
@@ -428,6 +429,24 @@ struct UuDaiView: View {
             if let m = res.message, !m.isEmpty { hienKetQuaDiemDanh(ngay: res.data?.ngay ?? 0, m) }
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
+        }
+    }
+}
+
+/// Vé voucher thu nhỏ: nền trắng, khuyết nửa tròn 2 bên (giống thẻ voucher), dùng ở ô ngày 7 thẻ điểm danh.
+private struct VeVoucherNho: View {
+    var body: some View {
+        GeometryReader { g in
+            let n = g.size.height * 0.24
+            RoundedRectangle(cornerRadius: 3, style: .continuous).fill(.white)
+                .overlay(
+                    ZStack {
+                        Circle().frame(width: n * 2, height: n * 2).position(x: 0, y: g.size.height / 2)
+                        Circle().frame(width: n * 2, height: n * 2).position(x: g.size.width, y: g.size.height / 2)
+                    }
+                    .blendMode(.destinationOut)
+                )
+                .compositingGroup()
         }
     }
 }
