@@ -175,29 +175,25 @@ struct UuDaiView: View {
         let isDay7 = day == 7
 
         VStack(spacing: 6) {
-            VStack(spacing: isDay7 ? 2 : 4) {
-                Text("+\(soNgan(thuongChoDay(day, info)))")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(isDay7 ? .white : (daXongNgayNay ? Theme.textFaint : Theme.textMuted))
+            Group {
                 if isDay7 {
-                    // Ngày 7 xếp dọc 3 quà (chủ quán 22/11/2026): Xu (dòng trên) · voucher (mức giảm server gửi) · 1 lượt mở quà.
-                    if let v = info.voucherNgay7 {
-                        // Hình vé voucher thu nhỏ (khuyết 2 bên như thẻ voucher) — chủ quán 22/11: "không giống icon voucher".
-                        Text(verbatim: v)
-                            .font(.system(size: 9, weight: .heavy)).foregroundColor(Theme.primary)
-                            .lineLimit(1).minimumScaleFactor(0.7)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(VeVoucherNho())
-                    }
-                    Text(verbatim: "🎁").font(.system(size: 12))
+                    // Ngày 7 = hình chủ quán gửi 22/11/2026 (+1.000 Xu · voucher -10% · hộp quà) — chữ VẼ SẴN trong hình,
+                    // đổi mức thưởng/voucher thì phải đổi hình (Assets DiemDanhNgay7, Android drawable diem_danh_ngay7).
+                    Image("DiemDanhNgay7").resizable().scaledToFill()
+                        .frame(maxWidth: .infinity, minHeight: 70, maxHeight: 70)
                 } else {
-                    xuIcon(24)
+                    VStack(spacing: 4) {
+                        Text("+\(soNgan(thuongChoDay(day, info)))")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(daXongNgayNay ? Theme.textFaint : Theme.textMuted)
+                        xuIcon(24)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .padding(.vertical, 10)
+                    .background(Theme.bg)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 50)
-            .padding(.vertical, 10)
             .opacity(daXongNgayNay ? 0.45 : 1)
-            .background(isDay7 ? Theme.primary : Theme.bg)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -429,24 +425,6 @@ struct UuDaiView: View {
             if let m = res.message, !m.isEmpty { hienKetQuaDiemDanh(ngay: res.data?.ngay ?? 0, m) }
         } else {
             alertMessage = ("Chưa điểm danh được", res.message ?? "")
-        }
-    }
-}
-
-/// Vé voucher thu nhỏ: nền trắng, khuyết nửa tròn 2 bên (giống thẻ voucher), dùng ở ô ngày 7 thẻ điểm danh.
-private struct VeVoucherNho: View {
-    var body: some View {
-        GeometryReader { g in
-            let n = g.size.height * 0.24
-            RoundedRectangle(cornerRadius: 3, style: .continuous).fill(.white)
-                .overlay(
-                    ZStack {
-                        Circle().frame(width: n * 2, height: n * 2).position(x: 0, y: g.size.height / 2)
-                        Circle().frame(width: n * 2, height: n * 2).position(x: g.size.width, y: g.size.height / 2)
-                    }
-                    .blendMode(.destinationOut)
-                )
-                .compositingGroup()
         }
     }
 }
