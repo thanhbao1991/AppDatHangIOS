@@ -218,7 +218,7 @@ enum DongVoucher: Identifiable {
     /// nhóm nào trước — "dungDuoc" (đủ điều kiện với giỏ hiện tại), "chuaDung", "thieuDieuKien", "tatCa" (mọi voucher còn lại).
     /// Mỗi nhóm giữ thứ tự `thuTuId`. Voucher đã dùng hẳn luôn nối cuối.
     static func xep(khaDung: [Voucher], chuaDung: [VoucherCuaToi], daDung: [VoucherCuaToi],
-                    thuTuNhom: [String], thuTuId: [String], duDieuKien: (Voucher) -> Bool) -> [DongVoucher] {
+                    thuTuNhom: [String], thuTuId: [String], duDieuKien: @escaping (Voucher) -> Bool) -> [DongVoucher] {
         let viTri = Dictionary(thuTuId.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
         func xepId(_ ds: [DongVoucher]) -> [DongVoucher] {
             ds.enumerated()
