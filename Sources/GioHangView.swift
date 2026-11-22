@@ -315,7 +315,7 @@ struct GioHangView: View {
             }
 
             // Thẻ Xu nổi bật (chủ quán 22/11/2026 "tăng độ chú ý cho dùng xu"): nền vàng Xu + viền, chữ đậm, dòng phụ nói
-            // rõ bật thì giảm bao nhiêu tiền. Bật rồi thì ghi đã trừ / còn lại (feedback 26/10: "bật toggle chưa rõ ràng").
+            // rõ bật thì giảm bao nhiêu tiền. Bật rồi thì ghi số Xu còn lại (chủ quán 22/11: ghi còn lại, không ghi đã trừ) (feedback 26/10: "bật toggle chưa rõ ràng").
             // 1 Xu = 1đ. Không chèn khoảng trắng trước "đ" — formatTien đã tự ghép liền số+đ.
             Toggle(isOn: $cart.dungXu) {
                 HStack(spacing: 10) {
@@ -324,9 +324,7 @@ struct GioHangView: View {
                         Text(chu("Dùng \(formatXu(cart.soDuXu))"))
                             .font(.system(size: 15, weight: .bold)).foregroundColor(Theme.xuTangChu)
                         if cart.dungXu {
-                            Text(cart.soDuXu - xuGiam > 0
-                                 ? chu("Đã trừ \(formatTien(xuGiam)) · còn lại \(formatXu(cart.soDuXu - xuGiam))")
-                                 : chu("Đã trừ \(formatTien(xuGiam))"))
+                            Text(chu("Còn lại \(formatXu(max(cart.soDuXu - xuGiam, 0)))"))
                                 .font(.system(size: 12, weight: .medium)).foregroundColor(Theme.textMuted)
                         } else if cart.soDuXu > 0 {
                             Text(chu("Bật để giảm ngay \(formatTien(min(cart.soDuXu, tongSauVoucher)))"))
